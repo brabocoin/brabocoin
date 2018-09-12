@@ -3,7 +3,7 @@ plugins {
     id 'idea'
 }
 
-group 'org.braboteam'
+group 'org.brabocoin'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
