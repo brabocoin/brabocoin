@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.data;
+package org.brabocoin.brabocoin.model;
 
 /**
  * An output of a transaction.

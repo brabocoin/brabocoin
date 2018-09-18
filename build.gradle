@@ -23,3 +23,9 @@ dependencies {
     testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
 }
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
+}

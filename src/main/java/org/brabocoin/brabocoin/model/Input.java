@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.data;
+package org.brabocoin.brabocoin.model;
 
 /**
  * An input of a transaction.
