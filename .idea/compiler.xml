@@ -4,6 +4,8 @@
     <bytecodeTargetLevel>
       <module name="brabocoin_main" target="1.8" />
       <module name="brabocoin_test" target="1.8" />
+      <module name="org.brabocoin-brabocoin_main" target="1.8" />
+      <module name="org.brabocoin-brabocoin_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

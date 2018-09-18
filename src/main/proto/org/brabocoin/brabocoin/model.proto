@@ -4,11 +4,11 @@ syntax = "proto3";
 package brabocoin;
 
 // Java package destination for generated classes
-option java_package = "org.brabocoin.brabocoin.model";
+option java_package = "org.brabocoin.brabocoin.proto.model";
 option java_outer_classname = "BrabocoinProtos";
 
 message Hash {
-
+    bytes value = 1;
 }
 
 message Signature {

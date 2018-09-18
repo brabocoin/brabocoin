@@ -23,7 +23,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.60" level="project" />
-    <orderEntry type="library" name="Gradle: com.google.api.grpc:googleapis-common-protos:0.0.3" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-protobuf:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.protobuf:protobuf-java:3.6.1" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-netty-shaded:1.15.0" level="project" />

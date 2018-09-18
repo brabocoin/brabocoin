@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package brabocoin.services;
+
+import "org/brabocoin/brabocoin/model.proto";
+import "google/api/annotations.proto";
+
+option java_multiple_files = true;
+option java_package = "org.brabocoin.brabocoin.proto.services";
+option java_outer_classname = "DictatorServiceProto";
+
+service Dictator {
+    rpc GetBlock(Hash) returns (Block) {
+        option (google.api.http) = { post: "/api/v1/magnetronmaaltijd" };
+    }
+}
