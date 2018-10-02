@@ -5,7 +5,7 @@ package org.brabocoin.brabocoin.model;
  */
 public interface Output {
     /**
-     * Get the address of the receiver.
+     * Get the address of the receiver of the output amount.
      * @return The address of the receiver
      */
     Hash getAddress();
