@@ -35,5 +35,11 @@ message Output {
 
 message Input {
     Signature signature = 1;
-    Output referencedOutput = 2;
+    Transaction referencedTransaction = 2;
+    int32 outputIndex = 3;
+}
+
+message Transaction {
+    repeated Input inputs = 1;
+    repeated Output outputs = 2;
 }

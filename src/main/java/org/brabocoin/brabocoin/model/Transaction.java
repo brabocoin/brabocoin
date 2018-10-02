@@ -1,26 +1,44 @@
 package org.brabocoin.brabocoin.model;
 
+import net.badata.protobuf.converter.annotation.ProtoClass;
+import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+
 import java.util.List;
 
 /**
- * A general transaction from several inputs to several outputs.
+ * Implementation of transaction.
  */
-public interface Transaction {
-    /**
-     * Get the list of inputs of the transaction.
-     * @return The inputs
-     */
-    List<Input> getInputs();
+@ProtoClass(BrabocoinProtos.Transaction.class)
+public class Transaction {
 
     /**
-     * Get the list of outputs of the transaction.
-     * @return The outputs
+     * Inputs used by the transaction.
      */
-    List<Output> getOutputs();
+    @ProtoField
+    private final List<Input> inputs;
 
     /**
-     * Get the hash of the transaction.
-     * @return The transaction hash
+     * Outputs used by the transaction.
      */
-    Hash getTransactionId();
+    @ProtoField
+    private final List<Output> outputs;
+
+    /**
+     * Create a new transaction.
+     * @param inputs inputs used by the transaction.
+     * @param outputs outputs used by the transaction.
+     */
+    public Transaction(List<Input> inputs, List<Output> outputs) {
+        this.inputs = inputs;
+        this.outputs = outputs;
+    }
+
+    public List<Input> getInputs() {
+        return inputs;
+    }
+
+    public List<Output> getOutputs() {
+        return outputs;
+    }
 }

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.BAData:protobuf-converter:1.1.5">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.BAData/protobuf-converter/1.1.5/bfee18b13edf4aebe18276d36ecf4ae43c926f10/protobuf-converter-1.1.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.BAData/protobuf-converter/1.1.5/c1e81b137c7fbd38dc5bd70f3ae3840ca0927878/protobuf-converter-1.1.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

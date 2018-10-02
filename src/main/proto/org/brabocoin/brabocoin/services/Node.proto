@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package brabocoin.services;
+
+import "org/brabocoin/brabocoin/Model.proto";
+import "google/api/annotations.proto";
+
+option java_multiple_files = true;
+option java_package = "org.brabocoin.brabocoin.proto.services";
+option java_outer_classname = "NodeServiceProto";
+
+message HandshakeRequest {}
+message HandshakeResponse {}
+
+service Node {
+    rpc Handshake(HandshakeRequest) returns (HandshakeResponse);
+    rpc GetBlock(Hash) returns (Block);
+}

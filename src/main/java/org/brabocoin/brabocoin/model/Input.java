@@ -1,19 +1,53 @@
 package org.brabocoin.brabocoin.model;
 
+import net.badata.protobuf.converter.annotation.ProtoClass;
+import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+
 /**
- * An input of a transaction.
+ * Implementation of an input of a transaction
  */
-public interface Input {
+@ProtoClass(BrabocoinProtos.Input.class)
+public class Input {
     /**
-     * Get the signature of the input.
-     * @return The signature
+     * Digital signature belonging to this input.
      */
-    Signature getSignature();
+    @ProtoField
+    private final Signature signature;
 
     /**
-     * Get the output referenced by this input.
-     * @return The referenced output
+     * Transaction referenced by this input.
      */
-    Output getReferencedOutput();
+    @ProtoField
+    private final Transaction referencedTransaction;
 
+    /**
+     * Ouput index for the referenced transaction.
+     */
+    @ProtoField
+    private final int outputIndex;
+
+    /**
+     * Create a new Input
+     * @param signature digital signature of this input
+     * @param referencedTransaction transaction referenced by this input
+     * @param outputIndex output index for the referenced transaction
+     */
+    public Input(Signature signature, Transaction referencedTransaction, int outputIndex) {
+        this.signature = signature;
+        this.referencedTransaction = referencedTransaction;
+        this.outputIndex = outputIndex;
+    }
+
+    public Signature getSignature() {
+        return signature;
+    }
+
+    public Transaction getReferencedTransaction() {
+        return referencedTransaction;
+    }
+
+    public int getOutputIndex() {
+        return outputIndex;
+    }
 }

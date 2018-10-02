@@ -1,26 +1,46 @@
 package org.brabocoin.brabocoin.model;
 
 /**
- * An output of a transaction.
+ * Implementation of an output of a transaction
  */
-public interface Output {
+public class Output {
     /**
-     * Get the address of the receiver of the output amount.
-     * @return The address of the receiver
+     * Address of the receiver of the output amount.
      */
-    Hash getAddress();
+    private final Hash address;
 
     /**
-     * Get the amount paid to the receiver.
-     * @return The amount
+     * Amount paid to the output receiver.
      */
-    long getAmount();
+    private final long amount;
 
     /**
-     * Get the index number of the output,
+     * The index number of the output,
      * identifying which output of the transaction is referenced.
-     * @return The index number
      */
-    int getOutputIndex();
+    private int outputIndex;
 
+    /**
+     * Create a new output
+     * @param address address of the receiver of the output amount
+     * @param amount amount paid to the output receiver
+     * @param outputIndex index number of the output in the overlaying transaction
+     */
+    public Output(Hash address, long amount, int outputIndex) {
+        this.address = address;
+        this.amount = amount;
+        this.outputIndex = outputIndex;
+    }
+
+    public Hash getAddress() {
+        return address;
+    }
+
+    public long getAmount() {
+        return amount;
+    }
+
+    public int getOutputIndex() {
+        return outputIndex;
+    }
 }

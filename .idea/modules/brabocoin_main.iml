@@ -9,11 +9,9 @@
     <content url="file://$MODULE_DIR$/../../build/extracted-protos/main">
       <sourceFolder url="file://$MODULE_DIR$/../../build/extracted-protos/main" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/../../build/generated/source/proto/main/grpc">
-      <sourceFolder url="file://$MODULE_DIR$/../../build/generated/source/proto/main/grpc" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../build/generated/source/proto/main/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../build/generated/source/proto/main/java" isTestSource="false" />
+    <content url="file://$MODULE_DIR$/../../protogen/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../protogen/main/grpc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../protogen/main/java" isTestSource="false" />
     </content>
     <content url="file://$MODULE_DIR$/../../src/main">
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/java" isTestSource="false" />
@@ -24,6 +22,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.60" level="project" />
     <orderEntry type="library" name="Gradle: com.google.api.grpc:googleapis-common-protos:0.0.3" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.BAData:protobuf-converter:1.1.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.grpc:grpc-services:1.15.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.protobuf:protobuf-java-util:3.5.1" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-protobuf:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.protobuf:protobuf-java:3.6.1" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-netty-shaded:1.15.0" level="project" />
@@ -32,6 +33,7 @@
     <orderEntry type="library" name="Gradle: io.grpc:grpc-core:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:20.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.api.grpc:proto-google-common-protos:1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.re2j:re2j:1.2" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-context:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.7" level="project" />
     <orderEntry type="library" name="Gradle: io.opencensus:opencensus-contrib-grpc-metrics:0.12.3" level="project" />
@@ -39,5 +41,6 @@
     <orderEntry type="library" name="Gradle: com.google.errorprone:error_prone_annotations:2.2.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.findbugs:jsr305:3.0.0" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.mojo:animal-sniffer-annotations:1.17" level="project" />
+    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
   </component>
 </module>
