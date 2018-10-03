@@ -5,8 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/brabocoin.iml" filepath="$PROJECT_DIR$/.idea/brabocoin.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/brabocoin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/brabocoin_main.iml" group="brabocoin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/brabocoin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/brabocoin_test.iml" group="brabocoin" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/org.brabocoin-brabocoin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/org.brabocoin-brabocoin_main.iml" group="brabocoin" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/org.brabocoin-brabocoin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/org.brabocoin-brabocoin_test.iml" group="brabocoin" />
     </modules>
   </component>
 </project>
