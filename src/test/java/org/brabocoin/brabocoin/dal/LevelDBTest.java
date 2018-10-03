@@ -77,7 +77,7 @@ class LevelDBTest {
             database.delete(byteKey);
 
             final byte[] dbValue = database.get(ByteString.copyFromUtf8(key).toByteArray());
-            assertEquals(null, dbValue);
+            assertNull(dbValue);
         } catch (final DatabaseException e) {
             fail(e.getMessage());
         }
