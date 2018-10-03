@@ -12,31 +12,25 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class InputTest {
-
-    static Transaction coinbase;
-
-    @BeforeAll
-    static void setUp() {
-        coinbase = new Transaction(new ArrayList<>(), new ArrayList<>());
-    }
-
     @Test
     void protoConvertInputToDTOTest() {
-        Input input = new Input(new Signature(), coinbase);
+        String transactionHash = "test";
+        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)));
         BrabocoinProtos.Input protoInput = Converter.create()
                 .toProtobuf(BrabocoinProtos.Input.class, input);
 
-        assertEquals(0, protoInput.getReferencedTransaction().getInputsCount());
+        assertEquals(transactionHash, protoInput.getReferencedTransaction().getValue().toStringUtf8());
     }
 
     @Test
     void protoConvertInputToDOMTest() {
-        Input input = new Input(new Signature(), coinbase);
+        String transactionHash = "test";
+        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)));
         BrabocoinProtos.Input protoInput = Converter.create()
                 .toProtobuf(BrabocoinProtos.Input.class, input);
         Input inputReflecion = Converter.create()
                 .toDomain(Input.Builder.class, protoInput).createInput();
 
-        assertEquals(0, inputReflecion.getReferencedTransaction().getInputs().size());
+        assertEquals(transactionHash, inputReflecion.getReferencedTransaction().getValue().toStringUtf8());
     }
 }

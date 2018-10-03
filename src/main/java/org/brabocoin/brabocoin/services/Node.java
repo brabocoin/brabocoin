@@ -1,15 +1,10 @@
 package org.brabocoin.brabocoin.services;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
-import net.badata.protobuf.converter.Converter;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.Environment;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.HandshakeRequest;
@@ -42,7 +37,6 @@ public class Node {
         this.connectPort = connectPort;
 
         this.server = ServerBuilder.forPort(listenPort)
-                .addService(ProtoReflectionService.newInstance())
                 .addService(new NodeService()).build();
 
         this.channel = ManagedChannelBuilder.
@@ -79,16 +73,16 @@ public class Node {
 
         @Override
         public void getBlock(final BrabocoinProtos.Hash request, final StreamObserver<BrabocoinProtos.Block> responseObserver) {
-            Block block = new Block(new Hash(request.getValue()),
-                    new Hash(ByteString.copyFromUtf8("hallooo")),
-                    new Hash(ByteString.copyFromUtf8("doei")),
-                    ByteString.copyFromUtf8("a"), 2L);
-
-            BrabocoinProtos.Block protoBlock = Converter.create().toProtobuf(BrabocoinProtos.Block.class, block);
-
-            responseObserver.onNext(protoBlock);
-
-            responseObserver.onCompleted();
+//            Block block = new Block(new Hash(request.getValue()),
+//                    new Hash(ByteString.copyFromUtf8("hallooo")),
+//                    new Hash(ByteString.copyFromUtf8("doei")),
+//                    ByteString.copyFromUtf8("a"), 2L);
+//
+//            BrabocoinProtos.Block protoBlock = Converter.create().toProtobuf(BrabocoinProtos.Block.class, block);
+//
+//            responseObserver.onNext(protoBlock);
+//
+//            responseObserver.onCompleted();
         }
     }
 }

@@ -11,17 +11,15 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TransactionTest {
-    static Transaction coinbase;
+    static Hash transactionHash = new Hash(ByteString.copyFromUtf8("test"));
     static List<Input> inputList;
     static List<Output> outputList;
 
     @BeforeAll
     static void setUp() {
-        coinbase = new Transaction(new ArrayList<>(), new ArrayList<>());
-
         inputList = new ArrayList<Input>() {{
-            add(new Input(new Signature(), coinbase));
-            add(new Input(new Signature(), coinbase));
+            add(new Input(new Signature(), transactionHash));
+            add(new Input(new Signature(), transactionHash));
         }};
 
         outputList = new ArrayList<Output>() {{

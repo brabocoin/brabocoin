@@ -34,7 +34,7 @@ message Output {
 
 message Input {
     Signature signature = 1;
-    Transaction referencedTransaction = 2;
+    Hash referencedTransaction = 2;
 }
 
 message Transaction {

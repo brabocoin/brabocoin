@@ -19,14 +19,14 @@ public class Input {
      * Transaction referenced by this input.
      */
     @ProtoField
-    private final Transaction referencedTransaction;
+    private final Hash referencedTransaction;
 
     /**
      * Create a new Input
      * @param signature digital signature of this input
      * @param referencedTransaction transaction referenced by this input
      */
-    public Input(Signature signature, Transaction referencedTransaction) {
+    public Input(Signature signature, Hash referencedTransaction) {
         this.signature = signature;
         this.referencedTransaction = referencedTransaction;
     }
@@ -35,7 +35,7 @@ public class Input {
         return signature;
     }
 
-    public Transaction getReferencedTransaction() {
+    public Hash getReferencedTransaction() {
         return referencedTransaction;
     }
 
@@ -44,20 +44,20 @@ public class Input {
         @ProtoField
         private Signature signature;
         @ProtoField
-        private Transaction.Builder referencedTransaction;
+        private Hash.Builder referencedTransaction;
 
         public Builder setSignature(Signature signature) {
             this.signature = signature;
             return this;
         }
 
-        public Builder setReferencedTransaction(Transaction.Builder referencedTransaction) {
+        public Builder setReferencedTransaction(Hash.Builder referencedTransaction) {
             this.referencedTransaction = referencedTransaction;
             return this;
         }
 
         public Input createInput() {
-            return new Input(signature, referencedTransaction.createTransaction());
+            return new Input(signature, referencedTransaction.createHash());
         }
     }
 }
