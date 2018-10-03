@@ -46,7 +46,16 @@ protobuf {
             grpc {}
         }
     }
-    generatedFilesBaseDir = "$projectDir/protogen"
+    generatedFilesBaseDir = "$projectDir/build/generated/protogen"
+}
+
+idea {
+    module {
+        generatedSourceDirs += file('build/generated/protogen/main/grpc')
+        generatedSourceDirs += file('build/generated/protogen/main/java')
+        generatedSourceDirs += file('build/generated/protogen/test/grpc')
+        generatedSourceDirs += file('build/generated/protogen/test/java')
+    }
 }
 
 clean {
