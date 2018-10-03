@@ -39,20 +39,28 @@ public class Block {
     private final long timestamp;
 
     /**
+     * The height of the current block.
+     */
+    @ProtoField
+    private final long blockHeight;
+
+    /**
      * Create a new block.
      * @param previousBlockHash hash of previous block
      * @param merkleRoot hash of merkle root
      * @param targetValue target value of proof-of-work
      * @param nonce nonce for proof-of-work
      * @param timestamp timestamp when block is created
+     * @param blockHeight
      */
     public Block(Hash previousBlockHash, Hash merkleRoot, Hash targetValue,
-                 ByteString nonce, long timestamp) {
+                 ByteString nonce, long timestamp, long blockHeight) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
         this.timestamp = timestamp;
+        this.blockHeight = blockHeight;
     }
 
     public Hash getPreviousBlockHash() {
@@ -87,6 +95,8 @@ public class Block {
         private ByteString nonce;
         @ProtoField
         private long timestamp;
+        @ProtoField
+        private long blockHeight;
 
         public Builder setPreviousBlockHash(Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -113,8 +123,12 @@ public class Block {
             return this;
         }
 
+        public void setBlockHeight(long blockHeight) {
+            this.blockHeight = blockHeight;
+        }
+
         public Block createBlock() {
-            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(), targetValue.createHash(), nonce, timestamp);
+            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(), targetValue.createHash(), nonce, timestamp, blockHeight);
         }
     }
 }
