@@ -1,0 +1,8 @@
+**/*.iml
+.idea/modules.xml
+.idea/uiDesigner.xml
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/libraries/*.xml
