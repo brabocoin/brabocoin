@@ -15,15 +15,6 @@ message Signature {
 
 }
 
-message Block {
-    Hash previousBlockHash = 1;
-    Hash merkleRoot = 2;
-    Hash targetValue = 3;
-    bytes nonce = 4;
-    int64 blockheight = 5;
-    int64 timestamp = 6;
-}
-
 message BlockChain {
 
 }
@@ -36,9 +27,20 @@ message Output {
 message Input {
     Signature signature = 1;
     Hash referencedTransaction = 2;
+    int32 referencedOutputIndex = 3;
 }
 
 message Transaction {
     repeated Input inputs = 1;
     repeated Output outputs = 2;
+}
+
+message Block {
+    Hash previousBlockHash = 1;
+    Hash merkleRoot = 2;
+    Hash targetValue = 3;
+    bytes nonce = 4;
+    int64 blockheight = 5;
+    int64 timestamp = 6;
+    repeated Transaction transactions = 7;
 }

@@ -5,6 +5,9 @@ import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @ProtoClass(BrabocoinProtos.Block.class)
 public class Block {
 
@@ -45,22 +48,31 @@ public class Block {
     private final long blockHeight;
 
     /**
+     * The list of transactions contained in this block.
+     */
+    @ProtoField
+    private final List<Transaction> transactions;
+
+    /**
      * Create a new block.
+     *
      * @param previousBlockHash hash of previous block
-     * @param merkleRoot hash of merkle root
-     * @param targetValue target value of proof-of-work
-     * @param nonce nonce for proof-of-work
-     * @param timestamp timestamp when block is created
+     * @param merkleRoot        hash of merkle root
+     * @param targetValue       target value of proof-of-work
+     * @param nonce             nonce for proof-of-work
+     * @param timestamp         timestamp when block is created
      * @param blockHeight
+     * @param transactions
      */
     public Block(Hash previousBlockHash, Hash merkleRoot, Hash targetValue,
-                 ByteString nonce, long timestamp, long blockHeight) {
+                 ByteString nonce, long timestamp, long blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
         this.timestamp = timestamp;
         this.blockHeight = blockHeight;
+        this.transactions = transactions;
     }
 
     public Hash getPreviousBlockHash() {
@@ -97,6 +109,8 @@ public class Block {
         private long timestamp;
         @ProtoField
         private long blockHeight;
+        @ProtoField
+        private List<Transaction.Builder> transactions;
 
         public Builder setPreviousBlockHash(Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -127,8 +141,12 @@ public class Block {
             this.blockHeight = blockHeight;
         }
 
+        public void setTransactions(List<Transaction.Builder> transactions) {
+            this.transactions = transactions;
+        }
+
         public Block createBlock() {
-            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(), targetValue.createHash(), nonce, timestamp, blockHeight);
+            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(), targetValue.createHash(), nonce, timestamp, blockHeight, transactions.stream().map(Transaction.Builder::createTransaction).collect(Collectors.toList()));
         }
     }
 }
