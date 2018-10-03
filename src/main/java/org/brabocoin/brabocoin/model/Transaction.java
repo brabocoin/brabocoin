@@ -5,6 +5,7 @@ import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of transaction.
@@ -26,7 +27,8 @@ public class Transaction {
 
     /**
      * Create a new transaction.
-     * @param inputs inputs used by the transaction.
+     *
+     * @param inputs  inputs used by the transaction.
      * @param outputs outputs used by the transaction.
      */
     public Transaction(List<Input> inputs, List<Output> outputs) {
@@ -40,5 +42,33 @@ public class Transaction {
 
     public List<Output> getOutputs() {
         return outputs;
+    }
+
+    @ProtoClass(BrabocoinProtos.Transaction.class)
+    public static class Builder {
+        @ProtoField
+        private List<Input.Builder> inputs;
+        @ProtoField
+        private List<Output.Builder> outputs;
+
+        public Builder setInputs(List<Input.Builder> inputs) {
+            this.inputs = inputs;
+            return this;
+        }
+
+        public Builder setOutputs(List<Output.Builder> outputs) {
+            this.outputs = outputs;
+            return this;
+        }
+
+        public Transaction createTransaction() {
+            return new Transaction(
+                    inputs.stream()
+                            .map(Input.Builder::createInput)
+                            .collect(Collectors.toList()),
+                    outputs.stream()
+                            .map(Output.Builder::createOutput)
+                            .collect(Collectors.toList()));
+        }
     }
 }

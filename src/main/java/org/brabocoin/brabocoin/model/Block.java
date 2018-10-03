@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.model;
 
+import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -29,7 +30,7 @@ public class Block {
      * Nonce used for the proof-of-work.
      */
     @ProtoField
-    private final long nonce;
+    private final ByteString nonce;
 
     /**
      * Timestamp when the block is created.
@@ -46,7 +47,7 @@ public class Block {
      * @param timestamp timestamp when block is created
      */
     public Block(Hash previousBlockHash, Hash merkleRoot, Hash targetValue,
-                 long nonce, long timestamp) {
+                 ByteString nonce, long timestamp) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -66,7 +67,7 @@ public class Block {
         return targetValue;
     }
 
-    public long getNonce() {
+    public ByteString getNonce() {
         return nonce;
     }
 
@@ -83,7 +84,7 @@ public class Block {
         @ProtoField
         private Hash.Builder targetValue;
         @ProtoField
-        private long nonce;
+        private ByteString nonce;
         @ProtoField
         private long timestamp;
 
@@ -102,7 +103,7 @@ public class Block {
             return this;
         }
 
-        public Builder setNonce(long nonce) {
+        public Builder setNonce(ByteString nonce) {
             this.nonce = nonce;
             return this;
         }

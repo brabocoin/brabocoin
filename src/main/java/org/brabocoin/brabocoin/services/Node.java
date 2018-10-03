@@ -82,13 +82,11 @@ public class Node {
             Block block = new Block(new Hash(request.getValue()),
                     new Hash(ByteString.copyFromUtf8("hallooo")),
                     new Hash(ByteString.copyFromUtf8("doei")),
-                    1L, 2L);
+                    ByteString.copyFromUtf8("a"), 2L);
 
             BrabocoinProtos.Block protoBlock = Converter.create().toProtobuf(BrabocoinProtos.Block.class, block);
 
-            responseObserver.onNext(
-                    protoBlock
-            );
+            responseObserver.onNext(protoBlock);
 
             responseObserver.onCompleted();
         }

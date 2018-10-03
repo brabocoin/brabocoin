@@ -22,21 +22,13 @@ public class Input {
     private final Transaction referencedTransaction;
 
     /**
-     * Ouput index for the referenced transaction.
-     */
-    @ProtoField
-    private final int outputIndex;
-
-    /**
      * Create a new Input
      * @param signature digital signature of this input
      * @param referencedTransaction transaction referenced by this input
-     * @param outputIndex output index for the referenced transaction
      */
-    public Input(Signature signature, Transaction referencedTransaction, int outputIndex) {
+    public Input(Signature signature, Transaction referencedTransaction) {
         this.signature = signature;
         this.referencedTransaction = referencedTransaction;
-        this.outputIndex = outputIndex;
     }
 
     public Signature getSignature() {
@@ -47,7 +39,25 @@ public class Input {
         return referencedTransaction;
     }
 
-    public int getOutputIndex() {
-        return outputIndex;
+    @ProtoClass(BrabocoinProtos.Input.class)
+    public static class Builder {
+        @ProtoField
+        private Signature signature;
+        @ProtoField
+        private Transaction.Builder referencedTransaction;
+
+        public Builder setSignature(Signature signature) {
+            this.signature = signature;
+            return this;
+        }
+
+        public Builder setReferencedTransaction(Transaction.Builder referencedTransaction) {
+            this.referencedTransaction = referencedTransaction;
+            return this;
+        }
+
+        public Input createInput() {
+            return new Input(signature, referencedTransaction.createTransaction());
+        }
     }
 }
