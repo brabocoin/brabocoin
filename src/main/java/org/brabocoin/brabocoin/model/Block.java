@@ -4,51 +4,56 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A collection of transactions, part of the blockchain.
+ */
 @ProtoClass(BrabocoinProtos.Block.class)
 public class Block {
 
     /**
-     * Hash of previous block.
+     * Hash of the previous block in the blockchain.
      */
     @ProtoField
-    private final Hash previousBlockHash;
+    private final @NotNull Hash previousBlockHash;
 
     /**
-     * Hash of the merkle root of this block.
+     * Hash of the Merkle root of this block.
      */
     @ProtoField
-    private final Hash merkleRoot;
+    private final @NotNull Hash merkleRoot;
 
     /**
      * Target value of the proof-of-work of this block.
      */
     @ProtoField
-    private final Hash targetValue;
+    private final @NotNull Hash targetValue;
 
     /**
      * Nonce used for the proof-of-work.
      */
     @ProtoField
-    private final ByteString nonce;
+    private final @NotNull ByteString nonce;
 
     /**
-     * Timestamp when the block is created.
+     * UNIX timestamp indicating when the block is created.
      */
     @ProtoField
     private final long timestamp;
 
     /**
-     * The height of the current block.
+     * The height of the block in the block chain.
      */
     @ProtoField
     private final long blockHeight;
 
     /**
-     * The list of transactions contained in this block.
+     * The transactions contained in this block.
      */
     @ProtoField
     private final List<Transaction> transactions;
@@ -56,38 +61,46 @@ public class Block {
     /**
      * Create a new block.
      *
-     * @param previousBlockHash hash of previous block
-     * @param merkleRoot        hash of merkle root
-     * @param targetValue       target value of proof-of-work
-     * @param nonce             nonce for proof-of-work
-     * @param timestamp         timestamp when block is created
+     * @param previousBlockHash
+     *         Hash of the previous block in the blockchain.
+     * @param merkleRoot
+     *         Hash of the Merkle root.
+     * @param targetValue
+     *         Target value for the proof-of-work.
+     * @param nonce
+     *         Nonce for the proof-of-work.
+     * @param timestamp
+     *         UNIX timestamp indicating when block is created.
      * @param blockHeight
+     *         Height of the block in the blockchain.
      * @param transactions
+     *         List of transactions contained in this block.
      */
-    public Block(Hash previousBlockHash, Hash merkleRoot, Hash targetValue,
-                 ByteString nonce, long timestamp, long blockHeight, List<Transaction> transactions) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
+                 @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
+                 long blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
         this.timestamp = timestamp;
         this.blockHeight = blockHeight;
-        this.transactions = transactions;
+        this.transactions = new ArrayList<>(transactions);
     }
 
-    public Hash getPreviousBlockHash() {
+    public @NotNull Hash getPreviousBlockHash() {
         return previousBlockHash;
     }
 
-    public Hash getMerkleRoot() {
+    public @NotNull Hash getMerkleRoot() {
         return merkleRoot;
     }
 
-    public Hash getTargetValue() {
+    public @NotNull Hash getTargetValue() {
         return targetValue;
     }
 
-    public ByteString getNonce() {
+    public @NotNull ByteString getNonce() {
         return nonce;
     }
 
@@ -97,6 +110,7 @@ public class Block {
 
     @ProtoClass(BrabocoinProtos.Block.class)
     public static class Builder {
+
         @ProtoField
         private Hash.Builder previousBlockHash;
         @ProtoField
@@ -141,12 +155,20 @@ public class Block {
             this.blockHeight = blockHeight;
         }
 
+        @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
         public void setTransactions(List<Transaction.Builder> transactions) {
             this.transactions = transactions;
         }
 
+        /**
+         * Creates a new block.
+         *
+         * @return The created block.
+         */
         public Block createBlock() {
-            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(), targetValue.createHash(), nonce, timestamp, blockHeight, transactions.stream().map(Transaction.Builder::createTransaction).collect(Collectors.toList()));
+            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(),
+                             targetValue.createHash(), nonce, timestamp, blockHeight,
+                             transactions.stream().map(Transaction.Builder::createTransaction).collect(Collectors.toList()));
         }
     }
 }
