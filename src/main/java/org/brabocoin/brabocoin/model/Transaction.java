@@ -3,12 +3,14 @@ package org.brabocoin.brabocoin.model;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Implementation of transaction.
+ * Transaction with brabocoin inputs and outputs.
  */
 @ProtoClass(BrabocoinProtos.Transaction.class)
 public class Transaction {
@@ -17,35 +19,38 @@ public class Transaction {
      * Inputs used by the transaction.
      */
     @ProtoField
-    private final List<Input> inputs;
+    private final @NotNull List<Input> inputs;
 
     /**
      * Outputs used by the transaction.
      */
     @ProtoField
-    private final List<Output> outputs;
+    private final @NotNull List<Output> outputs;
 
     /**
      * Create a new transaction.
      *
-     * @param inputs  inputs used by the transaction.
-     * @param outputs outputs used by the transaction.
+     * @param inputs
+     *         inputs used by the transaction.
+     * @param outputs
+     *         outputs used by the transaction.
      */
-    public Transaction(List<Input> inputs, List<Output> outputs) {
-        this.inputs = inputs;
-        this.outputs = outputs;
+    public Transaction(@NotNull List<Input> inputs, @NotNull List<Output> outputs) {
+        this.inputs = new ArrayList<>(inputs);
+        this.outputs = new ArrayList<>(outputs);
     }
 
-    public List<Input> getInputs() {
+    public @NotNull List<Input> getInputs() {
         return inputs;
     }
 
-    public List<Output> getOutputs() {
+    public @NotNull List<Output> getOutputs() {
         return outputs;
     }
 
     @ProtoClass(BrabocoinProtos.Transaction.class)
     public static class Builder {
+
         @ProtoField
         private List<Input.Builder> inputs;
         @ProtoField
@@ -68,7 +73,8 @@ public class Transaction {
                             .collect(Collectors.toList()),
                     outputs.stream()
                             .map(Output.Builder::createOutput)
-                            .collect(Collectors.toList()));
+                            .collect(Collectors.toList())
+            );
         }
     }
 }
