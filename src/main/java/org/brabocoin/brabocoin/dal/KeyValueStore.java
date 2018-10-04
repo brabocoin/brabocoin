@@ -3,12 +3,14 @@ package org.brabocoin.brabocoin.dal;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 
 import javax.xml.crypto.Data;
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Maps a byte array key to a byte array value.
  */
-public interface KeyValueStore {
+public interface KeyValueStore extends Iterable<Map.Entry> {
     /**
      * Put a new key-value in the database.
      *
