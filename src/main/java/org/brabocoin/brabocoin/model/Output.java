@@ -3,17 +3,19 @@ package org.brabocoin.brabocoin.model;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Implementation of an output of a transaction
+ * Output of a transaction.
  */
 @ProtoClass(BrabocoinProtos.Output.class)
 public class Output {
+
     /**
      * Address of the receiver of the output amount.
      */
     @ProtoField
-    private final Hash address;
+    private final @NotNull Hash address;
 
     /**
      * Amount paid to the output receiver.
@@ -22,16 +24,19 @@ public class Output {
     private final long amount;
 
     /**
-     * Create a new output
-     * @param address address of the receiver of the output amount
-     * @param amount amount paid to the output receiver
+     * Create a new output.
+     *
+     * @param address
+     *         Address of the receiver of the output amount.
+     * @param amount
+     *         Amount paid to the output receiver.
      */
-    public Output(Hash address, long amount) {
+    public Output(@NotNull Hash address, long amount) {
         this.address = address;
         this.amount = amount;
     }
 
-    public Hash getAddress() {
+    public @NotNull Hash getAddress() {
         return address;
     }
 
@@ -41,6 +46,7 @@ public class Output {
 
     @ProtoClass(BrabocoinProtos.Output.class)
     public static class Builder {
+
         @ProtoField
         private Hash.Builder address;
         @ProtoField

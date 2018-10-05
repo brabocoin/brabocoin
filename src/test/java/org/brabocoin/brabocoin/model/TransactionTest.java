@@ -18,8 +18,8 @@ class TransactionTest {
     @BeforeAll
     static void setUp() {
         inputList = new ArrayList<Input>() {{
-            add(new Input(new Signature(), transactionHash));
-            add(new Input(new Signature(), transactionHash));
+            add(new Input(new Signature(), transactionHash, 0));
+            add(new Input(new Signature(), transactionHash, 0));
         }};
 
         outputList = new ArrayList<Output>() {{

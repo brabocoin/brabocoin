@@ -3,11 +3,7 @@ package org.brabocoin.brabocoin.model;
 import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,7 +11,7 @@ class InputTest {
     @Test
     void protoConvertInputToDTOTest() {
         String transactionHash = "test";
-        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)));
+        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
         BrabocoinProtos.Input protoInput = Converter.create()
                 .toProtobuf(BrabocoinProtos.Input.class, input);
 
@@ -25,7 +21,7 @@ class InputTest {
     @Test
     void protoConvertInputToDOMTest() {
         String transactionHash = "test";
-        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)));
+        Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
         BrabocoinProtos.Input protoInput = Converter.create()
                 .toProtobuf(BrabocoinProtos.Input.class, input);
         Input inputReflecion = Converter.create()
