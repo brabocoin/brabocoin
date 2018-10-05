@@ -5,6 +5,8 @@ import org.iq80.leveldb.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 import static org.fusesource.leveldbjni.JniDBFactory.*;
 
@@ -63,5 +65,23 @@ public class LevelDB implements KeyValueStore {
         } catch (final DBException e) {
             throw new DatabaseException(e.getMessage());
         }
+    }
+
+    @Override
+    public Iterator<Map.Entry> iterator() {
+        Iterator<Map.Entry> it = new Iterator<Map.Entry>() {
+            DBIterator iterator = database.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public Map.Entry next() {
+                return iterator.next();
+            }
+        };
+        return it;
     }
 }
