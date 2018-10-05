@@ -1,38 +1,59 @@
 package org.brabocoin.brabocoin.services;
 
-import com.google.protobuf.ByteString;
-import net.badata.protobuf.converter.Converter;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.junit.jupiter.api.Disabled;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NodeTest {
+    class MockNode extends Node {
+        private String mockConfigFile;
+        MockNode(int listenPort, String mockConfigFile) {
+            super(listenPort);
+            this.mockConfigFile = mockConfigFile + ".yaml";
+        }
+
+        @Override
+        NodeEnvironment createEnvironment() {
+            return new MockEnvironment(mockConfigFile);
+        }
+    }
+
+    class MockEnvironment extends NodeEnvironment {
+        private String mockConfigFile;
+        MockEnvironment(String mockConfigFile) {
+            super(false);
+            this.mockConfigFile = mockConfigFile;
+            setup();
+        }
+
+        @Override
+        public BraboConfigProvider buildConfigProvider() {
+            return new BraboConfigProvider(mockConfigFile, "./src/test/resources/");
+        }
+
+    }
 
     @Test
-    @Disabled
-    void getBlockTest() throws IOException {
-        final Node n1 = new Node(8980, 8981);
-        final Node n2 = new Node(8981, 8980);
+    @DisplayName("handshakeTest")
+    void handshakeTest(TestInfo testInfo) throws IOException {
+        Node peerA = new MockNode(8091, "emptyBootstrap");
+        Node peerB = new MockNode(8092, "emptyBootstrap");
 
-        n1.start();
-        n2.start();
+        Node responder = new MockNode(8090, testInfo.getDisplayName() + "Responder");
+        Node greeter = new MockNode(8089, testInfo.getDisplayName()  + "Greeter");
 
-        String echoText = "abcdef";
+        peerA.start();
+        peerB.start();
 
-        Hash hash = new Hash.Builder().setValue(ByteString.copyFromUtf8(echoText)).createHash();
-        BrabocoinProtos.Hash protoHash = Converter.create().toProtobuf(BrabocoinProtos.Hash.class, hash);
-        BrabocoinProtos.Block protoBlock = n1.blockingStub.getBlock(protoHash);
-        Block block = Converter.create().toDomain(Block.Builder.class, protoBlock).createBlock();
+        responder.start();
+        greeter.start();
 
-        assertEquals(echoText, block.getPreviousBlockHash().getValue().toStringUtf8());
-
-        n1.stop();
-        n2.stop();
+        assertEquals(3, greeter.environment.getPeers().size());
     }
 }

@@ -44,3 +44,9 @@ message Block {
     int64 timestamp = 6;
     repeated Transaction transactions = 7;
 }
+
+message HandshakeRequest {}
+
+message HandshakeResponse {
+    repeated string peers = 1;
+}
