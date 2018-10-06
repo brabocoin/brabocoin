@@ -2,8 +2,6 @@ package org.brabocoin.brabocoin.dal;
 
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 
-import javax.xml.crypto.Data;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 
