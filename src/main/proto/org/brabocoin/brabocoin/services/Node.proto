@@ -4,12 +4,21 @@ package brabocoin.services;
 
 import "org/brabocoin/brabocoin/Model.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 option java_multiple_files = true;
 option java_package = "org.brabocoin.brabocoin.proto.services";
 option java_outer_classname = "NodeServiceProto";
 
 service Node {
-    rpc Handshake(HandshakeRequest) returns (HandshakeResponse);
-    rpc GetBlock(Hash) returns (Block);
+    rpc Handshake(google.protobuf.Empty) returns (HandshakeResponse);
+
+    rpc SendBlock(Hash) returns (google.protobuf.Empty);
+    rpc SendTransaction(Hash) returns (google.protobuf.Empty);
+    rpc GetBlocks(stream Hash) returns (stream Block);
+    rpc GetTransactions(stream Hash) returns (stream Transaction);
+    rpc SeekTransactionPool(google.protobuf.Empty) returns (stream Hash);
+    rpc DiscoverTopBlockHeight(google.protobuf.Empty) returns (BlockHeight);
+    rpc CheckChainCompatible(Hash) returns (ChainCompatibility);
+    rpc SeekBlockchain(Hash) returns (stream Hash);
 }

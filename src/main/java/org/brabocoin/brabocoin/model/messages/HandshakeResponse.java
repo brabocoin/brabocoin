@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.model;
+package org.brabocoin.brabocoin.model.messages;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;

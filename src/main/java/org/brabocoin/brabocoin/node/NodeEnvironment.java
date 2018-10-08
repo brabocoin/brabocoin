@@ -1,27 +1,30 @@
 package org.brabocoin.brabocoin.node;
 
+import com.google.protobuf.Empty;
 import io.grpc.StatusRuntimeException;
 import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
-import org.brabocoin.brabocoin.model.HandshakeRequest;
-import org.brabocoin.brabocoin.model.HandshakeResponse;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a node environment.
  */
 public class NodeEnvironment {
-    private Set<Peer> peers = new HashSet<>();
     private BraboConfig config;
+
+    private Set<Peer> peers = new HashSet<>();
     private Converter converter = Converter.create();
+    private Map<Hash, Transaction> transactionPool = new HashMap<>();
 
 
     public NodeEnvironment(Boolean autoSetup) {
@@ -94,6 +97,70 @@ public class NodeEnvironment {
         }
     }
 
+    /**
+     * Handles the receival of a new block.
+     * TODO: Describe logic
+     *
+     * @param blockHash Hash of the new block.
+     */
+    public void onReceiveBlockHash(@NotNull Hash blockHash) {
+        // TODO: Implement and log
+    }
+
+    /**
+     * Handles the receival of a new transaction.
+     * TODO: Describe logic
+     *
+     * @param transactionHash Hash of the new block.
+     */
+    public void onReceiveTransaction(@NotNull Hash transactionHash) {
+        // TODO: Implement and log
+    }
+
+    /**
+     * Handles the request for a block.
+     * TODO: Describe logic
+     *
+     * @param blockHash Hash of the block to get.
+     * @return Block instance or null if not found.
+     */
+    public Block getBlock(@NotNull Hash blockHash) {
+        return null;
+    }
+
+    /**
+     * Handles the request for a transaction.
+     * TODO: Describe logic
+     *
+     * @param transactionHash Hash of the transaction to get.
+     * @return Transaction instance or null if not found.
+     */
+    public Transaction getTransaction(@NotNull Hash transactionHash) {
+        return null;
+    }
+
+    /**
+     * Get an iterator for all transaction hashes in the transaction pool.
+     *
+     * @return Transaction hash iterator.
+     */
+    public Iterator<Hash> getTransactionIterator() {
+        return transactionPool.keySet().iterator();
+    }
+
+    /**
+     * Gets the height of the top block.
+     *
+     * @return Top block height.
+     */
+    public long getTopBlockHeight() {
+        // TODO: magic here
+        return 0;
+    }
+
+    /**
+     * TODO: Create JavaDoc
+     */
     private void bootstrap() {
         // Populate bootstrap peers
         instantiateBootstrapPeers();
@@ -111,7 +178,7 @@ public class NodeEnvironment {
                 // Perform a handshake with the peer
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                        .handshake(converter.toProtobuf(BrabocoinProtos.HandshakeRequest.class, new HandshakeRequest()));
+                        .handshake(Empty.newBuilder().build());
                 HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).createHandshakeResponse();
 
                 // We got a response from the current handshake peer, register this peer as valid

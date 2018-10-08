@@ -7,5 +7,6 @@ class PeerTest {
     @Test
     void fakePeerInstantiation() throws MalformedSocketException {
         new Peer("hatseflats:666");
+        // TODO: Shut down safely!!
     }
 }
