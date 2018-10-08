@@ -3,10 +3,13 @@ package org.brabocoin.brabocoin.model;
 import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,6 +91,28 @@ public class Block {
         this.transactions = new ArrayList<>(transactions);
     }
 
+    /**
+     * Computes the block hash.
+     * <p>
+     * The hash of a block is the hashed output of the block header data only.
+     * The hash is computed by applying the SHA-256 hashing function twice.
+     *
+     * @return The block hash.
+     */
+    public @NotNull Hash computeHash() {
+        ByteString header = getRawHeader();
+        return Hashing.digestSHA256(Hashing.digestSHA256(header));
+    }
+
+    private @NotNull ByteString getRawHeader() {
+        return previousBlockHash.getValue()
+                .concat(merkleRoot.getValue())
+                .concat(targetValue.getValue())
+                .concat(ByteUtil.toByteString(timestamp))
+                .concat(ByteUtil.toByteString(blockHeight))
+                .concat(nonce);
+    }
+
     public @NotNull Hash getPreviousBlockHash() {
         return previousBlockHash;
     }
@@ -106,6 +131,14 @@ public class Block {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public long getBlockHeight() {
+        return blockHeight;
+    }
+
+    public List<Transaction> getTransactions() {
+        return Collections.unmodifiableList(transactions);
     }
 
     @ProtoClass(BrabocoinProtos.Block.class)
@@ -166,9 +199,16 @@ public class Block {
          * @return The created block.
          */
         public Block createBlock() {
-            return new Block(previousBlockHash.createHash(), merkleRoot.createHash(),
-                             targetValue.createHash(), nonce, timestamp, blockHeight,
-                             transactions.stream().map(Transaction.Builder::createTransaction).collect(Collectors.toList()));
+            return new Block(previousBlockHash.createHash(),
+                    merkleRoot.createHash(),
+                    targetValue.createHash(),
+                    nonce,
+                    timestamp,
+                    blockHeight,
+                    transactions.stream()
+                            .map(Transaction.Builder::createTransaction)
+                            .collect(Collectors.toList())
+            );
         }
     }
 }
