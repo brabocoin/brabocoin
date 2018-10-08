@@ -1,20 +1,20 @@
 package org.brabocoin.brabocoin.services;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import org.brabocoin.brabocoin.node.Environment;
+import net.badata.protobuf.converter.Converter;
+import org.brabocoin.brabocoin.model.HandshakeResponse;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.brabocoin.brabocoin.proto.services.HandshakeRequest;
-import org.brabocoin.brabocoin.proto.services.HandshakeResponse;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 /**
- * @author Sten Wessel
+ * A full node on the Brabocoin network.
  */
 public class Node {
     /**
@@ -22,32 +22,20 @@ public class Node {
      */
     private final int listenPort;
     private final Server server;
-    private Environment environment;
+    NodeEnvironment environment;
 
-    /**
-     * Client parameters
-     */
-    private final int connectPort;
-    private final ManagedChannel channel;
-    public final NodeGrpc.NodeBlockingStub blockingStub;
-    public final NodeGrpc.NodeStub asyncStub;
-
-    public Node(final int listenPort, final int connectPort) {
+    public Node(final int listenPort) {
         this.listenPort = listenPort;
-        this.connectPort = connectPort;
-
         this.server = ServerBuilder.forPort(listenPort)
                 .addService(new NodeService()).build();
+    }
 
-        this.channel = ManagedChannelBuilder.
-                forAddress("localhost", connectPort)
-                .usePlaintext()
-                .build();
-        this.blockingStub = NodeGrpc.newBlockingStub(channel);
-        this.asyncStub = NodeGrpc.newStub(channel);
+    NodeEnvironment createEnvironment() {
+        return new NodeEnvironment();
     }
 
     public void start() throws IOException {
+        this.environment = createEnvironment();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
@@ -67,8 +55,10 @@ public class Node {
 
     private class NodeService extends NodeGrpc.NodeImplBase {
         @Override
-        public void handshake(HandshakeRequest request, StreamObserver<HandshakeResponse> responseObserver) {
-
+        public void handshake(BrabocoinProtos.HandshakeRequest request, StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
+            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toString).collect(Collectors.toList()));
+            responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.HandshakeResponse.class, response));
+            responseObserver.onCompleted();
         }
 
         @Override
