@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.util;
 
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +25,7 @@ public final class ByteUtil {
      * @return The byte string representation of the value.
      */
     public static @NotNull ByteString toByteString(long value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.putLong(value);
-        return ByteString.copyFrom(buffer);
+        return ByteString.copyFrom(Longs.toByteArray(value));
     }
 
     /**
@@ -38,9 +38,7 @@ public final class ByteUtil {
      * @return The byte string representation of the value.
      */
     public static @NotNull ByteString toByteString(int value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
-        buffer.putInt(value);
-        return ByteString.copyFrom(buffer);
+        return ByteString.copyFrom(Ints.toByteArray(value));
     }
 
     /**
