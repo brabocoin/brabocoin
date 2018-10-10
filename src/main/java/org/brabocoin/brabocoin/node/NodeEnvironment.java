@@ -159,6 +159,37 @@ public class NodeEnvironment {
     }
 
     /**
+     * Check whether the given block hash is contained in the main chain.
+     *
+     * @param blockHash Hash of the block to check.
+     * @return True if it is contained in the main chain.
+     */
+    public boolean isChainCompatible(@NotNull Hash blockHash) {
+        // TODO: Magic here
+        return false;
+    }
+
+    /**
+     * Gets the block hashes above a given block hash.
+     *
+     * @param blockHash The block hash to indicate the starting position.
+     * @return Iterator over block hashes above the given block.
+     */
+    public Iterator<Hash> getBlocksAbove(Hash blockHash) {
+        return new Iterator<Hash>() {
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+
+            @Override
+            public Hash next() {
+                return null;
+            }
+        };
+    }
+
+    /**
      * TODO: Create JavaDoc
      */
     private void bootstrap() {

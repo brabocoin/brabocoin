@@ -6,10 +6,11 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.messages.BlockHeight;
-import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.messages.BlockHeight;
+import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
+import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -17,12 +18,15 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
  * A full node on the Brabocoin network.
  */
 public class Node {
+    private final static Logger LOGGER = Logger.getLogger(NodeService.class.getName());
+
     /**
      * Service parameters
      */
@@ -163,12 +167,23 @@ public class Node {
 
         @Override
         public void checkChainCompatible(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.ChainCompatibility> responseObserver) {
-
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            ChainCompatibility compatibility = new ChainCompatibility(environment.isChainCompatible(hash));
+            responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.ChainCompatibility.class, compatibility));
+            responseObserver.onCompleted();
         }
 
         @Override
         public void seekBlockchain(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            Iterator<Hash> blockIterator = environment.getBlocksAbove(hash);
+            for (Iterator<Hash> it = blockIterator; it.hasNext(); ) {
+                Hash h = it.next();
 
+                responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.Hash.class, h));
+            }
+
+            responseObserver.onCompleted();
         }
     }
 }
