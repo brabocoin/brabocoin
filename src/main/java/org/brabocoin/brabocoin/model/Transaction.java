@@ -1,8 +1,11 @@
 package org.brabocoin.brabocoin.model;
 
+import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,6 +51,33 @@ public class Transaction {
         return outputs;
     }
 
+    /**
+     * Whether the transaction is a coinbase transaction.
+     *
+     * @return Whether the transaction is a coinbase transaction.
+     */
+    public boolean isCoinbase() {
+        // TODO: implement
+        return false;
+    }
+
+    /**
+     * Computes the transaction hash.
+     * <p>
+     * The hash of a block is the hashed output of the full transaction data.
+     * The hash is computed by applying the SHA-256 hashing function twice.
+     *
+     * @return The transaction hash.
+     */
+    public @NotNull Hash computeHash() {
+        ByteString data = getRawData();
+        return Hashing.digestSHA256(Hashing.digestSHA256(data));
+    }
+
+    private @NotNull ByteString getRawData() {
+        return ProtoConverter.toProto(this, BrabocoinProtos.Transaction.class).toByteString();
+    }
+
     @ProtoClass(BrabocoinProtos.Transaction.class)
     public static class Builder {
 
@@ -68,12 +98,8 @@ public class Transaction {
 
         public Transaction createTransaction() {
             return new Transaction(
-                    inputs.stream()
-                            .map(Input.Builder::createInput)
-                            .collect(Collectors.toList()),
-                    outputs.stream()
-                            .map(Output.Builder::createOutput)
-                            .collect(Collectors.toList())
+                    inputs.stream().map(Input.Builder::createInput).collect(Collectors.toList()),
+                    outputs.stream().map(Output.Builder::createOutput).collect(Collectors.toList())
             );
         }
     }

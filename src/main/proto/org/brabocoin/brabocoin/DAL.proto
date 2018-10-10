@@ -32,3 +32,10 @@ message BlockFileInfo {
     int64 lowestBlockTimestamp = 5;
     int64 highestBlockTimestamp = 6;
 }
+
+message UnspentOutputInfo {
+    bool coinbase = 1;
+    int32 blockHeight = 2;
+    int64 amount = 3;
+    Hash address = 4;
+}
