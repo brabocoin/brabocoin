@@ -37,8 +37,17 @@ public class UTXODatabase {
      * @param storage
      *         The key-value store to use for the database.
      */
-    public UTXODatabase(@NotNull KeyValueStore storage) {
+    public UTXODatabase(@NotNull KeyValueStore storage) throws DatabaseException {
         this.storage = storage;
+        initialize();
+    }
+
+    private void initialize() throws DatabaseException {
+        byte[] key = getBlockMarkerKey();
+
+        if (!storage.has(key)) {
+            storage.put(key, ByteUtil.toByteString(0).toByteArray());
+        }
     }
 
     /**
