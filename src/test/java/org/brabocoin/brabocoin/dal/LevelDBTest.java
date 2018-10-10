@@ -2,13 +2,14 @@ package org.brabocoin.brabocoin.dal;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.logging.Level;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,7 +49,7 @@ class LevelDBTest {
     @Test
     void put() {
         try {
-            database.put(ByteString.copyFromUtf8("testkey").toByteArray(), ByteString.copyFromUtf8("testvalue").toByteArray());
+            database.put(ByteString.copyFromUtf8("testkey"), ByteString.copyFromUtf8("testvalue"));
         } catch (final DatabaseException e) {
             fail(e.getMessage());
         }
@@ -59,9 +60,9 @@ class LevelDBTest {
         final String key = "testkey";
         final String value = "testvalue";
         try {
-            database.put(ByteString.copyFromUtf8(key).toByteArray(), ByteString.copyFromUtf8(value).toByteArray());
-            final byte[] dbValue = database.get(ByteString.copyFromUtf8(key).toByteArray());
-            assertEquals(value, ByteString.copyFrom(dbValue).toStringUtf8());
+            database.put(ByteString.copyFromUtf8(key), ByteString.copyFromUtf8(value));
+            final ByteString dbValue = database.get(ByteString.copyFromUtf8(key));
+            assertEquals(value, dbValue.toStringUtf8());
         } catch (final DatabaseException e) {
             fail(e.getMessage());
         }
@@ -72,11 +73,11 @@ class LevelDBTest {
         final String key = "testkey";
         final String value = "testvalue";
         try {
-            final byte[] byteKey = ByteString.copyFromUtf8(key).toByteArray();
-            database.put(byteKey, ByteString.copyFromUtf8(value).toByteArray());
+            final ByteString byteKey = ByteString.copyFromUtf8(key);
+            database.put(byteKey, ByteString.copyFromUtf8(value));
             database.delete(byteKey);
 
-            final byte[] dbValue = database.get(ByteString.copyFromUtf8(key).toByteArray());
+            final ByteString dbValue = database.get(ByteString.copyFromUtf8(key));
             assertNull(dbValue);
         } catch (final DatabaseException e) {
             fail(e.getMessage());

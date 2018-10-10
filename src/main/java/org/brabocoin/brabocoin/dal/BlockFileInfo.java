@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see BlockDatabase
  */
-@ProtoClass(BrabocoinStorageProtos.BlockInfo.class)
+@ProtoClass(BrabocoinStorageProtos.BlockFileInfo.class)
 public class BlockFileInfo {
 
     /**
@@ -87,7 +87,7 @@ public class BlockFileInfo {
      */
     @Contract(" -> new")
     public static @NotNull BlockFileInfo createEmpty() {
-        return new BlockFileInfo(0, 0, Long.MAX_VALUE, 0, Long.MAX_VALUE, 0);
+        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Long.MAX_VALUE).setHighestBlockHeight(0).setLowestBlockTimestamp(Long.MAX_VALUE).setHighestBlockTimestamp(0).createBlockFileInfo();
     }
 
     public int getNumberOfBlocks() {
@@ -112,5 +112,55 @@ public class BlockFileInfo {
 
     public long getHighestBlockTimestamp() {
         return highestBlockTimestamp;
+    }
+
+    @ProtoClass(BrabocoinStorageProtos.BlockFileInfo.class)
+    public static class Builder {
+        @ProtoField
+        private int numberOfBlocks;
+        @ProtoField
+        private long size;
+        @ProtoField
+        private long lowestBlockHeight;
+        @ProtoField
+        private long highestBlockHeight;
+        @ProtoField
+        private long lowestBlockTimestamp;
+        @ProtoField
+        private long highestBlockTimestamp;
+
+        public Builder setNumberOfBlocks(int numberOfBlocks) {
+            this.numberOfBlocks = numberOfBlocks;
+            return this;
+        }
+
+        public Builder setSize(long size) {
+            this.size = size;
+            return this;
+        }
+
+        public Builder setLowestBlockHeight(long lowestBlockHeight) {
+            this.lowestBlockHeight = lowestBlockHeight;
+            return this;
+        }
+
+        public Builder setHighestBlockHeight(long highestBlockHeight) {
+            this.highestBlockHeight = highestBlockHeight;
+            return this;
+        }
+
+        public Builder setLowestBlockTimestamp(long lowestBlockTimestamp) {
+            this.lowestBlockTimestamp = lowestBlockTimestamp;
+            return this;
+        }
+
+        public Builder setHighestBlockTimestamp(long highestBlockTimestamp) {
+            this.highestBlockTimestamp = highestBlockTimestamp;
+            return this;
+        }
+
+        public BlockFileInfo createBlockFileInfo() {
+            return new BlockFileInfo(numberOfBlocks, size, lowestBlockHeight, highestBlockHeight, lowestBlockTimestamp, highestBlockTimestamp);
+        }
     }
 }

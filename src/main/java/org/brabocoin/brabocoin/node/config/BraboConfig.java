@@ -6,4 +6,7 @@ public interface BraboConfig {
     int targetPeerCount();
     int bootstrapDeadline();
     List<String> bootstrapPeers();
+    String databaseDirectory();
+    String blockStoreDirectory();
+    String utxoStoreDirectory();
 }

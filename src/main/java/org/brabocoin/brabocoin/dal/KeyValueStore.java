@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 
 import java.io.IOException;
@@ -8,7 +9,7 @@ import java.util.Map;
 /**
  * Maps a byte array key to a byte array value.
  */
-public interface KeyValueStore extends Iterable<Map.Entry> {
+public interface KeyValueStore extends Iterable<Map.Entry<ByteString, ByteString>> {
     /**
      * Put a new key-value in the database.
      *
@@ -16,16 +17,16 @@ public interface KeyValueStore extends Iterable<Map.Entry> {
      * @param value The value corresponding to the key.
      * @throws DatabaseException Exception thrown when the database returns an error.
      */
-    void put(final byte[] key, final byte[] value) throws DatabaseException;
+    void put(final ByteString key, final ByteString value) throws DatabaseException;
 
     /**
      * Gets a value from the database based on its key.
      *
      * @param key Key to search the database.
-     * @return byte[] value or null if not found.
+     * @return ByteString value or null if not found.
      * @throws DatabaseException Exception thrown when the database could not read the value.
      */
-    byte[] get(final byte[] key) throws DatabaseException;
+    ByteString get(final ByteString key) throws DatabaseException;
 
     /**
      * Deletes a key-value pair from the database.
@@ -33,7 +34,7 @@ public interface KeyValueStore extends Iterable<Map.Entry> {
      * @param key The key under which the value is stored.
      * @throws DatabaseException Exception thrown when the database returns an error.
      */
-    void delete(final byte[] key) throws DatabaseException;
+    void delete(final ByteString key) throws DatabaseException;
 
     /**
      * Tries to open the database.

@@ -19,25 +19,25 @@ public class BlockInfo {
      * Hash of the previous block in the blockchain.
      */
     @ProtoField
-    private final @NotNull Hash previousBlockHash;
+    private final Hash previousBlockHash;
 
     /**
      * Hash of the Merkle root of this block.
      */
     @ProtoField
-    private final @NotNull Hash merkleRoot;
+    private final Hash merkleRoot;
 
     /**
      * Target value of the proof-of-work of this block.
      */
     @ProtoField
-    private final @NotNull Hash targetValue;
+    private final Hash targetValue;
 
     /**
      * Nonce used for the proof-of-work.
      */
     @ProtoField
-    private final @NotNull ByteString nonce;
+    private final ByteString nonce;
 
     /**
      * UNIX timestamp indicating when the block is created.
@@ -145,4 +145,119 @@ public class BlockInfo {
         return sizeInFile;
     }
 
+    public Hash getPreviousBlockHash() {
+        return previousBlockHash;
+    }
+
+    public Hash getMerkleRoot() {
+        return merkleRoot;
+    }
+
+    public Hash getTargetValue() {
+        return targetValue;
+    }
+
+    public ByteString getNonce() {
+        return nonce;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    @ProtoClass(BrabocoinStorageProtos.BlockInfo.class)
+    public static class Builder {
+        @ProtoField
+        private Hash.Builder previousBlockHash;
+        @ProtoField
+        private Hash.Builder merkleRoot;
+        @ProtoField
+        private Hash.Builder targetValue;
+        @ProtoField
+        private ByteString nonce;
+        @ProtoField
+        private long timestamp;
+        @ProtoField
+        private long blockHeight;
+        @ProtoField
+        private int transactionCount;
+        @ProtoField
+        private boolean validated;
+        @ProtoField
+        private int fileNumber;
+        @ProtoField
+        private long offsetInFile;
+        @ProtoField
+        private int sizeInFile;
+
+        public Builder setPreviousBlockHash(@NotNull Hash.Builder previousBlockHash) {
+            this.previousBlockHash = previousBlockHash;
+            return this;
+        }
+
+        public Builder setMerkleRoot(@NotNull Hash.Builder merkleRoot) {
+            this.merkleRoot = merkleRoot;
+            return this;
+        }
+
+        public Builder setTargetValue(@NotNull Hash.Builder targetValue) {
+            this.targetValue = targetValue;
+            return this;
+        }
+
+        public Builder setNonce(@NotNull ByteString nonce) {
+            this.nonce = nonce;
+            return this;
+        }
+
+        public Builder setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder setBlockHeight(long blockHeight) {
+            this.blockHeight = blockHeight;
+            return this;
+        }
+
+        public Builder setTransactionCount(int transactionCount) {
+            this.transactionCount = transactionCount;
+            return this;
+        }
+
+        public Builder setValidated(boolean validated) {
+            this.validated = validated;
+            return this;
+        }
+
+        public Builder setFileNumber(int fileNumber) {
+            this.fileNumber = fileNumber;
+            return this;
+        }
+
+        public Builder setOffsetInFile(long offsetInFile) {
+            this.offsetInFile = offsetInFile;
+            return this;
+        }
+
+        public Builder setSizeInFile(int sizeInFile) {
+            this.sizeInFile = sizeInFile;
+            return this;
+        }
+
+        public BlockInfo createBlockInfo() {
+            return new BlockInfo(
+                    previousBlockHash.createHash(),
+                    merkleRoot.createHash(),
+                    targetValue.createHash(),
+                    nonce,
+                    timestamp,
+                    blockHeight,
+                    transactionCount,
+                    validated,
+                    fileNumber,
+                    offsetInFile,
+                    sizeInFile);
+        }
+    }
 }

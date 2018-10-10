@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.iq80.leveldb.*;
 
@@ -41,35 +42,40 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public void put(final byte[] key, final byte[] value) throws DatabaseException {
+    public void put(final ByteString key, final ByteString value) throws DatabaseException {
         try {
-            database.put(key, value);
+            database.put(key.toByteArray(), value.toByteArray());
         } catch (final DBException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
 
     @Override
-    public byte[] get(final byte[] key) throws DatabaseException {
+    public ByteString get(final ByteString key) throws DatabaseException {
         try {
-            return database.get(key);
+            byte[] data = database.get(key.toByteArray());
+            if (data == null) {
+                return null;
+            }
+
+            return ByteString.copyFrom(data);
         } catch (final DBException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
 
     @Override
-    public void delete(final byte[] key) throws DatabaseException {
+    public void delete(final ByteString key) throws DatabaseException {
         try {
-            database.delete(key);
+            database.delete(key.toByteArray());
         } catch (final DBException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
 
     @Override
-    public Iterator<Map.Entry> iterator() {
-        Iterator<Map.Entry> it = new Iterator<Map.Entry>() {
+    public Iterator<Map.Entry<ByteString, ByteString>> iterator() {
+        Iterator<Map.Entry<ByteString, ByteString>> it = new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();
 
             @Override
