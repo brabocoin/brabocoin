@@ -50,13 +50,23 @@ public class BlockDatabase {
      * @param blockFileDirectory
      *         The directory in which to store the block files.
      */
-    public BlockDatabase(@NotNull KeyValueStore storage, @NotNull File blockFileDirectory) {
+    public BlockDatabase(@NotNull KeyValueStore storage, @NotNull File blockFileDirectory) throws DatabaseException {
         if (!blockFileDirectory.isDirectory()) {
             throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
         }
 
         this.storage = storage;
         this.directory = blockFileDirectory;
+
+        initialize();
+    }
+
+    private void initialize() throws DatabaseException {
+        byte[] key = getCurrentFileKey();
+
+        if (storage.get(key) == null) {
+            storage.put(key, ByteUtil.toByteString(0).toByteArray());
+        }
     }
 
     /**
