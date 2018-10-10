@@ -45,8 +45,8 @@ public class Node {
     }
 
     public void start() throws IOException {
-        this.environment = createEnvironment();
-        this.environment.setup();
+        environment = createEnvironment();
+        environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));

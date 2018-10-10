@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * Represents a node environment.
  */
 public class NodeEnvironment {
-    private BraboConfig config;
+    protected BraboConfig config;
 
     private Set<Peer> peers = new HashSet<>();
     private Converter converter = Converter.create();
@@ -58,20 +58,9 @@ public class NodeEnvironment {
     }
 
     /**
-     * Get a config Brabocoin Configuration Provider.
-     *
-     * @return Instantiated BraboConfigProvider.
-     */
-    public BraboConfigProvider buildConfigProvider() {
-        return new BraboConfigProvider();
-    }
-
-    /**
      * Setup the environment, loading the config and bootstrapping peers.
      */
-    protected void setup() {
-        config = buildConfigProvider().getConfig().bind("brabo", BraboConfig.class);
-
+    public void setup() {
         bootstrap();
     }
 
