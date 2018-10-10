@@ -15,27 +15,10 @@ public class BraboConfigProvider {
     private String configFile = "application.yaml";
     private String configDirectory = "./config";
 
-    public BraboConfigProvider() {
-
-    }
-
-    public BraboConfigProvider(String configFile, String configDirectory) {
-        this.configFile = configFile;
-        this.configDirectory = configDirectory;
-    }
-
-    public String getConfigDirectory() {
-        return configDirectory;
-    }
-
-    public String getConfigFile() {
-        return configFile;
-    }
-
     public ConfigurationProvider getConfig() {
-        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(Paths.get(getConfigFile()));
+        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(Paths.get(configFile));
         final ConfigurationSource source = new FilesConfigurationSource(configFilesProvider);
-        final Environment environment = new ImmutableEnvironment(getConfigDirectory());
+        final Environment environment = new ImmutableEnvironment(configDirectory);
 
         return new ConfigurationProviderBuilder()
                 .withConfigurationSource(source)

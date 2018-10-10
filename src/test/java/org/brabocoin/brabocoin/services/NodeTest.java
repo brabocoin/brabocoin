@@ -1,52 +1,53 @@
 package org.brabocoin.brabocoin.services;
 
-import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
-import org.junit.jupiter.api.DisplayName;
+import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NodeTest {
-    class MockNode extends Node {
-        private String mockConfigFile;
-        MockNode(int listenPort, String mockConfigFile) {
-            super(listenPort);
-            this.mockConfigFile = mockConfigFile + ".yaml";
-        }
-
-        @Override
-        NodeEnvironment createEnvironment() {
-            return new MockEnvironment(mockConfigFile);
-        }
-    }
-
-    class MockEnvironment extends NodeEnvironment {
-        private String mockConfigFile;
-        MockEnvironment(String mockConfigFile) {
-            super(false);
-            this.mockConfigFile = mockConfigFile;
-            setup();
-        }
-
-        @Override
-        public BraboConfigProvider buildConfigProvider() {
-            return new BraboConfigProvider(mockConfigFile, "./src/test/resources/");
-        }
-
-    }
+    BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
 
     @Test
-    @DisplayName("handshakeTest")
     void handshakeTest(TestInfo testInfo) throws IOException {
-        Node peerA = new MockNode(8091, "emptyBootstrap");
-        Node peerB = new MockNode(8092, "emptyBootstrap");
+        Node peerA = new MockNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        });
+        Node peerB = new MockNode(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        });
 
-        Node responder = new MockNode(8090, testInfo.getDisplayName() + "Responder");
-        Node greeter = new MockNode(8089, testInfo.getDisplayName()  + "Greeter");
+        Node responder = new MockNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                    add("localhost:8092");
+                }};
+            }
+        });
+        Node greeter = new MockNode(8089, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        });
 
         peerA.start();
         peerB.start();
@@ -55,5 +56,11 @@ class NodeTest {
         greeter.start();
 
         assertEquals(3, greeter.environment.getPeers().size());
+
+        peerA.stop();
+        peerB.stop();
+
+        responder.stop();
+        greeter.stop();
     }
 }

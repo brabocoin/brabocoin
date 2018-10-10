@@ -40,12 +40,13 @@ public class Node {
                 .addService(new NodeService()).build();
     }
 
-    NodeEnvironment createEnvironment() {
+    public NodeEnvironment createEnvironment() {
         return new NodeEnvironment();
     }
 
     public void start() throws IOException {
         this.environment = createEnvironment();
+        this.environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
@@ -54,6 +55,10 @@ public class Node {
     public void stop() {
         if (server != null) {
             server.shutdown();
+        }
+
+        for (Peer p : environment.getPeers()) {
+            p.stop();
         }
     }
 

@@ -60,6 +60,13 @@ public class Peer {
                 .build();
         this.blockingStub = NodeGrpc.newBlockingStub(channel);
         this.asyncStub = NodeGrpc.newStub(channel);
+
+
+        Runtime.getRuntime().addShutdownHook(new Thread(channel::shutdown));
+    }
+
+    public void stop() {
+        this.channel.shutdown();
     }
 
     private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {

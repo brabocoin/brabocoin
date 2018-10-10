@@ -26,15 +26,8 @@ public class NodeEnvironment {
     private Converter converter = Converter.create();
     private Map<Hash, Transaction> transactionPool = new HashMap<>();
 
-
-    public NodeEnvironment(Boolean autoSetup) {
-        if (autoSetup) {
-            setup();
-        }
-    }
-
     public NodeEnvironment() {
-        this(true);
+        config = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
     }
 
     /**
