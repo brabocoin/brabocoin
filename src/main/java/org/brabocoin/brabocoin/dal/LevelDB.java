@@ -16,24 +16,28 @@ import static org.fusesource.leveldbjni.JniDBFactory.*;
  */
 public class LevelDB implements KeyValueStore {
     private DB database;
-    private File databaseFile;
+    private File databasePath;
     private Options options;
 
     /**
      * Construct a LevelDB Data Access Layer.
      *
-     * @param databaseFile The file to store the database in.
+     * @param databasePath The path to store the database in.
      */
-    public LevelDB(final File databaseFile) {
+    public LevelDB(final File databasePath) {
         options = new Options();
         options.createIfMissing(true);
 
-        this.databaseFile = databaseFile;
+        this.databasePath = databasePath;
+        if (!databasePath.exists()){
+            databasePath.mkdirs();
+        }
     }
 
     @Override
     public void open() throws IOException {
-        database = factory.open(databaseFile, options);
+
+        database = factory.open(databasePath, options);
     }
 
     @Override
@@ -80,7 +84,7 @@ public class LevelDB implements KeyValueStore {
 
     @Override
     public Iterator<Map.Entry<ByteString, ByteString>> iterator() {
-        Iterator<Map.Entry<ByteString, ByteString>> it = new Iterator<Map.Entry<ByteString, ByteString>>() {
+        return new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();
 
             @Override
@@ -93,6 +97,5 @@ public class LevelDB implements KeyValueStore {
                 return iterator.next();
             }
         };
-        return it;
     }
 }
