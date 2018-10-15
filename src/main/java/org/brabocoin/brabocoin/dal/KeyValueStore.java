@@ -52,7 +52,7 @@ public interface KeyValueStore extends Iterable<Map.Entry<ByteString, ByteString
      * @throws DatabaseException
      *         When the database returns an error.
      */
-    boolean has(byte[] key) throws DatabaseException;
+    boolean has(ByteString key) throws DatabaseException;
 
     /**
      * Tries to open the database.

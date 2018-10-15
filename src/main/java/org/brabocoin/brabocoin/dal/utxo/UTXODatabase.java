@@ -43,10 +43,10 @@ public class UTXODatabase {
     }
 
     private void initialize() throws DatabaseException {
-        byte[] key = getBlockMarkerKey();
+        ByteString key = getBlockMarkerKey();
 
         if (!storage.has(key)) {
-            storage.put(key, ByteUtil.toByteString(0).toByteArray());
+            storage.put(key, ByteUtil.toByteString(0));
         }
     }
 
@@ -75,14 +75,13 @@ public class UTXODatabase {
      *         When the output data could not be read.
      */
     public boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
-        byte[] key = getOutputKey(transactionHash, outputIndex);
+        ByteString key = getOutputKey(transactionHash, outputIndex);
         return storage.has(key);
     }
 
-    private byte[] getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
+    private ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
         return KEY_PREFIX_OUTPUT.concat(transactionHash.getValue())
-                .concat(ByteUtil.toByteString(outputIndex))
-                .toByteArray();
+                .concat(ByteUtil.toByteString(outputIndex));
     }
 
     /**
@@ -113,8 +112,8 @@ public class UTXODatabase {
      */
     public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
                                                              int outputIndex) throws DatabaseException {
-        byte[] key = getOutputKey(transactionHash, outputIndex);
-        byte[] value = retrieve(key);
+        ByteString key = getOutputKey(transactionHash, outputIndex);
+        ByteString value = retrieve(key);
 
         return parseProtoValue(value,
                 UnspentOutputInfo.class,
@@ -122,11 +121,11 @@ public class UTXODatabase {
         );
     }
 
-    private @Nullable byte[] retrieve(byte[] key) throws DatabaseException {
+    private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
         return storage.get(key);
     }
 
-    private <D, P extends Message> @Nullable D parseProtoValue(@Nullable byte[] value,
+    private <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
                                                                @NotNull Class<D> domainClass,
                                                                @NotNull Parser<P> parser) throws DatabaseException {
         try {
@@ -180,18 +179,18 @@ public class UTXODatabase {
                     output.getAddress()
             );
 
-            byte[] key = getOutputKey(transactionHash, outputIndex);
-            byte[] value = getRawProtoValue(info, BrabocoinStorageProtos.UnspentOutputInfo.class);
+            ByteString key = getOutputKey(transactionHash, outputIndex);
+            ByteString value = getRawProtoValue(info, BrabocoinStorageProtos.UnspentOutputInfo.class);
 
             store(key, value);
         }
     }
 
-    private <D, P extends Message> byte[] getRawProtoValue(D domainObject, Class<P> protoClass) {
-        return ProtoConverter.toProto(domainObject, protoClass).toByteArray();
+    private <D, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+        return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
-    private void store(byte[] key, byte[] value) throws DatabaseException {
+    private void store(ByteString key, ByteString value) throws DatabaseException {
         storage.put(key, value);
     }
 
@@ -206,7 +205,7 @@ public class UTXODatabase {
      *         When the data could not be stored.
      */
     public void setOutputSpent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
-        byte[] key = getOutputKey(transactionHash, outputIndex);
+        ByteString key = getOutputKey(transactionHash, outputIndex);
         storage.delete(key);
     }
 
@@ -218,8 +217,8 @@ public class UTXODatabase {
      *         When the data could not be retrieved.
      */
     public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
-        byte[] key = getBlockMarkerKey();
-        byte[] value = retrieve(key);
+        ByteString key = getBlockMarkerKey();
+        ByteString value = retrieve(key);
 
         Hash hash = parseProtoValue(value, Hash.class, BrabocoinProtos.Hash.parser());
 
@@ -239,13 +238,13 @@ public class UTXODatabase {
      *         When the data could not be stored.
      */
     public void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
-        byte[] key = getBlockMarkerKey();
-        byte[] value = getRawProtoValue(hash, BrabocoinProtos.Hash.class);
+        ByteString key = getBlockMarkerKey();
+        ByteString value = getRawProtoValue(hash, BrabocoinProtos.Hash.class);
 
         store(key, value);
     }
 
-    private byte[] getBlockMarkerKey() {
-        return KEY_BLOCK_MARKER.toByteArray();
+    private ByteString getBlockMarkerKey() {
+        return KEY_BLOCK_MARKER;
     }
 }

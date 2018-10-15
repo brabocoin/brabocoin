@@ -57,11 +57,11 @@ class ByteUtilTest {
 
     @Test
     void testToInt() {
-        assertEquals(ByteUtil.toInt(ZERO_INT), 0);
-        assertEquals(ByteUtil.toInt(MAX_INT), Integer.MAX_VALUE);
-        assertEquals(ByteUtil.toInt(MIN_INT), Integer.MIN_VALUE);
-        assertEquals(ByteUtil.toInt(ONE_INT), 1);
-        assertEquals(ByteUtil.toInt(NEGATIVE_ONE_INT), -1);
-        assertEquals(ByteUtil.toInt(NINETEEN_EIGHTY_FOUR_INT), 1984);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(ZERO_INT)), 0);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(MAX_INT)), Integer.MAX_VALUE);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(MIN_INT)), Integer.MIN_VALUE);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(ONE_INT)), 1);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(NEGATIVE_ONE_INT)), -1);
+        assertEquals(ByteUtil.toInt(ByteString.copyFrom(NINETEEN_EIGHTY_FOUR_INT)), 1984);
     }
 }

@@ -27,6 +27,11 @@ public class HashMapDB implements KeyValueStore {
     }
 
     @Override
+    public boolean has(ByteString key) throws DatabaseException {
+        return map.containsKey(key);
+    }
+
+    @Override
     public void open() throws IOException {
 
     }

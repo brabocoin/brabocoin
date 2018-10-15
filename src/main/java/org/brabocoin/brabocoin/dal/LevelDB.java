@@ -74,8 +74,8 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public boolean has(byte[] key) throws DatabaseException {
-        return database.get(key) != null;
+    public boolean has(ByteString key) throws DatabaseException {
+        return database.get(key.toByteArray()) != null;
     }
 
     @Override

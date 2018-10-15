@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.util;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
@@ -14,7 +15,7 @@ public class ProtoConverter {
 
     private static final Converter CONVERTER = Converter.create();
 
-    public static <D, P extends Message> @Nullable D parseProtoValue(@Nullable byte[] value,
+    public static <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
                                                                @NotNull Class<D> domainClass,
                                                                @NotNull Parser<P> parser) throws InvalidProtocolBufferException {
         if (value == null) {
