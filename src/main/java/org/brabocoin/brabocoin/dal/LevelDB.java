@@ -74,6 +74,11 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
+    public boolean has(byte[] key) throws DatabaseException {
+        return database.get(key) != null;
+    }
+
+    @Override
     public Iterator<Map.Entry<ByteString, ByteString>> iterator() {
         Iterator<Map.Entry<ByteString, ByteString>> it = new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();

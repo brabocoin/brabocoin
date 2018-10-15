@@ -5,13 +5,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +29,6 @@ public class BlockDatabase {
     private static final ByteString KEY_PREFIX_BLOCK = ByteString.copyFromUtf8("b");
     private static final ByteString KEY_PREFIX_FILE = ByteString.copyFromUtf8("f");
     private static final ByteString KEY_CURRENT_FILE = ByteString.copyFromUtf8("l");
-
-    private static final Converter PROTO_CONVERTER = Converter.create();
 
     /**
      * Max block file size in bytes.
@@ -79,8 +77,9 @@ public class BlockDatabase {
      */
     public void storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
         // Get serialized block
-        BrabocoinProtos.Block protoBlock = PROTO_CONVERTER.toProtobuf(BrabocoinProtos.Block.class,
-                block
+        BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(
+                block,
+                BrabocoinProtos.Block.class
         );
         int size = protoBlock.getSerializedSize();
 
@@ -226,18 +225,12 @@ public class BlockDatabase {
     private <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
                                                                @NotNull Class<D> domainClass,
                                                                @NotNull Parser<P> parser) throws DatabaseException {
-        if (value == null) {
-            return null;
-        }
-
-        P proto;
         try {
-            proto = parser.parseFrom(value);
-        } catch (InvalidProtocolBufferException e) {
-            throw new DatabaseException("Data could not be parsed.", e);
+            return ProtoConverter.parseProtoValue(value, domainClass, parser);
         }
-
-        return PROTO_CONVERTER.toDomain(domainClass, proto);
+        catch (InvalidProtocolBufferException e) {
+            throw new DatabaseException("Data could not be parsed", e);
+        }
     }
 
     private ByteString getBlockKey(@NotNull Hash hash) {
@@ -289,7 +282,7 @@ public class BlockDatabase {
     }
 
     private <D, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
-        return PROTO_CONVERTER.toProtobuf(protoClass, domainObject).toByteString();
+        return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
     private int getCurrentFileNumber() throws DatabaseException {
