@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+// Package declaration, for non-java implementations
+package brabocoin;
+
+// Java package destination for generated classes
+option java_package = "org.brabocoin.brabocoin.proto.model";
+option java_outer_classname = "BrabocoinProtos";
+
+message Hash {
+    bytes value = 1;
+}
+
+message Signature {
+
+}
+
+message BlockChain {
+
+}
+
+message Output {
+    Hash address = 1;
+    int64 amount = 2;
+}
+
+message Input {
+    Signature signature = 1;
+    Hash referencedTransaction = 2;
+    int32 referencedOutputIndex = 3;
+}
+
+message Transaction {
+    repeated Input inputs = 1;
+    repeated Output outputs = 2;
+}
+
+message Block {
+    Hash previousBlockHash = 1;
+    Hash merkleRoot = 2;
+    Hash targetValue = 3;
+    bytes nonce = 4;
+    int64 blockHeight = 5;
+    int64 timestamp = 6;
+    repeated Transaction transactions = 7;
+}
+
+message HandshakeResponse {
+    repeated string peers = 1;
+}
+
+message BlockHeight {
+    int64 height = 1;
+}
+
+message ChainCompatibility {
+    bool compatible = 1;
+}
