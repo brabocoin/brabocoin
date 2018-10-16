@@ -22,7 +22,7 @@ public final class Hashing {
     }
 
     /**
-     * Compute the SHA-265 hash of a message.
+     * Compute the SHA-256 hash of a message.
      *
      * @param message
      *         The message to be hashed.
@@ -33,7 +33,7 @@ public final class Hashing {
     }
 
     /**
-     * Compute the SHA-265 hash of a message.
+     * Compute the SHA-256 hash of a message.
      *
      * @param message
      *         The message to be hashed.
