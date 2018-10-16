@@ -33,7 +33,7 @@ public class NodeEnvironment {
     private Map<Hash, Transaction> transactionPool = new HashMap<>();
 
     public NodeEnvironment() throws DatabaseException {
-        config = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+        config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
         // Create blockStore directory if not exists
         File blockStoreDirectory = new File(config.blockStoreDirectory());
@@ -212,7 +212,7 @@ public class NodeEnvironment {
             Peer handshakePeer = handshakePeers.remove(0);
             try {
                 // Perform a handshake with the peer
-                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
+                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
                         .handshake(Empty.newBuilder().build());
                 HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).createHandshakeResponse();

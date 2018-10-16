@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NodeTest {
-    BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+    BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
     @Test
     void handshakeTest() throws IOException, DatabaseException {
@@ -104,7 +104,7 @@ class NodeTest {
         Peer nodeBpeer = nodeB.environment.getPeers().get(0);
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
             @Override
             public void onNext(BrabocoinProtos.Block value) {
                 receivedBlocks.add(Converter.create().toDomain(Block.Builder.class, value).createBlock());

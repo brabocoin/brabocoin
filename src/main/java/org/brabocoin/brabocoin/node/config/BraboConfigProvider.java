@@ -12,10 +12,10 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 public class BraboConfigProvider {
-    private String configFile = "application.yaml";
-    private String configDirectory = "./config";
+    private static String configFile = "application.yaml";
+    private static String configDirectory = "./config";
 
-    public ConfigurationProvider getConfig() {
+    public static ConfigurationProvider getConfig() {
         final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(Paths.get(configFile));
         final ConfigurationSource source = new FilesConfigurationSource(configFilesProvider);
         final Environment environment = new ImmutableEnvironment(configDirectory);
