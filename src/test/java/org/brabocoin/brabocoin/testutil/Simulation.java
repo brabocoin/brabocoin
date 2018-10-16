@@ -28,7 +28,7 @@ public class Simulation {
                     randomByteString(),
                     creationTime,
                     i,
-                    repeatedBuilder(Simulation::randomTransaction, 30));
+                    repeatedBuilder(() -> randomTransaction(5,5), 30));
             previousHash = block.computeHash();
             list.add(block);
         }
@@ -36,9 +36,9 @@ public class Simulation {
         return list;
     }
 
-    public static Transaction randomTransaction() {
-        List<Input> inputs = repeatedBuilder(Simulation::randomInput, 5);
-        List<Output> outputs = repeatedBuilder(Simulation::randomOutput, 5);
+    public static Transaction randomTransaction(int inputBound, int outputBound) {
+        List<Input> inputs = repeatedBuilder(Simulation::randomInput, inputBound);
+        List<Output> outputs = repeatedBuilder(Simulation::randomOutput, outputBound);
         return new Transaction(inputs, outputs);
     }
 

@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class NodeEnvironment {
     protected BraboConfig config;
 
-    protected BlockDatabase database;
+    private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
     private Converter converter = Converter.create();
     private Map<Hash, Transaction> transactionPool = new HashMap<>();
@@ -41,10 +41,20 @@ public class NodeEnvironment {
             blockStoreDirectory.mkdirs();
         }
 
-        database = new BlockDatabase(getKeyValueStorage(), blockStoreDirectory);
+        database = new BlockDatabase(createKeyValueStorage(), blockStoreDirectory);
     }
 
-    protected KeyValueStore getKeyValueStorage() {
+    public NodeEnvironment(BlockDatabase database) throws DatabaseException {
+        this();
+        this.database = database;
+    }
+
+    public NodeEnvironment(Map<Hash, Transaction> transactionPool) throws DatabaseException {
+        this();
+        this.transactionPool = transactionPool;
+    }
+
+    protected KeyValueStore createKeyValueStorage() {
         return new LevelDB(new File(config.databaseDirectory()));
     }
 

@@ -3,9 +3,13 @@ package org.brabocoin.brabocoin.services;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import net.badata.protobuf.converter.Converter;
+import org.brabocoin.brabocoin.dal.BlockDatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.dal.LevelDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -16,9 +20,12 @@ import org.brabocoin.brabocoin.testutil.MockNode;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -79,15 +86,34 @@ class NodeTest {
 
     @Test
     void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        Node nodeA = new MockNode(8091, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
                     add("localhost:8092");
                 }};
             }
-        }, blocks));
+
+            @Override
+            public String blockStoreDirectory() {
+                return "src/test/resources/" + super.blockStoreDirectory();
+            }
+        };
+
+        // Create blockStore directory if not exists
+        File blockStoreDirectory = new File(config.blockStoreDirectory());
+        if (!blockStoreDirectory.exists()){
+            blockStoreDirectory.mkdirs();
+        }
+
+        BlockDatabase database = new BlockDatabase(new HashMapDB(), blockStoreDirectory);
+
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        for (Block b : blocks) {
+            database.storeBlock(b, true);
+        }
+
+        Node nodeA = new MockNode(8091, new MockEnvironment(config, database));
 
         Node nodeB = new MockNode(8092, new MockEnvironment(new MockBraboConfig(defaultConfig) {
             @Override
@@ -138,4 +164,48 @@ class NodeTest {
             assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
         }
     }
+
+    @Test
+    void getTransactionsTest() throws DatabaseException, IOException, InterruptedException {
+        BraboConfig config = new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8092");
+                }};
+            }
+
+            @Override
+            public String blockStoreDirectory() {
+                return "src/test/resources/" + super.blockStoreDirectory();
+            }
+        };
+
+        // Create blockStore directory if not exists
+        File blockStoreDirectory = new File(config.blockStoreDirectory());
+        if (!blockStoreDirectory.exists()){
+            blockStoreDirectory.mkdirs();
+        }
+
+        Map<Hash, Transaction> transactionPool = new HashMap<>();
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        for (Transaction t : transactions) {
+            transactionPool.put(t.computeHash(),t);
+        }
+
+        Node nodeA = new MockNode(8091, new MockEnvironment(config, transactionPool));
+
+        Node nodeB = new MockNode(8092, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+    }
+
 }
