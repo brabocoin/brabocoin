@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * @author Sten Wessel
+ * Test the block database.
  */
 class BlockDatabaseTest {
 

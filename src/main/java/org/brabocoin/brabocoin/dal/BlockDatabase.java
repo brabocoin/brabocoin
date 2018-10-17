@@ -186,20 +186,17 @@ public class BlockDatabase {
     }
 
     private long writeProtoToFile(int fileNumber, @NotNull MessageLite proto) throws DatabaseException {
-        try {
-            String fileName = getBlockFileName(fileNumber);
-            FileOutputStream outputStream = new FileOutputStream(fileName, true);
-
-            long offsetInFile = outputStream.getChannel().position();
-
+        String fileName = getBlockFileName(fileNumber);
+        long offsetInFile;
+        try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
+             offsetInFile = outputStream.getChannel().position();
             proto.writeTo(outputStream);
-            outputStream.close();
-
-            return offsetInFile;
         }
         catch (IOException e) {
             throw new DatabaseException("Data could not be written to disk.", e);
         }
+
+        return offsetInFile;
     }
 
     private int nextFileNumber(int blockSize) throws DatabaseException {
@@ -263,23 +260,22 @@ public class BlockDatabase {
 
     private ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         String fileName = getBlockFileName(blockInfo.getFileNumber());
+        byte[] data;
 
-        try {
-            InputStream inputStream = new FileInputStream(fileName);
-
+        try (InputStream inputStream = new FileInputStream(fileName)) {
             long offset = blockInfo.getOffsetInFile();
             int size = blockInfo.getSizeInFile();
 
-            byte[] data = new byte[size];
+            data = new byte[size];
 
             inputStream.skip(offset);
             inputStream.read(data);
-
-            return ByteString.copyFrom(data);
         }
         catch (IOException e) {
             throw new DatabaseException("Block could not be read from file.", e);
         }
+
+        return ByteString.copyFrom(data);
     }
 
     private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
