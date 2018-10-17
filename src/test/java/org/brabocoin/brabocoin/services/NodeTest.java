@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockEnvironment;
 import org.brabocoin.brabocoin.testutil.MockNode;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -21,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +33,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NodeTest {
     BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+
+    @BeforeAll
+    static void setUp() {
+        Logger log = Logger.getLogger("org.brabocoin");
+        log.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+
+        log.addHandler(handler);
+    }
 
     @Test
     void handshakeTest() throws IOException, DatabaseException {

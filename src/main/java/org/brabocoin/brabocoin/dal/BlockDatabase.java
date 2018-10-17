@@ -26,6 +26,7 @@ import java.io.InputStream;
  */
 public class BlockDatabase {
 
+
     private static final ByteString KEY_PREFIX_BLOCK = ByteString.copyFromUtf8("b");
     private static final ByteString KEY_PREFIX_FILE = ByteString.copyFromUtf8("f");
     private static final ByteString KEY_CURRENT_FILE = ByteString.copyFromUtf8("l");
