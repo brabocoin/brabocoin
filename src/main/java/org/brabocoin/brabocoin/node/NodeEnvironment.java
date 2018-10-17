@@ -215,7 +215,7 @@ public class NodeEnvironment {
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
                         .handshake(Empty.newBuilder().build());
-                HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).createHandshakeResponse();
+                HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).build();
 
                 // We got a response from the current handshake peer, register this peer as valid
                 addPeer(handshakePeer);

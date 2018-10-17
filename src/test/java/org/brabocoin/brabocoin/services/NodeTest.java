@@ -107,7 +107,7 @@ class NodeTest {
         StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
             @Override
             public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(Converter.create().toDomain(Block.Builder.class, value).createBlock());
+                receivedBlocks.add(Converter.create().toDomain(Block.Builder.class, value).build());
             }
 
             @Override

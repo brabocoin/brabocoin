@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.model;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * and contains a signature to verify the input and all outputs of the transaction.
  */
 @ProtoClass(BrabocoinProtos.Input.class)
-public class Input {
+public class Input implements ProtoModel<Input> {
 
     /**
      * Digital signature that validates this input and all outputs in the transaction.
@@ -61,8 +63,13 @@ public class Input {
         return referencedOutputIndex;
     }
 
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
     @ProtoClass(BrabocoinProtos.Input.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<Input> {
 
         @ProtoField
         private Signature signature;
@@ -85,13 +92,9 @@ public class Input {
             this.referencedOutputIndex = referencedOutputIndex;
         }
 
-        /**
-         * Creates the transaction input.
-         *
-         * @return The transaction input.
-         */
-        public Input createInput() {
-            return new Input(signature, referencedTransaction.createHash(), referencedOutputIndex);
+        @Override
+        public Input build() {
+            return new Input(signature, referencedTransaction.build(), referencedOutputIndex);
         }
     }
 }

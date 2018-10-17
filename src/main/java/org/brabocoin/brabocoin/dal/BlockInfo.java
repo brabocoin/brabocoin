@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @see BlockDatabase
  */
 @ProtoClass(BrabocoinStorageProtos.BlockInfo.class)
-public class BlockInfo {
+public class BlockInfo implements ProtoModel<BlockInfo> {
 
     /**
      * Hash of the previous block in the blockchain.
@@ -165,28 +167,43 @@ public class BlockInfo {
         return timestamp;
     }
 
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
     @ProtoClass(BrabocoinStorageProtos.BlockInfo.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<BlockInfo> {
         @ProtoField
         private Hash.Builder previousBlockHash;
+
         @ProtoField
         private Hash.Builder merkleRoot;
+
         @ProtoField
         private Hash.Builder targetValue;
+
         @ProtoField
         private ByteString nonce;
+
         @ProtoField
         private long timestamp;
+
         @ProtoField
         private long blockHeight;
+
         @ProtoField
         private int transactionCount;
+
         @ProtoField
         private boolean validated;
+
         @ProtoField
         private int fileNumber;
+
         @ProtoField
         private long offsetInFile;
+
         @ProtoField
         private int sizeInFile;
 
@@ -245,11 +262,12 @@ public class BlockInfo {
             return this;
         }
 
-        public BlockInfo createBlockInfo() {
+        @Override
+        public BlockInfo build() {
             return new BlockInfo(
-                    previousBlockHash.createHash(),
-                    merkleRoot.createHash(),
-                    targetValue.createHash(),
+                    previousBlockHash.build(),
+                    merkleRoot.build(),
+                    targetValue.build(),
                     nonce,
                     timestamp,
                     blockHeight,
