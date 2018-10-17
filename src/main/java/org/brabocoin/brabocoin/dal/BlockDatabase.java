@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -41,20 +42,19 @@ public class BlockDatabase {
 
     private final @NotNull File directory;
 
+    private final @NotNull BraboConfig config;
+
     /**
      * Creates a new block database using provided the key-value store and directory for the
      * block files.
      *
-     * @param storage            The key-value store to use for the database.
-     * @param blockFileDirectory The directory in which to store the block files.
+     * @param storage The key-value store to use for the database.
+     * @param config  The config used for this block database.
      */
-    public BlockDatabase(@NotNull KeyValueStore storage, @NotNull File blockFileDirectory) throws DatabaseException {
-        if (!blockFileDirectory.isDirectory()) {
-            throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
-        }
-
+    public BlockDatabase(@NotNull KeyValueStore storage, BraboConfig config) throws DatabaseException {
+        this.config = config;
         this.storage = storage;
-        this.directory = blockFileDirectory;
+        this.directory = new File(config.blockStoreDirectory());
 
         initialize();
     }
@@ -64,6 +64,16 @@ public class BlockDatabase {
 
         if (storage.get(key) == null) {
             registerNewBlockFile(0);
+        }
+
+        // Create blockStore directory if not exists
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        // Check if directory exists
+        if (!directory.isDirectory()) {
+            throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
         }
     }
 
@@ -229,8 +239,7 @@ public class BlockDatabase {
                                                                                                              @NotNull Parser<P> parser) throws DatabaseException {
         try {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
-        }
-        catch (InvalidProtocolBufferException e) {
+        } catch (InvalidProtocolBufferException e) {
             throw new DatabaseException("Data could not be parsed", e);
         }
     }

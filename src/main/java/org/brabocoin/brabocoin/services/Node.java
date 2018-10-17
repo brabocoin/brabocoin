@@ -5,7 +5,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import net.badata.protobuf.converter.Converter;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -33,20 +32,16 @@ public class Node {
      */
     private final int listenPort;
     private final Server server;
-    public NodeEnvironment environment;
+    NodeEnvironment environment;
 
-    public Node(final int listenPort) {
+    public Node(final int listenPort, NodeEnvironment environment) {
         this.listenPort = listenPort;
         this.server = ServerBuilder.forPort(listenPort)
                 .addService(new NodeService()).build();
+        this.environment = environment;
     }
 
-    protected NodeEnvironment createEnvironment() throws DatabaseException {
-        return new NodeEnvironment();
-    }
-
-    public void start() throws IOException, DatabaseException {
-        environment = createEnvironment();
+    public void start() throws IOException {
         environment.setup();
         server.start();
 
@@ -72,7 +67,7 @@ public class Node {
     private class NodeService extends NodeGrpc.NodeImplBase {
         @Override
         public void handshake(Empty request, StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
-            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toString).collect(Collectors.toList()));
+            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
             responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.HandshakeResponse.class, response));
             responseObserver.onCompleted();
             // TODO: logging
