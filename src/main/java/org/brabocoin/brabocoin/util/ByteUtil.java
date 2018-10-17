@@ -60,6 +60,9 @@ public final class ByteUtil {
      * @return The hexadecimal representation of the bytes in a string.
      */
     public static String toHexString(ByteString byteString) {
+        if (byteString == null) {
+            return "null";
+        }
         return DatatypeConverter.printHexBinary(byteString.toByteArray());
     }
 }

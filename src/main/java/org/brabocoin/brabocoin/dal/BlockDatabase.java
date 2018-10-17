@@ -300,19 +300,25 @@ public class BlockDatabase {
     }
 
     private ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
+        LOGGER.fine("Read raw block from file.");
         String fileName = getBlockFileName(blockInfo.getFileNumber());
+        LOGGER.log(Level.FINEST, "filename: {0}", fileName);
         byte[] data;
 
         try (InputStream inputStream = new FileInputStream(fileName)) {
             long offset = blockInfo.getOffsetInFile();
+            LOGGER.log(Level.FINEST, "offset: {0}", offset);
             int size = blockInfo.getSizeInFile();
+            LOGGER.log(Level.FINEST, "size: {0}", size);
 
             data = new byte[size];
 
             inputStream.skip(offset);
             inputStream.read(data);
+            LOGGER.fine("Read file into input stream.");
         }
         catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Could not read file: {0}", e.getMessage());
             throw new DatabaseException("Block could not be read from file.", e);
         }
 
@@ -324,20 +330,28 @@ public class BlockDatabase {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
         }
         catch (InvalidProtocolBufferException e) {
-            throw new DatabaseException("Data could not be parsed", e);
+            LOGGER.log(Level.SEVERE, "Data could not be parsed: {0}", e.getMessage());
+            throw new DatabaseException("Data could not be parsed.", e);
         }
     }
 
     private ByteString getBlockKey(@NotNull Hash hash) {
-        return KEY_PREFIX_BLOCK.concat(hash.getValue());
+        LOGGER.fine("Getting block key.");
+        ByteString key = KEY_PREFIX_BLOCK.concat(hash.getValue());
+        LOGGER.log(Level.FINEST, "Block key: {0}", toHexString(key));
+        return key;
     }
 
     private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
+        LOGGER.fine("Getting ByteString from storage.");
         return storage.get(key);
     }
 
     private String getBlockFileName(int fileNumber) {
-        return Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
+        LOGGER.fine("Getting block file name.");
+        String path = Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
+        LOGGER.log(Level.FINEST, "path: {0}", path);
+        return path;
     }
 
     /**
@@ -351,8 +365,11 @@ public class BlockDatabase {
      *         When the file information could not be retrieved.
      */
     public @Nullable BlockFileInfo findBlockFileInfo(int fileNumber) throws DatabaseException {
+        LOGGER.fine("Getting block file info.");
         ByteString key = getFileKey(fileNumber);
+        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
         ByteString value = retrieve(key);
+        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
 
         return parseProtoValue(value,
                 BlockFileInfo.Builder.class,
@@ -361,19 +378,27 @@ public class BlockDatabase {
     }
 
     private int getCurrentFileNumber() throws DatabaseException {
+        LOGGER.fine("Getting current file number.");
         ByteString key = getCurrentFileKey();
+        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
         ByteString value = retrieve(key);
+        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
 
         if (value == null) {
+            LOGGER.severe("Current file number could not be found.");
             throw new DatabaseException("Current file number could not be found.");
         }
+        LOGGER.fine("Got current file number.");
 
         return ByteUtil.toInt(value);
     }
 
     private void setCurrentFileNumber(int fileNumber) throws DatabaseException {
+        LOGGER.fine("Setting current file number.");
         ByteString key = getCurrentFileKey();
+        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
         ByteString value = ByteUtil.toByteString(fileNumber);
+        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
 
         store(key, value);
     }
