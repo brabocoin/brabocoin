@@ -74,7 +74,7 @@ public class Node {
         }
 
         @Override
-        public void sendBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
@@ -82,7 +82,7 @@ public class Node {
         }
 
         @Override
-        public void sendTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
