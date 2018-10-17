@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
  * A collection of transactions, part of the blockchain.
  */
 @ProtoClass(BrabocoinProtos.Block.class)
-public class Block {
+public class Block implements ProtoModel<Block> {
 
     /**
      * Hash of the previous block in the blockchain.
@@ -141,8 +143,13 @@ public class Block {
         return Collections.unmodifiableList(transactions);
     }
 
+    @Override
+    public Class<? extends ProtoBuilder<Block>> getBuilder() {
+        return Builder.class;
+    }
+
     @ProtoClass(BrabocoinProtos.Block.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<Block> {
 
         @ProtoField
         private Hash.Builder previousBlockHash;
@@ -193,20 +200,16 @@ public class Block {
             this.transactions = transactions;
         }
 
-        /**
-         * Creates a new block.
-         *
-         * @return The created block.
-         */
-        public Block createBlock() {
-            return new Block(previousBlockHash.createHash(),
-                    merkleRoot.createHash(),
-                    targetValue.createHash(),
+        @Override
+        public Block build() {
+            return new Block(previousBlockHash.build(),
+                    merkleRoot.build(),
+                    targetValue.build(),
                     nonce,
                     timestamp,
                     blockHeight,
                     transactions.stream()
-                            .map(Transaction.Builder::createTransaction)
+                            .map(Transaction.Builder::build)
                             .collect(Collectors.toList())
             );
         }

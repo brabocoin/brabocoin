@@ -75,7 +75,7 @@ public class Node {
 
         @Override
         public void sendBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
             // TODO: logging
@@ -83,7 +83,7 @@ public class Node {
 
         @Override
         public void sendTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
             // TODO: logging
@@ -94,7 +94,7 @@ public class Node {
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
-                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).createHash();
+                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
                     Block block = environment.getBlock(hash);
                     if (block == null) {
                         return;
@@ -123,7 +123,7 @@ public class Node {
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
-                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).createHash();
+                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
                     Transaction transaction = environment.getTransaction(hash);
                     if (transaction == null) {
                         return;
@@ -168,7 +168,7 @@ public class Node {
 
         @Override
         public void checkChainCompatible(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.ChainCompatibility> responseObserver) {
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             ChainCompatibility compatibility = new ChainCompatibility(environment.isChainCompatible(hash));
             responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.ChainCompatibility.class, compatibility));
             responseObserver.onCompleted();
@@ -176,7 +176,7 @@ public class Node {
 
         @Override
         public void seekBlockchain(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).createHash();
+            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             Iterator<Hash> blockIterator = environment.getBlocksAbove(hash);
             for (Iterator<Hash> it = blockIterator; it.hasNext(); ) {
                 Hash h = it.next();

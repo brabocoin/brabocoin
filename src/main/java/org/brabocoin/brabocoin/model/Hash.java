@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.model;
 import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * Represents a hash value.
  */
 @ProtoClass(BrabocoinProtos.Hash.class)
-public class Hash {
+public class Hash implements ProtoModel<Hash> {
 
     /**
      * Value of the hash.
@@ -33,6 +35,11 @@ public class Hash {
     }
 
     @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -52,7 +59,7 @@ public class Hash {
     }
 
     @ProtoClass(BrabocoinProtos.Hash.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<Hash> {
 
         @ProtoField
         private ByteString value;
@@ -62,12 +69,8 @@ public class Hash {
             return this;
         }
 
-        /**
-         * Creates the {@link Hash} object.
-         *
-         * @return The hash.
-         */
-        public Hash createHash() {
+        @Override
+        public Hash build() {
             return new Hash(value);
         }
     }
