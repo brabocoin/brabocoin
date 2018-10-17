@@ -7,13 +7,17 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PeerTest {
+
     /**
      * Creates a valid peer using a valid socket string.
-     *
-     * @throws MalformedSocketException
      */
     @Test
     void validPeerInstantiationString() throws MalformedSocketException {
@@ -23,13 +27,11 @@ class PeerTest {
     }
 
     /**
-     * Creates a valid peer using an instantiated
-     *
-     * @throws MalformedSocketException
-     * @throws UnknownHostException
+     * Creates a valid peer using an instantiated.
      */
     @Test
-    void validPeerInstantiationInetSocketAddress() throws MalformedSocketException, UnknownHostException {
+    void validPeerInstantiationInetSocketAddress() throws MalformedSocketException,
+                                                          UnknownHostException {
         InetSocketAddress address = new InetSocketAddress(InetAddress.getLocalHost(), 1);
         Peer p = new Peer(address);
         assertNotNull(p);
@@ -45,7 +47,8 @@ class PeerTest {
     }
 
     /**
-     * Tests for a MalformedSocketException on peer instantiation when passing a string with no colon.
+     * Tests for a MalformedSocketException on peer instantiation when passing a string with no
+     * colon.
      */
     @Test()
     void invalidPeerInstantiationNoColon() {
@@ -53,7 +56,8 @@ class PeerTest {
     }
 
     /**
-     * Tests for a MalformedSocketException on peer instantiation when passing a string with multiple colons.
+     * Tests for a MalformedSocketException on peer instantiation when passing a string with
+     * multiple colons.
      */
     @Test()
     void invalidPeerInstantiationMultipleColons() {
@@ -67,6 +71,7 @@ class PeerTest {
     void invalidPeerInstantiationNoHostname() {
         assertThrows(MalformedSocketException.class, () -> new Peer("----:123"));
     }
+
     /**
      * Tests for a MalformedSocketException on peer instantiation when passing an invalid hostname.
      */
@@ -76,7 +81,7 @@ class PeerTest {
     }
 
     /**
-     * Tests whether the stop method closes the peer channel
+     * Tests whether the stop method closes the peer channel.
      */
     @Test()
     void peerStop() throws MalformedSocketException {
@@ -86,7 +91,7 @@ class PeerTest {
     }
 
     /**
-     * Tests the blocking stub getter
+     * Tests the blocking stub getter.
      */
     @Test()
     void getBlockingStub() throws MalformedSocketException {
@@ -98,7 +103,7 @@ class PeerTest {
     }
 
     /**
-     * Tests the async stub getter
+     * Tests the async stub getter.
      */
     @Test()
     void getAsyncStub() throws MalformedSocketException {
@@ -110,7 +115,7 @@ class PeerTest {
     }
 
     /**
-     * Tests the toString method of a peer
+     * Tests the toString method of a peer.
      */
     @Test()
     void toStringTest() throws MalformedSocketException {
@@ -122,80 +127,80 @@ class PeerTest {
     }
 
     /**
-     * Test equals method for same object
+     * Test equals method for same object.
      */
     @Test
     void equalsSameObject() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
 
-        assertTrue(p.equals(p));
+        assertEquals(p, p);
 
         p.stop();
     }
 
     /**
-     * Test equals method for same hostname and port
+     * Test equals method for same hostname and port.
      */
     @Test
     void equalsSameSocket() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
         Peer p2 = new Peer("localhost:123");
 
-        assertTrue(p.equals(p2));
+        assertEquals(p, p2);
 
         p.stop();
         p2.stop();
     }
 
     /**
-     * Test equals method for same hostname and port
+     * Test equals method for same hostname and port.
      */
     @Test
     void equalsDiffSocketHostname() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
         Peer p2 = new Peer("bladiebla:123");
 
-        assertFalse(p.equals(p2));
+        assertNotEquals(p, p2);
 
         p.stop();
         p2.stop();
     }
 
     /**
-     * Test equals method for same hostname and port
+     * Test equals method for same hostname and port.
      */
     @Test
     void equalsDiffSocketPort() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
         Peer p2 = new Peer("localhost:145");
 
-        assertFalse(p.equals(p2));
+        assertNotEquals(p, p2);
 
         p.stop();
         p2.stop();
     }
 
     /**
-     * Test equals method for null
+     * Test equals method for {@code null}.
      */
     @Test
     void equalsNull() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
 
-        assertFalse(p.equals(null));
+        assertNotEquals(null, p);
 
         p.stop();
     }
 
     /**
-     * Test equals method for different object
+     * Test equals method for different object.
      */
     @Test
     void equalsDiffObject() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
         Object o = new Object();
 
-        assertFalse(p.equals(o));
+        assertNotEquals(p, o);
 
         p.stop();
     }
