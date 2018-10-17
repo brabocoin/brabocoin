@@ -1,8 +1,6 @@
 package org.brabocoin.brabocoin.model;
 
 import com.google.protobuf.ByteString;
-import net.badata.protobuf.converter.Converter;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.junit.jupiter.api.*;
 
 import java.util.ArrayList;
