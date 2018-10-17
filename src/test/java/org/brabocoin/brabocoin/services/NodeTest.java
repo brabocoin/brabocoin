@@ -159,6 +159,9 @@ class NodeTest {
         for (Block block : blocks) {
             assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
         }
+
+        nodeA.stop();
+        nodeB.stop();
     }
 
     @Test
@@ -228,6 +231,9 @@ class NodeTest {
         for (Transaction transaction : transactions) {
             assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
         }
+
+        nodeA.stop();
+        nodeB.stop();
     }
 
 }
