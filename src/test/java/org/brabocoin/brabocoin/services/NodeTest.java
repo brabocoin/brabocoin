@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
@@ -537,6 +538,52 @@ class NodeTest {
         assertEquals(transactions.size(), receivedTransactions.size());
         for (Transaction transaction : transactions) {
             assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
+        }
+
+        nodeA.stop();
+        nodeB.stop();
+    }
+
+    @Test
+    void seekTransactionPoolTest() throws DatabaseException, IOException {
+        BraboConfig config = new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8092");
+                }};
+            }
+        };
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(20, 20), 100);
+        Map<Hash, Transaction> transactionPool = new HashMap<>();
+        transactions.stream().forEach(t -> transactionPool.put(t.computeHash(), t));
+
+
+        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
+
+        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Iterator<BrabocoinProtos.Hash> receivedHashStream = nodeBpeer.blockingStub.seekTransactionPool(
+                Empty.newBuilder().build()
+        );
+
+        List<Hash> receivedHashes = new ArrayList<>();
+        receivedHashStream.forEachRemaining(h -> receivedHashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
+
+        assertEquals(transactions.size(), receivedHashes.size());
+        for (Transaction transaction : transactions) {
+            assertTrue(receivedHashes.contains(transaction.computeHash()));
         }
 
         nodeA.stop();
