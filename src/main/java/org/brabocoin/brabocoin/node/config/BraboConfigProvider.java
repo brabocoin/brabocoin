@@ -11,9 +11,12 @@ import org.cfg4j.source.files.FilesConfigurationSource;
 import java.nio.file.Paths;
 import java.util.Collections;
 
+/**
+ * Provides the default Brabocoin configuration.
+ */
 public class BraboConfigProvider {
-    private static String configFile = "application.yaml";
-    private static String configDirectory = "./config";
+    private final static String configFile = "application.yaml";
+    private final static String configDirectory = "./config";
 
     public static ConfigurationProvider getConfig() {
         final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(Paths.get(configFile));

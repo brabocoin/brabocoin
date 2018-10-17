@@ -41,14 +41,14 @@ public class Node {
         this.environment = environment;
     }
 
-    void start() throws IOException {
+    public void start() throws IOException {
         environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
     }
 
-    void stop() {
+    public void stop() {
         if (server != null) {
             server.shutdown();
         }
