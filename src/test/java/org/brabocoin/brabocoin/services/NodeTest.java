@@ -228,7 +228,7 @@ class NodeTest {
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
-        assertEquals(2, receivedTransactions.size());
+        assertEquals(transactions.size(), receivedTransactions.size());
         for (Transaction transaction : transactions) {
             assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
         }
