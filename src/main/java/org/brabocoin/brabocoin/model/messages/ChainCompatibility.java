@@ -2,10 +2,13 @@ package org.brabocoin.brabocoin.model.messages;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 
 @ProtoClass(BrabocoinProtos.ChainCompatibility.class)
-public class ChainCompatibility {
+public class ChainCompatibility implements ProtoModel<ChainCompatibility> {
+
     @ProtoField
     private boolean compatible;
 
@@ -13,7 +16,15 @@ public class ChainCompatibility {
         this.compatible = compatible;
     }
 
-    public static class Builder {
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
+    @ProtoClass(BrabocoinProtos.ChainCompatibility.class)
+    public static class Builder implements ProtoBuilder<ChainCompatibility> {
+
+        @ProtoField
         private boolean compatible;
 
         public Builder setCompatible(boolean compatible) {
@@ -21,7 +32,8 @@ public class ChainCompatibility {
             return this;
         }
 
-        public ChainCompatibility createChainCompatibility() {
+        @Override
+        public ChainCompatibility build() {
             return new ChainCompatibility(compatible);
         }
     }

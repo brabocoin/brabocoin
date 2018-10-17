@@ -8,6 +8,8 @@ import com.google.protobuf.Parser;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -184,7 +186,7 @@ public class BlockDatabase {
         }
 
         ByteString rawBlock = readRawBlockFromFile(blockInfo);
-        return parseProtoValue(rawBlock, Block.Builder.class, BrabocoinProtos.Block.parser()).createBlock();
+        return parseProtoValue(rawBlock, Block.Builder.class, BrabocoinProtos.Block.parser());
     }
 
     /**
@@ -199,7 +201,7 @@ public class BlockDatabase {
         ByteString key = getBlockKey(hash);
         ByteString value = retrieve(key);
 
-        return parseProtoValue(value, BlockInfo.Builder.class, BrabocoinStorageProtos.BlockInfo.parser()).createBlockInfo();
+        return parseProtoValue(value, BlockInfo.Builder.class, BrabocoinStorageProtos.BlockInfo.parser());
     }
 
     private ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
@@ -222,11 +224,11 @@ public class BlockDatabase {
         }
     }
 
-    private <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
-                                                               @NotNull Class<D> domainClass,
-                                                               @NotNull Parser<P> parser) throws DatabaseException {
+    private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
+                                                                                                             @NotNull Class<B> domainClassBuilder,
+                                                                                                             @NotNull Parser<P> parser) throws DatabaseException {
         try {
-            return ProtoConverter.parseProtoValue(value, domainClass, parser);
+            return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
         }
         catch (InvalidProtocolBufferException e) {
             throw new DatabaseException("Data could not be parsed", e);
@@ -274,14 +276,14 @@ public class BlockDatabase {
         return parseProtoValue(value,
                 BlockFileInfo.Builder.class,
                 BrabocoinStorageProtos.BlockFileInfo.parser()
-        ).createBlockFileInfo();
+        );
     }
 
     private ByteString getFileKey(int fileNumber) {
         return KEY_PREFIX_FILE.concat(ByteUtil.toByteString(fileNumber));
     }
 
-    private <D, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+    private <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
         return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
