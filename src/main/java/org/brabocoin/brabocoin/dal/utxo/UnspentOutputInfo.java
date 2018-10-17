@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.dal.utxo;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 
 /**
@@ -11,7 +13,7 @@ import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
  * @see UTXODatabase
  */
 @ProtoClass(BrabocoinStorageProtos.UnspentOutputInfo.class)
-public class UnspentOutputInfo {
+public class UnspentOutputInfo implements ProtoModel<UnspentOutputInfo> {
 
     /**
      * Whether the output is from a coinbase transaction.
@@ -84,11 +86,24 @@ public class UnspentOutputInfo {
         return address;
     }
 
-    public static class Builder {
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
 
+    @ProtoClass(BrabocoinStorageProtos.UnspentOutputInfo.class)
+    public static class Builder implements ProtoBuilder<UnspentOutputInfo> {
+
+        @ProtoField
         private boolean coinbase;
+
+        @ProtoField
         private int blockHeight;
+
+        @ProtoField
         private long amount;
+
+        @ProtoField
         private Hash.Builder address;
 
         public Builder setCoinbase(boolean coinbase) {
@@ -111,8 +126,9 @@ public class UnspentOutputInfo {
             return this;
         }
 
-        public UnspentOutputInfo createUnspentOutputInfo() {
-            return new UnspentOutputInfo(coinbase, blockHeight, amount, address.createHash());
+        @Override
+        public UnspentOutputInfo build() {
+            return new UnspentOutputInfo(coinbase, blockHeight, amount, address.build());
         }
     }
 }

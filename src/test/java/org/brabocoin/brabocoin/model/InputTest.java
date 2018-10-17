@@ -25,7 +25,7 @@ class InputTest {
         BrabocoinProtos.Input protoInput = Converter.create()
                 .toProtobuf(BrabocoinProtos.Input.class, input);
         Input inputReflecion = Converter.create()
-                .toDomain(Input.Builder.class, protoInput).createInput();
+                .toDomain(Input.Builder.class, protoInput).build();
 
         assertEquals(transactionHash, inputReflecion.getReferencedTransaction().getValue().toStringUtf8());
     }

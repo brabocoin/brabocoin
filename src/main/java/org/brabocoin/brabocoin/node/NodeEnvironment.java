@@ -5,7 +5,6 @@ import io.grpc.StatusRuntimeException;
 import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
-import org.brabocoin.brabocoin.dal.LevelDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.Block;
@@ -13,11 +12,9 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -32,20 +29,14 @@ public class NodeEnvironment {
     private Converter converter = Converter.create();
     private Map<Hash, Transaction> transactionPool = new HashMap<>();
 
-    public NodeEnvironment() throws DatabaseException {
-        config = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
-
-        // Create blockStore directory if not exists
-        File blockStoreDirectory = new File(config.blockStoreDirectory());
-        if (!blockStoreDirectory.exists()){
-            blockStoreDirectory.mkdirs();
-        }
-
-        database = new BlockDatabase(getKeyValueStorage(), blockStoreDirectory);
+    public NodeEnvironment(BlockDatabase database, BraboConfig config) {
+        this.config = config;
+        this.database = database;
     }
 
-    protected KeyValueStore getKeyValueStorage() {
-        return new LevelDB(new File(config.databaseDirectory()));
+    public NodeEnvironment(KeyValueStore store, BraboConfig config) throws DatabaseException {
+        this.config = config;
+        this.database = new BlockDatabase(store, config);
     }
 
     /**
@@ -212,10 +203,10 @@ public class NodeEnvironment {
             Peer handshakePeer = handshakePeers.remove(0);
             try {
                 // Perform a handshake with the peer
-                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
+                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
                         .handshake(Empty.newBuilder().build());
-                HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).createHandshakeResponse();
+                HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).build();
 
                 // We got a response from the current handshake peer, register this peer as valid
                 addPeer(handshakePeer);

@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.dal;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @see BlockDatabase
  */
 @ProtoClass(BrabocoinStorageProtos.BlockFileInfo.class)
-public class BlockFileInfo {
+public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
 
     /**
      * Number of full blocks that are stored in this file.
@@ -87,7 +89,7 @@ public class BlockFileInfo {
      */
     @Contract(" -> new")
     public static @NotNull BlockFileInfo createEmpty() {
-        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Long.MAX_VALUE).setHighestBlockHeight(0).setLowestBlockTimestamp(Long.MAX_VALUE).setHighestBlockTimestamp(0).createBlockFileInfo();
+        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Long.MAX_VALUE).setHighestBlockHeight(0).setLowestBlockTimestamp(Long.MAX_VALUE).setHighestBlockTimestamp(0).build();
     }
 
     public int getNumberOfBlocks() {
@@ -114,18 +116,29 @@ public class BlockFileInfo {
         return highestBlockTimestamp;
     }
 
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
     @ProtoClass(BrabocoinStorageProtos.BlockFileInfo.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<BlockFileInfo> {
+
         @ProtoField
         private int numberOfBlocks;
+
         @ProtoField
         private long size;
+
         @ProtoField
         private long lowestBlockHeight;
+
         @ProtoField
         private long highestBlockHeight;
+
         @ProtoField
         private long lowestBlockTimestamp;
+
         @ProtoField
         private long highestBlockTimestamp;
 
@@ -159,7 +172,8 @@ public class BlockFileInfo {
             return this;
         }
 
-        public BlockFileInfo createBlockFileInfo() {
+        @Override
+        public BlockFileInfo build() {
             return new BlockFileInfo(numberOfBlocks, size, lowestBlockHeight, highestBlockHeight, lowestBlockTimestamp, highestBlockTimestamp);
         }
     }

@@ -6,3 +6,4 @@ brabo:
   databaseDirectory: db               # Database subfolder
   blockStoreDirectory: data/blocks    # Subfolder to store block data
   utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data
+  maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)

@@ -11,6 +11,8 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -124,7 +126,7 @@ public class UTXODatabase {
         LOGGER.log(Level.FINEST, "value: {0}", value);
 
         return parseProtoValue(value,
-                UnspentOutputInfo.class,
+                UnspentOutputInfo.Builder.class,
                 BrabocoinStorageProtos.UnspentOutputInfo.parser()
         );
     }
@@ -136,12 +138,10 @@ public class UTXODatabase {
         return bytes;
     }
 
-    private <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
-                                                               @NotNull Class<D> domainClass,
-                                                               @NotNull Parser<P> parser) throws DatabaseException {
+    private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
         LOGGER.log(Level.FINEST, "Parsing proto value from byte array: {0}", value);
         try {
-            return ProtoConverter.parseProtoValue(value, domainClass, parser);
+            return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(Level.SEVERE, "Data parsing failed: {0}", e.getMessage());
             throw new DatabaseException("Data could not be parsed", e);
@@ -189,14 +189,17 @@ public class UTXODatabase {
             LOGGER.log(Level.FINEST, "Setting output to unspent, index: {0}, amount: {1}, blockheight: {2}, address: {3}", new Object[]{outputIndex, output.getAmount(), blockHeight, output.getAddress()});
 
             ByteString key = getOutputKey(transactionHash, outputIndex);
-            ByteString value = getRawProtoValue(info, BrabocoinStorageProtos.UnspentOutputInfo.class);
+            ByteString value = getRawProtoValue(
+                    info,
+                    BrabocoinStorageProtos.UnspentOutputInfo.class
+            );
 
             LOGGER.log(Level.FINE, "Storing key and value for outputIndex: {0}", outputIndex);
             store(key, value);
         }
     }
 
-    private <D, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+    private <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
         return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
@@ -232,7 +235,7 @@ public class UTXODatabase {
         ByteString value = retrieve(key);
         LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
 
-        Hash hash = parseProtoValue(value, Hash.class, BrabocoinProtos.Hash.parser());
+        Hash hash = parseProtoValue(value, Hash.Builder.class, BrabocoinProtos.Hash.parser());
 
         if (hash == null) {
             LOGGER.severe("Could not find last processed block");

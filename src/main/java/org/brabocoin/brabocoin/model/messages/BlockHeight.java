@@ -2,10 +2,13 @@ package org.brabocoin.brabocoin.model.messages;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 
 @ProtoClass(BrabocoinProtos.BlockHeight.class)
-public class BlockHeight {
+public class BlockHeight implements ProtoModel<BlockHeight> {
+
     @ProtoField
     private long height;
 
@@ -13,7 +16,15 @@ public class BlockHeight {
         this.height = height;
     }
 
-    public static class Builder {
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
+    @ProtoClass(BrabocoinProtos.BlockHeight.class)
+    public static class Builder implements ProtoBuilder<BlockHeight> {
+
+        @ProtoField
         private long height;
 
         public Builder setHeight(long height) {
@@ -21,7 +32,8 @@ public class BlockHeight {
             return this;
         }
 
-        public BlockHeight createBlockHeight() {
+        @Override
+        public BlockHeight build() {
             return new BlockHeight(height);
         }
     }

@@ -9,6 +9,9 @@ import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -21,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +43,7 @@ public class BlockDatabase {
     /**
      * Max block file size in bytes.
      */
-    private static final long MAX_FILE_SIZE = 128_000_000; // 128 MB
+    private final long maxFileSize;
 
     private final @NotNull KeyValueStore storage;
 
@@ -49,16 +53,17 @@ public class BlockDatabase {
      * Creates a new block database using provided the key-value store and directory for the
      * block files.
      *
-     * @param storage            The key-value store to use for the database.
-     * @param blockFileDirectory The directory in which to store the block files.
+     * @param storage
+     *         The key-value store to use for the database.
+     * @param config
+     *         The config used for this block database.
+     * @throws DatabaseException
+     *         When the database could not be initialized.
      */
-    public BlockDatabase(@NotNull KeyValueStore storage, @NotNull File blockFileDirectory) throws DatabaseException {
-        if (!blockFileDirectory.isDirectory()) {
-            throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
-        }
-
+    public BlockDatabase(@NotNull KeyValueStore storage, BraboConfig config) throws DatabaseException {
         this.storage = storage;
-        this.directory = blockFileDirectory;
+        this.directory = new File(config.blockStoreDirectory());
+        this.maxFileSize = config.maxBlockFileSize();
 
         initialize();
     }
@@ -72,6 +77,49 @@ public class BlockDatabase {
             registerNewBlockFile(0);
             LOGGER.fine("Current file key created.");
         }
+
+        // Create blockStore directory if not exists
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        // Check if directory exists
+        if (!directory.isDirectory()) {
+            throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
+        }
+    }
+
+    private ByteString getCurrentFileKey() {
+        return KEY_CURRENT_FILE;
+    }
+
+    /**
+     * Set the file information record in the database.
+     *
+     * @param fileNumber
+     *         The file number of which to set the information record.
+     * @param fileInfo
+     *         The file information record to store.
+     * @throws DatabaseException
+     *         When the file information could not be stored.
+     */
+    private void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
+        ByteString key = getFileKey(fileNumber);
+        ByteString value = getRawProtoValue(fileInfo, BrabocoinStorageProtos.BlockFileInfo.class);
+
+        store(key, value);
+    }
+
+    private ByteString getFileKey(int fileNumber) {
+        return KEY_PREFIX_FILE.concat(ByteUtil.toByteString(fileNumber));
+    }
+
+    private <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+        return ProtoConverter.toProto(domainObject, protoClass).toByteString();
+    }
+
+    private void store(ByteString key, ByteString value) throws DatabaseException {
+        storage.put(key, value);
     }
 
     /**
@@ -80,15 +128,17 @@ public class BlockDatabase {
      * Writes the full block data to a block file on disk and records a {@link BlockInfo} record in
      * the database.
      *
-     * @param block     The block to store.
-     * @param validated Whether the block is validated.
-     * @throws DatabaseException When the block could not be stored.
+     * @param block
+     *         The block to store.
+     * @param validated
+     *         Whether the block is validated.
+     * @throws DatabaseException
+     *         When the block could not be stored.
      */
     public void storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
         LOGGER.fine("Storing block.");
         // Get serialized block
-        BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(
-                block,
+        BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block,
                 BrabocoinProtos.Block.class
         );
         int size = protoBlock.getSerializedSize();
@@ -107,8 +157,7 @@ public class BlockDatabase {
         LOGGER.log(Level.FINE, "Updated file info.");
 
         // Write the block info to database
-        BlockInfo blockInfo = new BlockInfo(
-                block.getPreviousBlockHash(),
+        BlockInfo blockInfo = new BlockInfo(block.getPreviousBlockHash(),
                 block.getMerkleRoot(),
                 block.getTargetValue(),
                 block.getNonce(),
@@ -118,7 +167,8 @@ public class BlockDatabase {
                 validated,
                 fileNumber,
                 offsetInFile,
-                size);
+                size
+        );
         LOGGER.fine("Created BlockInfo for block to be stored.");
 
         ByteString key = getBlockKey(block.computeHash());
@@ -138,13 +188,13 @@ public class BlockDatabase {
         }
         LOGGER.fine("Found file info.");
 
-        BlockFileInfo newFileInfo = new BlockFileInfo(
-                fileInfo.getNumberOfBlocks() + 1,
+        BlockFileInfo newFileInfo = new BlockFileInfo(fileInfo.getNumberOfBlocks() + 1,
                 fileInfo.getSize() + serializedSize,
                 Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
                 Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
                 Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
-                Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp()));
+                Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
+        );
         LOGGER.fine("Created new file info for updated version.");
 
         setBlockFileInfo(fileNumber, newFileInfo);
@@ -152,23 +202,21 @@ public class BlockDatabase {
 
     private long writeProtoToFile(int fileNumber, @NotNull MessageLite proto) throws DatabaseException {
         LOGGER.fine("Writing proto to file.");
-        try {
-            String fileName = getBlockFileName(fileNumber);
-            LOGGER.log(Level.FINEST, "Got filename for blockfile: {0}", fileName);
-            FileOutputStream outputStream = new FileOutputStream(fileName, true);
-
-            long offsetInFile = outputStream.getChannel().position();
+        String fileName = getBlockFileName(fileNumber);
+        LOGGER.log(Level.FINEST, "Got filename for blockfile: {0}", fileName);
+        long offsetInFile;
+        try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
+            offsetInFile = outputStream.getChannel().position();
             LOGGER.log(Level.FINEST, "offsetInFile: {0}", offsetInFile);
-
             proto.writeTo(outputStream);
-            outputStream.close();
             LOGGER.log(Level.FINEST, "Data written to stream");
-
-            return offsetInFile;
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed writing to file: {0}", e.getMessage());
             throw new DatabaseException("Data could not be written to disk.", e);
         }
+
+        return offsetInFile;
     }
 
     private int nextFileNumber(int blockSize) throws DatabaseException {
@@ -183,8 +231,8 @@ public class BlockDatabase {
         }
         LOGGER.fine("Found file info.");
 
-        if (fileInfo.getSize() + blockSize <= MAX_FILE_SIZE) {
-            LOGGER.fine("Block fits in current file.");
+        if (fileInfo.getSize() + blockSize <= maxFileSize) {
+           LOGGER.fine("Block fits in current file.");
             return current;
         } else {
             LOGGER.fine("Registering next block file, block does not fit in current file.");
@@ -204,10 +252,12 @@ public class BlockDatabase {
     /**
      * Find the block with the given block hash.
      *
-     * @param hash The hash of the block to find.
+     * @param hash
+     *         The hash of the block to find.
      * @return The full block with the given hash, or {@code null} if no block with that hash is
      * stored in the database.
-     * @throws DatabaseException When the block could not be retrieved.
+     * @throws DatabaseException
+     *         When the block could not be retrieved.
      */
     public @Nullable Block findBlock(@NotNull Hash hash) throws DatabaseException {
         LOGGER.fine("Finding block for a given hash.");
@@ -222,16 +272,18 @@ public class BlockDatabase {
 
         ByteString rawBlock = readRawBlockFromFile(blockInfo);
         LOGGER.log(Level.FINEST, "Raw block data: {0}", toHexString(rawBlock));
-        return parseProtoValue(rawBlock, Block.Builder.class, BrabocoinProtos.Block.parser()).createBlock();
+        return parseProtoValue(rawBlock, Block.Builder.class, BrabocoinProtos.Block.parser());
     }
 
     /**
      * Find the block information from the database for the block with the given hash.
      *
-     * @param hash The hash of the block to find the block information for.
+     * @param hash
+     *         The hash of the block to find the block information for.
      * @return The block information from the database for the given block hash, or {@code null}
      * when the block hash is not present in the database.
-     * @throws DatabaseException When the block information could not be retrieved.
+     * @throws DatabaseException
+     *         When the block information could not be retrieved.
      */
     public @Nullable BlockInfo findBlockInfo(@NotNull Hash hash) throws DatabaseException {
         LOGGER.fine("Finding block info for a given hash.");
@@ -240,34 +292,36 @@ public class BlockDatabase {
         ByteString value = retrieve(key);
         LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
 
-        return parseProtoValue(value, BlockInfo.Builder.class, BrabocoinStorageProtos.BlockInfo.parser()).createBlockInfo();
+        return parseProtoValue(
+                value,
+                BlockInfo.Builder.class,
+                BrabocoinStorageProtos.BlockInfo.parser()
+        );
     }
 
     private ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         String fileName = getBlockFileName(blockInfo.getFileNumber());
+        byte[] data;
 
-        try {
-            InputStream inputStream = new FileInputStream(fileName);
-
+        try (InputStream inputStream = new FileInputStream(fileName)) {
             long offset = blockInfo.getOffsetInFile();
             int size = blockInfo.getSizeInFile();
 
-            byte[] data = new byte[size];
+            data = new byte[size];
 
             inputStream.skip(offset);
             inputStream.read(data);
-
-            return ByteString.copyFrom(data);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new DatabaseException("Block could not be read from file.", e);
         }
+
+        return ByteString.copyFrom(data);
     }
 
-    private <D, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value,
-                                                               @NotNull Class<D> domainClass,
-                                                               @NotNull Parser<P> parser) throws DatabaseException {
+    private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
         try {
-            return ProtoConverter.parseProtoValue(value, domainClass, parser);
+            return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
         }
         catch (InvalidProtocolBufferException e) {
             throw new DatabaseException("Data could not be parsed", e);
@@ -283,30 +337,18 @@ public class BlockDatabase {
     }
 
     private String getBlockFileName(int fileNumber) {
-        return this.directory.getPath() + File.pathSeparator + "blk" + fileNumber + ".dat";
-    }
-
-    /**
-     * Set the file information record in the database.
-     *
-     * @param fileNumber The file number of which to set the information record.
-     * @param fileInfo   The file information record to store.
-     * @throws DatabaseException When the file information could not be stored.
-     */
-    public void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
-        ByteString key = getFileKey(fileNumber);
-        ByteString value = getRawProtoValue(fileInfo, BrabocoinStorageProtos.BlockFileInfo.class);
-
-        store(key, value);
+        return Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
     }
 
     /**
      * Find the file information for the given file number.
      *
-     * @param fileNumber The file number to find the file information for.
+     * @param fileNumber
+     *         The file number to find the file information for.
      * @return The file information record, or {@code null} if the record for the given file
      * number is not present in the database.
-     * @throws DatabaseException When the file information could not be retrieved.
+     * @throws DatabaseException
+     *         When the file information could not be retrieved.
      */
     public @Nullable BlockFileInfo findBlockFileInfo(int fileNumber) throws DatabaseException {
         ByteString key = getFileKey(fileNumber);
@@ -315,15 +357,7 @@ public class BlockDatabase {
         return parseProtoValue(value,
                 BlockFileInfo.Builder.class,
                 BrabocoinStorageProtos.BlockFileInfo.parser()
-        ).createBlockFileInfo();
-    }
-
-    private ByteString getFileKey(int fileNumber) {
-        return KEY_PREFIX_FILE.concat(ByteUtil.toByteString(fileNumber));
-    }
-
-    private <D, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
-        return ProtoConverter.toProto(domainObject, protoClass).toByteString();
+        );
     }
 
     private int getCurrentFileNumber() throws DatabaseException {
@@ -342,13 +376,5 @@ public class BlockDatabase {
         ByteString value = ByteUtil.toByteString(fileNumber);
 
         store(key, value);
-    }
-
-    private ByteString getCurrentFileKey() {
-        return KEY_CURRENT_FILE;
-    }
-
-    private void store(ByteString key, ByteString value) throws DatabaseException {
-        storage.put(key, value);
     }
 }

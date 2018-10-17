@@ -45,7 +45,7 @@ class TransactionTest {
         BrabocoinProtos.Transaction protoTransaction = Converter.create()
                 .toProtobuf(BrabocoinProtos.Transaction.class, transaction);
         Transaction transactionReflection = Converter.create()
-                .toDomain(Transaction.Builder.class, protoTransaction).createTransaction();
+                .toDomain(Transaction.Builder.class, protoTransaction).build();
 
         assertEquals(2, transactionReflection.getInputs().size());
         assertEquals(2, transactionReflection.getOutputs().size());

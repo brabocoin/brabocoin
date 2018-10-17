@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
+import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
  * Transaction with brabocoin inputs and outputs.
  */
 @ProtoClass(BrabocoinProtos.Transaction.class)
-public class Transaction {
+public class Transaction implements ProtoModel<Transaction> {
 
     /**
      * Inputs used by the transaction.
@@ -78,8 +80,13 @@ public class Transaction {
         return ProtoConverter.toProto(this, BrabocoinProtos.Transaction.class).toByteString();
     }
 
+    @Override
+    public Class<? extends ProtoBuilder> getBuilder() {
+        return Builder.class;
+    }
+
     @ProtoClass(BrabocoinProtos.Transaction.class)
-    public static class Builder {
+    public static class Builder implements ProtoBuilder<Transaction> {
 
         @ProtoField
         private List<Input.Builder> inputs;
@@ -96,10 +103,11 @@ public class Transaction {
             return this;
         }
 
-        public Transaction createTransaction() {
+        @Override
+        public Transaction build() {
             return new Transaction(
-                    inputs.stream().map(Input.Builder::createInput).collect(Collectors.toList()),
-                    outputs.stream().map(Output.Builder::createOutput).collect(Collectors.toList())
+                    inputs.stream().map(Input.Builder::build).collect(Collectors.toList()),
+                    outputs.stream().map(Output.Builder::build).collect(Collectors.toList())
             );
         }
     }
