@@ -174,18 +174,7 @@ class NodeTest {
                     add("localhost:8092");
                 }};
             }
-
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
         };
-
-        // Create blockStore directory if not exists
-        File blockStoreDirectory = new File(config.blockStoreDirectory());
-        if (!blockStoreDirectory.exists()){
-            blockStoreDirectory.mkdirs();
-        }
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
         List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
@@ -206,6 +195,43 @@ class NodeTest {
 
         nodeA.start();
         nodeB.start();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        List<Transaction> receivedTransactions = new ArrayList<>();
+        final CountDownLatch finishLatch = new CountDownLatch(1);
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+            @Override
+            public void onNext(BrabocoinProtos.Transaction value) {
+                receivedTransactions.add(Converter.create().toDomain(Transaction.Builder.class, value).createTransaction());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                finishLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                finishLatch.countDown();
+            }
+        });
+
+        for (Transaction transaction : transactions) {
+            requestObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.Hash.class, transaction.computeHash()));
+        }
+        requestObserver.onCompleted();
+
+        finishLatch.await(1, TimeUnit.MINUTES);
+
+        List<ByteString> receivedTransactionHashes = receivedTransactions.stream()
+                .map(Transaction::computeHash)
+                .map(Hash::getValue)
+                .collect(Collectors.toList());
+
+        assertEquals(2, receivedTransactions.size());
+        for (Transaction transaction : transactions) {
+            assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
+        }
     }
 
 }

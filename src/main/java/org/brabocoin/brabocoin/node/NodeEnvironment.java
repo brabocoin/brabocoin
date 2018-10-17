@@ -151,7 +151,7 @@ public class NodeEnvironment {
      * @return Transaction instance or null if not found.
      */
     public Transaction getTransaction(@NotNull Hash transactionHash) {
-        return null;
+        return transactionPool.get(transactionHash);
     }
 
     /**
