@@ -1,6 +1,5 @@
 package org.brabocoin.brabocoin.testutil;
 
-import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -14,23 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 public class MockEnvironment extends NodeEnvironment {
-    public MockEnvironment(BraboConfig mockConfig) throws DatabaseException {
-        super();
-        this.config = mockConfig;
-    }
-
-    public MockEnvironment(BraboConfig mockConfig, BlockDatabase database) throws DatabaseException {
-        super(database);
-        this.config = mockConfig;
-    }
-
-    public MockEnvironment(BraboConfig mockConfig, Map<Hash, Transaction> transactions) throws DatabaseException {
-        super(transactions);
-        this.config = mockConfig;
-    }
-
-    @Override
-    protected KeyValueStore createKeyValueStorage() {
-        return new HashMapDB();
+    public MockEnvironment(KeyValueStore store, BraboConfig config, List<Block> initialBlocks) throws DatabaseException {
+        super(store, config);
+        for (Block b : initialBlocks) {
+            database.storeBlock(b, true);
+        }
     }
 }

@@ -5,7 +5,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import net.badata.protobuf.converter.Converter;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -33,27 +32,23 @@ public class Node {
      */
     private final int listenPort;
     private final Server server;
-    public NodeEnvironment environment;
+    NodeEnvironment environment;
 
-    public Node(final int listenPort) {
+    public Node(final int listenPort, NodeEnvironment environment) {
         this.listenPort = listenPort;
         this.server = ServerBuilder.forPort(listenPort)
                 .addService(new NodeService()).build();
+        this.environment = environment;
     }
 
-    protected NodeEnvironment createEnvironment() throws DatabaseException {
-        return new NodeEnvironment();
-    }
-
-    public void start() throws IOException, DatabaseException {
-        environment = createEnvironment();
+    void start() throws IOException {
         environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
     }
 
-    public void stop() {
+    void stop() {
         if (server != null) {
             server.shutdown();
         }

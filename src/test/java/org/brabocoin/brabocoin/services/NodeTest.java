@@ -5,18 +5,17 @@ import io.grpc.stub.StreamObserver;
 import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.LevelDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockEnvironment;
-import org.brabocoin.brabocoin.testutil.MockNode;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.Test;
 
@@ -38,20 +37,20 @@ class NodeTest {
 
     @Test
     void handshakeTest() throws IOException, DatabaseException {
-        Node nodeA = new MockNode(8091, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node nodeA = new Node(8091, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
         }));
-        Node nodeB = new MockNode(8092, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
         }));
 
-        Node responder = new MockNode(8090, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node responder = new Node(8090, new NodeEnvironment(new HashMapDB(),new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -60,7 +59,7 @@ class NodeTest {
                 }};
             }
         }));
-        Node greeter = new MockNode(8089, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node greeter = new Node(8089, new NodeEnvironment(new HashMapDB(),new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -86,7 +85,8 @@ class NodeTest {
 
     @Test
     void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Node nodeA = new Node(8091, new MockEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -115,7 +115,7 @@ class NodeTest {
 
         Node nodeA = new MockNode(8091, new MockEnvironment(config, database));
 
-        Node nodeB = new MockNode(8092, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
