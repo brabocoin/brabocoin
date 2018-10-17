@@ -143,7 +143,7 @@ public class UTXODatabase {
         try {
             return ProtoConverter.parseProtoValue(value, domainClass, parser);
         } catch (InvalidProtocolBufferException e) {
-            LOGGER.severe("Data parsing failed.");
+            LOGGER.log(Level.SEVERE, "Data parsing failed: {0}", e.getMessage());
             throw new DatabaseException("Data could not be parsed", e);
         }
     }

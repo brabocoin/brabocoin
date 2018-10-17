@@ -20,7 +20,7 @@ public final class Hashing {
     private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
 
     static {
-        LOGGER.fine("Hashing class initialized.");
+        LOGGER.fine("Hashing class initializing.");
         Security.addProvider(new BouncyCastleProvider());
     }
 
