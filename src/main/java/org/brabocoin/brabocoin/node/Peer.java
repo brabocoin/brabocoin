@@ -147,6 +147,15 @@ public class Peer {
         return String.format("%s:%d (%s)", socket.getHostString(), socket.getPort(), isRunning() ? "running" : "closed");
     }
 
+    /**
+     * Gets the socket string for this peer.
+     *
+     * @return Socket string in {ip}:{port} format.
+     */
+    public String toSocketString() {
+        return String.format("%s:%d", socket.getHostString(), socket.getPort());
+    }
+
     @Override
     public int hashCode() {
         return socket.hashCode();

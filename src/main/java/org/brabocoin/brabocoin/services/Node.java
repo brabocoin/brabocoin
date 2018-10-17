@@ -67,7 +67,7 @@ public class Node {
     private class NodeService extends NodeGrpc.NodeImplBase {
         @Override
         public void handshake(Empty request, StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
-            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toString).collect(Collectors.toList()));
+            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
             responseObserver.onNext(Converter.create().toProtobuf(BrabocoinProtos.HandshakeResponse.class, response));
             responseObserver.onCompleted();
             // TODO: logging
