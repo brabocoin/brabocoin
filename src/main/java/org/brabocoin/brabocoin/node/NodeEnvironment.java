@@ -24,19 +24,21 @@ import java.util.concurrent.TimeUnit;
 public class NodeEnvironment {
     protected BraboConfig config;
 
-    protected BlockDatabase database;
+    private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
     private Converter converter = Converter.create();
-    private Map<Hash, Transaction> transactionPool = new HashMap<>();
+    private Map<Hash, Transaction> transactionPool;
 
-    public NodeEnvironment(BlockDatabase database, BraboConfig config) {
+    public NodeEnvironment(BlockDatabase database, Map<Hash, Transaction> transactionPool, BraboConfig config) {
         this.config = config;
         this.database = database;
+        this.transactionPool = transactionPool;
     }
 
-    public NodeEnvironment(KeyValueStore store, BraboConfig config) throws DatabaseException {
+    public NodeEnvironment(KeyValueStore store, Map<Hash, Transaction> transactionPool, BraboConfig config) throws DatabaseException {
         this.config = config;
         this.database = new BlockDatabase(store, config);
+        this.transactionPool = transactionPool;
     }
 
     /**

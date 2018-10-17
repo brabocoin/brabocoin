@@ -15,11 +15,10 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
-import org.brabocoin.brabocoin.testutil.MockEnvironment;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,24 +32,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NodeTest {
-    BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+    static BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+
+    @BeforeAll
+    static void setUp() {
+        defaultConfig = new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return "src/test/resources/" + super.blockStoreDirectory();
+            }
+        };
+    }
 
     @Test
     void handshakeTest() throws IOException, DatabaseException {
-        Node nodeA = new Node(8091, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
+        Node nodeA = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
         }));
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
+        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
         }));
 
-        Node responder = new Node(8090, new NodeEnvironment(new HashMapDB(),new MockBraboConfig(defaultConfig) {
+        Node responder = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -59,7 +68,7 @@ class NodeTest {
                 }};
             }
         }));
-        Node greeter = new Node(8089, new NodeEnvironment(new HashMapDB(),new MockBraboConfig(defaultConfig) {
+        Node greeter = new Node(8089, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -85,37 +94,24 @@ class NodeTest {
 
     @Test
     void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        Node nodeA = new Node(8091, new MockEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
+        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
                     add("localhost:8092");
                 }};
             }
-
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
         };
 
-        // Create blockStore directory if not exists
-        File blockStoreDirectory = new File(config.blockStoreDirectory());
-        if (!blockStoreDirectory.exists()){
-            blockStoreDirectory.mkdirs();
-        }
-
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), blockStoreDirectory);
-
+        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b, true);
         }
 
-        Node nodeA = new MockNode(8091, new MockEnvironment(config, database));
+        Node nodeA = new Node(8091, new NodeEnvironment(database, new HashMap<>(), config));
 
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new MockBraboConfig(defaultConfig) {
+        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -166,7 +162,7 @@ class NodeTest {
     }
 
     @Test
-    void getTransactionsTest() throws DatabaseException, IOException, InterruptedException {
+    void getTransactionsTest() throws IOException, InterruptedException, DatabaseException {
         BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
@@ -182,9 +178,9 @@ class NodeTest {
             transactionPool.put(t.computeHash(),t);
         }
 
-        Node nodeA = new MockNode(8091, new MockEnvironment(config, transactionPool));
+        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
 
-        Node nodeB = new MockNode(8092, new MockEnvironment(new MockBraboConfig(defaultConfig) {
+        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
