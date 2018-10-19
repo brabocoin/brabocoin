@@ -51,7 +51,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * Height of the block in the blockchain.
      */
     @ProtoField
-    private final long blockHeight;
+    private final int blockHeight;
 
     /**
      * The number of transactions in the block, including the coinbase transaction.
@@ -108,7 +108,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      */
     public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                      @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
-                     long blockHeight, int transactionCount, boolean validated, int fileNumber,
+                     int blockHeight, int transactionCount, boolean validated, int fileNumber,
                      long offsetInFile, int sizeInFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
@@ -123,7 +123,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.sizeInFile = sizeInFile;
     }
 
-    public long getBlockHeight() {
+    public int getBlockHeight() {
         return blockHeight;
     }
 
@@ -190,7 +190,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         private long timestamp;
 
         @ProtoField
-        private long blockHeight;
+        private int blockHeight;
 
         @ProtoField
         private int transactionCount;
@@ -232,7 +232,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setBlockHeight(long blockHeight) {
+        public Builder setBlockHeight(int blockHeight) {
             this.blockHeight = blockHeight;
             return this;
         }

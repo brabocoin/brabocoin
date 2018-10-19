@@ -32,13 +32,13 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      * Minimum block height of all the blocks stored in the file.
      */
     @ProtoField
-    private long lowestBlockHeight;
+    private int lowestBlockHeight;
 
     /**
      * Maximum block height of all the blocks stored in the file.
      */
     @ProtoField
-    private long highestBlockHeight;
+    private int highestBlockHeight;
 
     /**
      * Earliest timestamp of all the blocks stored in the file.
@@ -68,8 +68,8 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      * @param highestBlockTimestamp
      *         Latest timestamp of all the blocks stored in the file.
      */
-    public BlockFileInfo(int numberOfBlocks, long size, long lowestBlockHeight,
-                         long highestBlockHeight, long lowestBlockTimestamp,
+    public BlockFileInfo(int numberOfBlocks, long size, int lowestBlockHeight,
+                         int highestBlockHeight, long lowestBlockTimestamp,
                          long highestBlockTimestamp) {
         this.numberOfBlocks = numberOfBlocks;
         this.size = size;
@@ -89,7 +89,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      */
     @Contract(" -> new")
     public static @NotNull BlockFileInfo createEmpty() {
-        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Long.MAX_VALUE).setHighestBlockHeight(0).setLowestBlockTimestamp(Long.MAX_VALUE).setHighestBlockTimestamp(0).build();
+        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Integer.MAX_VALUE).setHighestBlockHeight(0).setLowestBlockTimestamp(Long.MAX_VALUE).setHighestBlockTimestamp(0).build();
     }
 
     public int getNumberOfBlocks() {
@@ -100,11 +100,11 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
         return size;
     }
 
-    public long getLowestBlockHeight() {
+    public int getLowestBlockHeight() {
         return lowestBlockHeight;
     }
 
-    public long getHighestBlockHeight() {
+    public int getHighestBlockHeight() {
         return highestBlockHeight;
     }
 
@@ -131,10 +131,10 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
         private long size;
 
         @ProtoField
-        private long lowestBlockHeight;
+        private int lowestBlockHeight;
 
         @ProtoField
-        private long highestBlockHeight;
+        private int highestBlockHeight;
 
         @ProtoField
         private long lowestBlockTimestamp;
@@ -152,12 +152,12 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
             return this;
         }
 
-        public Builder setLowestBlockHeight(long lowestBlockHeight) {
+        public Builder setLowestBlockHeight(int lowestBlockHeight) {
             this.lowestBlockHeight = lowestBlockHeight;
             return this;
         }
 
-        public Builder setHighestBlockHeight(long highestBlockHeight) {
+        public Builder setHighestBlockHeight(int highestBlockHeight) {
             this.highestBlockHeight = highestBlockHeight;
             return this;
         }

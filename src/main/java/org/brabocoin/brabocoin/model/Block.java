@@ -55,7 +55,7 @@ public class Block implements ProtoModel<Block> {
      * The height of the block in the block chain.
      */
     @ProtoField
-    private final long blockHeight;
+    private final int blockHeight;
 
     /**
      * The transactions contained in this block.
@@ -83,7 +83,7 @@ public class Block implements ProtoModel<Block> {
      */
     public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                  @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
-                 long blockHeight, List<Transaction> transactions) {
+                 int blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -135,7 +135,7 @@ public class Block implements ProtoModel<Block> {
         return timestamp;
     }
 
-    public long getBlockHeight() {
+    public int getBlockHeight() {
         return blockHeight;
     }
 
@@ -162,7 +162,7 @@ public class Block implements ProtoModel<Block> {
         @ProtoField
         private long timestamp;
         @ProtoField
-        private long blockHeight;
+        private int blockHeight;
         @ProtoField
         private List<Transaction.Builder> transactions;
 
@@ -191,8 +191,9 @@ public class Block implements ProtoModel<Block> {
             return this;
         }
 
-        public void setBlockHeight(long blockHeight) {
+        public Builder setBlockHeight(int blockHeight) {
             this.blockHeight = blockHeight;
+            return this;
         }
 
         @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")

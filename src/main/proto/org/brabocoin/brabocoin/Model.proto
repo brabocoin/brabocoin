@@ -40,7 +40,7 @@ message Block {
     Hash merkleRoot = 2;
     Hash targetValue = 3;
     bytes nonce = 4;
-    int64 blockHeight = 5;
+    int32 blockHeight = 5;
     int64 timestamp = 6;
     repeated Transaction transactions = 7;
 }

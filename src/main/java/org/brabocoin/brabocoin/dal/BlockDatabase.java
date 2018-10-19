@@ -129,10 +129,19 @@ public class BlockDatabase {
      *         The block to store.
      * @param validated
      *         Whether the block is validated.
+     * @return The block information of the added block.
      * @throws DatabaseException
      *         When the block could not be stored.
      */
-    public void storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
+    public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
+        Hash hash = block.computeHash();
+        ByteString key = getBlockKey(hash);
+
+        // Check if block is already stored
+        if (storage.has(key)) {
+            return setBlockValidationStatus(hash, validated);
+        }
+
         // Get serialized block
         BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block,
                 BrabocoinProtos.Block.class
@@ -162,9 +171,49 @@ public class BlockDatabase {
                 size
         );
 
-        ByteString key = getBlockKey(block.computeHash());
         ByteString value = getRawProtoValue(blockInfo, BrabocoinStorageProtos.BlockInfo.class);
         store(key, value);
+
+        return blockInfo;
+    }
+
+    /**
+     * Sets the validation status of the block with the given hash.
+     *
+     * @param blockHash
+     *         The hash of the block.
+     * @param validated
+     *         The validation status.
+     * @return The updated block information.
+     * @throws DatabaseException
+     *         When the block is not stored in the database, or when the new status could not be
+     *         written to the database.
+     */
+    public @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash, boolean validated) throws DatabaseException {
+        ByteString key = getBlockKey(blockHash);
+        BlockInfo info = findBlockInfo(blockHash);
+
+        if (info == null) {
+            throw new DatabaseException("Block is not stored in database.");
+        }
+
+        BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
+                info.getMerkleRoot(),
+                info.getTargetValue(),
+                info.getNonce(),
+                info.getTimestamp(),
+                info.getBlockHeight(),
+                info.getTransactionCount(),
+                validated,
+                info.getFileNumber(),
+                info.getOffsetInFile(),
+                info.getSizeInFile()
+        );
+
+        ByteString value = getRawProtoValue(newInfo, BrabocoinStorageProtos.BlockInfo.class);
+        store(key, value);
+
+        return info;
     }
 
     private void updateFileInfo(int fileNumber, @NotNull Block block, int serializedSize) throws DatabaseException {
@@ -189,7 +238,7 @@ public class BlockDatabase {
         String fileName = getBlockFileName(fileNumber);
         long offsetInFile;
         try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
-             offsetInFile = outputStream.getChannel().position();
+            offsetInFile = outputStream.getChannel().position();
             proto.writeTo(outputStream);
         }
         catch (IOException e) {
@@ -251,8 +300,7 @@ public class BlockDatabase {
         ByteString key = getBlockKey(hash);
         ByteString value = retrieve(key);
 
-        return parseProtoValue(
-                value,
+        return parseProtoValue(value,
                 BlockInfo.Builder.class,
                 BrabocoinStorageProtos.BlockInfo.parser()
         );
@@ -297,6 +345,20 @@ public class BlockDatabase {
 
     private String getBlockFileName(int fileNumber) {
         return Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
+    }
+
+    /**
+     * Check whether the block with the given hash is stored in the database.
+     *
+     * @param hash
+     *         The hash of the block.
+     * @return Whether the block is stored in the database.
+     * @throws DatabaseException
+     *         When the block information could not be retrieved.
+     */
+    public boolean hasBlock(@NotNull Hash hash) throws DatabaseException {
+        ByteString key = getBlockKey(hash);
+        return storage.has(key);
     }
 
     /**
