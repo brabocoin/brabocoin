@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.dal.BlockInfo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.utxo.UTXOSet;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,11 @@ public class Blockchain {
     private final @NotNull BlockDatabase database;
 
     /**
+     * UTXO set.
+     */
+    private final @NotNull UTXOSet utxoSet;
+
+    /**
      * Block validator.
      */
     private final @NotNull BlockValidator blockValidator;
@@ -50,11 +56,15 @@ public class Blockchain {
      *
      * @param database
      *     The block database backend.
+     * @param utxoSet
+     *     The UTXO set.
      * @param blockValidator
      *     The block validator.
      */
-    public Blockchain(@NotNull BlockDatabase database, @NotNull BlockValidator blockValidator) {
+    public Blockchain(@NotNull BlockDatabase database, @NotNull UTXOSet utxoSet,
+                      @NotNull BlockValidator blockValidator) {
         this.database = database;
+        this.utxoSet = utxoSet;
         this.blockValidator = blockValidator;
         this.mainChain = new IndexedChain();
         this.orphanMap = HashMultimap.create();
@@ -291,7 +301,19 @@ public class Blockchain {
             return;
         }
 
-        // TODO: do chain reorganization and update transaction pool
+        // Get block at up to which the main chain needs to be reverted
+        IndexedBlock revertTargetBlock = fork.pop();
+
+        // Revert chain state to target block by disconnecting tip blocks
+        while (!revertTargetBlock.equals(mainChain.getTipBlock())) {
+            disconnectTip();
+        }
+
+        // Connect the blocks in the new fork
+        while (!fork.isEmpty()) {
+            IndexedBlock newBlock = fork.pop();
+            connectTip(newBlock);
+        }
     }
 
     /**
@@ -316,7 +338,7 @@ public class Blockchain {
 
         // Backtrack to the main chain, loading previous blocks from the database
         while (parent != null && !mainChain.contains(parent)) {
-            fork.add(parent);
+            fork.push(parent);
             parent = getIndexedBlock(parent.getBlockInfo().getPreviousBlockHash());
         }
 
@@ -326,8 +348,63 @@ public class Blockchain {
         }
 
         // Add the fork block in the main chain as well so we know where to update
-        fork.add(parent);
+        fork.push(parent);
         return fork;
+    }
+
+    /**
+     * Disconnects the current tip block from the main chain, while updating the chain state to
+     * account for the changed main chain.
+     * <p>
+     * The tip is removed from the main chain, and the UTXO set and transaction pool are updated
+     * accordingly.
+     *
+     * @throws DatabaseException
+     *     When the blocks database is not available.
+     */
+    private void disconnectTip() throws DatabaseException {
+        IndexedBlock tip = mainChain.getTipBlock();
+
+        if (tip == null) {
+            return;
+        }
+
+        // Read block from disk
+        Block block = database.findBlock(tip.getHash());
+        assert block != null;
+
+        // Update UTXO set
+        utxoSet.processBlockDisconnected(block);
+
+        // TODO: update mempool
+
+        // Set the new tip to the parent of the previous tip
+        mainChain.popTipBlock();
+    }
+
+    /**
+     * Connects the given block as the new tip to the main chain, while updating the chain state
+     * to account for the changed main chain.
+     * <p>
+     * The block is added to the main chain, and the UTXO set and transaction pool are updated
+     * accordingly.
+     *
+     * @param tip
+     *     The block to be added as the new tip.
+     * @throws DatabaseException
+     *     When the blocks database is not available.
+     */
+    private void connectTip(@NotNull IndexedBlock tip) throws DatabaseException {
+        // Read block from disk
+        Block block = database.findBlock(tip.getHash());
+        assert block != null;
+
+        utxoSet.processBlockConnected(block);
+
+        // TODO: remove transactions from mempool
+
+        // Set the new tip in the main chain
+        mainChain.pushTipBlock(tip);
     }
 
     /**

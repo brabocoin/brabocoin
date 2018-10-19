@@ -44,7 +44,7 @@ public class IndexedChain {
      * Get the successor block of the given block in this chain.
      *
      * @param block
-     *         The block of which to retrieve the successor of.
+     *     The block of which to retrieve the successor of.
      * @return The successor of the given block, or {@code null} no successor block is found.
      */
     public @Nullable IndexedBlock getNextBlock(@NotNull IndexedBlock block) {
@@ -55,7 +55,7 @@ public class IndexedChain {
      * Check whether the block is contained on the chain.
      *
      * @param block
-     *         The block to check.
+     *     The block to check.
      * @return Whether the block is present on the chain.
      */
     public boolean contains(@NotNull IndexedBlock block) {
@@ -66,7 +66,7 @@ public class IndexedChain {
      * Get the block at the specified height in this chain.
      *
      * @param height
-     *         The height of the requested block.
+     *     The height of the requested block.
      * @return The block at the specified height, or {@code null} if no block at such height
      * exists in this chain.
      */
@@ -86,5 +86,24 @@ public class IndexedChain {
      */
     public int getHeight() {
         return this.chain.size() - 1;
+    }
+
+    /**
+     * Removes and returns the tip of the chain.
+     *
+     * @return The tip block of the chain, or {@code null} if the chain was empty.
+     */
+    @Nullable IndexedBlock popTipBlock() {
+        return this.chain.remove(this.chain.size() - 1);
+    }
+
+    /**
+     * Adds the given block as tip to the chain.
+     *
+     * @param block
+     *     The block to add.
+     */
+    void pushTipBlock(@NotNull IndexedBlock block) {
+        this.chain.add(block);
     }
 }
