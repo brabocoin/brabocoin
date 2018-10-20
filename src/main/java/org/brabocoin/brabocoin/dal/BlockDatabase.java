@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -48,11 +49,11 @@ public class BlockDatabase {
      * block files.
      *
      * @param storage
-     *         The key-value store to use for the database.
+     *     The key-value store to use for the database.
      * @param config
-     *         The config used for this block database.
+     *     The config used for this block database.
      * @throws DatabaseException
-     *         When the database could not be initialized.
+     *     When the database could not be initialized.
      */
     public BlockDatabase(@NotNull KeyValueStore storage, BraboConfig config) throws DatabaseException {
         this.storage = storage;
@@ -94,11 +95,11 @@ public class BlockDatabase {
      * Set the file information record in the database.
      *
      * @param fileNumber
-     *         The file number of which to set the information record.
+     *     The file number of which to set the information record.
      * @param fileInfo
-     *         The file information record to store.
+     *     The file information record to store.
      * @throws DatabaseException
-     *         When the file information could not be stored.
+     *     When the file information could not be stored.
      */
     private void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
         ByteString key = getFileKey(fileNumber);
@@ -124,14 +125,18 @@ public class BlockDatabase {
      * <p>
      * Writes the full block data to a block file on disk and records a {@link BlockInfo} record in
      * the database.
+     * <p>
+     * Note that the revert file information is not available when
+     * {@link BlockDatabase#storeBlockUndo(IndexedBlock, BlockUndo)} has not yet been called on
+     * the block. In that case, the offset and size field for the revert file are set to {@code 0}.
      *
      * @param block
-     *         The block to store.
+     *     The block to store.
      * @param validated
-     *         Whether the block is validated.
+     *     Whether the block is validated.
      * @return The block information of the added block.
      * @throws DatabaseException
-     *         When the block could not be stored.
+     *     When the block could not be stored.
      */
     public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
         Hash hash = block.computeHash();
@@ -144,7 +149,7 @@ public class BlockDatabase {
 
         // Get serialized block
         BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block,
-                BrabocoinProtos.Block.class
+            BrabocoinProtos.Block.class
         );
         int size = protoBlock.getSerializedSize();
 
@@ -152,23 +157,25 @@ public class BlockDatabase {
         int fileNumber = nextFileNumber(size);
 
         // Position in file where the block is be written
-        long offsetInFile = writeProtoToFile(fileNumber, protoBlock);
+        long offsetInFile = writeProtoToFile(getBlockFileName(fileNumber), protoBlock);
 
         // Write new file info to database
         updateFileInfo(fileNumber, block, size);
 
         // Write the block info to database
         BlockInfo blockInfo = new BlockInfo(block.getPreviousBlockHash(),
-                block.getMerkleRoot(),
-                block.getTargetValue(),
-                block.getNonce(),
-                block.getTimestamp(),
-                block.getBlockHeight(),
-                block.getTransactions().size(),
-                validated,
-                fileNumber,
-                offsetInFile,
-                size
+            block.getMerkleRoot(),
+            block.getTargetValue(),
+            block.getNonce(),
+            block.getTimestamp(),
+            block.getBlockHeight(),
+            block.getTransactions().size(),
+            validated,
+            fileNumber,
+            offsetInFile,
+            size,
+            0,
+            0
         );
 
         ByteString value = getRawProtoValue(blockInfo, BrabocoinStorageProtos.BlockInfo.class);
@@ -178,18 +185,85 @@ public class BlockDatabase {
     }
 
     /**
+     * Stores the block undo data and returns the updated block info record.
+     *
+     * @param block
+     *     The block to store the undo data of.
+     * @param undo
+     *     The block undo data.
+     * @return The updated block information record.
+     * @throws DatabaseException
+     *     When the undo data could not be stored.
+     */
+    public @NotNull BlockInfo storeBlockUndo(@NotNull IndexedBlock block,
+                                             @NotNull BlockUndo undo) throws DatabaseException {
+        BlockInfo info = block.getBlockInfo();
+
+        BrabocoinStorageProtos.BlockUndo protoUndo = ProtoConverter.toProto(undo,
+            BrabocoinStorageProtos.BlockUndo.class
+        );
+        int revertSize = protoUndo.getSerializedSize();
+        long offsetInRevertFile = writeProtoToFile(getRevertFileName(info.getFileNumber()),
+            protoUndo
+        );
+
+        BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
+            info.getMerkleRoot(),
+            info.getTargetValue(),
+            info.getNonce(),
+            info.getTimestamp(),
+            info.getBlockHeight(),
+            info.getTransactionCount(),
+            info.isValidated(),
+            info.getFileNumber(),
+            info.getOffsetInFile(),
+            info.getSizeInFile(),
+            offsetInRevertFile,
+            revertSize
+        );
+
+        ByteString key = getBlockKey(block.getHash());
+        ByteString value = getRawProtoValue(newInfo, BrabocoinStorageProtos.BlockInfo.class);
+        store(key, value);
+
+        return newInfo;
+    }
+
+    private long writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
+        long offsetInFile;
+        try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
+            offsetInFile = outputStream.getChannel().position();
+            proto.writeTo(outputStream);
+        }
+        catch (IOException e) {
+            throw new DatabaseException("Data could not be written to disk.", e);
+        }
+
+        return offsetInFile;
+    }
+
+    private String getRevertFileName(int fileNumber) {
+        return Paths.get(this.directory.getPath(), "rev" + fileNumber + ".dat").toString();
+    }
+
+    private ByteString getBlockKey(@NotNull Hash hash) {
+        return KEY_PREFIX_BLOCK.concat(hash.getValue());
+    }
+
+    /**
      * Sets the validation status of the block with the given hash.
      *
      * @param blockHash
-     *         The hash of the block.
+     *     The hash of the block.
      * @param validated
-     *         The validation status.
+     *     The validation status.
      * @return The updated block information.
      * @throws DatabaseException
-     *         When the block is not stored in the database, or when the new status could not be
-     *         written to the database.
+     *     When the block is not stored in the database, or when the new status could not be
+     *     written to the database.
      */
-    public @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash, boolean validated) throws DatabaseException {
+    public @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash,
+                                                       boolean validated) throws DatabaseException {
         ByteString key = getBlockKey(blockHash);
         BlockInfo info = findBlockInfo(blockHash);
 
@@ -198,16 +272,18 @@ public class BlockDatabase {
         }
 
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
-                info.getMerkleRoot(),
-                info.getTargetValue(),
-                info.getNonce(),
-                info.getTimestamp(),
-                info.getBlockHeight(),
-                info.getTransactionCount(),
-                validated,
-                info.getFileNumber(),
-                info.getOffsetInFile(),
-                info.getSizeInFile()
+            info.getMerkleRoot(),
+            info.getTargetValue(),
+            info.getNonce(),
+            info.getTimestamp(),
+            info.getBlockHeight(),
+            info.getTransactionCount(),
+            validated,
+            info.getFileNumber(),
+            info.getOffsetInFile(),
+            info.getSizeInFile(),
+            info.getOffsetInRevertFile(),
+            info.getSizeInRevertFile()
         );
 
         ByteString value = getRawProtoValue(newInfo, BrabocoinStorageProtos.BlockInfo.class);
@@ -224,28 +300,14 @@ public class BlockDatabase {
         }
 
         BlockFileInfo newFileInfo = new BlockFileInfo(fileInfo.getNumberOfBlocks() + 1,
-                fileInfo.getSize() + serializedSize,
-                Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
-                Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
-                Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
-                Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
+            fileInfo.getSize() + serializedSize,
+            Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
+            Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
+            Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
+            Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
         );
 
         setBlockFileInfo(fileNumber, newFileInfo);
-    }
-
-    private long writeProtoToFile(int fileNumber, @NotNull MessageLite proto) throws DatabaseException {
-        String fileName = getBlockFileName(fileNumber);
-        long offsetInFile;
-        try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
-            offsetInFile = outputStream.getChannel().position();
-            proto.writeTo(outputStream);
-        }
-        catch (IOException e) {
-            throw new DatabaseException("Data could not be written to disk.", e);
-        }
-
-        return offsetInFile;
     }
 
     private int nextFileNumber(int blockSize) throws DatabaseException {
@@ -269,11 +331,11 @@ public class BlockDatabase {
      * Find the block with the given block hash.
      *
      * @param hash
-     *         The hash of the block to find.
+     *     The hash of the block to find.
      * @return The full block with the given hash, or {@code null} if no block with that hash is
      * stored in the database.
      * @throws DatabaseException
-     *         When the block could not be retrieved.
+     *     When the block could not be retrieved.
      */
     public @Nullable Block findBlock(@NotNull Hash hash) throws DatabaseException {
         BlockInfo blockInfo = findBlockInfo(hash);
@@ -290,40 +352,28 @@ public class BlockDatabase {
      * Find the block information from the database for the block with the given hash.
      *
      * @param hash
-     *         The hash of the block to find the block information for.
+     *     The hash of the block to find the block information for.
      * @return The block information from the database for the given block hash, or {@code null}
      * when the block hash is not present in the database.
      * @throws DatabaseException
-     *         When the block information could not be retrieved.
+     *     When the block information could not be retrieved.
      */
     public @Nullable BlockInfo findBlockInfo(@NotNull Hash hash) throws DatabaseException {
         ByteString key = getBlockKey(hash);
         ByteString value = retrieve(key);
 
         return parseProtoValue(value,
-                BlockInfo.Builder.class,
-                BrabocoinStorageProtos.BlockInfo.parser()
+            BlockInfo.Builder.class,
+            BrabocoinStorageProtos.BlockInfo.parser()
         );
     }
 
-    private ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
+    private @NotNull ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         String fileName = getBlockFileName(blockInfo.getFileNumber());
-        byte[] data;
+        long offset = blockInfo.getOffsetInFile();
+        int size = blockInfo.getSizeInFile();
 
-        try (InputStream inputStream = new FileInputStream(fileName)) {
-            long offset = blockInfo.getOffsetInFile();
-            int size = blockInfo.getSizeInFile();
-
-            data = new byte[size];
-
-            inputStream.skip(offset);
-            inputStream.read(data);
-        }
-        catch (IOException e) {
-            throw new DatabaseException("Block could not be read from file.", e);
-        }
-
-        return ByteString.copyFrom(data);
+        return readBytesFromFile(fileName, offset, size);
     }
 
     private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
@@ -335,10 +385,6 @@ public class BlockDatabase {
         }
     }
 
-    private ByteString getBlockKey(@NotNull Hash hash) {
-        return KEY_PREFIX_BLOCK.concat(hash.getValue());
-    }
-
     private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
         return storage.get(key);
     }
@@ -347,14 +393,77 @@ public class BlockDatabase {
         return Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
     }
 
+    private @NotNull ByteString readBytesFromFile(@NotNull String fileName, long offset,
+                                                  int size) throws DatabaseException {
+        byte[] data;
+
+        try (InputStream inputStream = new FileInputStream(fileName)) {
+            data = new byte[size];
+
+            inputStream.skip(offset);
+            inputStream.read(data);
+        }
+        catch (IOException e) {
+            throw new DatabaseException("Data could not be read from file.", e);
+        }
+
+        return ByteString.copyFrom(data);
+    }
+
+    /**
+     * Retrieve the block undo data from the database.
+     *
+     * @param hash
+     *     The hash of the block of which to find the undo data of, or {@code null} when the undo
+     *     data could not be found.
+     * @return The block undo data.
+     * @throws DatabaseException
+     *     When the block undo data could not be retrieved.
+     */
+    public @Nullable BlockUndo findBlockUndo(@NotNull Hash hash) throws DatabaseException {
+        BlockInfo info = findBlockInfo(hash);
+
+        if (info == null) {
+            return null;
+        }
+
+        return findBlockUndo(info);
+    }
+
+    /**
+     * Retrieve the block undo data from the database.
+     *
+     * @param info
+     *     The block information record of the block of which to find the undo data of, or {@code
+     *     null} when the undo data could not be found.
+     * @return The block undo data.
+     * @throws DatabaseException
+     *     When the block undo data could not be retrieved.
+     */
+    public @Nullable BlockUndo findBlockUndo(@NotNull BlockInfo info) throws DatabaseException {
+        ByteString rawUndo = readRawUndoFromFile(info);
+        return parseProtoValue(rawUndo,
+            BlockUndo.Builder.class,
+            BrabocoinStorageProtos.BlockUndo.parser()
+        );
+    }
+
+    private @NotNull ByteString readRawUndoFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
+        String fileName = getRevertFileName(blockInfo.getFileNumber());
+        long offset = blockInfo.getOffsetInRevertFile();
+        int size = blockInfo.getSizeInRevertFile();
+
+        return readBytesFromFile(fileName, offset, size);
+    }
+
     /**
      * Check whether the block with the given hash is stored in the database.
      *
      * @param hash
-     *         The hash of the block.
+     *     The hash of the block.
      * @return Whether the block is stored in the database.
      * @throws DatabaseException
-     *         When the block information could not be retrieved.
+     *     When the block information could not be retrieved.
      */
     public boolean hasBlock(@NotNull Hash hash) throws DatabaseException {
         ByteString key = getBlockKey(hash);
@@ -365,19 +474,19 @@ public class BlockDatabase {
      * Find the file information for the given file number.
      *
      * @param fileNumber
-     *         The file number to find the file information for.
+     *     The file number to find the file information for.
      * @return The file information record, or {@code null} if the record for the given file
      * number is not present in the database.
      * @throws DatabaseException
-     *         When the file information could not be retrieved.
+     *     When the file information could not be retrieved.
      */
     public @Nullable BlockFileInfo findBlockFileInfo(int fileNumber) throws DatabaseException {
         ByteString key = getFileKey(fileNumber);
         ByteString value = retrieve(key);
 
         return parseProtoValue(value,
-                BlockFileInfo.Builder.class,
-                BrabocoinStorageProtos.BlockFileInfo.parser()
+            BlockFileInfo.Builder.class,
+            BrabocoinStorageProtos.BlockFileInfo.parser()
         );
     }
 

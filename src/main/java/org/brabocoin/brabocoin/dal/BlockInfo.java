@@ -67,7 +67,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final boolean validated;
 
     /**
-     * The file number in which the full block is stored on disk.
+     * The file number in which the full block is stored on disk, as well as the number of the
+     * revert file.
      *
      * @see BlockFileInfo
      */
@@ -91,25 +92,54 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final int sizeInFile;
 
     /**
+     * The offset in bytes indicating the location in the file where the revert data is stored.
+     */
+    @ProtoField
+    private final long offsetInRevertFile;
+
+    /**
+     * The size in bytes of the serialized revert data in the file.
+     */
+    @ProtoField
+    private final int sizeInRevertFile;
+
+    /**
      * Creates a new block information holder.
      *
-     * @param previousBlockHash Hash of the previous block in the blockchain.
-     * @param merkleRoot Hash of the Merkle root of this block.
-     * @param targetValue Target value of the proof-of-work of this block.
-     * @param nonce Nonce used for the proof-of-work.
-     * @param timestamp UNIX timestamp indicating when the block is created.
-     * @param blockHeight Height of the block in the blockchain.
-     * @param transactionCount The number of transactions in the block, including the coinbase transaction.
-     * @param validated Indicates whether the block has been validated and is considered part of
-     *                  the verified blockchain.
-     * @param fileNumber The file number in which the full block is stored on disk.
-     * @param offsetInFile The offset in bytes indicating the location in the file where the full block is stored.
-     * @param sizeInFile The size of the serialized block in the file.
+     * @param previousBlockHash
+     *     Hash of the previous block in the blockchain.
+     * @param merkleRoot
+     *     Hash of the Merkle root of this block.
+     * @param targetValue
+     *     Target value of the proof-of-work of this block.
+     * @param nonce
+     *     Nonce used for the proof-of-work.
+     * @param timestamp
+     *     UNIX timestamp indicating when the block is created.
+     * @param blockHeight
+     *     Height of the block in the blockchain.
+     * @param transactionCount
+     *     The number of transactions in the block, including the coinbase
+     *     transaction.
+     * @param validated
+     *     Indicates whether the block has been validated and is considered part of
+     *     the verified blockchain.
+     * @param fileNumber
+     *     The file number in which the full block is stored on disk.
+     * @param offsetInFile
+     *     The offset in bytes indicating the location in the file where the full block is stored.
+     * @param sizeInFile
+     *     The size of the serialized block in the file.
+     * @param offsetInRevertFile
+     *     The offset in bytes indicating the location in the file where the revert data is stored.
+     * @param sizeInRevertFile
+     *     The size in bytes of the serialized revert data in the file.
      */
     public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                      @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
                      int blockHeight, int transactionCount, boolean validated, int fileNumber,
-                     long offsetInFile, int sizeInFile) {
+                     long offsetInFile, int sizeInFile, long offsetInRevertFile,
+                     int sizeInRevertFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -121,6 +151,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.fileNumber = fileNumber;
         this.offsetInFile = offsetInFile;
         this.sizeInFile = sizeInFile;
+        this.offsetInRevertFile = offsetInRevertFile;
+        this.sizeInRevertFile = sizeInRevertFile;
     }
 
     public int getBlockHeight() {
@@ -167,6 +199,14 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return timestamp;
     }
 
+    public long getOffsetInRevertFile() {
+        return offsetInRevertFile;
+    }
+
+    public int getSizeInRevertFile() {
+        return sizeInRevertFile;
+    }
+
     @Override
     public Class<? extends ProtoBuilder> getBuilder() {
         return Builder.class;
@@ -174,6 +214,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
     @ProtoClass(BrabocoinStorageProtos.BlockInfo.class)
     public static class Builder implements ProtoBuilder<BlockInfo> {
+
         @ProtoField
         private Hash.Builder previousBlockHash;
 
@@ -206,6 +247,12 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
         @ProtoField
         private int sizeInFile;
+
+        @ProtoField
+        private long offsetInRevertFile;
+
+        @ProtoField
+        private int sizeInRevertFile;
 
         public Builder setPreviousBlockHash(@NotNull Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -262,20 +309,33 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
+        public Builder setOffsetInRevertFile(long offsetInRevertFile) {
+            this.offsetInRevertFile = offsetInRevertFile;
+            return this;
+        }
+
+        public Builder setSizeInRevertFile(int sizeInRevertFile) {
+            this.sizeInRevertFile = sizeInRevertFile;
+            return this;
+        }
+
         @Override
         public BlockInfo build() {
             return new BlockInfo(
-                    previousBlockHash.build(),
-                    merkleRoot.build(),
-                    targetValue.build(),
-                    nonce,
-                    timestamp,
-                    blockHeight,
-                    transactionCount,
-                    validated,
-                    fileNumber,
-                    offsetInFile,
-                    sizeInFile);
+                previousBlockHash.build(),
+                merkleRoot.build(),
+                targetValue.build(),
+                nonce,
+                timestamp,
+                blockHeight,
+                transactionCount,
+                validated,
+                fileNumber,
+                offsetInFile,
+                sizeInFile,
+                offsetInRevertFile,
+                sizeInRevertFile
+            );
         }
     }
 }

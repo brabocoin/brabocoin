@@ -22,6 +22,8 @@ message BlockInfo {
     int32 fileNumber = 9;
     int64 offsetInFile = 10;
     int32 sizeInFile = 11;
+    int64 offsetInRevertFile = 12;
+    int32 sizeInRevertFile = 13;
 }
 
 message BlockFileInfo {
@@ -38,4 +40,12 @@ message UnspentOutputInfo {
     int32 blockHeight = 2;
     int64 amount = 3;
     Hash address = 4;
+}
+
+message TransactionUndo {
+    repeated UnspentOutputInfo outputInfoList = 1;
+}
+
+message BlockUndo {
+    repeated TransactionUndo transactionUndos = 1;
 }

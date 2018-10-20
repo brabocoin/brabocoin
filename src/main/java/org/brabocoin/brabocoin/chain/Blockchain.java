@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.BlockInfo;
+import org.brabocoin.brabocoin.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -369,12 +370,18 @@ public class Blockchain {
             return;
         }
 
+        Hash hash = tip.getHash();
+
         // Read block from disk
-        Block block = database.findBlock(tip.getHash());
+        Block block = database.findBlock(hash);
         assert block != null;
 
+        // Read undo data from disk
+        BlockUndo blockUndo = database.findBlockUndo(hash);
+        assert blockUndo != null;
+
         // Update UTXO set
-        utxoSet.processBlockDisconnected(block);
+        utxoSet.processBlockDisconnected(block, blockUndo);
 
         // TODO: update mempool
 
@@ -399,7 +406,10 @@ public class Blockchain {
         Block block = database.findBlock(tip.getHash());
         assert block != null;
 
-        utxoSet.processBlockConnected(block);
+        BlockUndo undo = utxoSet.processBlockConnected(block);
+
+        // Store undo data
+        database.storeBlockUndo(tip, undo);
 
         // TODO: remove transactions from mempool
 
