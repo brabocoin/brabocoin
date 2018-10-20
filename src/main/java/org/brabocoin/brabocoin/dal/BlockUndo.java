@@ -43,8 +43,10 @@ public class BlockUndo implements ProtoModel<BlockUndo> {
         return Builder.class;
     }
 
+    @ProtoClass(BrabocoinStorageProtos.BlockUndo.class)
     public static class Builder implements ProtoBuilder<BlockUndo> {
 
+        @ProtoField
         private List<TransactionUndo.Builder> transactionUndos;
 
         public Builder setTransactionUndos(List<TransactionUndo.Builder> transactionUndos) {

@@ -47,8 +47,10 @@ public class TransactionUndo implements ProtoModel<TransactionUndo> {
         return Builder.class;
     }
 
+    @ProtoClass(BrabocoinStorageProtos.TransactionUndo.class)
     public static class Builder implements ProtoBuilder<TransactionUndo> {
 
+        @ProtoField
         private @NotNull List<UnspentOutputInfo.Builder> outputInfoList;
 
         public Builder setOutputInfoList(@NotNull List<UnspentOutputInfo.Builder> outputInfoList) {

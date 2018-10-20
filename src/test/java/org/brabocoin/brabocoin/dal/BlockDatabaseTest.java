@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -14,11 +15,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -83,6 +87,71 @@ class BlockDatabaseTest {
             Block retrievedBlock = database.findBlock(hash);
             assertBlock(hash, retrievedBlock);
         }
+    }
+
+    @Test
+    void storeBlockTwice() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        database.storeBlock(block, false);
+        BlockInfo info1 = database.findBlockInfo(hash);
+        assertNotNull(info1);
+
+        database.storeBlock(block, false);
+        BlockInfo info2 = database.findBlockInfo(hash);
+        assertNotNull(info2);
+
+        assertEquals(info1.getFileNumber(), info2.getFileNumber());
+        assertEquals(info1.getOffsetInFile(), info2.getOffsetInFile());
+        assertEquals(info1.getSizeInFile(), info2.getSizeInFile());
+        assertEquals(info1.isValidated(), info2.isValidated());
+    }
+
+    @Test
+    void storeBlockTwiceUpdateValidated() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        database.storeBlock(block, false);
+        BlockInfo info1 = database.findBlockInfo(hash);
+        assertNotNull(info1);
+
+        database.storeBlock(block, true);
+        BlockInfo info2 = database.findBlockInfo(hash);
+        assertNotNull(info2);
+
+        assertEquals(info1.getFileNumber(), info2.getFileNumber());
+        assertEquals(info1.getOffsetInFile(), info2.getOffsetInFile());
+        assertEquals(info1.getSizeInFile(), info2.getSizeInFile());
+        assertTrue(info2.isValidated());
+    }
+
+    @Test
+    void setValidationStatus() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        database.storeBlock(block, false);
+
+        database.setBlockValidationStatus(hash, true);
+        BlockInfo info = database.findBlockInfo(hash);
+        assertNotNull(info);
+        assertTrue(info.isValidated());
+
+        database.setBlockValidationStatus(hash, false);
+        BlockInfo info2 = database.findBlockInfo(hash);
+        assertNotNull(info2);
+        assertFalse(info2.isValidated());
+    }
+
+    @Test
+    void setValidationStatusUnknownBlock() {
+        Hash hash = Simulation.randomHash();
+
+        assertThrows(DatabaseException.class, () -> {
+            database.setBlockValidationStatus(hash, true);
+        });
     }
 
     private void assertBlock(Hash expectedHash, Block actualBlock) {
@@ -195,5 +264,46 @@ class BlockDatabaseTest {
         BlockFileInfo fileInfo = database.findBlockFileInfo(1);
         assertNotNull(fileInfo);
         assertTrue(fileInfo.getSize() > 0);
+    }
+
+    @Test
+    void storeAndFindBlockUndo() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        BlockInfo info = database.storeBlock(block, false);
+        assertNotNull(info);
+        assertEquals(0, info.getOffsetInRevertFile());
+        assertEquals(0, info.getSizeInRevertFile());
+
+        IndexedBlock indexedBlock = new IndexedBlock(hash, info);
+        BlockUndo undo = new BlockUndo(new ArrayList<>());
+
+        database.storeBlockUndo(indexedBlock, undo);
+
+        BlockInfo newInfo = database.findBlockInfo(hash);
+
+        assertNotNull(newInfo);
+        assertTrue(info.getSizeInFile() > 0);
+
+        BlockUndo retrievedUndo = database.findBlockUndo(hash);
+        assertNotNull(retrievedUndo);
+    }
+
+    @Test
+    void hasExistingBlock() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        database.storeBlock(block, false);
+
+        assertTrue(database.hasBlock(hash));
+    }
+
+    @Test
+    void notHasNonexistingBlock() throws DatabaseException {
+        Hash hash = Simulation.randomHash();
+
+        assertFalse(database.hasBlock(hash));
     }
 }
