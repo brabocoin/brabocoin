@@ -72,12 +72,15 @@ public class BlockDatabase {
 
         // Create blockStore directory if not exists
         if (!directory.exists()) {
-            directory.mkdirs();
+            boolean created = directory.mkdirs();
+            if (!created) {
+                throw new DatabaseException("Block storage directory could not be created");
+            }
         }
 
         // Check if directory exists
         if (!directory.isDirectory()) {
-            throw new IllegalArgumentException("Parameter blockFileDirectory is not a directory.");
+            throw new DatabaseException("Block storage directory is not a directory.");
         }
     }
 

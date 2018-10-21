@@ -306,4 +306,60 @@ class BlockDatabaseTest {
 
         assertFalse(database.hasBlock(hash));
     }
+
+    @Test
+    void createNewDirectory() throws DatabaseException {
+        final String newDir = BLOCK_FILE_LOCATION + "/stroomboot";
+
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public String blockStoreDirectory() {
+                return newDir;
+            }
+        };
+
+        BlockDatabase newDatabase = new BlockDatabase(storage, newConfig);
+
+        File dir = new File(newDir);
+        assertTrue(dir.exists());
+
+        // Cleanup
+        dir.delete();
+    }
+
+    @Test
+    void cannotCreateDirectory() {
+        final String newDir = "/\0/invalid";
+
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public String blockStoreDirectory() {
+                return newDir;
+            }
+        };
+
+        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, newConfig));
+    }
+
+    @Test
+    void isNotDirectory() {
+        final String newDir = "src/test/java/org/brabocoin/brabocoin/dal/BlockDatabaseTest.java";
+
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public String blockStoreDirectory() {
+                return newDir;
+            }
+        };
+
+        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, newConfig));
+    }
+
+    @Test
+    void findNonExistingUndo() throws DatabaseException {
+        Hash hash = Simulation.randomHash();
+
+        BlockUndo undo = database.findBlockUndo(hash);
+        assertNull(undo);
+    }
 }
