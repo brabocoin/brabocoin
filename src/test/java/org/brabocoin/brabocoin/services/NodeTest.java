@@ -117,7 +117,7 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
         StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {

@@ -13,15 +13,20 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Represents a node environment.
  */
 public class NodeEnvironment {
+    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     protected BraboConfig config;
 
     protected BlockDatabase database;
@@ -45,45 +50,58 @@ public class NodeEnvironment {
      * @param peer The peer to add to the peer list known to this node.
      */
     public void addPeer(Peer peer) {
+        LOGGER.fine("Adding peer.");
+        LOGGER.log(Level.FINEST, "peer: {0}", peer);
         peers.add(peer);
     }
 
     /**
      * Adds a list of peers to the list of peers known to this node.
      *
-     * @param peer The peers to add to the peer list known to this node.
+     * @param peers The peers to add to the peer list known to this node.
      */
-    public void addPeers(List<Peer> peer) {
-        peers.addAll(peer);
+    public void addPeers(List<Peer> peers) {
+        LOGGER.fine("Adding list of peers.");
+        LOGGER.log(Level.FINEST, "peers: {0}", peers.stream().map(Peer::toString).collect(Collectors.joining(", ")));
+        this.peers.addAll(peers);
     }
 
     /**
-     * Get a copy of the list of peers.
+     * Get a copy of the set of peers.
      *
-     * @return List of peers.
+     * @return Set of peers.
      */
-    public List<Peer> getPeers() {
-        return new ArrayList<>(peers);
+    public Set<Peer> getPeers() {
+        LOGGER.fine("Creating a copy of the set of peers.");
+        return new HashSet<>(peers);
     }
 
     /**
      * Setup the environment, loading the config and bootstrapping peers.
      */
     public void setup() {
+        LOGGER.fine("Setting up the node environment.");
         bootstrap();
+        LOGGER.fine("Environment setup done.");
     }
 
     /**
      * Initializes the set of peers.
      */
     private void instantiateBootstrapPeers() {
+        LOGGER.fine("Instantiating bootstrap peers.");
         for (final String peerSocket : config.bootstrapPeers()) {
+            LOGGER.log(Level.FINEST, "Peer socket read from config: {0}", peerSocket);
             try {
-                peers.add(new Peer(peerSocket));
+                Peer p = new Peer(peerSocket);
+                peers.add(p);
+                LOGGER.log(Level.FINEST, "Peer created and added to peer set: {0}", p);
             } catch (MalformedSocketException e) {
+                LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
+                        peerSocket, e.getMessage()
+                });
                 // TODO: Handle invalid peer socket representation in the config.
                 // Exit throwing an error to the user or skip this peer?
-                // Definitely log this.
             }
         }
     }
@@ -95,6 +113,8 @@ public class NodeEnvironment {
      * @param blockHash Hash of the new block.
      */
     public void onReceiveBlockHash(@NotNull Hash blockHash) {
+        LOGGER.fine("Block hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Implement and log
     }
 
@@ -105,6 +125,8 @@ public class NodeEnvironment {
      * @param transactionHash Hash of the new block.
      */
     public void onReceiveTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         // TODO: Implement and log
     }
 
