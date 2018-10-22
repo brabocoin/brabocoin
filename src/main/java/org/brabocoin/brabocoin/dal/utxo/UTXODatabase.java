@@ -84,7 +84,7 @@ public class UTXODatabase {
         LOGGER.fine("Checking whether a transaction hash with given output index is unspent.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         boolean has = storage.has(key);
-        LOGGER.log(Level.FINER, "Hash: {0}, output index: {1}, unspent: {2}", new Object[]{toHexString(transactionHash.getValue()), outputIndex, has});
+        LOGGER.log(Level.FINEST, "Hash: {0}, output index: {1}, unspent: {2}", new Object[]{toHexString(transactionHash.getValue()), outputIndex, has});
         return has;
     }
 

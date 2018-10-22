@@ -138,10 +138,12 @@ public class NodeEnvironment {
      * @return Block instance or null if not found.
      */
     public Block getBlock(@NotNull Hash blockHash) {
+        LOGGER.fine("Block requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         try {
             return database.findBlock(blockHash);
         } catch (DatabaseException e) {
-            // TODO: Log
+            LOGGER.log(Level.SEVERE, "Database error while trying to acquire block, error: {0}", e.getMessage());
             return null;
         }
     }
@@ -154,6 +156,8 @@ public class NodeEnvironment {
      * @return Transaction instance or null if not found.
      */
     public Transaction getTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         return null;
     }
 
@@ -163,6 +167,7 @@ public class NodeEnvironment {
      * @return Transaction hash iterator.
      */
     public Iterator<Hash> getTransactionIterator() {
+        LOGGER.fine("Transaction iterator creation requested.");
         return transactionPool.keySet().iterator();
     }
 
@@ -172,6 +177,7 @@ public class NodeEnvironment {
      * @return Top block height.
      */
     public long getTopBlockHeight() {
+        LOGGER.fine("Top block height requested.");
         // TODO: magic here
         return 0;
     }
@@ -183,6 +189,8 @@ public class NodeEnvironment {
      * @return True if it is contained in the main chain.
      */
     public boolean isChainCompatible(@NotNull Hash blockHash) {
+        LOGGER.fine("Chain compatibility check requested for block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Magic here
         return false;
     }
@@ -194,6 +202,8 @@ public class NodeEnvironment {
      * @return Iterator over block hashes above the given block.
      */
     public Iterator<Hash> getBlocksAbove(Hash blockHash) {
+        LOGGER.fine("Block hashes requested above a given block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         return new Iterator<Hash>() {
             @Override
             public boolean hasNext() {
@@ -211,42 +221,52 @@ public class NodeEnvironment {
      * TODO: Create JavaDoc
      */
     private void bootstrap() {
+        LOGGER.info("Bootstrapping initiated.");
         // Populate bootstrap peers
         instantiateBootstrapPeers();
         // A list of peers for which we need to do a handshake
         List<Peer> handshakePeers = new ArrayList<>(getPeers());
 
         if (handshakePeers.size() <= 0) {
-            // TODO: Log to user, we can not bootstrap without any bootstrap peers
+            LOGGER.severe("No bootstrapping peers found.");
+            // TODO: What to do now?
             return;
         }
 
         while (getPeers().size() < config.targetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.remove(0);
+            LOGGER.log(Level.FINEST,"Bootstrapping on peer: {0}", handshakePeer);
             try {
+                LOGGER.log(Level.FINEST,"Performing handshake.");
                 // Perform a handshake with the peer
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
                         .handshake(Empty.newBuilder().build());
                 HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).build();
+                LOGGER.log(Level.FINEST,"Response acquired, got {0} peers.", response.getPeers().size());
 
+                LOGGER.log(Level.FINEST,"Adding handshake peer to peer list, as handshake was successful.");
                 // We got a response from the current handshake peer, register this peer as valid
                 addPeer(handshakePeer);
 
                 // Add the discovered peers to the list of handshake peers
                 for (final String peerSocket : response.getPeers()) {
+                    LOGGER.log(Level.FINEST,"Discovered new peer, raw socket string: {0}", peerSocket);
                     try {
                         final Peer discoveredPeer = new Peer(peerSocket);
+                        LOGGER.log(Level.FINEST,"Discovered new peer parsed: {0}", discoveredPeer);
                         handshakePeers.add(discoveredPeer);
-                    } catch (final Exception e) {
-                        // Bootstrap peer returned a malformed or invalid peer
+                    } catch (MalformedSocketException e) {
+                        LOGGER.log(Level.WARNING,"Error while parsing raw peer socket string: {0}", e.getMessage());
+                        // TODO: Ignore and continue?
                     }
                 }
             } catch (StatusRuntimeException e) {
-                // TODO: handle peer errors on handshake, log
+                LOGGER.log(Level.WARNING,"Error while handshaking with peer: {0}", e.getMessage());
+                // TODO: Ignore and continue?
             }
         }
 
-        // TODO: Check whether the bootstrap peers were valid.
+        // TODO: Update peers when connection is lost.
     }
 }

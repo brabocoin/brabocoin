@@ -7,11 +7,14 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A representation of an peer in the network.
  */
 public class Peer {
+    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     /**
      * The socket for this peer.
      */
@@ -58,14 +61,16 @@ public class Peer {
      * Also add a shutdown handler for the channel.
      */
     private void setupStubs() throws MalformedSocketException {
+        LOGGER.fine("Setting up channel and stubs for peer.");
         try {
             this.channel = ManagedChannelBuilder
                     .forAddress(socket.getHostString(), socket.getPort())
                     .usePlaintext()
                     .build();
         } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.FINE, "Could not build channel for peer: {0}", e.getMessage());
             // hostname or port is invalid
-            throw new MalformedSocketException("Invalid hostname or port on channel creation");
+            throw new MalformedSocketException("Invalid hostname or port on channel creation.");
         }
         this.blockingStub = NodeGrpc.newBlockingStub(channel);
         this.asyncStub = NodeGrpc.newStub(channel);
@@ -78,6 +83,7 @@ public class Peer {
      * Close the channel to this peer.
      */
     public void stop() {
+        LOGGER.fine("Stopping peer.");
         channel.shutdown();
     }
 
@@ -98,12 +104,16 @@ public class Peer {
      * @throws MalformedSocketException When the socket string has an invalid format.
      */
     private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {
+        LOGGER.fine("Getting socket from string.");
+        LOGGER.log(Level.FINEST, "String: {0}", socket);
         if (!socket.contains(":")) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
             throw new MalformedSocketException("Socket representation does not contain a colon separator.");
         }
 
         String[] socketSplit = socket.split(":");
         if (socketSplit.length != 2) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
             throw new MalformedSocketException("Socket representation does not contain a single separator.");
         }
 
@@ -111,6 +121,7 @@ public class Peer {
         try {
             socketPort = Integer.parseInt(socketSplit[1]);
         } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException("Socket port section is not an integer.");
         }
 
@@ -118,9 +129,12 @@ public class Peer {
         try {
             socketAddress = new InetSocketAddress(socketSplit[0], socketPort);
         } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException(e.getMessage());
         }
 
+
+        LOGGER.fine("Socket created.");
         return socketAddress;
     }
 
