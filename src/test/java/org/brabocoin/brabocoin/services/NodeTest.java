@@ -43,7 +43,7 @@ class NodeTest {
     }
 
     @Test
-    void handshakeTest() throws IOException, DatabaseException {
+    void handshakeTest() throws IOException, DatabaseException, InterruptedException {
         Node nodeA = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
@@ -84,10 +84,14 @@ class NodeTest {
         assertEquals(3, greeter.environment.getPeers().size());
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
 
         responder.stop();
+        responder.blockUntilShutdown();
         greeter.stop();
+        greeter.blockUntilShutdown();
     }
 
     @Test
@@ -159,7 +163,9 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -232,7 +238,9 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -314,7 +322,9 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -386,7 +396,9 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -459,7 +471,9 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -541,11 +555,13 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
-    void seekTransactionPoolTest() throws DatabaseException, IOException {
+    void seekTransactionPoolTest() throws DatabaseException, IOException, InterruptedException {
         BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
@@ -587,6 +603,8 @@ class NodeTest {
         }
 
         nodeA.stop();
+        nodeA.blockUntilShutdown();
         nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 }
