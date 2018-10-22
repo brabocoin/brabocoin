@@ -8,15 +8,9 @@ import org.brabocoin.brabocoin.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.utxo.UTXOSet;
-import org.brabocoin.brabocoin.validation.BlockValidator;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -32,17 +26,7 @@ public class Blockchain {
     private final @NotNull BlockDatabase database;
 
     /**
-     * UTXO set.
-     */
-    private final @NotNull UTXOSet utxoSet;
-
-    /**
-     * Block validator.
-     */
-    private final @NotNull BlockValidator blockValidator;
-
-    /**
-     * Contains the information of all blocks on the main mainChain, such that these blocks are
+     * Contains the information of all blocks on the main chain, such that these blocks are
      * readily available.
      */
     private final @NotNull IndexedChain mainChain;
@@ -57,16 +41,11 @@ public class Blockchain {
      *
      * @param database
      *     The block database backend.
-     * @param utxoSet
-     *     The UTXO set.
      * @param blockValidator
      *     The block validator.
      */
-    public Blockchain(@NotNull BlockDatabase database, @NotNull UTXOSet utxoSet,
-                      @NotNull BlockValidator blockValidator) {
+    public Blockchain(@NotNull BlockDatabase database) {
         this.database = database;
-        this.utxoSet = utxoSet;
-        this.blockValidator = blockValidator;
         this.mainChain = new IndexedChain();
         this.orphanMap = HashMultimap.create();
     }
@@ -107,69 +86,6 @@ public class Blockchain {
     }
 
     /**
-     * Add a block to the blockchain.
-     * <p>
-     * Validates and stores the block data to the block database. Note that invalid blocks are
-     * discarded and not stored.
-     * <p>
-     * New blocks are added to the block chain if possible. Any orphans that are descendants of
-     * the new block are also added, if able. When a new fork becomes leading, the main chain is
-     * reorganized and the chain state is updated.
-     *
-     * @param block
-     *     The block to add.
-     * @return The status of the block that is added.
-     * @throws DatabaseException
-     *     When the block database is not available.
-     */
-    public NewBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
-        // Check if the block is valid
-        if (!checkBlockValid(block)) {
-            return NewBlockStatus.INVALID;
-        }
-
-        // Check if we already have the block
-        Hash hash = block.computeHash();
-        if (isBlockStored(hash)) {
-            return NewBlockStatus.ALREADY_STORED;
-        }
-
-        // Store the block on disk
-        BlockInfo info = database.storeBlock(block, true);
-        IndexedBlock indexedBlock = new IndexedBlock(hash, info);
-
-        // Find the parent block
-        IndexedBlock parent = getIndexedBlock(block.getPreviousBlockHash());
-
-        // If parent is unknown or orphan, this block is an orphan as well
-        if (parent == null || isOrphan(parent)) {
-            addOrphan(indexedBlock);
-            return NewBlockStatus.ORPHAN;
-        }
-
-        // Check if any orphan blocks are descendants and can be added as well
-        // Return the leaf blocks of the new family, which are new tip candidates
-        Set<IndexedBlock> tipCandidates = processOrphansTipCandidates(indexedBlock);
-
-        // Update the main chain if necessary
-        updateMainChain(tipCandidates);
-
-        return NewBlockStatus.ADDED_TO_BLOCKCHAIN;
-    }
-
-    /**
-     * Checks whether a block is valid.
-     *
-     * @param block
-     *     The block to check.
-     * @return Whether the block is valid.
-     * @see BlockValidator
-     */
-    private boolean checkBlockValid(@NotNull Block block) {
-        return blockValidator.checkBlockValid(block);
-    }
-
-    /**
      * Checks whether the block with the given hash is stored in the block database.
      * <p>
      * This only checks whether the full block data is known and stored on disk, not whether this
@@ -186,6 +102,22 @@ public class Blockchain {
     }
 
     /**
+     * Stores a block on disk.
+     *
+     * @param block
+     *     The block to store
+     * @param validated
+     *     Validation status.
+     * @return The stored block information.
+     * @throws DatabaseException
+     *     When the block database is not available.
+     * @see BlockDatabase#storeBlock(Block, boolean)
+     */
+    public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
+        return database.storeBlock(block, validated);
+    }
+
+    /**
      * Retrieve the block information from the database from the given block hash and return an
      * indexed representation of the block (for memory storage).
      *
@@ -195,7 +127,7 @@ public class Blockchain {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    private @Nullable IndexedBlock getIndexedBlock(@NotNull Hash hash) throws DatabaseException {
+    public @Nullable IndexedBlock getIndexedBlock(@NotNull Hash hash) throws DatabaseException {
         BlockInfo info = database.findBlockInfo(hash);
 
         if (info == null) {
@@ -213,7 +145,7 @@ public class Blockchain {
      *     The block to check.
      * @return Whether the block is an orphan.
      */
-    private boolean isOrphan(@NotNull IndexedBlock block) {
+    public boolean isOrphan(@NotNull IndexedBlock block) {
         return orphanMap.containsValue(block);
     }
 
@@ -227,220 +159,48 @@ public class Blockchain {
      * @param block
      *     The block to add as orphan.
      */
-    private void addOrphan(@NotNull IndexedBlock block) {
+    public void addOrphan(@NotNull IndexedBlock block) {
         orphanMap.put(block.getBlockInfo().getPreviousBlockHash(), block);
     }
 
     /**
-     * Find from the pool of orphan blocks any blocks that are descendants of the given block and
-     * remove them from the orphan pool.
-     * <p>
-     * From the set of blocks that are removed as orphans, return the blocks that have no further
-     * descendants from the orphan pool. These blocks are now new candidates for the tip of the
-     * main chain.
+     * Find the block undo data.
      *
-     * @param newParent
-     *     The new parent to find descendants for.
-     * @return The set of new tip candidates from the orphan pool (that are now removed as
-     * orphans and are added to the blockchain).
-     */
-    private @NotNull Set<IndexedBlock> processOrphansTipCandidates(@NotNull IndexedBlock newParent) {
-        Set<IndexedBlock> tipCandidates = new HashSet<>();
-
-        Deque<IndexedBlock> queue = new ArrayDeque<>();
-        queue.add(newParent);
-
-        while (!queue.isEmpty()) {
-            IndexedBlock orphan = queue.remove();
-
-            // Find any orphan descendants and mark them as part of the chain
-            Set<IndexedBlock> descendants = orphanMap.removeAll(orphan.getHash());
-
-            if (descendants.isEmpty()) {
-                // When this orphan has no more known descendants, make tip candidate
-                // TODO: maybe check if it actually supersedes the current tip?
-                tipCandidates.add(orphan);
-            } else {
-                // Add the removed blocks to the queue to find further descendant orphans
-                queue.addAll(descendants);
-            }
-        }
-
-        return tipCandidates;
-    }
-
-    /**
-     * Update the main chain by selecting the new best tip from the provided tip candidates.
-     * <p>
-     * If none of the tip candidates is better than the current tip, nothing will happen. When a
-     * new tip is selected, the main chain is reorganized.
-     *
-     * @param tipCandidates
-     *     The set of possible new tip blocks.
-     * @throws DatabaseException
-     *     When the blocks database is not available.
-     */
-    private void updateMainChain(Set<IndexedBlock> tipCandidates) throws DatabaseException {
-        // Add the current tip to the tip candidates
-        IndexedBlock currentTip = mainChain.getTipBlock();
-        Set<IndexedBlock> allCandidates = new HashSet<>(tipCandidates);
-        allCandidates.add(currentTip);
-
-        // Select the best tip candidate
-        // TODO: Re-organize on block height tiebreaker??
-        IndexedBlock bestCandidate = Consensus.bestBlock(allCandidates);
-
-        // If tip does not change, do nothing
-        if (bestCandidate == null || bestCandidate.equals(currentTip)) {
-            return;
-        }
-
-        // Main chain needs to be updated: find the fork that needs to become active
-        Deque<IndexedBlock> fork = findFork(bestCandidate);
-        if (fork == null) {
-            // TODO: need rollback when find fork fails?
-            return;
-        }
-
-        // Get block at up to which the main chain needs to be reverted
-        IndexedBlock revertTargetBlock = fork.pop();
-
-        // Revert chain state to target block by disconnecting tip blocks
-        while (!revertTargetBlock.equals(mainChain.getTipBlock())) {
-            disconnectTip();
-        }
-
-        // Connect the blocks in the new fork
-        while (!fork.isEmpty()) {
-            IndexedBlock newBlock = fork.pop();
-            connectTip(newBlock);
-        }
-    }
-
-    /**
-     * Find all blocks present on the fork off the main chain up to the given block.
-     * <p>
-     * Backtrack from the given block through all parents to the first block present on the main
-     * chain. The given block, all intermediate parent blocks and the first block present on the
-     * main chain are recorded in-order and returned.
-     * <p>
-     * Note that these blocks are not indexed in memory and are first retrieved from the database.
-     *
-     * @param block
-     *     The block to find the fork to the main chain for.
-     * @return All the blocks present on the fork, in-order, up to and including the first block
-     * on the main chain, or {@code null} when no path back to the main chain could be found.
+     * @param hash
+     *     The hash of the block.
+     * @return The block undo data, or {@code null} if the block undo data could not be found.
      * @throws DatabaseException
      *     When the block database is not available.
+     * @see BlockDatabase#findBlockUndo(Hash)
      */
-    private @Nullable Deque<IndexedBlock> findFork(@NotNull IndexedBlock block) throws DatabaseException {
-        Deque<IndexedBlock> fork = new ArrayDeque<>();
-        IndexedBlock parent = block;
-
-        // Backtrack to the main chain, loading previous blocks from the database
-        while (parent != null && !mainChain.contains(parent)) {
-            fork.push(parent);
-            parent = getIndexedBlock(parent.getBlockInfo().getPreviousBlockHash());
-        }
-
-        // If no fork is found, return null
-        if (parent == null) {
-            return null;
-        }
-
-        // Add the fork block in the main chain as well so we know where to update
-        fork.push(parent);
-        return fork;
+    public @Nullable BlockUndo findBlockUndo(Hash hash) throws DatabaseException {
+        return database.findBlockUndo(hash);
     }
 
     /**
-     * Disconnects the current tip block from the main chain, while updating the chain state to
-     * account for the changed main chain.
-     * <p>
-     * The tip is removed from the main chain, and the UTXO set and transaction pool are updated
-     * accordingly.
+     * Stores the block undo data in the database.
      *
+     * @param block
+     *     The block to store the undo data for.
+     * @param undo
+     *     The undo data.
      * @throws DatabaseException
-     *     When the blocks database is not available.
+     *     When the block database is not available.
+     * @see BlockDatabase#storeBlockUndo(IndexedBlock, BlockUndo)
      */
-    private void disconnectTip() throws DatabaseException {
-        IndexedBlock tip = mainChain.getTipBlock();
-
-        if (tip == null) {
-            return;
-        }
-
-        Hash hash = tip.getHash();
-
-        // Read block from disk
-        Block block = database.findBlock(hash);
-        assert block != null;
-
-        // Read undo data from disk
-        BlockUndo blockUndo = database.findBlockUndo(hash);
-        assert blockUndo != null;
-
-        // Update UTXO set
-        utxoSet.processBlockDisconnected(block, blockUndo);
-
-        // TODO: update mempool
-
-        // Set the new tip to the parent of the previous tip
-        mainChain.popTipBlock();
+    public void storeBlockUndo(IndexedBlock block, BlockUndo undo) throws DatabaseException {
+        database.storeBlockUndo(block, undo);
     }
 
     /**
-     * Connects the given block as the new tip to the main chain, while updating the chain state
-     * to account for the changed main chain.
-     * <p>
-     * The block is added to the main chain, and the UTXO set and transaction pool are updated
-     * accordingly.
+     * Remove and return all the orphans from the orphan set which have the given hash as parent
+     * block.
      *
-     * @param tip
-     *     The block to be added as the new tip.
-     * @throws DatabaseException
-     *     When the blocks database is not available.
+     * @param parentHash
+     *     The hash of the parent.
+     * @return The set of orphan block that are removed, or an empty set if no orphans are removed.
      */
-    private void connectTip(@NotNull IndexedBlock tip) throws DatabaseException {
-        // Read block from disk
-        Block block = database.findBlock(tip.getHash());
-        assert block != null;
-
-        BlockUndo undo = utxoSet.processBlockConnected(block);
-
-        // Store undo data
-        database.storeBlockUndo(tip, undo);
-
-        // TODO: remove transactions from mempool
-
-        // Set the new tip in the main chain
-        mainChain.pushTipBlock(tip);
-    }
-
-    /**
-     * The result of processing a new block.
-     */
-    public enum NewBlockStatus {
-
-        /**
-         * The block is added as orphan because not all ancestors of the block are already known.
-         */
-        ORPHAN,
-
-        /**
-         * The new block is successfully added to the blockchain, either on the main chain or as
-         * a fork.
-         */
-        ADDED_TO_BLOCKCHAIN,
-
-        /**
-         * The block has already been processed and stored.
-         */
-        ALREADY_STORED,
-
-        /**
-         * The block is invalid and has not been stored.
-         */
-        INVALID
+    public @NotNull Set<IndexedBlock> removeOrphansOfParent(@NotNull Hash parentHash) {
+        return orphanMap.removeAll(parentHash);
     }
 }
