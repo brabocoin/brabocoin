@@ -41,8 +41,6 @@ public class Blockchain {
      *
      * @param database
      *     The block database backend.
-     * @param blockValidator
-     *     The block validator.
      */
     public Blockchain(@NotNull BlockDatabase database) {
         this.database = database;
