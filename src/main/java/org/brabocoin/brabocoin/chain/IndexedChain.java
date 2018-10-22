@@ -32,11 +32,11 @@ public class IndexedChain {
     }
 
     /**
-     * Get the tip (highest) block in this chain.
+     * Get the top (highest) block in this chain.
      *
-     * @return The tip block, or {@code null} if the chain is empty.
+     * @return The top block, or {@code null} if the chain is empty.
      */
-    public @Nullable IndexedBlock getTipBlock() {
+    public @Nullable IndexedBlock getTopBlock() {
         return this.chain.isEmpty() ? null : this.chain.get(this.chain.size() - 1);
     }
 
@@ -79,9 +79,9 @@ public class IndexedChain {
     }
 
     /**
-     * Get the height of the tip (highest) block in this chain.
+     * Get the height of the top (highest) block in this chain.
      *
-     * @return The height of the tip (highest) block in the chain, or {@code -1} if the chain is
+     * @return The height of the top (highest) block in the chain, or {@code -1} if the chain is
      * empty.
      */
     public int getHeight() {
@@ -89,21 +89,21 @@ public class IndexedChain {
     }
 
     /**
-     * Removes and returns the tip of the chain.
+     * Removes and returns the top of the chain.
      *
-     * @return The tip block of the chain, or {@code null} if the chain was empty.
+     * @return The top block of the chain, or {@code null} if the chain was empty.
      */
-    @Nullable IndexedBlock popTipBlock() {
+    @Nullable IndexedBlock popTopBlock() {
         return this.chain.remove(this.chain.size() - 1);
     }
 
     /**
-     * Adds the given block as tip to the chain.
+     * Adds the given block as top to the chain.
      *
      * @param block
      *     The block to add.
      */
-    void pushTipBlock(@NotNull IndexedBlock block) {
+    void pushTopBlock(@NotNull IndexedBlock block) {
         this.chain.add(block);
     }
 }

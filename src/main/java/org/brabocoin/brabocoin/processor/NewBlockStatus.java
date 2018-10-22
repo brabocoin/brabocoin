@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.chain;
+package org.brabocoin.brabocoin.processor;
 
 /**
  * The result of processing a new block.

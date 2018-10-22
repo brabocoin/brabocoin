@@ -1,5 +1,7 @@
-package org.brabocoin.brabocoin.chain;
+package org.brabocoin.brabocoin.processor;
 
+import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.BlockInfo;
 import org.brabocoin.brabocoin.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -95,11 +97,11 @@ public class BlockProcessor {
         }
 
         // Check if any orphan blocks are descendants and can be added as well
-        // Return the leaf blocks of the new family, which are new tip candidates
-        Set<IndexedBlock> tipCandidates = processOrphansTipCandidates(indexedBlock);
+        // Return the leaf blocks of the new family, which are new top candidates
+        Set<IndexedBlock> topCandidates = processOrphansTopCandidates(indexedBlock);
 
         // Update the main chain if necessary
-        updateMainChain(tipCandidates);
+        updateMainChain(topCandidates);
 
         return NewBlockStatus.ADDED_TO_BLOCKCHAIN;
     }
@@ -121,16 +123,16 @@ public class BlockProcessor {
      * remove them from the orphan pool.
      * <p>
      * From the set of blocks that are removed as orphans, return the blocks that have no further
-     * descendants from the orphan pool. These blocks are now new candidates for the tip of the
+     * descendants from the orphan pool. These blocks are now new candidates for the top of the
      * main chain.
      *
      * @param newParent
      *     The new parent to find descendants for.
-     * @return The set of new tip candidates from the orphan pool (that are now removed as
+     * @return The set of new top candidates from the orphan pool (that are now removed as
      * orphans and are added to the blockchain).
      */
-    private @NotNull Set<IndexedBlock> processOrphansTipCandidates(@NotNull IndexedBlock newParent) {
-        Set<IndexedBlock> tipCandidates = new HashSet<>();
+    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) {
+        Set<IndexedBlock> topCandidates = new HashSet<>();
 
         Deque<IndexedBlock> queue = new ArrayDeque<>();
         queue.add(newParent);
@@ -142,41 +144,41 @@ public class BlockProcessor {
             Set<IndexedBlock> descendants = blockchain.removeOrphansOfParent(orphan.getHash());
 
             if (descendants.isEmpty()) {
-                // When this orphan has no more known descendants, make tip candidate
-                // TODO: maybe check if it actually supersedes the current tip?
-                tipCandidates.add(orphan);
+                // When this orphan has no more known descendants, make top candidate
+                // TODO: maybe check if it actually supersedes the current top?
+                topCandidates.add(orphan);
             } else {
                 // Add the removed blocks to the queue to find further descendant orphans
                 queue.addAll(descendants);
             }
         }
 
-        return tipCandidates;
+        return topCandidates;
     }
 
     /**
-     * Update the main chain by selecting the new best tip from the provided tip candidates.
+     * Update the main chain by selecting the new best top from the provided top candidates.
      * <p>
-     * If none of the tip candidates is better than the current tip, nothing will happen. When a
-     * new tip is selected, the main chain is reorganized.
+     * If none of the top candidates is better than the current top, nothing will happen. When a
+     * new top is selected, the main chain is reorganized.
      *
-     * @param tipCandidates
-     *     The set of possible new tip blocks.
+     * @param topCandidates
+     *     The set of possible new top blocks.
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void updateMainChain(Set<IndexedBlock> tipCandidates) throws DatabaseException {
-        // Add the current tip to the tip candidates
-        IndexedBlock currentTip = blockchain.getMainChain().getTipBlock();
-        Set<IndexedBlock> allCandidates = new HashSet<>(tipCandidates);
-        allCandidates.add(currentTip);
+    private void updateMainChain(Set<IndexedBlock> topCandidates) throws DatabaseException {
+        // Add the current top to the top candidates
+        IndexedBlock currentTop = blockchain.getMainChain().getTopBlock();
+        Set<IndexedBlock> allCandidates = new HashSet<>(topCandidates);
+        allCandidates.add(currentTop);
 
-        // Select the best tip candidate
+        // Select the best top candidate
         // TODO: Re-organize on block height tiebreaker??
         IndexedBlock bestCandidate = Consensus.bestBlock(allCandidates);
 
-        // If tip does not change, do nothing
-        if (bestCandidate == null || bestCandidate.equals(currentTip)) {
+        // If top does not change, do nothing
+        if (bestCandidate == null || bestCandidate.equals(currentTop)) {
             return;
         }
 
@@ -190,15 +192,15 @@ public class BlockProcessor {
         // Get block at up to which the main chain needs to be reverted
         IndexedBlock revertTargetBlock = fork.pop();
 
-        // Revert chain state to target block by disconnecting tip blocks
-        while (!revertTargetBlock.equals(blockchain.getMainChain().getTipBlock())) {
-            disconnectTip();
+        // Revert chain state to target block by disconnecting top blocks
+        while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
+            disconnectTop();
         }
 
         // Connect the blocks in the new fork
         while (!fork.isEmpty()) {
             IndexedBlock newBlock = fork.pop();
-            connectTip(newBlock);
+            connectTopBlock(newBlock);
         }
     }
 
@@ -239,23 +241,23 @@ public class BlockProcessor {
     }
 
     /**
-     * Disconnects the current tip block from the main chain, while updating the chain state to
+     * Disconnects the current top block from the main chain, while updating the chain state to
      * account for the changed main chain.
      * <p>
-     * The tip is removed from the main chain, and the UTXO set and transaction pool are updated
+     * The top is removed from the main chain, and the UTXO set and transaction pool are updated
      * accordingly.
      *
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void disconnectTip() throws DatabaseException {
-        IndexedBlock tip = blockchain.getMainChain().getTipBlock();
+    private void disconnectTop() throws DatabaseException {
+        IndexedBlock top = blockchain.getMainChain().getTopBlock();
 
-        if (tip == null) {
+        if (top == null) {
             return;
         }
 
-        Hash hash = tip.getHash();
+        Hash hash = top.getHash();
 
         // Read block from disk
         Block block = blockchain.getBlock(hash);
@@ -270,36 +272,36 @@ public class BlockProcessor {
 
         // TODO: update mempool
 
-        // Set the new tip to the parent of the previous tip
-        blockchain.getMainChain().popTipBlock();
+        // Set the new top to the parent of the previous top
+        blockchain.popTopBlock();
     }
 
     /**
-     * Connects the given block as the new tip to the main chain, while updating the chain state
+     * Connects the given block as the new top to the main chain, while updating the chain state
      * to account for the changed main chain.
      * <p>
      * The block is added to the main chain, and the UTXO set and transaction pool are updated
      * accordingly.
      *
-     * @param tip
-     *     The block to be added as the new tip.
+     * @param top
+     *     The block to be added as the new top.
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void connectTip(@NotNull IndexedBlock tip) throws DatabaseException {
+    private void connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
         // Read block from disk
-        Block block = blockchain.getBlock(tip.getHash());
+        Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
         BlockUndo undo = utxoSet.processBlockConnected(block);
 
         // Store undo data
-        blockchain.storeBlockUndo(tip, undo);
+        blockchain.storeBlockUndo(top, undo);
 
         // TODO: remove transactions from mempool
 
-        // Set the new tip in the main chain
-        blockchain.getMainChain().pushTipBlock(tip);
+        // Set the new top in the main chain
+        blockchain.pushTopBlock(top);
     }
 
 }

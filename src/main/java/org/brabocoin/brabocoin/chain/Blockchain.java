@@ -201,4 +201,25 @@ public class Blockchain {
     public @NotNull Set<IndexedBlock> removeOrphansOfParent(@NotNull Hash parentHash) {
         return orphanMap.removeAll(parentHash);
     }
+
+    /**
+     * Pops the top block from the main chain.
+     *
+     * @return The removed top block.
+     * @see IndexedChain#popTopBlock()
+     */
+    public @Nullable IndexedBlock popTopBlock() {
+        return mainChain.popTopBlock();
+    }
+
+    /**
+     * Pushes the top block on the main chain.
+     *
+     * @param block
+     *     The block to add.
+     * @see IndexedChain#pushTopBlock(IndexedBlock)
+     */
+    public void pushTopBlock(@NotNull IndexedBlock block) {
+        mainChain.pushTopBlock(block);
+    }
 }
