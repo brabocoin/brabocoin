@@ -1,7 +1,14 @@
 package org.brabocoin.brabocoin.testutil;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.util.ByteUtil;
 
 import java.util.ArrayList;
@@ -31,6 +38,45 @@ public class Simulation {
                     repeatedBuilder(Simulation::randomTransaction, 30));
             previousHash = block.computeHash();
             list.add(block);
+        }
+
+        return list;
+    }
+
+    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length) {
+        List<IndexedBlock> list = new ArrayList<>();
+        Hash previousHash = new Hash(ByteUtil.toByteString(0));
+        long creationTime = new Date().getTime();
+
+        for (int i = 0; i < length; i++) {
+            Block block = new Block(
+                previousHash,
+                randomHash(),
+                randomHash(),
+                randomByteString(),
+                creationTime,
+                i,
+                repeatedBuilder(Simulation::randomTransaction, 30));
+
+            BlockInfo info = new BlockInfo(
+                block.getPreviousBlockHash(),
+                block.getMerkleRoot(),
+                block.getTargetValue(),
+                block.getNonce(),
+                block.getTimestamp(),
+                block.getBlockHeight(),
+                block.getTransactions().size(),
+                false,
+                0,
+                0,
+                0,
+                0,
+                0
+            );
+
+            previousHash = block.computeHash();
+            IndexedBlock indexedBlock = new IndexedBlock(previousHash, info);
+            list.add(indexedBlock);
         }
 
         return list;

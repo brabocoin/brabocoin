@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 /**
  * Tests the blockchain.
  */
-class BlockchainTest {
+class BlockProcessorTest {
 
     @BeforeEach
     void setUp() {

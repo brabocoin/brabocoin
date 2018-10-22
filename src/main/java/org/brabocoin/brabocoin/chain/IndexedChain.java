@@ -71,7 +71,7 @@ public class IndexedChain {
      * exists in this chain.
      */
     public @Nullable IndexedBlock getBlockAtHeight(int height) {
-        if (height < 0 || height > this.chain.size()) {
+        if (height < 0 || height >= this.chain.size()) {
             return null;
         }
 
@@ -94,6 +94,9 @@ public class IndexedChain {
      * @return The top block of the chain, or {@code null} if the chain was empty.
      */
     @Nullable IndexedBlock popTopBlock() {
+        if (this.chain.isEmpty()) {
+            return null;
+        }
         return this.chain.remove(this.chain.size() - 1);
     }
 
