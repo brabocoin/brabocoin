@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.dal;
 
 import com.google.protobuf.ByteString;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -17,31 +18,31 @@ public class HashMapDB implements KeyValueStore {
     @Override
     public void put(ByteString key, ByteString value) {
         LOGGER.fine("Putting key-value pair.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
-        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
         map.put(key, value);
     }
 
     @Override
     public ByteString get(ByteString key) {
         LOGGER.fine("Getting value using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         return map.get(key);
     }
 
     @Override
     public void delete(ByteString key) {
         LOGGER.fine("Deleting key-value pair using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         map.remove(key);
     }
 
     @Override
     public boolean has(ByteString key) {
         LOGGER.fine("Checking if store has key-value pair using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         final boolean hasKey = map.containsKey(key);
-        LOGGER.log(Level.FINEST, "found: {0}", hasKey);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("found: {0}", hasKey));
         return hasKey;
     }
 

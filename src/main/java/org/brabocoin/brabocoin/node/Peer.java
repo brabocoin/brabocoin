@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -105,7 +106,7 @@ public class Peer {
      */
     private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {
         LOGGER.fine("Getting socket from string.");
-        LOGGER.log(Level.FINEST, "String: {0}", socket);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("String: {0}", socket));
         if (!socket.contains(":")) {
             LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
             throw new MalformedSocketException("Socket representation does not contain a colon separator.");

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.security.MessageDigest;
 import java.security.Security;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +55,7 @@ public final class Hashing {
                                         @NotNull ByteString message) {
         LOGGER.log(Level.FINE, "Digest for ByteString message using MessageDigest: {0}", messageDigest.getAlgorithm());
         Hash hash = new Hash(ByteString.copyFrom(messageDigest.digest(message.toByteArray())));
-        LOGGER.log(Level.FINEST, "{0} ( {1} ) = {2}", new Object[]{messageDigest.getAlgorithm(), toHexString(message), toHexString(hash.getValue())});
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("{0} ( {1} ) = {2}", new Object[]{messageDigest.getAlgorithm(), toHexString(message), toHexString(hash.getValue())}));
         return hash;
     }
 
