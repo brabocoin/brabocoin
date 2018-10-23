@@ -9,6 +9,9 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.BlockFileInfo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -20,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.logging.Level;
@@ -44,7 +44,7 @@ public class BlockDatabase {
     /**
      * Max block file size in bytes.
      */
-    private final long maxFileSize;
+    private final int maxFileSize;
 
     private final @NotNull KeyValueStore storage;
 
@@ -71,13 +71,6 @@ public class BlockDatabase {
 
     private void initialize() throws DatabaseException {
         LOGGER.info("Initializing BlockDatabase.");
-        ByteString key = getCurrentFileKey();
-
-        if (storage.get(key) == null) {
-            LOGGER.fine("Current file key not found.");
-            registerNewBlockFile(0);
-            LOGGER.fine("Current file key created.");
-        }
 
         // Create blockStore directory if not exists
         if (!directory.exists()) {
@@ -93,8 +86,20 @@ public class BlockDatabase {
             LOGGER.severe("Block storage directory is not a directory.");
             throw new DatabaseException("Block storage directory is not a directory.");
         }
+
+        ByteString key = getCurrentFileKey();
+        if (!storage.has(key)) {
+            LOGGER.fine("Current file key not found.");
+            registerNewBlockFile(0);
+            LOGGER.fine("Current file key created.");
+        }
     }
 
+    /**
+     * Get the key that points to the current file number.
+     *
+     * @return The key.
+     */
     private ByteString getCurrentFileKey() {
         return KEY_CURRENT_FILE;
     }
@@ -111,17 +116,13 @@ public class BlockDatabase {
      */
     private void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
         ByteString key = getFileKey(fileNumber);
-        ByteString value = getRawProtoValue(fileInfo, BrabocoinStorageProtos.BlockFileInfo.class);
+        ByteString value = ProtoConverter.toProtoBytes(fileInfo, BrabocoinStorageProtos.BlockFileInfo.class);
 
         store(key, value);
     }
 
     private ByteString getFileKey(int fileNumber) {
         return KEY_PREFIX_FILE.concat(ByteUtil.toByteString(fileNumber));
-    }
-
-    private <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
-        return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
     private void store(ByteString key, ByteString value) throws DatabaseException {
@@ -134,9 +135,9 @@ public class BlockDatabase {
      * Writes the full block data to a block file on disk and records a {@link BlockInfo} record in
      * the database.
      * <p>
-     * Note that the revert file information is not available when
+     * Note that the undo file information is not available when
      * {@link BlockDatabase#storeBlockUndo(IndexedBlock, BlockUndo)} has not yet been called on
-     * the block. In that case, the offset and size field for the revert file are set to {@code 0}.
+     * the block. In that case, the offset and size field for the undo file are set to {@code 0}.
      *
      * @param block
      *     The block to store.
@@ -170,7 +171,7 @@ public class BlockDatabase {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("fileNumber: {0}", fileNumber));
 
         // Position in file where the block is be written
-        long offsetInFile = writeProtoToFile(getBlockFileName(fileNumber), protoBlock);
+        int offsetInFile = writeProtoToFile(getBlockFileName(fileNumber), protoBlock);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("offsetInFile: {0}", offsetInFile));
 
         // Write new file info to database
@@ -194,7 +195,7 @@ public class BlockDatabase {
         );
         LOGGER.fine("Created BlockInfo for block to be stored.");
 
-        ByteString value = getRawProtoValue(blockInfo, BrabocoinStorageProtos.BlockInfo.class);
+        ByteString value = ProtoConverter.toProtoBytes(blockInfo, BrabocoinStorageProtos.BlockInfo.class);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
         store(key, value);
 
@@ -220,13 +221,14 @@ public class BlockDatabase {
         BrabocoinStorageProtos.BlockUndo protoUndo = ProtoConverter.toProto(undo,
             BrabocoinStorageProtos.BlockUndo.class
         );
-        int revertSize = protoUndo.getSerializedSize();
-        LOGGER.finest(() -> MessageFormat.format("revertSize={0}", revertSize));
+        int undoSize = protoUndo.getSerializedSize();
+        LOGGER.finest(() -> MessageFormat.format("undoSize={0}", undoSize));
 
-        long offsetInRevertFile = writeProtoToFile(getRevertFileName(info.getFileNumber()),
+        int offsetInUndoFile = writeProtoToFile(
+            getUndoFileName(info.getFileNumber()),
             protoUndo
         );
-        LOGGER.finest(() -> MessageFormat.format("offsetInRevertFile={0}", offsetInRevertFile));
+        LOGGER.finest(() -> MessageFormat.format("offsetInUndoFile={0}", offsetInUndoFile));
 
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
             info.getMerkleRoot(),
@@ -239,24 +241,25 @@ public class BlockDatabase {
             info.getFileNumber(),
             info.getOffsetInFile(),
             info.getSizeInFile(),
-            offsetInRevertFile,
-            revertSize
+            offsetInUndoFile,
+            undoSize
         );
 
         ByteString key = getBlockKey(block.getHash());
-        ByteString value = getRawProtoValue(newInfo, BrabocoinStorageProtos.BlockInfo.class);
+        ByteString value = ProtoConverter.toProtoBytes(newInfo, BrabocoinStorageProtos.BlockInfo.class);
         store(key, value);
 
         return newInfo;
     }
 
-    private long writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
-        long offsetInFile;
-        try (FileOutputStream outputStream = new FileOutputStream(fileName, true)) {
-            offsetInFile = outputStream.getChannel().position();
-            proto.writeTo(outputStream);
+    private int writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
+        int offsetInFile;
+        try (RandomAccessFile file = new RandomAccessFile(fileName, "w")) {
+            file.seek(file.length());
+            offsetInFile = Math.toIntExact(file.getFilePointer());
+            file.write(proto.toByteArray());
         }
-        catch (IOException e) {
+        catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Data could not be written to disk.", e);
             throw new DatabaseException("Data could not be written to disk.", e);
         }
@@ -264,8 +267,8 @@ public class BlockDatabase {
         return offsetInFile;
     }
 
-    private String getRevertFileName(int fileNumber) {
-        return Paths.get(this.directory.getPath(), "rev" + fileNumber + ".dat").toString();
+    private String getUndoFileName(int fileNumber) {
+        return Paths.get(this.directory.getPath(), "und" + fileNumber + ".dat").toString();
     }
 
     private ByteString getBlockKey(@NotNull Hash hash) {
@@ -310,16 +313,28 @@ public class BlockDatabase {
             info.getFileNumber(),
             info.getOffsetInFile(),
             info.getSizeInFile(),
-            info.getOffsetInRevertFile(),
-            info.getSizeInRevertFile()
+            info.getOffsetInUndoFile(),
+            info.getSizeInUndoFile()
         );
 
-        ByteString value = getRawProtoValue(newInfo, BrabocoinStorageProtos.BlockInfo.class);
+        ByteString value = ProtoConverter.toProtoBytes(newInfo, BrabocoinStorageProtos.BlockInfo.class);
         store(key, value);
 
-        return info;
+        return newInfo;
     }
 
+    /**
+     * Update the file info record in the database.
+     *
+     * @param fileNumber
+     *     The file number to update the record for.
+     * @param block
+     *     The newly added block to the specified file.
+     * @param serializedSize
+     *     The size of the newly added block.
+     * @throws DatabaseException
+     *     When the data could not be stored.
+     */
     private void updateFileInfo(int fileNumber, @NotNull Block block, int serializedSize) throws DatabaseException {
         LOGGER.fine("Updating file info.");
         BlockFileInfo fileInfo = findBlockFileInfo(fileNumber);
@@ -342,6 +357,18 @@ public class BlockDatabase {
         setBlockFileInfo(fileNumber, newFileInfo);
     }
 
+    /**
+     * Retrieves the file number to store the block in of the given size.
+     * <p>
+     * When the new block is too large to be put in the current file (such that the maximum file
+     * size is not exceeded), the current file number is incremented.
+     *
+     * @param blockSize
+     *     The serialized size of the new block to store.
+     * @return The file number in which the block can be stored.
+     * @throws DatabaseException
+     *     When the file data could not be retrieved.
+     */
     private int nextFileNumber(int blockSize) throws DatabaseException {
         LOGGER.fine("Getting next file number.");
         int current = getCurrentFileNumber();
@@ -425,7 +452,7 @@ public class BlockDatabase {
         LOGGER.fine("Read raw block from file.");
         String fileName = getBlockFileName(blockInfo.getFileNumber());
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("filename: {0}", fileName));
-        long offset = blockInfo.getOffsetInFile();
+        int offset = blockInfo.getOffsetInFile();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("offset: {0}", offset));
         int size = blockInfo.getSizeInFile();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("size: {0}", size));
@@ -455,19 +482,17 @@ public class BlockDatabase {
         return path;
     }
 
-    private @NotNull ByteString readBytesFromFile(@NotNull String fileName, long offset,
+    private @NotNull ByteString readBytesFromFile(@NotNull String fileName, int offset,
                                                   int size) throws DatabaseException {
         LOGGER.fine("Read raw bytes from file.");
         byte[] data;
 
-        try (InputStream inputStream = new FileInputStream(fileName)) {
+        try (RandomAccessFile file = new RandomAccessFile(fileName, "r")) {
             data = new byte[size];
-
-            inputStream.skip(offset);
-            inputStream.read(data);
+            file.readFully(data, offset, size);
             LOGGER.fine("Read file into input stream.");
         }
-        catch (IOException e) {
+        catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Could not read file: {0}", e.getMessage());
             throw new DatabaseException("Data could not be read from file.", e);
         }
@@ -515,11 +540,11 @@ public class BlockDatabase {
 
     private @NotNull ByteString readRawUndoFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         LOGGER.fine("Read raw undo data from file.");
-        String fileName = getRevertFileName(blockInfo.getFileNumber());
+        String fileName = getUndoFileName(blockInfo.getFileNumber());
         LOGGER.log(Level.FINEST, "filename: {0}", fileName);
-        long offset = blockInfo.getOffsetInRevertFile();
+        int offset = blockInfo.getOffsetInUndoFile();
         LOGGER.log(Level.FINEST, "offset: {0}", offset);
-        int size = blockInfo.getSizeInRevertFile();
+        int size = blockInfo.getSizeInUndoFile();
         LOGGER.log(Level.FINEST, "size: {0}", size);
 
         return readBytesFromFile(fileName, offset, size);
@@ -562,6 +587,13 @@ public class BlockDatabase {
         );
     }
 
+    /**
+     * Retrieves the current file number.
+     *
+     * @return The current file number.
+     * @throws DatabaseException
+     *     When the data could not be retrieved.
+     */
     private int getCurrentFileNumber() throws DatabaseException {
         LOGGER.fine("Getting current file number.");
         ByteString key = getCurrentFileKey();
@@ -578,6 +610,14 @@ public class BlockDatabase {
         return ByteUtil.toInt(value);
     }
 
+    /**
+     * Sets the current file number.
+     *
+     * @param fileNumber
+     *     The file number.
+     * @throws DatabaseException
+     *     When the data could not be stored.
+     */
     private void setCurrentFileNumber(int fileNumber) throws DatabaseException {
         LOGGER.fine("Setting current file number.");
         ByteString key = getCurrentFileKey();

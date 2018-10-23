@@ -1,8 +1,9 @@
-package org.brabocoin.brabocoin.dal;
+package org.brabocoin.brabocoin.model.dal;
 
 import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
@@ -68,7 +69,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
     /**
      * The file number in which the full block is stored on disk, as well as the number of the
-     * revert file.
+     * undo file.
      *
      * @see BlockFileInfo
      */
@@ -81,7 +82,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @see BlockFileInfo
      */
     @ProtoField
-    private final long offsetInFile;
+    private final int offsetInFile;
 
     /**
      * The size in bytes of the serialized block in the file.
@@ -92,16 +93,16 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final int sizeInFile;
 
     /**
-     * The offset in bytes indicating the location in the file where the revert data is stored.
+     * The offset in bytes indicating the location in the file where the undo data is stored.
      */
     @ProtoField
-    private final long offsetInRevertFile;
+    private final int offsetInUndoFile;
 
     /**
-     * The size in bytes of the serialized revert data in the file.
+     * The size in bytes of the serialized undo data in the file.
      */
     @ProtoField
-    private final int sizeInRevertFile;
+    private final int sizeInUndoFile;
 
     /**
      * Creates a new block information holder.
@@ -130,16 +131,16 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      *     The offset in bytes indicating the location in the file where the full block is stored.
      * @param sizeInFile
      *     The size of the serialized block in the file.
-     * @param offsetInRevertFile
-     *     The offset in bytes indicating the location in the file where the revert data is stored.
-     * @param sizeInRevertFile
-     *     The size in bytes of the serialized revert data in the file.
+     * @param offsetInUndoFile
+     *     The offset in bytes indicating the location in the file where the undo data is stored.
+     * @param sizeInUndoFile
+     *     The size in bytes of the serialized undo data in the file.
      */
     public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                      @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
                      int blockHeight, int transactionCount, boolean validated, int fileNumber,
-                     long offsetInFile, int sizeInFile, long offsetInRevertFile,
-                     int sizeInRevertFile) {
+                     int offsetInFile, int sizeInFile, int offsetInUndoFile,
+                     int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -151,8 +152,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.fileNumber = fileNumber;
         this.offsetInFile = offsetInFile;
         this.sizeInFile = sizeInFile;
-        this.offsetInRevertFile = offsetInRevertFile;
-        this.sizeInRevertFile = sizeInRevertFile;
+        this.offsetInUndoFile = offsetInUndoFile;
+        this.sizeInUndoFile = sizeInUndoFile;
     }
 
     public int getBlockHeight() {
@@ -171,7 +172,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return fileNumber;
     }
 
-    public long getOffsetInFile() {
+    public int getOffsetInFile() {
         return offsetInFile;
     }
 
@@ -199,12 +200,12 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return timestamp;
     }
 
-    public long getOffsetInRevertFile() {
-        return offsetInRevertFile;
+    public int getOffsetInUndoFile() {
+        return offsetInUndoFile;
     }
 
-    public int getSizeInRevertFile() {
-        return sizeInRevertFile;
+    public int getSizeInUndoFile() {
+        return sizeInUndoFile;
     }
 
     @Override
@@ -243,16 +244,16 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         private int fileNumber;
 
         @ProtoField
-        private long offsetInFile;
+        private int offsetInFile;
 
         @ProtoField
         private int sizeInFile;
 
         @ProtoField
-        private long offsetInRevertFile;
+        private int offsetInUndoFile;
 
         @ProtoField
-        private int sizeInRevertFile;
+        private int sizeInUndoFile;
 
         public Builder setPreviousBlockHash(@NotNull Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -299,7 +300,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setOffsetInFile(long offsetInFile) {
+        public Builder setOffsetInFile(int offsetInFile) {
             this.offsetInFile = offsetInFile;
             return this;
         }
@@ -309,13 +310,13 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setOffsetInRevertFile(long offsetInRevertFile) {
-            this.offsetInRevertFile = offsetInRevertFile;
+        public Builder setOffsetInUndoFile(int offsetInUndoFile) {
+            this.offsetInUndoFile = offsetInUndoFile;
             return this;
         }
 
-        public Builder setSizeInRevertFile(int sizeInRevertFile) {
-            this.sizeInRevertFile = sizeInRevertFile;
+        public Builder setSizeInUndoFile(int sizeInUndoFile) {
+            this.sizeInUndoFile = sizeInUndoFile;
             return this;
         }
 
@@ -332,9 +333,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 validated,
                 fileNumber,
                 offsetInFile,
-                sizeInFile,
-                offsetInRevertFile,
-                sizeInRevertFile
+                sizeInFile, offsetInUndoFile, sizeInUndoFile
             );
         }
     }

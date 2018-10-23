@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.chain;
 
-import org.brabocoin.brabocoin.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 

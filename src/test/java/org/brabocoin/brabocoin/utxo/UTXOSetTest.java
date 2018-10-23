@@ -1,10 +1,10 @@
 package org.brabocoin.brabocoin.utxo;
 
-import org.brabocoin.brabocoin.dal.BlockUndo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.TransactionUndo;
-import org.brabocoin.brabocoin.dal.utxo.UTXODatabase;
-import org.brabocoin.brabocoin.dal.utxo.UnspentOutputInfo;
+import org.brabocoin.brabocoin.model.dal.TransactionUndo;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;

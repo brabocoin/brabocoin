@@ -45,4 +45,27 @@ public class ProtoConverter {
                                                                          Class<P> protoClass) {
         return CONVERTER.toProtobuf(protoClass, domainObject);
     }
+
+    /**
+     * Convert a domain object to the byte representation of the converted proto object.
+     *
+     * @param domainObject
+     *     The domain object instance.
+     * @param protoClass
+     *     The generated proto class.
+     * @param <D>
+     *     The proto model class.
+     * @param <P>
+     *     The generated proto class.
+     * @return The raw bytes of the converted proto object, or {@code null} if the object could
+     * not be converted.
+     */
+    public static <D extends ProtoModel<D>, P extends Message> ByteString toProtoBytes(D domainObject, Class<P> protoClass) {
+        P proto = toProto(domainObject, protoClass);
+        if (proto == null) {
+            return null;
+        }
+
+        return proto.toByteString();
+    }
 }

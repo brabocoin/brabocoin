@@ -42,7 +42,7 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public long maxBlockFileSize() {
+    public int maxBlockFileSize() {
         return delegator.maxBlockFileSize();
     }
 }

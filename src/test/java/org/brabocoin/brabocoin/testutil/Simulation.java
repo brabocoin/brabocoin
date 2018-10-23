@@ -2,7 +2,7 @@ package org.brabocoin.brabocoin.testutil;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;

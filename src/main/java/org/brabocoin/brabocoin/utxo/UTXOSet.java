@@ -1,9 +1,9 @@
 package org.brabocoin.brabocoin.utxo;
 
-import org.brabocoin.brabocoin.dal.BlockUndo;
-import org.brabocoin.brabocoin.dal.TransactionUndo;
-import org.brabocoin.brabocoin.dal.utxo.UTXODatabase;
-import org.brabocoin.brabocoin.dal.utxo.UnspentOutputInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
+import org.brabocoin.brabocoin.model.dal.TransactionUndo;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -87,7 +87,7 @@ public class UTXOSet {
      * Process the inputs and outputs of all transactions in a disconnected block.
      * <p>
      * All outputs of the transactions in the block are marked as spent, and the inputs are
-     * marked as unspent by applying the block revert file.
+     * marked as unspent by applying the block undo file.
      *
      * @param block
      *     The disconnected block.

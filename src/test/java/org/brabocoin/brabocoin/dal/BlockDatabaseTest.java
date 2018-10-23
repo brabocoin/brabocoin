@@ -4,6 +4,9 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.BlockFileInfo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
@@ -134,14 +137,10 @@ class BlockDatabaseTest {
 
         database.storeBlock(block, false);
 
-        database.setBlockValidationStatus(hash, true);
-        BlockInfo info = database.findBlockInfo(hash);
-        assertNotNull(info);
+        BlockInfo info = database.setBlockValidationStatus(hash, true);
         assertTrue(info.isValidated());
 
-        database.setBlockValidationStatus(hash, false);
-        BlockInfo info2 = database.findBlockInfo(hash);
-        assertNotNull(info2);
+        BlockInfo info2 = database.setBlockValidationStatus(hash, false);
         assertFalse(info2.isValidated());
     }
 
@@ -245,7 +244,7 @@ class BlockDatabaseTest {
     void createNewFileWhenSizeExceeds() throws DatabaseException {
         BraboConfig smallConfig = new MockBraboConfig(config) {
             @Override
-            public long maxBlockFileSize() {
+            public int maxBlockFileSize() {
                 return 1L;
             }
         };
@@ -273,8 +272,8 @@ class BlockDatabaseTest {
 
         BlockInfo info = database.storeBlock(block, false);
         assertNotNull(info);
-        assertEquals(0, info.getOffsetInRevertFile());
-        assertEquals(0, info.getSizeInRevertFile());
+        assertEquals(0, info.getOffsetInUndoFile());
+        assertEquals(0, info.getSizeInUndoFile());
 
         IndexedBlock indexedBlock = new IndexedBlock(hash, info);
         BlockUndo undo = new BlockUndo(new ArrayList<>());

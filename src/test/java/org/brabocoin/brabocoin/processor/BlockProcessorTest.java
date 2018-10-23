@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.utxo.UTXODatabase;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -84,8 +84,8 @@ class BlockProcessorTest {
 
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
 
-        NewBlockStatus status = blockProcessor.processNewBlock(block);
-        assertEquals(NewBlockStatus.INVALID, status);
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        assertEquals(ProcessedBlockStatus.INVALID, status);
     }
 
     @Test
@@ -93,16 +93,16 @@ class BlockProcessorTest {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
         blockchain.storeBlock(block, true);
 
-        NewBlockStatus status = blockProcessor.processNewBlock(block);
-        assertEquals(NewBlockStatus.ALREADY_STORED, status);
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        assertEquals(ProcessedBlockStatus.ALREADY_STORED, status);
     }
 
     @Test
     void addAsOrphanParentUnknown() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        NewBlockStatus status = blockProcessor.processNewBlock(block);
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
 
-        assertEquals(NewBlockStatus.ORPHAN, status);
+        assertEquals(ProcessedBlockStatus.ORPHAN, status);
         IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.computeHash());
         assertTrue(blockchain.isOrphan(indexedBlock));
     }
@@ -117,8 +117,8 @@ class BlockProcessorTest {
         IndexedBlock indexedParent = blockchain.getIndexedBlock(parent.computeHash());
         blockchain.addOrphan(indexedParent);
 
-        NewBlockStatus status = blockProcessor.processNewBlock(child);
-        assertEquals(NewBlockStatus.ORPHAN, status);
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
+        assertEquals(ProcessedBlockStatus.ORPHAN, status);
         IndexedBlock indexedChild = blockchain.getIndexedBlock(child.computeHash());
         assertTrue(blockchain.isOrphan(indexedChild));
     }
@@ -131,9 +131,9 @@ class BlockProcessorTest {
         Block block = Simulation.randomBlockChainGenerator(1, genesis, 1).get(0);
         Hash hash = block.computeHash();
 
-        NewBlockStatus status = blockProcessor.processNewBlock(block);
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
 
-        assertEquals(NewBlockStatus.ADDED_TO_BLOCKCHAIN, status);
+        assertEquals(ProcessedBlockStatus.ADDED_TO_BLOCKCHAIN, status);
         assertEquals(hash, blockchain.getMainChain().getTopBlock().getHash());
         assertEquals(1, blockchain.getMainChain().getHeight());
     }

@@ -2,8 +2,8 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.dal.BlockInfo;
-import org.brabocoin.brabocoin.dal.BlockUndo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -86,20 +86,20 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public NewBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
+    public ProcessedBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
         if (!checkBlockValid(block)) {
             LOGGER.info("New block is invalid.");
-            return NewBlockStatus.INVALID;
+            return ProcessedBlockStatus.INVALID;
         }
 
         // Check if we already have the block
         Hash hash = block.computeHash();
         if (blockchain.isBlockStored(hash)) {
             LOGGER.info("New block was already stored.");
-            return NewBlockStatus.ALREADY_STORED;
+            return ProcessedBlockStatus.ALREADY_STORED;
         }
 
         // Store the block on disk
@@ -113,7 +113,7 @@ public class BlockProcessor {
         if (parent == null || blockchain.isOrphan(parent)) {
             blockchain.addOrphan(indexedBlock);
             LOGGER.info("New block is added as orphan.");
-            return NewBlockStatus.ORPHAN;
+            return ProcessedBlockStatus.ORPHAN;
         }
 
         // Check if any orphan blocks are descendants and can be added as well
@@ -124,7 +124,7 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
-        return NewBlockStatus.ADDED_TO_BLOCKCHAIN;
+        return ProcessedBlockStatus.ADDED_TO_BLOCKCHAIN;
     }
 
     /**

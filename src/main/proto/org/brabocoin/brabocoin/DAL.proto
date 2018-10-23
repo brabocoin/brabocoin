@@ -22,8 +22,8 @@ message BlockInfo {
     int32 fileNumber = 9;
     int64 offsetInFile = 10;
     int32 sizeInFile = 11;
-    int64 offsetInRevertFile = 12;
-    int32 sizeInRevertFile = 13;
+    int64 offsetInUndoFile = 12;
+    int32 sizeInUndoFile = 13;
 }
 
 message BlockFileInfo {

@@ -3,7 +3,7 @@ package org.brabocoin.brabocoin.processor;
 /**
  * The result of processing a new block.
  */
-public enum NewBlockStatus {
+public enum ProcessedBlockStatus {
 
     /**
      * The block is added as orphan because not all ancestors of the block are already known.

@@ -1,7 +1,8 @@
-package org.brabocoin.brabocoin.dal.utxo;
+package org.brabocoin.brabocoin.model.dal;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;

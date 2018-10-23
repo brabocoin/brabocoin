@@ -1,8 +1,8 @@
 package org.brabocoin.brabocoin.chain;
 
 import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.BlockInfo;
-import org.brabocoin.brabocoin.dal.BlockUndo;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;

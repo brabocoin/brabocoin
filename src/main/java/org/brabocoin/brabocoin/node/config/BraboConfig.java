@@ -21,5 +21,5 @@ public interface BraboConfig {
      *
      * @return The maximum file size.
      */
-    long maxBlockFileSize();
+    int maxBlockFileSize();
 }
