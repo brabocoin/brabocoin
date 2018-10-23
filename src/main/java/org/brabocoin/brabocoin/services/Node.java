@@ -129,7 +129,7 @@ public class Node {
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendBlock(request, emptyLogResponseObserver));
+            environment.propagateMessage((Peer p) -> p.getAsyncStub().announceBlock(request, emptyLogResponseObserver));
         }
 
         @Override
@@ -140,7 +140,7 @@ public class Node {
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendTransaction(request, emptyLogResponseObserver));
+            environment.propagateMessage((Peer p) -> p.getAsyncStub().announceTransaction(request, emptyLogResponseObserver));
         }
 
         @Override
