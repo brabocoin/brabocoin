@@ -80,9 +80,9 @@ public class NodeEnvironment {
      * Setup the environment, loading the config and bootstrapping peers.
      */
     public void setup() {
-        LOGGER.fine("Setting up the node environment.");
+        LOGGER.info("Setting up the node environment.");
         bootstrap();
-        LOGGER.fine("Environment setup done.");
+        LOGGER.info("Environment setup done.");
     }
 
     /**

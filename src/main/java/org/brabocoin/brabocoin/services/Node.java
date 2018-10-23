@@ -70,7 +70,11 @@ public class Node {
     }
 
     private void logIncomingCall(String call, MessageOrBuilder receivedMessage) {
-        LOGGER.log(Level.FINE, "Received '{0}' call.", call);
+        logIncomingCall(call, receivedMessage, Level.INFO);
+    }
+
+    private void logIncomingCall(String call, MessageOrBuilder receivedMessage, Level receivedLogLevel) {
+        LOGGER.log(receivedLogLevel, "Received '{0}' call.", call);
         try {
             LOGGER.log(Level.FINEST, "Received data: {0}", JsonFormat.printer().print(receivedMessage));
         } catch (InvalidProtocolBufferException e) {
@@ -121,10 +125,11 @@ public class Node {
 
         @Override
         public StreamObserver<BrabocoinProtos.Hash> getBlocks(StreamObserver<BrabocoinProtos.Block> responseObserver) {
+            LOGGER.log(Level.INFO, "getBlocks message received.");
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
-                    logIncomingCall("getBlocks.onNext", value);
+                    logIncomingCall("getBlocks.onNext", value, Level.FINE);
                     Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
                     Block block = environment.getBlock(hash);
                     if (block == null) {
@@ -154,10 +159,11 @@ public class Node {
 
         @Override
         public StreamObserver<BrabocoinProtos.Hash> getTransactions(StreamObserver<BrabocoinProtos.Transaction> responseObserver) {
+            LOGGER.log(Level.INFO, "getTransactions message received.");
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
-                    logIncomingCall("getTransactions.onNext", value);
+                    logIncomingCall("getTransactions.onNext", value, Level.FINE);
                     Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
                     Transaction transaction = environment.getTransaction(hash);
                     if (transaction == null) {

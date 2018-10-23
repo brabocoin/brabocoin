@@ -61,7 +61,7 @@ public class Peer {
      * Also add a shutdown handler for the channel.
      */
     private void setupStubs() throws MalformedSocketException {
-        LOGGER.fine("Setting up channel and stubs for peer.");
+        LOGGER.log(Level.INFO, "Setting up a new peer: {0}", toSocketString());
         try {
             this.channel = ManagedChannelBuilder
                     .forAddress(socket.getHostString(), socket.getPort())
@@ -83,7 +83,7 @@ public class Peer {
      * Close the channel to this peer.
      */
     public void stop() {
-        LOGGER.fine("Stopping peer.");
+        LOGGER.log(Level.INFO, "Stopping peer: {0}", toSocketString());
         channel.shutdown();
     }
 
