@@ -13,12 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Manages all tasks related to a set of peers.
  * This includes bootstrapping and maintaining the peer set to match the desired number of peers set in the config.
  */
 public class PeerProcessor {
+    private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
     private Set<Peer> peers;
     private BraboConfig config;
 
@@ -37,13 +40,19 @@ public class PeerProcessor {
      * Initializes the set of peers.
      */
     private void instantiateBootstrapPeers() {
+        LOGGER.fine("Instantiating bootstrap peers.");
         for (final String peerSocket : config.bootstrapPeers()) {
+            LOGGER.log(Level.FINEST, "Peer socket read from config: {0}", peerSocket);
             try {
-                peers.add(new Peer(peerSocket));
+                Peer p = new Peer(peerSocket);
+                peers.add(p);
+                LOGGER.log(Level.FINEST, "Peer created and added to peer set: {0}", p);
             } catch (MalformedSocketException e) {
+                LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
+                    peerSocket, e.getMessage()
+                });
                 // TODO: Handle invalid peer socket representation in the config.
                 // Exit throwing an error to the user or skip this peer?
-                // Definitely log this.
             }
         }
     }
@@ -53,43 +62,53 @@ public class PeerProcessor {
      * This constant is defined in the config.
      */
     public void bootstrap() {
+        LOGGER.info("Bootstrapping initiated.");
         // Populate bootstrap peers
         instantiateBootstrapPeers();
         // A list of peers for which we need to do a handshake
         List<Peer> handshakePeers = copyPeers();
 
         if (handshakePeers.size() <= 0) {
-            // TODO: Log to user, we can not bootstrap without any bootstrap peers
+            LOGGER.severe("No bootstrapping peers found.");
+            // TODO: What to do now?
             return;
         }
 
         while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.remove(0);
+            LOGGER.log(Level.FINEST,"Bootstrapping on peer: {0}", handshakePeer);
             try {
+                LOGGER.log(Level.FINEST,"Performing handshake.");
                 // Perform a handshake with the peer
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
-                        .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                        .handshake(Empty.newBuilder().build());
+                    .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
+                    .handshake(Empty.newBuilder().build());
                 HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
+                LOGGER.log(Level.FINEST,"Response acquired, got {0} peers.", response.getPeers().size());
 
+                LOGGER.log(Level.FINEST,"Adding handshake peer to peer list, as handshake was successful.");
                 // We got a response from the current handshake peer, register this peer as valid
                 peers.add(handshakePeer);
 
                 // Add the discovered peers to the list of handshake peers
                 for (final String peerSocket : response.getPeers()) {
+                    LOGGER.log(Level.FINEST,"Discovered new peer, raw socket string: {0}", peerSocket);
                     try {
                         final Peer discoveredPeer = new Peer(peerSocket);
+                        LOGGER.log(Level.FINEST,"Discovered new peer parsed: {0}", discoveredPeer);
                         handshakePeers.add(discoveredPeer);
-                    } catch (final Exception e) {
-                        // Bootstrap peer returned a malformed or invalid peer
+                    } catch (MalformedSocketException e) {
+                        LOGGER.log(Level.WARNING,"Error while parsing raw peer socket string: {0}", e.getMessage());
+                        // TODO: Ignore and continue?
                     }
                 }
             } catch (StatusRuntimeException e) {
-                // TODO: handle peer errors on handshake, log
+                LOGGER.log(Level.WARNING,"Error while handshaking with peer: {0}", e.getMessage());
+                // TODO: Ignore and continue?
             }
         }
 
-        // TODO: Check whether the bootstrap peers were valid.
+        // TODO: Update peers when connection is lost.
     }
 
     /**
@@ -98,6 +117,7 @@ public class PeerProcessor {
      * @return List of peers.
      */
     private List<Peer> copyPeers() {
+        LOGGER.fine("Creating a list copy of the set of peers.");
         return new ArrayList<>(peers);
     }
 }
