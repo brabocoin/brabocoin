@@ -16,6 +16,16 @@ import java.util.Comparator;
  */
 public class Consensus {
 
+    private final @NotNull Block genesisBlock = new Block(
+        new Hash(ByteString.copyFromUtf8("brabo")),
+        new Hash(ByteString.copyFromUtf8("root")),
+        new Hash(ByteString.copyFromUtf8("easy")),
+        ByteString.copyFromUtf8("blabla"),
+        0,
+        0,
+        new ArrayList<>()
+    );
+
     /**
      * Find the best block from the given collection of blocks.
      *
@@ -34,15 +44,7 @@ public class Consensus {
     }
 
     public @NotNull Block getGenesisBlock() {
-        return new Block(
-            new Hash(ByteString.copyFromUtf8("brabo")),
-            new Hash(ByteString.copyFromUtf8("root")),
-            new Hash(ByteString.copyFromUtf8("easy")),
-            ByteString.copyFromUtf8("blabla"),
-            0,
-            0,
-            new ArrayList<>()
-        );
+        return genesisBlock;
     }
 
 }
