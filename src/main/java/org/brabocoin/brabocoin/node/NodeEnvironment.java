@@ -1,8 +1,5 @@
 package org.brabocoin.brabocoin.node;
 
-import com.google.protobuf.Empty;
-import io.grpc.StatusRuntimeException;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -12,14 +9,9 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

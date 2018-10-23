@@ -18,22 +18,27 @@ public class Simulation {
     public static List<Block> randomBlockChainGenerator(int length) {
         List<Block> list = new ArrayList<>();
         Hash previousHash = new Hash(ByteUtil.toByteString(0));
-        long creationTime = new Date().getTime();
 
         for (int i = 0; i < length; i++) {
-            Block block = new Block(
-                    previousHash,
-                    randomHash(),
-                    randomHash(),
-                    randomByteString(),
-                    creationTime,
-                    i,
-                    repeatedBuilder(() -> randomTransaction(5,5), 30));
+            Block block = randomBlock(previousHash, i, 5, 5, 30);
             previousHash = block.computeHash();
             list.add(block);
         }
 
         return list;
+    }
+
+    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+        long creationTime = new Date().getTime();
+
+        return new Block(
+                previousHash,
+                randomHash(),
+                randomHash(),
+                randomByteString(),
+                creationTime,
+                blockHeight,
+                repeatedBuilder(() -> randomTransaction(transactionInputBound,transactionOutputBound), transactionsBound));
     }
 
     public static Transaction randomTransaction(int inputBound, int outputBound) {
@@ -43,7 +48,7 @@ public class Simulation {
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
-        return IntStream.range(0, RANDOM.nextInt(bound - 1) + 1).mapToObj(i -> {
+        return IntStream.range(1, RANDOM.nextInt(bound ) + 1).mapToObj(i -> {
             try {
                 return builder.call();
             } catch (Exception e) {

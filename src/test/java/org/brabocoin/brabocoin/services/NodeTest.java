@@ -17,7 +17,7 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.junit.jupiter.api.BeforeAll;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class NodeTest {
     private Random random = new Random();
-    BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+    static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
     @BeforeAll
     static void setUp() {
@@ -137,10 +137,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
             @Override
             public void onNext(BrabocoinProtos.Block value) {
                 receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
@@ -286,10 +286,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
             @Override
             public void onNext(BrabocoinProtos.Block value) {
                 receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
@@ -370,10 +370,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Transaction> receivedTransactions = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
             @Override
             public void onNext(BrabocoinProtos.Transaction value) {
                 receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
@@ -444,10 +444,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Transaction> receivedTransactions = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
             @Override
             public void onNext(BrabocoinProtos.Transaction value) {
                 receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
@@ -519,10 +519,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Transaction> receivedTransactions = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
             @Override
             public void onNext(BrabocoinProtos.Transaction value) {
                 receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
@@ -601,8 +601,8 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
-        Iterator<BrabocoinProtos.Hash> receivedHashStream = nodeBpeer.blockingStub.seekTransactionPool(
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Iterator<BrabocoinProtos.Hash> receivedHashStream = nodeBpeer.getBlockingStub().seekTransactionPool(
                 Empty.newBuilder().build()
         );
 
@@ -618,5 +618,106 @@ class NodeTest {
         nodeA.blockUntilShutdown();
         nodeB.stop();
         nodeB.blockUntilShutdown();
+    }
+
+    @Test
+    void announceBlockTest() throws DatabaseException, IOException, InterruptedException {
+        final CountDownLatch finishLatch = new CountDownLatch(1);
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        }) {
+            @Override
+            public void onReceiveBlockHash(Hash blockHash) {
+                finishLatch.countDown();
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Hash announceHash = Simulation.randomHash();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        nodeBpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
+            @Override
+            public void onNext(Empty value) {
+
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+    }
+
+    @Test
+    void announceTransactionTest() throws DatabaseException, IOException, InterruptedException {
+        final CountDownLatch finishLatch = new CountDownLatch(1);
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        }) {
+
+            @Override
+            public void onReceiveTransaction(@NotNull Hash transactionHash) {
+                finishLatch.countDown();
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Hash announceHash = Simulation.randomHash();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        nodeBpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
+            @Override
+            public void onNext(Empty value) {
+
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
     }
 }
