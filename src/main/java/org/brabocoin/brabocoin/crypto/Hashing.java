@@ -13,6 +13,7 @@ import java.security.Security;
  * Hashing functions.
  */
 public final class Hashing {
+    private static SHA256.Digest SHA256Digest = new SHA256.Digest();
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -29,7 +30,7 @@ public final class Hashing {
      * @return The hashed message.
      */
     public static Hash digestSHA256(@NotNull ByteString message) {
-        return digest(new SHA256.Digest(), message);
+        return digest(SHA256Digest, message);
     }
 
     /**
