@@ -9,13 +9,16 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -31,96 +34,67 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class BlockchainTest {
 
+    private static final String BLOCK_FILE_LOCATION = "testenv/blocks";
+    private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
+    private static BraboConfig config;
+
     private static Block TEST_BLOCK;
 
-    private static BlockDatabase database;
-
-    private static boolean blockUndoStored;
+    private BlockDatabase database;
+    private Consensus consensus;
     private Blockchain blockchain;
 
     @BeforeAll
     static void setUpAll() throws DatabaseException {
         TEST_BLOCK = Simulation.randomBlockChainGenerator(1).get(0);
 
-        BraboConfig config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
-
-
-        database = new BlockDatabase(new HashMapDB(), config) {
+        BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+        config = new MockBraboConfig(defaultConfig) {
             @Override
-            public @Nullable Block findBlock(@NotNull Hash hash) {
-                return TEST_BLOCK;
-            }
-
-            @Override
-            public boolean hasBlock(@NotNull Hash hash) throws DatabaseException {
-                return TEST_BLOCK.computeHash().equals(hash);
-            }
-
-            @Override
-            public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
-                return this.findBlockInfo(block.computeHash());
-            }
-
-            @Override
-            public BlockInfo findBlockInfo(@NotNull Hash hash) throws DatabaseException {
-                if (!hash.equals(TEST_BLOCK.computeHash())) {
-                    return null;
-                }
-
-                return new BlockInfo(
-                    TEST_BLOCK.getPreviousBlockHash(),
-                    TEST_BLOCK.getMerkleRoot(),
-                    TEST_BLOCK.getTargetValue(),
-                    TEST_BLOCK.getNonce(),
-                    TEST_BLOCK.getTimestamp(),
-                    TEST_BLOCK.getBlockHeight(),
-                    TEST_BLOCK.getTransactions().size(),
-                    true,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
-                );
-            }
-
-            @Override
-            public @Nullable BlockUndo findBlockUndo(@NotNull Hash hash) throws DatabaseException {
-                if (!hash.equals(TEST_BLOCK.computeHash())) {
-                    return null;
-                }
-
-                return new BlockUndo(new ArrayList<>());
-            }
-
-            @Override
-            public @NotNull BlockInfo storeBlockUndo(@NotNull IndexedBlock block,
-                                                     @NotNull BlockUndo undo) throws DatabaseException {
-                blockUndoStored = true;
-
-                return this.findBlockInfo(TEST_BLOCK.computeHash());
+            public String blockStoreDirectory() {
+                return BLOCK_FILE_LOCATION;
             }
         };
     }
 
     @BeforeEach
-    void setUp() {
-        blockUndoStored = false;
-        blockchain = new Blockchain(database);
+    void setUp() throws DatabaseException {
+        database = new BlockDatabase(new HashMapDB(), config);
+        consensus = new Consensus();
+        blockchain = new Blockchain(database, consensus);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Remove block files
+        for (File f : blocksDirectory.listFiles()) {
+            f.delete();
+        }
+    }
+
+    @Test
+    void genesisBlock() throws DatabaseException {
+        Hash hash = consensus.getGenesisBlock().computeHash();
+        assertTrue(blockchain.isBlockStored(hash));
+
+        IndexedBlock topBlock = blockchain.getMainChain().getTopBlock();
+        assertNotNull(topBlock);
+        assertEquals(hash, topBlock.getHash());
     }
 
     @Test
     void getBlockByIndexedBlock() throws DatabaseException {
-        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        Hash hash = consensus.getGenesisBlock().computeHash();
+        IndexedBlock block = blockchain.getIndexedBlock(hash);
         Block fromChain = blockchain.getBlock(block);
 
         assertNotNull(fromChain);
-        assertEquals(TEST_BLOCK.computeHash(), fromChain.computeHash());
+        assertEquals(hash, fromChain.computeHash());
     }
 
     @Test
     void getBlockByHash() throws DatabaseException {
-        Hash hash = TEST_BLOCK.computeHash();
+        Hash hash = consensus.getGenesisBlock().computeHash();
         Block fromChain = blockchain.getBlock(hash);
 
         assertNotNull(fromChain);
@@ -129,9 +103,8 @@ class BlockchainTest {
 
     @Test
     void isBlockStored() throws DatabaseException {
-        assertTrue(blockchain.isBlockStored(TEST_BLOCK.computeHash()));
-        Hash hash = new Hash(TEST_BLOCK.computeHash().getValue().substring(1));
-        assertFalse(blockchain.isBlockStored(hash));
+        assertTrue(blockchain.isBlockStored(consensus.getGenesisBlock().computeHash()));
+        assertFalse(blockchain.isBlockStored(TEST_BLOCK.computeHash()));
     }
 
     @Test
@@ -142,9 +115,10 @@ class BlockchainTest {
 
     @Test
     void getIndexedBlock() throws DatabaseException {
-        IndexedBlock block = blockchain.getIndexedBlock(TEST_BLOCK.computeHash());
+        Hash hash = consensus.getGenesisBlock().computeHash();
+        IndexedBlock block = blockchain.getIndexedBlock(hash);
         assertNotNull(block);
-        assertEquals(block.getHash(), TEST_BLOCK.computeHash());
+        assertEquals(hash, block.getHash());
     }
 
     @Test
@@ -174,16 +148,11 @@ class BlockchainTest {
     }
 
     @Test
-    void findBlockUndo() throws DatabaseException {
-        assertNotNull(blockchain.findBlockUndo(TEST_BLOCK.computeHash()));
-    }
-
-    @Test
-    void storeBlockUndo() throws DatabaseException {
+    void storeFindBlockUndo() throws DatabaseException {
         IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
         blockchain.storeBlockUndo(block, new BlockUndo(new ArrayList<>()));
 
-        assertTrue(blockUndoStored);
+        assertNotNull(blockchain.findBlockUndo(block.getHash()));
     }
 
     @Test
@@ -233,11 +202,6 @@ class BlockchainTest {
 
         Set<IndexedBlock> orphans = blockchain.removeOrphansOfParent(parent);
         assertEquals(2, orphans.size());
-    }
-
-    @Test
-    void popTopBlockEmpty() {
-        assertNull(blockchain.popTopBlock());
     }
 
     @Test

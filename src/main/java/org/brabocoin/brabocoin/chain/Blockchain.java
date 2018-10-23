@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +38,30 @@ public class Blockchain {
     private final @NotNull SetMultimap<Hash, IndexedBlock> orphanMap;
 
     /**
-     * Initializes an empty blockchain with the given database backend.
+     * Initializes a blockchain with a genesis block with the given database backend.
      *
      * @param database
      *     The block database backend.
+     * @param consensus
+     *     The consensus on which this blockchain needs to be constructed.
+     * @throws DatabaseException
+     *     When the genesis block could not be stored.
      */
-    public Blockchain(@NotNull BlockDatabase database) {
+    public Blockchain(@NotNull BlockDatabase database, @NotNull Consensus consensus) throws DatabaseException {
         this.database = database;
         this.mainChain = new IndexedChain();
         this.orphanMap = HashMultimap.create();
+
+        addGenesisBlock(consensus.getGenesisBlock());
+    }
+
+    private void addGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
+        database.storeBlock(genesisBlock, true);
+        IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.computeHash());
+        if (indexedGenesis == null) {
+            throw new DatabaseException("Genesis block could not be stored.");
+        }
+        mainChain.pushTopBlock(indexedGenesis);
     }
 
     /**
