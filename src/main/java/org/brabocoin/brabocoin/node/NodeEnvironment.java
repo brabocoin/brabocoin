@@ -9,14 +9,20 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Represents a node environment.
  */
 public class NodeEnvironment {
+    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     protected BraboConfig config;
 
     protected BlockDatabase database;
@@ -42,16 +48,19 @@ public class NodeEnvironment {
      * Setup the environment, loading the config and bootstrapping peers.
      */
     public void setup() {
+        LOGGER.info("Setting up the node environment.");
         peerProcessor.bootstrap();
+        LOGGER.info("Environment setup done.");
     }
 
     /**
-     * Get a copy of the list of peers.
+     * Get a copy of the set of peers.
      *
-     * @return List of peers.
+     * @return Set of peers.
      */
-    public List<Peer> getPeers() {
-        return new ArrayList<>(peers);
+    public Set<Peer> getPeers() {
+        LOGGER.fine("Creating a copy of the set of peers.");
+        return new HashSet<>(peers);
     }
 
     /**
@@ -61,6 +70,8 @@ public class NodeEnvironment {
      * @param blockHash Hash of the new block.
      */
     public void onReceiveBlockHash(@NotNull Hash blockHash) {
+        LOGGER.fine("Block hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Implement and log
     }
 
@@ -71,6 +82,8 @@ public class NodeEnvironment {
      * @param transactionHash Hash of the new block.
      */
     public void onReceiveTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         // TODO: Implement and log
     }
 
@@ -82,10 +95,12 @@ public class NodeEnvironment {
      * @return Block instance or null if not found.
      */
     public Block getBlock(@NotNull Hash blockHash) {
+        LOGGER.fine("Block requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         try {
             return database.findBlock(blockHash);
         } catch (DatabaseException e) {
-            // TODO: Log
+            LOGGER.log(Level.SEVERE, "Database error while trying to acquire block, error: {0}", e.getMessage());
             return null;
         }
     }
@@ -98,6 +113,8 @@ public class NodeEnvironment {
      * @return Transaction instance or null if not found.
      */
     public Transaction getTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         return null;
     }
 
@@ -107,6 +124,7 @@ public class NodeEnvironment {
      * @return Transaction hash iterator.
      */
     public Iterator<Hash> getTransactionIterator() {
+        LOGGER.fine("Transaction iterator creation requested.");
         return transactionPool.keySet().iterator();
     }
 
@@ -116,6 +134,7 @@ public class NodeEnvironment {
      * @return Top block height.
      */
     public long getTopBlockHeight() {
+        LOGGER.fine("Top block height requested.");
         // TODO: magic here
         return 0;
     }
@@ -127,6 +146,8 @@ public class NodeEnvironment {
      * @return True if it is contained in the main chain.
      */
     public boolean isChainCompatible(@NotNull Hash blockHash) {
+        LOGGER.fine("Chain compatibility check requested for block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Magic here
         return false;
     }
@@ -138,6 +159,8 @@ public class NodeEnvironment {
      * @return Iterator over block hashes above the given block.
      */
     public Iterator<Hash> getBlocksAbove(Hash blockHash) {
+        LOGGER.fine("Block hashes requested above a given block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         return new Iterator<Hash>() {
             @Override
             public boolean hasNext() {
