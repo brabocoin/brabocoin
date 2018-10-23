@@ -48,4 +48,11 @@ class TransactionTest {
         assertEquals(2, transactionReflection.getInputs().size());
         assertEquals(2, transactionReflection.getOutputs().size());
     }
+
+    @Test
+    void testComputeHash() {
+        Transaction transaction = new Transaction(inputList, outputList);
+        Hash hash = transaction.computeHash();
+        assertNotNull(hash);
+    }
 }

@@ -40,4 +40,9 @@ public class MockBraboConfig implements BraboConfig {
     public String utxoStoreDirectory() {
         return delegator.utxoStoreDirectory();
     }
+
+    @Override
+    public long maxBlockFileSize() {
+        return delegator.maxBlockFileSize();
+    }
 }

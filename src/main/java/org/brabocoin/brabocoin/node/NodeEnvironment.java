@@ -2,41 +2,51 @@ package org.brabocoin.brabocoin.node;
 
 import com.google.protobuf.Empty;
 import io.grpc.StatusRuntimeException;
+import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents a node environment.
  */
 public class NodeEnvironment {
+    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     protected BraboConfig config;
 
     private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
     private Map<Hash, Transaction> transactionPool;
 
+    private PeerProcessor peerProcessor;
+
     public NodeEnvironment(BlockDatabase database, Map<Hash, Transaction> transactionPool, BraboConfig config) {
         this.config = config;
         this.database = database;
         this.transactionPool = transactionPool;
+        this.peerProcessor = new PeerProcessor(peers, config);
     }
 
     public NodeEnvironment(KeyValueStore store, Map<Hash, Transaction> transactionPool, BraboConfig config) throws DatabaseException {
         this.config = config;
         this.database = new BlockDatabase(store, config);
+        this.peerProcessor = new PeerProcessor(peers, config);
         this.transactionPool = transactionPool;
     }
 
@@ -59,34 +69,22 @@ public class NodeEnvironment {
     }
 
     /**
-     * Get a copy of the list of peers.
+     * Get a copy of the set of peers.
      *
-     * @return List of peers.
+     * @return Set of peers.
      */
-    public List<Peer> getPeers() {
-        return new ArrayList<>(peers);
+    public Set<Peer> getPeers() {
+        LOGGER.fine("Creating a copy of the set of peers.");
+        return new HashSet<>(peers);
     }
 
     /**
      * Setup the environment, loading the config and bootstrapping peers.
      */
     public void setup() {
-        bootstrap();
-    }
-
-    /**
-     * Initializes the set of peers.
-     */
-    private void instantiateBootstrapPeers() {
-        for (final String peerSocket : config.bootstrapPeers()) {
-            try {
-                peers.add(new Peer(peerSocket));
-            } catch (MalformedSocketException e) {
-                // TODO: Handle invalid peer socket representation in the config.
-                // Exit throwing an error to the user or skip this peer?
-                // Definitely log this.
-            }
-        }
+        LOGGER.info("Setting up the node environment.");
+        peerProcessor.bootstrap();
+        LOGGER.info("Environment setup done.");
     }
 
     /**
@@ -96,6 +94,8 @@ public class NodeEnvironment {
      * @param blockHash Hash of the new block.
      */
     public void onReceiveBlockHash(@NotNull Hash blockHash) {
+        LOGGER.fine("Block hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Implement and log
     }
 
@@ -106,6 +106,8 @@ public class NodeEnvironment {
      * @param transactionHash Hash of the new block.
      */
     public void onReceiveTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction hash received.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         // TODO: Implement and log
     }
 
@@ -117,10 +119,12 @@ public class NodeEnvironment {
      * @return Block instance or null if not found.
      */
     public Block getBlock(@NotNull Hash blockHash) {
+        LOGGER.fine("Block requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         try {
             return database.findBlock(blockHash);
         } catch (DatabaseException e) {
-            // TODO: Log
+            LOGGER.log(Level.SEVERE, "Database error while trying to acquire block, error: {0}", e.getMessage());
             return null;
         }
     }
@@ -133,6 +137,8 @@ public class NodeEnvironment {
      * @return Transaction instance or null if not found.
      */
     public Transaction getTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Transaction requested by hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         return transactionPool.get(transactionHash);
     }
 
@@ -142,6 +148,7 @@ public class NodeEnvironment {
      * @return Transaction hash iterator.
      */
     public Iterator<Hash> getTransactionIterator() {
+        LOGGER.fine("Transaction iterator creation requested.");
         return transactionPool.keySet().iterator();
     }
 
@@ -151,6 +158,7 @@ public class NodeEnvironment {
      * @return Top block height.
      */
     public long getTopBlockHeight() {
+        LOGGER.fine("Top block height requested.");
         // TODO: magic here
         return 0;
     }
@@ -162,6 +170,8 @@ public class NodeEnvironment {
      * @return True if it is contained in the main chain.
      */
     public boolean isChainCompatible(@NotNull Hash blockHash) {
+        LOGGER.fine("Chain compatibility check requested for block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         // TODO: Magic here
         return false;
     }
@@ -173,6 +183,8 @@ public class NodeEnvironment {
      * @return Iterator over block hashes above the given block.
      */
     public Iterator<Hash> getBlocksAbove(Hash blockHash) {
+        LOGGER.fine("Block hashes requested above a given block hash.");
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         return new Iterator<Hash>() {
             @Override
             public boolean hasNext() {
@@ -184,48 +196,5 @@ public class NodeEnvironment {
                 return null;
             }
         };
-    }
-
-    /**
-     * TODO: Create JavaDoc
-     */
-    private void bootstrap() {
-        // Populate bootstrap peers
-        instantiateBootstrapPeers();
-        // A list of peers for which we need to do a handshake
-        List<Peer> handshakePeers = new ArrayList<>(getPeers());
-
-        if (handshakePeers.size() <= 0) {
-            // TODO: Log to user, we can not bootstrap without any bootstrap peers
-            return;
-        }
-
-        while (getPeers().size() < config.targetPeerCount() && handshakePeers.size() > 0) {
-            Peer handshakePeer = handshakePeers.remove(0);
-            try {
-                // Perform a handshake with the peer
-                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
-                        .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                        .handshake(Empty.newBuilder().build());
-                HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
-
-                // We got a response from the current handshake peer, register this peer as valid
-                addPeer(handshakePeer);
-
-                // Add the discovered peers to the list of handshake peers
-                for (final String peerSocket : response.getPeers()) {
-                    try {
-                        final Peer discoveredPeer = new Peer(peerSocket);
-                        handshakePeers.add(discoveredPeer);
-                    } catch (final Exception e) {
-                        // Bootstrap peer returned a malformed or invalid peer
-                    }
-                }
-            } catch (StatusRuntimeException e) {
-                // TODO: handle peer errors on handshake, log
-            }
-        }
-
-        // TODO: Check whether the bootstrap peers were valid.
     }
 }

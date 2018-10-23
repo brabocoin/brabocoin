@@ -43,7 +43,7 @@ public class Simulation {
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
-        return IntStream.range(0, RANDOM.nextInt(bound)).mapToObj(i -> {
+        return IntStream.range(0, RANDOM.nextInt(bound - 1) + 1).mapToObj(i -> {
             try {
                 return builder.call();
             } catch (Exception e) {

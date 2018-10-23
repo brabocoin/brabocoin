@@ -18,19 +18,24 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class NodeTest {
     private Random random = new Random();
-    static BraboConfig defaultConfig = new BraboConfigProvider().getConfig().bind("brabo", BraboConfig.class);
+    BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
     @BeforeAll
     static void setUp() {
@@ -40,6 +45,13 @@ class NodeTest {
                 return "src/test/resources/" + super.blockStoreDirectory();
             }
         };
+
+        Logger log = Logger.getLogger("org.brabocoin");
+        log.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+
+        log.addHandler(handler);
     }
 
     @Test
@@ -199,10 +211,10 @@ class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().get(0);
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.asyncStub.getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
             @Override
             public void onNext(BrabocoinProtos.Block value) {
                 receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));

@@ -7,19 +7,22 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A representation of an peer in the network.
  */
 public class Peer {
+    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     /**
      * The socket for this peer.
      */
     private InetSocketAddress socket;
 
     private ManagedChannel channel;
-    public NodeGrpc.NodeBlockingStub blockingStub;
-    public NodeGrpc.NodeStub asyncStub;
+    private NodeGrpc.NodeBlockingStub blockingStub;
+    private NodeGrpc.NodeStub asyncStub;
 
     /**
      * Creates a peer from an address and port.
@@ -27,7 +30,7 @@ public class Peer {
      * @param address The address of the peer.
      * @param port    The port of the peer
      */
-    public Peer(InetAddress address, int port) {
+    public Peer(InetAddress address, int port) throws MalformedSocketException {
         this(new InetSocketAddress(address, port));
     }
 
@@ -36,7 +39,7 @@ public class Peer {
      *
      * @param socketAddress The socket of the peer.
      */
-    public Peer(InetSocketAddress socketAddress) {
+    public Peer(InetSocketAddress socketAddress) throws MalformedSocketException {
         this.socket = socketAddress;
         setupStubs();
     }
@@ -53,11 +56,22 @@ public class Peer {
         setupStubs();
     }
 
-    private void setupStubs() {
-        this.channel = ManagedChannelBuilder
-                .forAddress(socket.getHostString(), socket.getPort())
-                .usePlaintext()
-                .build();
+    /**
+     * Create a channel for the peer address and setup stubs to communicate with this peer.
+     * Also add a shutdown handler for the channel.
+     */
+    private void setupStubs() throws MalformedSocketException {
+        LOGGER.log(Level.INFO, "Setting up a new peer: {0}", toSocketString());
+        try {
+            this.channel = ManagedChannelBuilder
+                    .forAddress(socket.getHostString(), socket.getPort())
+                    .usePlaintext()
+                    .build();
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.FINE, "Could not build channel for peer: {0}", e.getMessage());
+            // hostname or port is invalid
+            throw new MalformedSocketException("Invalid hostname or port on channel creation.");
+        }
         this.blockingStub = NodeGrpc.newBlockingStub(channel);
         this.asyncStub = NodeGrpc.newStub(channel);
 
@@ -65,17 +79,41 @@ public class Peer {
         Runtime.getRuntime().addShutdownHook(new Thread(channel::shutdown));
     }
 
+    /**
+     * Close the channel to this peer.
+     */
     public void stop() {
-        this.channel.shutdown();
+        LOGGER.log(Level.INFO, "Stopping peer: {0}", toSocketString());
+        channel.shutdown();
     }
 
+    /**
+     * Returns whether the channel for this peer is still open and not terminated.
+     *
+     * @return Boolean indicating peer channel availability.
+     */
+    public boolean isRunning() {
+        return !channel.isShutdown() && !channel.isTerminated();
+    }
+
+    /**
+     * Tries to parse a InetSocketAddress from a {ip}:{port} string.
+     *
+     * @param socket Socket in string format
+     * @return Instantiated InetSocketAddress
+     * @throws MalformedSocketException When the socket string has an invalid format.
+     */
     private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {
+        LOGGER.fine("Getting socket from string.");
+        LOGGER.log(Level.FINEST, "String: {0}", socket);
         if (!socket.contains(":")) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
             throw new MalformedSocketException("Socket representation does not contain a colon separator.");
         }
 
         String[] socketSplit = socket.split(":");
         if (socketSplit.length != 2) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
             throw new MalformedSocketException("Socket representation does not contain a single separator.");
         }
 
@@ -83,6 +121,7 @@ public class Peer {
         try {
             socketPort = Integer.parseInt(socketSplit[1]);
         } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException("Socket port section is not an integer.");
         }
 
@@ -90,14 +129,44 @@ public class Peer {
         try {
             socketAddress = new InetSocketAddress(socketSplit[0], socketPort);
         } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException(e.getMessage());
         }
 
+
+        LOGGER.fine("Socket created.");
         return socketAddress;
+    }
+
+    /**
+     * Get the blocking stub.
+     *
+     * @return NodeBlockingStub for this peer.
+     */
+    public NodeGrpc.NodeBlockingStub getBlockingStub() {
+        return blockingStub;
+    }
+
+    /**
+     * Get the async stub.
+     *
+     * @return NodeStub for this peer.
+     */
+    public NodeGrpc.NodeStub getAsyncStub() {
+        return asyncStub;
     }
 
     @Override
     public String toString() {
+        return String.format("%s:%d (%s)", socket.getHostString(), socket.getPort(), isRunning() ? "running" : "closed");
+    }
+
+    /**
+     * Gets the socket string for this peer.
+     *
+     * @return Socket string in {ip}:{port} format.
+     */
+    public String toSocketString() {
         return String.format("%s:%d", socket.getHostString(), socket.getPort());
     }
 
@@ -115,7 +184,7 @@ public class Peer {
         if (getClass() != obj.getClass())
             return false;
         final Peer other = (Peer) obj;
-        return socket.getAddress().getHostAddress() == other.socket.getAddress().getHostAddress() &&
+        return socket.getHostString().equals(other.socket.getHostString()) &&
                 socket.getPort() == other.socket.getPort();
     }
 }
