@@ -668,6 +668,11 @@ class NodeTest {
         });
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 
     @Test
@@ -719,5 +724,10 @@ class NodeTest {
         });
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
     }
 }
