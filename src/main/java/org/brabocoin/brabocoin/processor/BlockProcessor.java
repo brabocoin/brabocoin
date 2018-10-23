@@ -34,6 +34,11 @@ public class BlockProcessor {
     private final @NotNull BlockValidator blockValidator;
 
     /**
+     * The consensus.
+     */
+    private final @NotNull Consensus consensus;
+
+    /**
      * The blockchain.
      */
     private final @NotNull Blockchain blockchain;
@@ -45,13 +50,16 @@ public class BlockProcessor {
      *     The blockchain.
      * @param utxoSet
      *     The UTXO set.
+     * @param consensus
+     *     The consensus on which to process blocks.
      * @param blockValidator
      *     The block validator.
      */
     public BlockProcessor(@NotNull Blockchain blockchain, @NotNull UTXOSet utxoSet,
-                          @NotNull BlockValidator blockValidator) {
+                          @NotNull Consensus consensus, @NotNull BlockValidator blockValidator) {
         this.blockchain = blockchain;
         this.utxoSet = utxoSet;
+        this.consensus = consensus;
         this.blockValidator = blockValidator;
     }
 
@@ -175,7 +183,7 @@ public class BlockProcessor {
 
         // Select the best top candidate
         // TODO: Re-organize on block height tiebreaker??
-        IndexedBlock bestCandidate = Consensus.bestBlock(allCandidates);
+        IndexedBlock bestCandidate = consensus.bestBlock(allCandidates);
 
         // If top does not change, do nothing
         if (bestCandidate == null || bestCandidate.equals(currentTop)) {

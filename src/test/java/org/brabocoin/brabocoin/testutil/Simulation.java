@@ -23,11 +23,14 @@ public class Simulation {
     private static Random RANDOM = new Random();
 
     public static List<Block> randomBlockChainGenerator(int length) {
+        return randomBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
+    }
+
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
         List<Block> list = new ArrayList<>();
-        Hash previousHash = new Hash(ByteUtil.toByteString(0));
         long creationTime = new Date().getTime();
 
-        for (int i = 0; i < length; i++) {
+        for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
             Block block = new Block(
                     previousHash,
                     randomHash(),
