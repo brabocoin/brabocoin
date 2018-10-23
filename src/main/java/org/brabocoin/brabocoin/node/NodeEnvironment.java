@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.function.Consumer;
 
 /**
  * Represents a node environment.
@@ -105,6 +106,13 @@ public class NodeEnvironment {
             LOGGER.log(Level.SEVERE, "Database error while trying to acquire block, error: {0}", e.getMessage());
             return null;
         }
+    }
+
+    public void propagateMessage(Consumer<Peer> peerConsumer) {
+        for (Peer peer : peers) {
+            peerConsumer.accept(peer);
+        }
+        LOGGER.info("Message propagated to all peers.");
     }
 
     /**

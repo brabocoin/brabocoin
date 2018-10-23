@@ -63,6 +63,22 @@ public class Node {
         }
     }
 
+    private StreamObserver<Empty> emptyLogResponseObserver = new StreamObserver<Empty>() {
+        @Override
+        public void onNext(Empty value) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            LOGGER.warning("Propagation to peer failed.");
+        }
+
+        @Override
+        public void onCompleted() {
+            LOGGER.fine("Message propagation finished to peer.");
+        }
+    };
+
     public void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
@@ -112,6 +128,8 @@ public class Node {
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
+
+            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendBlock(request, emptyLogResponseObserver));
         }
 
         @Override
@@ -121,6 +139,8 @@ public class Node {
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
+
+            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendTransaction(request, emptyLogResponseObserver));
         }
 
         @Override
