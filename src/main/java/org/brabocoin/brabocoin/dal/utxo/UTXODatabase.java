@@ -85,7 +85,11 @@ public class UTXODatabase {
         LOGGER.fine("Checking whether a transaction hash with given output index is unspent.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         boolean has = storage.has(key);
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}, output index: {1}, unspent: {2}", new Object[]{toHexString(transactionHash.getValue()), outputIndex, has}));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}, output index: {1}, unspent: {2}",
+            toHexString(transactionHash.getValue()),
+            outputIndex,
+            has
+        ));
         return has;
     }
 
@@ -205,7 +209,10 @@ public class UTXODatabase {
     }
 
     private void store(ByteString key, ByteString value) throws DatabaseException {
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Storing key: {0}, value: {1}", new Object[]{toHexString(key), toHexString(value)}));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Storing key: {0}, value: {1}",
+            toHexString(key),
+            toHexString(value)
+        ));
         storage.put(key, value);
     }
 
