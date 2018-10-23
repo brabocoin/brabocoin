@@ -1,19 +1,18 @@
 package org.brabocoin.brabocoin.model;
 
 import com.google.protobuf.ByteString;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InputTest {
     @Test
     void protoConvertInputToDTOTest() {
         String transactionHash = "test";
         Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
-        BrabocoinProtos.Input protoInput = Converter.create()
-                .toProtobuf(BrabocoinProtos.Input.class, input);
+        BrabocoinProtos.Input protoInput = ProtoConverter.toProto(input, BrabocoinProtos.Input.class);
 
         assertEquals(transactionHash, protoInput.getReferencedTransaction().getValue().toStringUtf8());
     }
@@ -22,10 +21,8 @@ class InputTest {
     void protoConvertInputToDOMTest() {
         String transactionHash = "test";
         Input input = new Input(new Signature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
-        BrabocoinProtos.Input protoInput = Converter.create()
-                .toProtobuf(BrabocoinProtos.Input.class, input);
-        Input inputReflecion = Converter.create()
-                .toDomain(Input.Builder.class, protoInput).build();
+        BrabocoinProtos.Input protoInput = ProtoConverter.toProto(input, BrabocoinProtos.Input.class);
+        Input inputReflecion = ProtoConverter.toDomain(protoInput, Input.Builder.class);
 
         assertEquals(transactionHash, inputReflecion.getReferencedTransaction().getValue().toStringUtf8());
     }

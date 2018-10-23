@@ -9,6 +9,7 @@ import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
