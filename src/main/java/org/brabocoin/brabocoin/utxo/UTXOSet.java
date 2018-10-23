@@ -14,11 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Maintains an index of the unspent transaction outputs (UTXO) set.
  */
 public class UTXOSet {
+
+    private static final Logger LOGGER = Logger.getLogger(UTXOSet.class.getName());
 
     /**
      * The UTXO database.
@@ -49,6 +52,8 @@ public class UTXOSet {
      *     When the database backend is not available.
      */
     public @NotNull BlockUndo processBlockConnected(@NotNull Block block) throws DatabaseException {
+        LOGGER.finest("Process connected block in UTXO set.");
+
         // TODO: validate everything!
 
         List<TransactionUndo> undos = new ArrayList<>();
@@ -92,6 +97,8 @@ public class UTXOSet {
      *     When the database backend is not available.
      */
     public void processBlockDisconnected(@NotNull Block block, @NotNull BlockUndo blockUndo) throws DatabaseException {
+        LOGGER.finest("Process disconnected block in UTXO set.");
+
         List<Transaction> transactions = block.getTransactions();
         List<TransactionUndo> undos = blockUndo.getTransactionUndos();
 

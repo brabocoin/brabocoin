@@ -3,8 +3,10 @@ package org.brabocoin.brabocoin.chain;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A linear chain of blocks (no forks) as part of the blockchain.
@@ -12,6 +14,7 @@ import java.util.List;
  * Note: the genesis (first) block in the chain has height 0.
  */
 public class IndexedChain {
+    private static final Logger LOGGER = Logger.getLogger(IndexedChain.class.getName());
 
     private final @NotNull List<IndexedBlock> chain;
 
@@ -19,6 +22,7 @@ public class IndexedChain {
      * Creates a new empty chain of blocks.
      */
     public IndexedChain() {
+        LOGGER.fine("Initialize empty IndexedChain.");
         this.chain = new ArrayList<>();
     }
 
@@ -28,6 +32,7 @@ public class IndexedChain {
      * @return The genesis block, or {@code null} if the chain is empty.
      */
     public @Nullable IndexedBlock getGenesisBlock() {
+        LOGGER.fine("Find genesis block.");
         return this.chain.isEmpty() ? null : this.chain.get(0);
     }
 
@@ -37,6 +42,7 @@ public class IndexedChain {
      * @return The top block, or {@code null} if the chain is empty.
      */
     public @Nullable IndexedBlock getTopBlock() {
+        LOGGER.fine("Find top block.");
         return this.chain.isEmpty() ? null : this.chain.get(this.chain.size() - 1);
     }
 
@@ -48,6 +54,7 @@ public class IndexedChain {
      * @return The successor of the given block, or {@code null} no successor block is found.
      */
     public @Nullable IndexedBlock getNextBlock(@NotNull IndexedBlock block) {
+        LOGGER.fine("Get next block.");
         return contains(block) ? getBlockAtHeight(block.getBlockInfo().getBlockHeight() + 1) : null;
     }
 
@@ -59,7 +66,11 @@ public class IndexedChain {
      * @return Whether the block is present on the chain.
      */
     public boolean contains(@NotNull IndexedBlock block) {
-        return block.equals(getBlockAtHeight(block.getBlockInfo().getBlockHeight()));
+        LOGGER.fine("Check if block is contained in chain.");
+        boolean contains = block.equals(getBlockAtHeight(block.getBlockInfo().getBlockHeight()));
+        LOGGER.finest(() -> MessageFormat.format("contains={0}", contains));
+
+        return contains;
     }
 
     /**
@@ -71,7 +82,9 @@ public class IndexedChain {
      * exists in this chain.
      */
     public @Nullable IndexedBlock getBlockAtHeight(int height) {
+        LOGGER.fine("Get block at specific height.");
         if (height < 0 || height >= this.chain.size()) {
+            LOGGER.fine("Height was out of bounds.");
             return null;
         }
 
@@ -85,6 +98,7 @@ public class IndexedChain {
      * empty.
      */
     public int getHeight() {
+        LOGGER.fine("Get chain height.");
         return this.chain.size() - 1;
     }
 
@@ -94,7 +108,9 @@ public class IndexedChain {
      * @return The top block of the chain, or {@code null} if the chain was empty.
      */
     @Nullable IndexedBlock popTopBlock() {
+        LOGGER.fine("Pop top block from chain.");
         if (this.chain.isEmpty()) {
+            LOGGER.fine("Not popped, chain was empty.");
             return null;
         }
         return this.chain.remove(this.chain.size() - 1);
@@ -107,6 +123,7 @@ public class IndexedChain {
      *     The block to add.
      */
     void pushTopBlock(@NotNull IndexedBlock block) {
+        LOGGER.fine("Top block pushed on chain.");
         this.chain.add(block);
     }
 }

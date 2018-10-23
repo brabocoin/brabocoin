@@ -6,7 +6,6 @@ import com.google.protobuf.Message;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -26,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +35,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * Provides the functionality of storing the blocks in the database.
  */
 public class BlockDatabase {
-    private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(BlockDatabase.class.getName());
 
     private static final ByteString KEY_PREFIX_BLOCK = ByteString.copyFromUtf8("b");
     private static final ByteString KEY_PREFIX_FILE = ByteString.copyFromUtf8("f");
@@ -83,12 +83,14 @@ public class BlockDatabase {
         if (!directory.exists()) {
             boolean created = directory.mkdirs();
             if (!created) {
-                throw new DatabaseException("Block storage directory could not be created");
+                LOGGER.severe("Block storage directory could not be created.");
+                throw new DatabaseException("Block storage directory could not be created.");
             }
         }
 
         // Check if directory exists
         if (!directory.isDirectory()) {
+            LOGGER.severe("Block storage directory is not a directory.");
             throw new DatabaseException("Block storage directory is not a directory.");
         }
     }
@@ -152,6 +154,7 @@ public class BlockDatabase {
 
         // Check if block is already stored
         if (storage.has(key)) {
+            LOGGER.fine("Block is already stored.");
             return setBlockValidationStatus(hash, validated);
         }
 
@@ -211,15 +214,19 @@ public class BlockDatabase {
      */
     public @NotNull BlockInfo storeBlockUndo(@NotNull IndexedBlock block,
                                              @NotNull BlockUndo undo) throws DatabaseException {
+        LOGGER.fine("Store block undo data.");
         BlockInfo info = block.getBlockInfo();
 
         BrabocoinStorageProtos.BlockUndo protoUndo = ProtoConverter.toProto(undo,
             BrabocoinStorageProtos.BlockUndo.class
         );
         int revertSize = protoUndo.getSerializedSize();
+        LOGGER.finest(() -> MessageFormat.format("revertSize={0}", revertSize));
+
         long offsetInRevertFile = writeProtoToFile(getRevertFileName(info.getFileNumber()),
             protoUndo
         );
+        LOGGER.finest(() -> MessageFormat.format("offsetInRevertFile={0}", offsetInRevertFile));
 
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
             info.getMerkleRoot(),
@@ -250,6 +257,7 @@ public class BlockDatabase {
             proto.writeTo(outputStream);
         }
         catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Data could not be written to disk.", e);
             throw new DatabaseException("Data could not be written to disk.", e);
         }
 
@@ -281,10 +289,13 @@ public class BlockDatabase {
      */
     public @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash,
                                                        boolean validated) throws DatabaseException {
+        LOGGER.fine("Set block validation status.");
+
         ByteString key = getBlockKey(blockHash);
         BlockInfo info = findBlockInfo(blockHash);
 
         if (info == null) {
+            LOGGER.warning("Block is not stored in database.");
             throw new DatabaseException("Block is not stored in database.");
         }
 

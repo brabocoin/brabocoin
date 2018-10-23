@@ -4,12 +4,15 @@ import org.brabocoin.brabocoin.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.logging.Logger;
+
 /**
  * Indexed block for memory storage.
  *
  * @see IndexedChain
  */
 public class IndexedBlock {
+    private static final Logger LOGGER = Logger.getLogger(IndexedBlock.class.getName());
 
     private final @NotNull Hash hash;
 

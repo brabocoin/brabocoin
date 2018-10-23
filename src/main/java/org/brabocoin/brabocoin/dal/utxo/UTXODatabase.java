@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
-import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Hash;
@@ -32,7 +31,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * Provides the functionality of storing the unspent transaction outputs (UTXO) set.
  */
 public class UTXODatabase {
-    private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
 
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");
     private static final ByteString KEY_BLOCK_MARKER = ByteString.copyFromUtf8("B");

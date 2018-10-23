@@ -13,15 +13,21 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
+
+import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 
 /**
  * Processes a new incoming block.
  */
 public class BlockProcessor {
+
+    private static final Logger LOGGER = Logger.getLogger(BlockProcessor.class.getName());
 
     /**
      * UTXO set.
@@ -57,6 +63,7 @@ public class BlockProcessor {
      */
     public BlockProcessor(@NotNull Blockchain blockchain, @NotNull UTXOSet utxoSet,
                           @NotNull Consensus consensus, @NotNull BlockValidator blockValidator) {
+        LOGGER.fine("Initializing BlockProcessor.");
         this.blockchain = blockchain;
         this.utxoSet = utxoSet;
         this.consensus = consensus;
@@ -80,14 +87,18 @@ public class BlockProcessor {
      *     When the block database is not available.
      */
     public NewBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
+        LOGGER.fine("Processing new block.");
+
         // Check if the block is valid
         if (!checkBlockValid(block)) {
+            LOGGER.info("New block is invalid.");
             return NewBlockStatus.INVALID;
         }
 
         // Check if we already have the block
         Hash hash = block.computeHash();
         if (blockchain.isBlockStored(hash)) {
+            LOGGER.info("New block was already stored.");
             return NewBlockStatus.ALREADY_STORED;
         }
 
@@ -101,6 +112,7 @@ public class BlockProcessor {
         // If parent is unknown or orphan, this block is an orphan as well
         if (parent == null || blockchain.isOrphan(parent)) {
             blockchain.addOrphan(indexedBlock);
+            LOGGER.info("New block is added as orphan.");
             return NewBlockStatus.ORPHAN;
         }
 
@@ -111,6 +123,7 @@ public class BlockProcessor {
         // Update the main chain if necessary
         updateMainChain(topCandidates);
 
+        LOGGER.info("New block is added to the blockchain.");
         return NewBlockStatus.ADDED_TO_BLOCKCHAIN;
     }
 
@@ -140,6 +153,8 @@ public class BlockProcessor {
      * orphans and are added to the blockchain).
      */
     private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) {
+        LOGGER.fine("Processing orphans for top candidates.");
+
         Set<IndexedBlock> topCandidates = new HashSet<>();
 
         Deque<IndexedBlock> queue = new ArrayDeque<>();
@@ -155,6 +170,7 @@ public class BlockProcessor {
                 // When this orphan has no more known descendants, make top candidate
                 // TODO: maybe check if it actually supersedes the current top?
                 topCandidates.add(orphan);
+                LOGGER.finest(() -> MessageFormat.format("Added orphan {0} as top candidate.", toHexString(orphan.getHash().getValue())));
             } else {
                 // Add the removed blocks to the queue to find further descendant orphans
                 queue.addAll(descendants);
@@ -176,17 +192,19 @@ public class BlockProcessor {
      *     When the blocks database is not available.
      */
     private void updateMainChain(Set<IndexedBlock> topCandidates) throws DatabaseException {
+        LOGGER.fine("Updating main chain.");
+
         // Add the current top to the top candidates
         IndexedBlock currentTop = blockchain.getMainChain().getTopBlock();
         Set<IndexedBlock> allCandidates = new HashSet<>(topCandidates);
         allCandidates.add(currentTop);
 
         // Select the best top candidate
-        // TODO: Re-organize on block height tiebreaker??
         IndexedBlock bestCandidate = consensus.bestBlock(allCandidates);
 
         // If top does not change, do nothing
         if (bestCandidate == null || bestCandidate.equals(currentTop)) {
+            LOGGER.fine("Main chain is not updated.");
             return;
         }
 
@@ -194,11 +212,13 @@ public class BlockProcessor {
         Deque<IndexedBlock> fork = findFork(bestCandidate);
         if (fork == null) {
             // TODO: need rollback when find fork fails?
+            LOGGER.severe("Main chain needs to be updated, but no fork is found.");
             return;
         }
 
         // Get block at up to which the main chain needs to be reverted
         IndexedBlock revertTargetBlock = fork.pop();
+        LOGGER.finest(() -> MessageFormat.format("Target block to revert main chain to {0}.", toHexString(revertTargetBlock.getHash().getValue())));
 
         // Revert chain state to target block by disconnecting top blocks
         while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
@@ -210,6 +230,9 @@ public class BlockProcessor {
             IndexedBlock newBlock = fork.pop();
             connectTopBlock(newBlock);
         }
+
+        LOGGER.info("Main chain is updated with new top block.");
+        LOGGER.finest(MessageFormat.format("New top block {0}.", toHexString(blockchain.getMainChain().getTopBlock().getHash().getValue())));
     }
 
     /**
@@ -229,6 +252,8 @@ public class BlockProcessor {
      *     When the block database is not available.
      */
     private @Nullable Deque<IndexedBlock> findFork(@NotNull IndexedBlock block) throws DatabaseException {
+        LOGGER.fine("Find a fork.");
+
         Deque<IndexedBlock> fork = new ArrayDeque<>();
         IndexedBlock parent = block;
 
@@ -240,6 +265,7 @@ public class BlockProcessor {
 
         // If no fork is found, return null
         if (parent == null) {
+            LOGGER.fine("No fork is found.");
             return null;
         }
 
@@ -266,6 +292,7 @@ public class BlockProcessor {
         }
 
         Hash hash = top.getHash();
+        LOGGER.finest(() -> MessageFormat.format("Disconnecting block {0}", toHexString(hash.getValue())));
 
         // Read block from disk
         Block block = blockchain.getBlock(hash);
@@ -297,6 +324,8 @@ public class BlockProcessor {
      *     When the blocks database is not available.
      */
     private void connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
+        LOGGER.finest(() -> MessageFormat.format("Connecting block {0}", toHexString(top.getHash().getValue())));
+
         // Read block from disk
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
