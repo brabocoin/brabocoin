@@ -9,6 +9,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -42,11 +43,11 @@ public class PeerProcessor {
     private void instantiateBootstrapPeers() {
         LOGGER.fine("Instantiating bootstrap peers.");
         for (final String peerSocket : config.bootstrapPeers()) {
-            LOGGER.log(Level.FINEST, "Peer socket read from config: {0}", peerSocket);
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer socket read from config: {0}", peerSocket));
             try {
                 Peer p = new Peer(peerSocket);
                 peers.add(p);
-                LOGGER.log(Level.FINEST, "Peer created and added to peer set: {0}", p);
+                LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer created and added to peer set: {0}", p));
             } catch (MalformedSocketException e) {
                 LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
                     peerSocket, e.getMessage()

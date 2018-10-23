@@ -19,6 +19,7 @@ import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -86,14 +87,18 @@ public class UTXODatabase {
         LOGGER.fine("Checking whether a transaction hash with given output index is unspent.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         boolean has = storage.has(key);
-        LOGGER.log(Level.FINEST, "Hash: {0}, output index: {1}, unspent: {2}", new Object[]{toHexString(transactionHash.getValue()), outputIndex, has});
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}, output index: {1}, unspent: {2}",
+            toHexString(transactionHash.getValue()),
+            outputIndex,
+            has
+        ));
         return has;
     }
 
     private ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
         ByteString outputKey = KEY_PREFIX_OUTPUT.concat(transactionHash.getValue())
             .concat(ByteUtil.toByteString(outputIndex));
-        LOGGER.log(Level.FINEST, "Output key: {0}", toHexString(outputKey));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Output key: {0}", toHexString(outputKey)));
         return outputKey;
     }
 
@@ -124,9 +129,9 @@ public class UTXODatabase {
                                                              int outputIndex) throws DatabaseException {
         LOGGER.fine("Getting unspent output info for a given transaction hash and output index.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
-        LOGGER.log(Level.FINEST, "key: {0}", key);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", key));
         ByteString value = retrieve(key);
-        LOGGER.log(Level.FINEST, "value: {0}", value);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", value));
 
         return parseProtoValue(value,
             UnspentOutputInfo.Builder.class,
@@ -135,14 +140,14 @@ public class UTXODatabase {
     }
 
     private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
-        LOGGER.log(Level.FINEST, "Retrieving ByteString from key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Retrieving ByteString from key: {0}", toHexString(key)));
         ByteString bytes = storage.get(key);
-        LOGGER.log(Level.FINEST, "Got ByteString: {0}", toHexString(bytes));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Got ByteString: {0}", toHexString(bytes)));
         return bytes;
     }
 
     private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
-        LOGGER.log(Level.FINEST, "Parsing proto value from byte array: {0}", value);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Parsing proto value from byte array: {0}", value));
         try {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
         } catch (InvalidProtocolBufferException e) {
@@ -183,9 +188,9 @@ public class UTXODatabase {
                                   @NotNull List<Integer> outputIndices, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark outputs of the given transaction as unspent.");
         Hash transactionHash = transaction.computeHash();
-        LOGGER.log(Level.FINEST, "Transaction hash: {0}", toHexString(transactionHash.getValue()));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Transaction hash: {0}", toHexString(transactionHash.getValue())));
         boolean coinbase = transaction.isCoinbase();
-        LOGGER.log(Level.FINEST, "Coinbase: {0}", coinbase);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Coinbase: {0}", coinbase));
 
         for (int outputIndex : outputIndices) {
             Output output = transaction.getOutputs().get(outputIndex);
@@ -194,7 +199,7 @@ public class UTXODatabase {
                 output.getAmount(),
                 output.getAddress()
             );
-            LOGGER.log(Level.FINEST, "Setting output to unspent, index: {0}, amount: {1}, blockheight: {2}, address: {3}", new Object[]{outputIndex, output.getAmount(), blockHeight, output.getAddress()});
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Setting output to unspent, index: {0}, amount: {1}, blockheight: {2}, address: {3}", new Object[]{outputIndex, output.getAmount(), blockHeight, output.getAddress()}));
 
             addUnspentOutputInfo(transactionHash, outputIndex, info);
         }
@@ -226,7 +231,10 @@ public class UTXODatabase {
     }
 
     private void store(ByteString key, ByteString value) throws DatabaseException {
-        LOGGER.log(Level.FINEST, "Storing key: {0}, value: {1}", new Object[]{toHexString(key), toHexString(value)});
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Storing key: {0}, value: {1}",
+            toHexString(key),
+            toHexString(value)
+        ));
         storage.put(key, value);
     }
 
@@ -242,7 +250,7 @@ public class UTXODatabase {
     public void setOutputSpent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.log(Level.FINE, "Marking output as spent");
         ByteString key = getOutputKey(transactionHash, outputIndex);
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         storage.delete(key);
     }
 
@@ -255,9 +263,9 @@ public class UTXODatabase {
     public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
         LOGGER.log(Level.FINE, "Getting last processed block hash.");
         ByteString key = getBlockMarkerKey();
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         ByteString value = retrieve(key);
-        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
 
         Hash hash = parseProtoValue(value, Hash.Builder.class, BrabocoinProtos.Hash.parser());
 
@@ -279,9 +287,9 @@ public class UTXODatabase {
     public void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
         LOGGER.log(Level.FINE, "Sets the hash of the last block up to which the UTXO set is up-to-date.");
         ByteString key = getBlockMarkerKey();
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         ByteString value = getRawProtoValue(hash, BrabocoinProtos.Hash.class);
-        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
 
         store(key, value);
     }

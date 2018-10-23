@@ -9,6 +9,7 @@ import org.iq80.leveldb.Options;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -56,8 +57,8 @@ public class LevelDB implements KeyValueStore {
     @Override
     public void put(final ByteString key, final ByteString value) throws DatabaseException {
         LOGGER.fine("Putting key-value pair.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
-        LOGGER.log(Level.FINEST, "value: {0}", toHexString(value));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
         try {
             database.put(key.toByteArray(), value.toByteArray());
         } catch (final DBException e) {
@@ -69,7 +70,7 @@ public class LevelDB implements KeyValueStore {
     @Override
     public ByteString get(final ByteString key) throws DatabaseException {
         LOGGER.fine("Getting value using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         try {
             byte[] data = database.get(key.toByteArray());
             if (data == null) {
@@ -78,7 +79,7 @@ public class LevelDB implements KeyValueStore {
             }
 
             ByteString byteString = ByteString.copyFrom(data);
-            LOGGER.log(Level.FINEST, "Value found: {0}", toHexString(byteString));
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Value found: {0}", toHexString(byteString)));
             return byteString;
         } catch (final DBException e) {
             LOGGER.log(Level.SEVERE, "Exception while getting value: {0}", e.getMessage());
@@ -89,7 +90,7 @@ public class LevelDB implements KeyValueStore {
     @Override
     public void delete(final ByteString key) throws DatabaseException {
         LOGGER.fine("Deleting key-value pair using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         try {
             database.delete(key.toByteArray());
         } catch (final DBException e) {
@@ -101,9 +102,9 @@ public class LevelDB implements KeyValueStore {
     @Override
     public boolean has(ByteString key) {
         LOGGER.fine("Checking whether store has key-value pair using key.");
-        LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         final boolean hasKey = database.get(key.toByteArray()) != null;
-        LOGGER.log(Level.FINEST, "found: {0}", hasKey);
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("found: {0}", hasKey));
         return hasKey;
     }
 

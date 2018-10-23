@@ -20,6 +20,7 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,7 +59,7 @@ public class Node {
         }
 
         for (Peer p : environment.getPeers()) {
-            LOGGER.log(Level.FINEST, "Stopping peer: {0}", p);
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
             p.stop();
         }
     }
@@ -75,19 +76,28 @@ public class Node {
 
     private void logIncomingCall(String call, MessageOrBuilder receivedMessage, Level receivedLogLevel) {
         LOGGER.log(receivedLogLevel, "Received '{0}' call.", call);
-        try {
-            LOGGER.log(Level.FINEST, "Received data: {0}", JsonFormat.printer().print(receivedMessage));
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.");
-        }
+        LOGGER.log(Level.FINEST, () -> {
+            try {
+                return MessageFormat.format("Received data: {0}", JsonFormat.printer().print(receivedMessage));
+            }
+            catch (InvalidProtocolBufferException e) {
+                LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.", e);
+            }
+
+            return "";
+        });
     }
 
     private void logOutgoingResponse(MessageOrBuilder responseMessage) {
-        try {
-            LOGGER.log(Level.FINEST, "Responding with data: {0}", JsonFormat.printer().print(responseMessage));
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.");
-        }
+        LOGGER.log(Level.FINEST, () -> {
+            try {
+                return MessageFormat.format("Responding with data: {0}", JsonFormat.printer().print(responseMessage));
+            }
+            catch (InvalidProtocolBufferException e) {
+                LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.", e);
+            }
+            return "";
+        });
     }
 
     private class NodeService extends NodeGrpc.NodeImplBase {
