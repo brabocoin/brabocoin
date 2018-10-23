@@ -254,7 +254,7 @@ public class BlockDatabase {
 
     private int writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
         int offsetInFile;
-        try (RandomAccessFile file = new RandomAccessFile(fileName, "w")) {
+        try (RandomAccessFile file = new RandomAccessFile(fileName, "rw")) {
             file.seek(file.length());
             offsetInFile = Math.toIntExact(file.getFilePointer());
             file.write(proto.toByteArray());
@@ -489,7 +489,8 @@ public class BlockDatabase {
 
         try (RandomAccessFile file = new RandomAccessFile(fileName, "r")) {
             data = new byte[size];
-            file.readFully(data, offset, size);
+            file.seek(offset);
+            file.readFully(data);
             LOGGER.fine("Read file into input stream.");
         }
         catch (Exception e) {

@@ -27,7 +27,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      * Size of the file in bytes.
      */
     @ProtoField
-    private long size;
+    private int size;
 
     /**
      * Minimum block height of all the blocks stored in the file.
@@ -69,7 +69,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      * @param highestBlockTimestamp
      *         Latest timestamp of all the blocks stored in the file.
      */
-    public BlockFileInfo(int numberOfBlocks, long size, int lowestBlockHeight,
+    public BlockFileInfo(int numberOfBlocks, int size, int lowestBlockHeight,
                          int highestBlockHeight, long lowestBlockTimestamp,
                          long highestBlockTimestamp) {
         this.numberOfBlocks = numberOfBlocks;
@@ -97,7 +97,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
         return numberOfBlocks;
     }
 
-    public long getSize() {
+    public int getSize() {
         return size;
     }
 
@@ -129,7 +129,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
         private int numberOfBlocks;
 
         @ProtoField
-        private long size;
+        private int size;
 
         @ProtoField
         private int lowestBlockHeight;
@@ -148,7 +148,7 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
             return this;
         }
 
-        public Builder setSize(long size) {
+        public Builder setSize(int size) {
             this.size = size;
             return this;
         }

@@ -20,15 +20,15 @@ message BlockInfo {
     int32 transactionCount = 7;
     bool validated = 8;
     int32 fileNumber = 9;
-    int64 offsetInFile = 10;
+    int32 offsetInFile = 10;
     int32 sizeInFile = 11;
-    int64 offsetInUndoFile = 12;
+    int32 offsetInUndoFile = 12;
     int32 sizeInUndoFile = 13;
 }
 
 message BlockFileInfo {
     int32 numberOfBlocks = 1;
-    int64 size = 2;
+    int32 size = 2;
     int32 lowestBlockHeight = 3;
     int32 highestBlockHeight = 4;
     int64 lowestBlockTimestamp = 5;
