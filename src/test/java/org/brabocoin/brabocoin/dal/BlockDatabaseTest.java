@@ -245,7 +245,7 @@ class BlockDatabaseTest {
         BraboConfig smallConfig = new MockBraboConfig(config) {
             @Override
             public int maxBlockFileSize() {
-                return 1L;
+                return 1;
             }
         };
 
