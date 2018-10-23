@@ -18,6 +18,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  */
 public final class Hashing {
     private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
+    private static SHA256.Digest SHA256Digest = new SHA256.Digest();
 
     static {
         LOGGER.fine("Hashing class initializing.");
@@ -35,7 +36,7 @@ public final class Hashing {
      */
     public static Hash digestSHA256(@NotNull ByteString message) {
         LOGGER.fine("Digest SHA256 for ByteString message.");
-        return digest(new SHA256.Digest(), message);
+        return digest(SHA256Digest, message);
     }
 
     /**
