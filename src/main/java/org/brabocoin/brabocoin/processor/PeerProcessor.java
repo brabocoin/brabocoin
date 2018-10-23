@@ -14,9 +14,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Manages all tasks related to a set of peers.
+ * This includes bootstrapping and maintaining the peer set to match the desired number of peers set in the config.
+ */
 public class PeerProcessor {
     private Set<Peer> peers;
     private BraboConfig config;
+
+    /**
+     * Create a new peer processor for a referenced set of peers and a config file.
+     *
+     * @param peers  Set of peers to manage.
+     * @param config Config to use for this processor.
+     */
     public PeerProcessor(Set<Peer> peers, BraboConfig config) {
         this.peers = peers;
         this.config = config;
@@ -45,14 +56,14 @@ public class PeerProcessor {
         // Populate bootstrap peers
         instantiateBootstrapPeers();
         // A list of peers for which we need to do a handshake
-        List<Peer> handshakePeers = new ArrayList<>(getPeers());
+        List<Peer> handshakePeers = copyPeers();
 
         if (handshakePeers.size() <= 0) {
             // TODO: Log to user, we can not bootstrap without any bootstrap peers
             return;
         }
 
-        while (getPeers().size() < config.targetPeerCount() && handshakePeers.size() > 0) {
+        while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.remove(0);
             try {
                 // Perform a handshake with the peer
@@ -86,7 +97,7 @@ public class PeerProcessor {
      *
      * @return List of peers.
      */
-    private List<Peer> getPeers() {
+    private List<Peer> copyPeers() {
         return new ArrayList<>(peers);
     }
 }
