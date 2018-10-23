@@ -287,10 +287,6 @@ public class BlockProcessor {
     private void disconnectTop() throws DatabaseException {
         IndexedBlock top = blockchain.getMainChain().getTopBlock();
 
-        if (top == null) {
-            return;
-        }
-
         Hash hash = top.getHash();
         LOGGER.finest(() -> MessageFormat.format("Disconnecting block {0}", toHexString(hash.getValue())));
 

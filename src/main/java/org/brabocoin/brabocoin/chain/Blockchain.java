@@ -3,11 +3,11 @@ package org.brabocoin.brabocoin.chain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,13 +54,13 @@ public class Blockchain {
      */
     public Blockchain(@NotNull BlockDatabase database, @NotNull Consensus consensus) throws DatabaseException {
         this.database = database;
-        this.mainChain = new IndexedChain();
         this.orphanMap = HashMultimap.create();
 
-        addGenesisBlock(consensus.getGenesisBlock());
+        IndexedBlock genesis = storeGenesisBlock(consensus.getGenesisBlock());
+        this.mainChain = new IndexedChain(genesis);
     }
 
-    private void addGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
+    private @NotNull IndexedBlock storeGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
         database.storeBlock(genesisBlock, true);
         IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.computeHash());
@@ -68,7 +68,8 @@ public class Blockchain {
             LOGGER.severe("Genesis block could not be stored.");
             throw new DatabaseException("Genesis block could not be stored.");
         }
-        mainChain.pushTopBlock(indexedGenesis);
+
+        return indexedGenesis;
     }
 
     /**
@@ -237,9 +238,11 @@ public class Blockchain {
      * Pops the top block from the main chain.
      *
      * @return The removed top block.
+     * @throws IllegalStateException
+     *     When the current top block is the genesis block.
      * @see IndexedChain#popTopBlock()
      */
-    public @Nullable IndexedBlock popTopBlock() {
+    public IndexedBlock popTopBlock() throws IllegalStateException {
         return mainChain.popTopBlock();
     }
 

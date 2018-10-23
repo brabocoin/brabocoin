@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.chain;
 
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -18,49 +20,41 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class IndexedChainTest {
 
     private IndexedChain chain;
+    private static IndexedBlock genesis;
+
+    @BeforeAll
+    static void setUpEnvironment() {
+        genesis = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+    }
 
     @BeforeEach
     void setUp() {
-        chain = new IndexedChain();
+        chain = new IndexedChain(genesis);
     }
 
     @Test
-    void getGenesisBlockEmptyChain() {
-        assertNull(chain.getGenesisBlock());
-    }
-
-    @Test
-    void getGenesisBlockSingleBlock() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        chain.pushTopBlock(indexedBlock);
-
-        IndexedBlock fromChain = chain.getGenesisBlock();
-
-        assertNotNull(fromChain);
-        assertEquals(indexedBlock.getHash(), fromChain.getHash());
+    void getGenesisBlockInit() {
+        assertEquals(genesis.getHash(), chain.getGenesisBlock().getHash());
     }
 
     @Test
     void getGenesisBlockMultiple() {
-        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2);
-        IndexedBlock first = list.get(0);
-        chain.pushTopBlock(first);
-        chain.pushTopBlock(list.get(1));
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
+        chain.pushTopBlock(indexedBlock);
 
         IndexedBlock fromChain = chain.getGenesisBlock();
 
-        assertNotNull(fromChain);
-        assertEquals(first.getHash(), fromChain.getHash());
+        assertEquals(genesis.getHash(), fromChain.getHash());
     }
 
     @Test
-    void getTopBlockEmptyChain() {
-        assertNull(chain.getTopBlock());
+    void getTopBlockInit() {
+        assertEquals(genesis.getHash(), chain.getTopBlock().getHash());
     }
 
     @Test
     void pushSingleTopBlock() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
 
         IndexedBlock fromChain = chain.getTopBlock();
@@ -71,7 +65,7 @@ class IndexedChainTest {
 
     @Test
     void getTopBlockMultiple() {
-        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2);
+        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2, genesis.getHash(), 1);
         IndexedBlock last = list.get(1);
         chain.pushTopBlock(list.get(0));
         chain.pushTopBlock(last);
@@ -84,20 +78,20 @@ class IndexedChainTest {
 
     @Test
     void getNextBlockNonExistent() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         assertNull(chain.getNextBlock(indexedBlock));
     }
 
     @Test
     void getNextBlockAfterTop() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
         assertNull(chain.getNextBlock(indexedBlock));
     }
 
     @Test
     void getNextBlockValid() {
-        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2);
+        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2, genesis.getHash(), 1);
         IndexedBlock first = list.get(0);
         IndexedBlock last = list.get(1);
         chain.pushTopBlock(first);
@@ -110,23 +104,31 @@ class IndexedChainTest {
 
     @Test
     void contains() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
         assertTrue(chain.contains(indexedBlock));
     }
 
     @Test
     void containsNot() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         assertFalse(chain.contains(indexedBlock));
     }
 
     @Test
+    void getBlockAtHeightGenesis() {
+        IndexedBlock fromChain = chain.getBlockAtHeight(0);
+
+        assertNotNull(fromChain);
+        assertEquals(genesis.getHash(), fromChain.getHash());
+    }
+
+    @Test
     void getBlockAtHeight() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
 
-        IndexedBlock fromChain = chain.getBlockAtHeight(0);
+        IndexedBlock fromChain = chain.getBlockAtHeight(1);
 
         assertNotNull(fromChain);
         assertEquals(indexedBlock.getHash(), fromChain.getHash());
@@ -134,55 +136,45 @@ class IndexedChainTest {
 
     @Test
     void getBlockAtHeightInvalid() {
-        assertNull(chain.getBlockAtHeight(0));
-
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
 
         assertNull(chain.getBlockAtHeight(-1));
-        assertNull(chain.getBlockAtHeight(1));
+        assertNull(chain.getBlockAtHeight(2));
     }
 
     @Test
-    void getHeightEmpty() {
-        assertEquals(-1, chain.getHeight());
+    void getHeightInit() {
+        assertEquals(0, chain.getHeight());
     }
 
     @Test
     void getHeight() {
-        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2);
+        List<IndexedBlock> list = Simulation.randomIndexedBlockChainGenerator(2, genesis.getHash(), 1);
         IndexedBlock first = list.get(0);
         IndexedBlock last = list.get(1);
         chain.pushTopBlock(first);
-        assertEquals(0, chain.getHeight());
+        assertEquals(1, chain.getHeight());
 
         chain.pushTopBlock(last);
-        assertEquals(1, chain.getHeight());
+        assertEquals(2, chain.getHeight());
     }
 
     @Test
-    void popTopBlockEmpty() {
-        assertNull(chain.popTopBlock());
+    void popTopBlockGenesis() {
+        assertThrows(IllegalStateException.class, () -> chain.popTopBlock());
+        assertEquals(genesis.getHash(), chain.getTopBlock().getHash());
     }
 
     @Test
-    void popTopBlockReturns() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+    void popTopBlock() {
+        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1, genesis.getHash(), 1).get(0);
         chain.pushTopBlock(indexedBlock);
 
         IndexedBlock fromChain = chain.popTopBlock();
         assertNotNull(fromChain);
         assertEquals(indexedBlock.getHash(), fromChain.getHash());
 
-        assertNull(chain.getTopBlock());
-    }
-
-    @Test
-    void popTopBlockRemoves() {
-        IndexedBlock indexedBlock = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        chain.pushTopBlock(indexedBlock);
-        chain.popTopBlock();
-
-        assertNull(chain.getTopBlock());
+        assertEquals(genesis.getHash(), chain.getTopBlock().getHash());
     }
 }

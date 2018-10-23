@@ -14,36 +14,42 @@ import java.util.logging.Logger;
  * Note: the genesis (first) block in the chain has height 0.
  */
 public class IndexedChain {
+
     private static final Logger LOGGER = Logger.getLogger(IndexedChain.class.getName());
 
     private final @NotNull List<IndexedBlock> chain;
 
     /**
-     * Creates a new empty chain of blocks.
+     * Creates a new chain of blocks with the given genesis block.
+     *
+     * @param genesisBlock
+     *     The genesis block to add for this chain.
      */
-    public IndexedChain() {
-        LOGGER.fine("Initialize empty IndexedChain.");
+    public IndexedChain(@NotNull IndexedBlock genesisBlock) {
+        LOGGER.fine("Initialize new IndexedChain.");
         this.chain = new ArrayList<>();
+
+        pushTopBlock(genesisBlock);
     }
 
     /**
      * Get the genesis (first) block in this chain.
      *
-     * @return The genesis block, or {@code null} if the chain is empty.
+     * @return The genesis block of this chain.
      */
-    public @Nullable IndexedBlock getGenesisBlock() {
+    public @NotNull IndexedBlock getGenesisBlock() {
         LOGGER.fine("Find genesis block.");
-        return this.chain.isEmpty() ? null : this.chain.get(0);
+        return this.chain.get(0);
     }
 
     /**
      * Get the top (highest) block in this chain.
      *
-     * @return The top block, or {@code null} if the chain is empty.
+     * @return The top block.
      */
-    public @Nullable IndexedBlock getTopBlock() {
+    public @NotNull IndexedBlock getTopBlock() {
         LOGGER.fine("Find top block.");
-        return this.chain.isEmpty() ? null : this.chain.get(this.chain.size() - 1);
+        return this.chain.get(this.chain.size() - 1);
     }
 
     /**
@@ -93,9 +99,10 @@ public class IndexedChain {
 
     /**
      * Get the height of the top (highest) block in this chain.
+     * <p>
+     * Note that the height of the genesis (first) block is {@code 0}.
      *
-     * @return The height of the top (highest) block in the chain, or {@code -1} if the chain is
-     * empty.
+     * @return The height of the top (highest) block in the chain.
      */
     public int getHeight() {
         LOGGER.fine("Get chain height.");
@@ -104,14 +111,18 @@ public class IndexedChain {
 
     /**
      * Removes and returns the top of the chain.
+     * <p>
+     * When the genesis block is at the top, the block is not removed and an exception is thrown.
      *
-     * @return The top block of the chain, or {@code null} if the chain was empty.
+     * @return The top block of the chain.
+     * @throws IllegalStateException
+     *     When the current top block is the genesis block.
      */
-    @Nullable IndexedBlock popTopBlock() {
+    @NotNull IndexedBlock popTopBlock() throws IllegalStateException {
         LOGGER.fine("Pop top block from chain.");
-        if (this.chain.isEmpty()) {
-            LOGGER.fine("Not popped, chain was empty.");
-            return null;
+        if (getHeight() == 0) {
+            LOGGER.warning("Not popped, only genesis block is left.");
+            throw new IllegalStateException("Genesis block cannot be removed from the chain.");
         }
         return this.chain.remove(this.chain.size() - 1);
     }
@@ -124,6 +135,7 @@ public class IndexedChain {
      */
     void pushTopBlock(@NotNull IndexedBlock block) {
         LOGGER.fine("Top block pushed on chain.");
+        // TODO: (validation): check if the blockheight matches the height in chain?
         this.chain.add(block);
     }
 }

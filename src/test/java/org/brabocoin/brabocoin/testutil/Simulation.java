@@ -47,11 +47,14 @@ public class Simulation {
     }
 
     public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length) {
+        return randomIndexedBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
+    }
+
+    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
         List<IndexedBlock> list = new ArrayList<>();
-        Hash previousHash = new Hash(ByteUtil.toByteString(0));
         long creationTime = new Date().getTime();
 
-        for (int i = 0; i < length; i++) {
+        for (int i = startBlockHeight; i < startBlockHeight + length; i++) {
             Block block = new Block(
                 previousHash,
                 randomHash(),
