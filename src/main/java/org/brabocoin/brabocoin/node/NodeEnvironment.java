@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.node;
 
 import com.google.protobuf.Empty;
 import io.grpc.StatusRuntimeException;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -13,6 +12,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,7 +26,6 @@ public class NodeEnvironment {
 
     private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
-    private Converter converter = Converter.create();
     private Map<Hash, Transaction> transactionPool;
 
     public NodeEnvironment(BlockDatabase database, Map<Hash, Transaction> transactionPool, BraboConfig config) {
@@ -208,7 +207,7 @@ public class NodeEnvironment {
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.blockingStub
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
                         .handshake(Empty.newBuilder().build());
-                HandshakeResponse response = converter.toDomain(HandshakeResponse.Builder.class, protoResponse).build();
+                HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
 
                 // We got a response from the current handshake peer, register this peer as valid
                 addPeer(handshakePeer);
