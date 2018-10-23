@@ -66,7 +66,7 @@ public class Blockchain {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public @Nullable Block getBlock(IndexedBlock block) throws DatabaseException {
+    public @Nullable Block getBlock(@NotNull IndexedBlock block) throws DatabaseException {
         return getBlock(block.getHash());
     }
 
@@ -79,7 +79,7 @@ public class Blockchain {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public @Nullable Block getBlock(Hash hash) throws DatabaseException {
+    public @Nullable Block getBlock(@NotNull Hash hash) throws DatabaseException {
         return database.findBlock(hash);
     }
 
