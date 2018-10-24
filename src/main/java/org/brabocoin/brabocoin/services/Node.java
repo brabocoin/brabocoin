@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * A full node on the Brabocoin network.
  */
 public class Node {
-    private final static Logger LOGGER = Logger.getLogger(NodeService.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
 
     /**
      * Service parameters
