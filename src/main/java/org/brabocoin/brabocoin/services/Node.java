@@ -122,7 +122,7 @@ public class Node {
         }
 
         @Override
-        public void sendBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             logIncomingCall("sendBlock", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
@@ -133,11 +133,11 @@ public class Node {
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().sendBlock(request, emptyLogResponseObserver));
+            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().announceBlock(request, emptyLogResponseObserver));
         }
 
         @Override
-        public void sendTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             logIncomingCall("sendTransaction", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
@@ -148,7 +148,7 @@ public class Node {
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().sendTransaction(request, emptyLogResponseObserver));
+            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().announceTransaction(request, emptyLogResponseObserver));
         }
 
         @Override
