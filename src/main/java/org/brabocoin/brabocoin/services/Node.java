@@ -63,22 +63,6 @@ public class Node {
         }
     }
 
-    private StreamObserver<Empty> emptyLogResponseObserver = new StreamObserver<Empty>() {
-        @Override
-        public void onNext(Empty value) {
-        }
-
-        @Override
-        public void onError(Throwable t) {
-            LOGGER.warning("Propagation to peer failed.");
-        }
-
-        @Override
-        public void onCompleted() {
-            LOGGER.fine("Message propagation finished to peer.");
-        }
-    };
-
     public void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
@@ -90,7 +74,7 @@ public class Node {
     }
 
     private void logIncomingCall(String call, MessageOrBuilder receivedMessage, Level receivedLogLevel) {
-        LOGGER.log(receivedLogLevel, "Received '{0}' call.", call);
+        LOGGER.log(receivedLogLevel, "Received {0} call.", call);
         try {
             LOGGER.log(Level.FINEST, "Received data: {0}", JsonFormat.printer().print(receivedMessage));
         } catch (InvalidProtocolBufferException e) {
@@ -123,32 +107,36 @@ public class Node {
 
         @Override
         public void announceBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            logIncomingCall("sendBlock", request);
+            logIncomingCall("announceBlock", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
+            responseObserver.onNext(Empty.newBuilder().build());
+            responseObserver.onCompleted();
             if (environment.hasPropagatedMessage(hash)) {
                 LOGGER.fine("Abort processing a duplicate block announce message");
                 return;
             }
             environment.onReceiveBlockHash(hash);
-            responseObserver.onCompleted();
 
-            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().announceBlock(request, emptyLogResponseObserver));
+            // TODO: Async stub usage for propagation throws cancellation exceptions from GRPC.
+            new Thread(() -> environment.propagateMessage(hash, (Peer p) -> p.getBlockingStub().announceBlock(request))).start();
         }
 
         @Override
         public void announceTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            logIncomingCall("sendTransaction", request);
+            logIncomingCall("announceTransaction", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
+            responseObserver.onNext(Empty.newBuilder().build());
+            responseObserver.onCompleted();
             if (environment.hasPropagatedMessage(hash)) {
                 LOGGER.fine("Abort processing a duplicate block announce message");
                 return;
             }
             environment.onReceiveTransaction(hash);
-            responseObserver.onCompleted();
 
-            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().announceTransaction(request, emptyLogResponseObserver));
+            // TODO: Async stub usage for propagation throws cancellation exceptions from GRPC.
+            new Thread(() -> environment.propagateMessage(hash, (Peer p) -> p.getBlockingStub().announceTransaction(request))).start();
         }
 
         @Override

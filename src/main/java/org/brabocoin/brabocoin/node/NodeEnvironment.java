@@ -146,11 +146,11 @@ public class NodeEnvironment {
             return;
         }
 
+        propagatedHashes.add(hash);
+
         for (Peer peer : peers) {
             peerConsumer.accept(peer);
         }
-
-        propagatedHashes.add(hash);
 
         LOGGER.info("Message propagated to all peers.");
     }

@@ -351,9 +351,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -425,9 +425,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -500,9 +500,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -857,6 +857,162 @@ class NodeTest {
         });
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+        nodeC.stop();
+        nodeC.blockUntilShutdown();
+    }
+
+    @Test
+    void announceBlockDuplicatePropagationTest() throws DatabaseException, IOException, InterruptedException {
+        final CountDownLatch finishLatch = new CountDownLatch(2);
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }) {
+
+            @Override
+            public void onReceiveBlockHash(@NotNull Hash blockHash) {
+                finishLatch.countDown();
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        Hash announceHash = Simulation.randomHash();
+
+        Optional<Peer> nodeCpeerO = nodeC.environment.getPeers()
+                .stream()
+                .filter(p -> p.getPort() == 8091)
+                .findFirst();
+
+        assertTrue(nodeCpeerO.isPresent());
+
+        Peer nodeCpeer = nodeCpeerO.get();
+
+        nodeCpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
+            @Override
+            public void onNext(Empty value) {
+
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+        assertFalse(finishLatch.await(10, TimeUnit.SECONDS));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+        nodeC.stop();
+        nodeC.blockUntilShutdown();
+    }
+
+    @Test
+    void announceTransactionDuplicatePropagationTest() throws DatabaseException, IOException, InterruptedException {
+        final CountDownLatch finishLatch = new CountDownLatch(2);
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }) {
+
+            @Override
+            public void onReceiveTransaction(@NotNull Hash transactionHash) {
+                finishLatch.countDown();
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        Hash announceHash = Simulation.randomHash();
+
+        Optional<Peer> nodeCpeerO = nodeC.environment.getPeers()
+                .stream()
+                .filter(p -> p.getPort() == 8091)
+                .findFirst();
+
+        assertTrue(nodeCpeerO.isPresent());
+
+        Peer nodeCpeer = nodeCpeerO.get();
+
+        nodeCpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
+            @Override
+            public void onNext(Empty value) {
+
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+        assertFalse(finishLatch.await(10, TimeUnit.SECONDS));
 
         nodeA.stop();
         nodeA.blockUntilShutdown();
