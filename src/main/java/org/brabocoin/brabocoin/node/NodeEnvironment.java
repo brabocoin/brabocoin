@@ -32,6 +32,7 @@ public class NodeEnvironment {
     private Set<Peer> peers = new HashSet<>();
     private Converter converter = Converter.create();
     private Map<Hash, Transaction> transactionPool = new HashMap<>();
+    private Set<Hash> propagatedHashes = new HashSet<>();
 
     private PeerProcessor peerProcessor;
 
@@ -108,10 +109,35 @@ public class NodeEnvironment {
         }
     }
 
-    public void propagateMessage(Consumer<Peer> peerConsumer) {
+    /**
+     * Check whether the given hash was already propagated.
+     *
+     * @param hash Hash to check.
+     * @return Whether this hash was already propagated.
+     */
+    public boolean hasPropagatedMessage(Hash hash) {
+        return propagatedHashes.contains(hash);
+    }
+
+    /**
+     * Propagate a peer consuming lambda expression to all known peers.
+     * Only if the given hash was not already propagated.
+     *
+     * @param hash         Hash that is to be propagated.
+     * @param peerConsumer The lambda expression evaluated on all peers.
+     */
+    public void propagateMessage(Hash hash, Consumer<Peer> peerConsumer) {
+        if (propagatedHashes.contains(hash)) {
+            LOGGER.fine("Cancelling duplicate message propagation.");
+            return;
+        }
+
         for (Peer peer : peers) {
             peerConsumer.accept(peer);
         }
+
+        propagatedHashes.add(hash);
+
         LOGGER.info("Message propagated to all peers.");
     }
 

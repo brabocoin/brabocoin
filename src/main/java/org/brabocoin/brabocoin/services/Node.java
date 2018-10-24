@@ -126,10 +126,14 @@ public class Node {
             logIncomingCall("sendBlock", request);
 
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            if (environment.hasPropagatedMessage(hash)) {
+                LOGGER.fine("Abort processing a duplicate block announce message");
+                return;
+            }
             environment.onReceiveBlockHash(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendBlock(request, emptyLogResponseObserver));
+            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().sendBlock(request, emptyLogResponseObserver));
         }
 
         @Override
@@ -137,10 +141,14 @@ public class Node {
             logIncomingCall("sendTransaction", request);
 
             Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            if (environment.hasPropagatedMessage(hash)) {
+                LOGGER.fine("Abort processing a duplicate block announce message");
+                return;
+            }
             environment.onReceiveTransaction(hash);
             responseObserver.onCompleted();
 
-            environment.propagateMessage((Peer p) -> p.getAsyncStub().sendTransaction(request, emptyLogResponseObserver));
+            environment.propagateMessage(hash, (Peer p) -> p.getAsyncStub().sendTransaction(request, emptyLogResponseObserver));
         }
 
         @Override
