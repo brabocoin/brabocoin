@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.utxo;
+package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -17,68 +17,25 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Maintains an index of the unspent transaction outputs (UTXO) set.
+ * Processes mutations to the UTXO set.
  */
-public class UTXOSet {
+public class UTXOProcessor {
 
-    private static final Logger LOGGER = Logger.getLogger(UTXOSet.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(UTXOProcessor.class.getName());
 
     /**
-     * The UTXO database.
+     * UTXO database.
      */
     private final @NotNull UTXODatabase database;
 
     /**
-     * Creates a new UTXO set manager.
+     * Creates a new UTXO processor for the given UTXO database.
      *
      * @param database
-     *     The UTXO database backend.
+     *     THhe UTXO database.
      */
-    public UTXOSet(@NotNull UTXODatabase database) {
+    public UTXOProcessor(@NotNull UTXODatabase database) {
         this.database = database;
-    }
-
-    /**
-     * Check whether the referenced output of this input is unspent.
-     * <p>
-     * If the referenced output is not present in the UTXO set, it is considered to be spent.
-     *
-     * @param input
-     *     The input.
-     * @return Whether the referenced output of the input is unspent.
-     * @throws DatabaseException
-     *     When the UTXO database is not available.
-     */
-    public boolean isUnspent(@NotNull Input input) throws DatabaseException {
-        return database.isUnspent(input);
-    }
-
-    /**
-     * Check whether the output specified by the index and hash of the transaction is unspent.
-     * <p>
-     * If the referenced output is not present in the UTXO set, it is considered to be spent.
-     *
-     * @param transactionHash
-     *     The hash of the transaction of the specified output.
-     * @param outputIndex
-     *     The index of the output in the transaction.
-     * @return Whether the output is unspent.
-     * @throws DatabaseException
-     *     When the UTXO database is not available.
-     */
-    public boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
-        return database.isUnspent(transactionHash, outputIndex);
-    }
-
-    /**
-     * Retrieves the hash of the block in the main chain up to which the UTXO set is up to date.
-     *
-     * @return The hash of the block up to which the UTXO set is updated.
-     * @throws DatabaseException
-     *     When the UTXO database is not available.
-     */
-    public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
-        return database.getLastProcessedBlockHash();
     }
 
     /**
@@ -174,4 +131,5 @@ public class UTXOSet {
         // Move block pointer
         database.setLastProcessedBlockHash(block.getPreviousBlockHash());
     }
+
 }

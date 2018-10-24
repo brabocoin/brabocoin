@@ -12,7 +12,6 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.utxo.UTXOSet;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ class BlockProcessorTest {
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
     private static BraboConfig config;
 
-    private UTXOSet utxoSet;
+    private UTXOProcessor utxoProcessor;
     private Blockchain blockchain;
     private BlockValidator validator;
     private Consensus consensus;
@@ -58,9 +57,9 @@ class BlockProcessorTest {
     void setUp() throws DatabaseException {
         validator = new BlockValidator();
         consensus = new Consensus();
-        utxoSet = new UTXOSet(new UTXODatabase(new HashMapDB(), consensus));
+        utxoProcessor = new UTXOProcessor(new UTXODatabase(new HashMapDB(), consensus));
         blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        blockProcessor = new BlockProcessor(blockchain, utxoSet, consensus, validator);
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, consensus, validator);
     }
 
     @AfterEach
@@ -80,7 +79,7 @@ class BlockProcessorTest {
             }
         };
 
-        blockProcessor = new BlockProcessor(blockchain, utxoSet, consensus, validator);
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, consensus, validator);
 
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
 

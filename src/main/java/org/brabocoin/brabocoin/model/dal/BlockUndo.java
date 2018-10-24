@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Block undo data to restore the UTXO set when the block is disconnected.
  *
  * @see BlockDatabase
- * @see org.brabocoin.brabocoin.utxo.UTXOSet
+ * @see org.brabocoin.brabocoin.processor.UTXOProcessor
  */
 @ProtoClass(BrabocoinStorageProtos.BlockUndo.class)
 public class BlockUndo implements ProtoModel<BlockUndo> {

@@ -7,7 +7,6 @@ import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.utxo.UTXOSet;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +29,9 @@ public class BlockProcessor {
     private static final Logger LOGGER = Logger.getLogger(BlockProcessor.class.getName());
 
     /**
-     * UTXO set.
+     * UTXO processor.
      */
-    private final @NotNull UTXOSet utxoSet;
+    private final @NotNull UTXOProcessor utxoProcessor;
 
     /**
      * Block validator.
@@ -54,18 +53,18 @@ public class BlockProcessor {
      *
      * @param blockchain
      *     The blockchain.
-     * @param utxoSet
-     *     The UTXO set.
+     * @param utxoProcessor
+     *     The UTXO processor.
      * @param consensus
      *     The consensus on which to process blocks.
      * @param blockValidator
      *     The block validator.
      */
-    public BlockProcessor(@NotNull Blockchain blockchain, @NotNull UTXOSet utxoSet,
+    public BlockProcessor(@NotNull Blockchain blockchain, @NotNull UTXOProcessor utxoProcessor,
                           @NotNull Consensus consensus, @NotNull BlockValidator blockValidator) {
         LOGGER.fine("Initializing BlockProcessor.");
         this.blockchain = blockchain;
-        this.utxoSet = utxoSet;
+        this.utxoProcessor = utxoProcessor;
         this.consensus = consensus;
         this.blockValidator = blockValidator;
     }
@@ -299,7 +298,7 @@ public class BlockProcessor {
         assert blockUndo != null;
 
         // Update UTXO set
-        utxoSet.processBlockDisconnected(block, blockUndo);
+        utxoProcessor.processBlockDisconnected(block, blockUndo);
 
         // TODO: update mempool
 
@@ -326,7 +325,7 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-        BlockUndo undo = utxoSet.processBlockConnected(block);
+        BlockUndo undo = utxoProcessor.processBlockConnected(block);
 
         // Store undo data
         blockchain.storeBlockUndo(top, undo);

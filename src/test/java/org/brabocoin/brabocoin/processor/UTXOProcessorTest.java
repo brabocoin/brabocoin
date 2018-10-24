@@ -1,16 +1,16 @@
-package org.brabocoin.brabocoin.utxo;
+package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.model.dal.TransactionUndo;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
-import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
+import org.brabocoin.brabocoin.model.dal.TransactionUndo;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,19 +25,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Test {@link UTXOSet}.
+ * Test {@link org.brabocoin.brabocoin.processor.UTXOProcessor}.
  */
-class UTXOSetTest {
+class UTXOProcessorTest {
 
     private UTXODatabase database;
     private Consensus consensus;
-    private UTXOSet utxoSet;
+    private UTXOProcessor processor;
 
     @BeforeEach
     void setUp() throws DatabaseException {
         consensus = new Consensus();
         database = new UTXODatabase(new HashMapDB(), consensus);
-        utxoSet = new UTXOSet(database);
+        processor = new UTXOProcessor(database);
     }
 
     @Test
@@ -60,7 +60,7 @@ class UTXOSetTest {
         );
 
         // Check undo is empty
-        BlockUndo undo = utxoSet.processBlockConnected(block);
+        BlockUndo undo = processor.processBlockConnected(block);
         assertEquals(1, undo.getTransactionUndos().size());
         TransactionUndo transactionUndo = undo.getTransactionUndos().get(0);
         assertTrue(transactionUndo.getOutputInfoList().isEmpty());
@@ -86,7 +86,7 @@ class UTXOSetTest {
         }
 
         // Process block
-        BlockUndo blockUndo = utxoSet.processBlockConnected(block);
+        BlockUndo blockUndo = processor.processBlockConnected(block);
 
         // Check undo
         assertEquals(block.getTransactions().size(), blockUndo.getTransactionUndos().size());
@@ -109,7 +109,7 @@ class UTXOSetTest {
             }
         }
 
-        assertEquals(block.computeHash(), utxoSet.getLastProcessedBlockHash());
+        assertEquals(block.computeHash(), database.getLastProcessedBlockHash());
     }
 
     @Test
@@ -129,10 +129,10 @@ class UTXOSetTest {
         }
 
         // Process block
-        BlockUndo blockUndo = utxoSet.processBlockConnected(block);
+        BlockUndo blockUndo = processor.processBlockConnected(block);
 
         // Disconnect block
-        utxoSet.processBlockDisconnected(block, blockUndo);
+        processor.processBlockDisconnected(block, blockUndo);
 
         // Check if all inputs are unspent / outputs are spent
         for (Transaction transaction : block.getTransactions()) {
@@ -147,6 +147,6 @@ class UTXOSetTest {
             }
         }
 
-        assertEquals(consensus.getGenesisBlock().computeHash(), utxoSet.getLastProcessedBlockHash());
+        assertEquals(consensus.getGenesisBlock().computeHash(), database.getLastProcessedBlockHash());
     }
 }

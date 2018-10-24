@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * disconnected.
  *
  * @see BlockDatabase
- * @see org.brabocoin.brabocoin.utxo.UTXOSet
+ * @see org.brabocoin.brabocoin.processor.UTXOProcessor
  */
 @ProtoClass(BrabocoinStorageProtos.TransactionUndo.class)
 public class TransactionUndo implements ProtoModel<TransactionUndo> {
