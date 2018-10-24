@@ -7,7 +7,6 @@ import com.google.protobuf.util.JsonFormat;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -18,6 +17,7 @@ import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -112,7 +112,7 @@ public class Node {
             logIncomingCall("handshake", request);
 
             HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
-            BrabocoinProtos.HandshakeResponse protoResponse = Converter.create().toProtobuf(BrabocoinProtos.HandshakeResponse.class, response);
+            BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(response, BrabocoinProtos.HandshakeResponse.class);
 
             logOutgoingResponse(protoResponse);
 
@@ -125,7 +125,7 @@ public class Node {
         public void sendBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             logIncomingCall("sendBlock", request);
 
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             if (environment.hasPropagatedMessage(hash)) {
                 LOGGER.fine("Abort processing a duplicate block announce message");
                 return;
@@ -140,7 +140,7 @@ public class Node {
         public void sendTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
             logIncomingCall("sendTransaction", request);
 
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             if (environment.hasPropagatedMessage(hash)) {
                 LOGGER.fine("Abort processing a duplicate block announce message");
                 return;
@@ -158,13 +158,13 @@ public class Node {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
                     logIncomingCall("getBlocks.onNext", value, Level.FINE);
-                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
+                    Hash hash = ProtoConverter.toDomain(value, Hash.Builder.class);
                     Block block = environment.getBlock(hash);
                     if (block == null) {
                         return;
                     }
 
-                    BrabocoinProtos.Block protoBlock = Converter.create().toProtobuf(BrabocoinProtos.Block.class, block);
+                    BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block, BrabocoinProtos.Block.class);
 
                     logOutgoingResponse(protoBlock);
 
@@ -192,13 +192,13 @@ public class Node {
                 @Override
                 public void onNext(BrabocoinProtos.Hash value) {
                     logIncomingCall("getTransactions.onNext", value, Level.FINE);
-                    Hash hash = Converter.create().toDomain(Hash.Builder.class, value).build();
+                    Hash hash = ProtoConverter.toDomain(value, Hash.Builder.class);
                     Transaction transaction = environment.getTransaction(hash);
                     if (transaction == null) {
                         return;
                     }
 
-                    BrabocoinProtos.Transaction protoTransaction = Converter.create().toProtobuf(BrabocoinProtos.Transaction.class, transaction);
+                    BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
 
                     logOutgoingResponse(protoTransaction);
 
@@ -226,7 +226,7 @@ public class Node {
             for (Iterator<Hash> it = transactionIterator; it.hasNext(); ) {
                 Hash h = it.next();
 
-                BrabocoinProtos.Hash protoHash = Converter.create().toProtobuf(BrabocoinProtos.Hash.class, h);
+                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(h, BrabocoinProtos.Hash.class);
                 logOutgoingResponse(protoHash);
                 responseObserver.onNext(protoHash);
             }
@@ -238,7 +238,7 @@ public class Node {
         public void discoverTopBlockHeight(Empty request, StreamObserver<BrabocoinProtos.BlockHeight> responseObserver) {
             logIncomingCall("discoverTopBlockHeight", request);
             BlockHeight blockHeight = new BlockHeight(environment.getTopBlockHeight());
-            BrabocoinProtos.BlockHeight protoBlockHeight = Converter.create().toProtobuf(BrabocoinProtos.BlockHeight.class, blockHeight);
+            BrabocoinProtos.BlockHeight protoBlockHeight = ProtoConverter.toProto(blockHeight, BrabocoinProtos.BlockHeight.class);
 
             logOutgoingResponse(protoBlockHeight);
             responseObserver.onNext(protoBlockHeight);
@@ -248,9 +248,9 @@ public class Node {
         @Override
         public void checkChainCompatible(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.ChainCompatibility> responseObserver) {
             logIncomingCall("checkChainCompatible", request);
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             ChainCompatibility compatibility = new ChainCompatibility(environment.isChainCompatible(hash));
-            BrabocoinProtos.ChainCompatibility protoChainCompatiblity = Converter.create().toProtobuf(BrabocoinProtos.ChainCompatibility.class, compatibility);
+            BrabocoinProtos.ChainCompatibility protoChainCompatiblity = ProtoConverter.toProto(compatibility, BrabocoinProtos.ChainCompatibility.class);
 
             logOutgoingResponse(protoChainCompatiblity);
             responseObserver.onNext(protoChainCompatiblity);
@@ -260,12 +260,12 @@ public class Node {
         @Override
         public void seekBlockchain(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
             logIncomingCall("seekBlockchain", request);
-            Hash hash = Converter.create().toDomain(Hash.Builder.class, request).build();
+            Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             Iterator<Hash> blockIterator = environment.getBlocksAbove(hash);
             for (Iterator<Hash> it = blockIterator; it.hasNext(); ) {
                 Hash h = it.next();
 
-                BrabocoinProtos.Hash protoHash = Converter.create().toProtobuf(BrabocoinProtos.Hash.class, h);
+                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(h, BrabocoinProtos.Hash.class);
 
                 logOutgoingResponse(protoHash);
                 responseObserver.onNext(protoHash);
