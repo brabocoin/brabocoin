@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,17 +23,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * UTXO Database tests
+ * UTXO Database tests.
  */
 class UTXODatabaseTest {
 
+    private Consensus consensus;
     private UTXODatabase database;
     private KeyValueStore storage;
 
     @BeforeEach
     void setUp() throws DatabaseException {
         storage = new HashMapDB();
-        database = new UTXODatabase(storage);
+        consensus = new Consensus();
+        database = new UTXODatabase(storage, consensus);
     }
 
     @Test
@@ -109,6 +112,11 @@ class UTXODatabaseTest {
     @Test
     void nonExistingUnspentOutputInfo() throws DatabaseException {
         assertNull(database.findUnspentOutputInfo(Simulation.randomHash(), 0));
+    }
+
+    @Test
+    void genesisProcessedBlockHash() throws DatabaseException {
+        assertEquals(consensus.getGenesisBlock().computeHash(), database.getLastProcessedBlockHash());
     }
 
     @Test

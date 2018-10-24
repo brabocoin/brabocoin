@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
@@ -16,6 +17,7 @@ import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,23 +44,26 @@ public class UTXODatabase {
     /**
      * Creates a new UTXO set database using the provided key-value store.
      *
-     * @param storage     The key-value store to use for the database.
+     * @param storage
+     *     The key-value store to use for the database.
+     * @param consensus
+     *     The consensus on which this UTXO needs to be initialized, if necessary.
      * @throws DatabaseException
      *     When the database could not be initialized.
      */
-    public UTXODatabase(@NotNull KeyValueStore storage) throws DatabaseException {
+    public UTXODatabase(@NotNull KeyValueStore storage, @NotNull Consensus consensus) throws DatabaseException {
         this.storage = storage;
-        initialize();
+        initialize(consensus.getGenesisBlock());
     }
 
-    private void initialize() throws DatabaseException {
+    private void initialize(@NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing UTXO database.");
         ByteString key = getBlockMarkerKey();
 
         if (!storage.has(key)) {
-            LOGGER.fine("Storage block marker key not found");
-            storage.put(key, ByteUtil.toByteString(0));
-            LOGGER.fine("Storage block marker key created");
+            LOGGER.fine("Storage block marker key not found.");
+            setLastProcessedBlockHash(genesisBlock.computeHash());
+            LOGGER.fine("Storage block marker key created from consensus genesis block hash.");
         }
     }
 
@@ -199,7 +204,12 @@ public class UTXODatabase {
                 output.getAmount(),
                 output.getAddress()
             );
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Setting output to unspent, index: {0}, amount: {1}, blockheight: {2}, address: {3}", new Object[]{outputIndex, output.getAmount(), blockHeight, output.getAddress()}));
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Setting output to unspent, index: {0}, amount: {1}, blockheight: {2}, address: {3}",
+                outputIndex,
+                output.getAmount(),
+                blockHeight,
+                output.getAddress()
+            ));
 
             addUnspentOutputInfo(transactionHash, outputIndex, info);
         }

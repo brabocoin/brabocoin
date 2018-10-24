@@ -58,7 +58,7 @@ class BlockProcessorTest {
     void setUp() throws DatabaseException {
         validator = new BlockValidator();
         consensus = new Consensus();
-        utxoSet = new UTXOSet(new UTXODatabase(new HashMapDB()));
+        utxoSet = new UTXOSet(new UTXODatabase(new HashMapDB(), consensus));
         blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         blockProcessor = new BlockProcessor(blockchain, utxoSet, consensus, validator);
     }

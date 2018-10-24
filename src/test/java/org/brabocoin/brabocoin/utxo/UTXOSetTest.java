@@ -12,6 +12,7 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,11 +30,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class UTXOSetTest {
 
     private UTXODatabase database;
+    private Consensus consensus;
     private UTXOSet utxoSet;
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        database = new UTXODatabase(new HashMapDB());
+        consensus = new Consensus();
+        database = new UTXODatabase(new HashMapDB(), consensus);
         utxoSet = new UTXOSet(database);
     }
 
@@ -105,11 +108,13 @@ class UTXOSetTest {
                 assertTrue(database.isUnspent(hash, outputIndex));
             }
         }
+
+        assertEquals(block.computeHash(), utxoSet.getLastProcessedBlockHash());
     }
 
     @Test
     void processBlockDisconnected() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Block block = Simulation.randomBlockChainGenerator(1, consensus.getGenesisBlock().computeHash(), 1).get(0);
         Hash address = Simulation.randomHash();
 
         // Set all inputs of new block manually unspent
@@ -141,5 +146,7 @@ class UTXOSetTest {
                 assertFalse(database.isUnspent(hash, i));
             }
         }
+
+        assertEquals(consensus.getGenesisBlock().computeHash(), utxoSet.getLastProcessedBlockHash());
     }
 }
