@@ -96,6 +96,7 @@ public class TransactionPool {
      *     The validated transaction to be stored as independent in the transaction pool.
      */
     public void addIndependentTransaction(@NotNull Transaction transaction) {
+        LOGGER.fine("Adding independent transaction.");
         independentTransactions.put(transaction.computeHash(), transaction);
     }
 
@@ -110,6 +111,7 @@ public class TransactionPool {
      *     The validated transaction to be stored as dependent in the transaction pool.
      */
     public void addDependentTransaction(@NotNull Transaction transaction) {
+        LOGGER.fine("Adding dependent transaction.");
         dependentTransactions.put(transaction);
     }
 
@@ -122,6 +124,7 @@ public class TransactionPool {
      *     The transaction to be stored as orphan in the transaction pool.
      */
     public void addOrphanTransaction(@NotNull Transaction transaction) {
+        LOGGER.fine("Adding orphan transaction.");
         orphanTransactions.put(transaction);
     }
 
@@ -137,10 +140,13 @@ public class TransactionPool {
      * found.
      */
     public @Nullable Transaction findValidatedTransaction(@NotNull Hash transactionHash) {
+        LOGGER.fine("Finding validated transaction.");
         if (independentTransactions.containsKey(transactionHash)) {
+            LOGGER.fine("Transaction found in independent set.");
             return independentTransactions.get(transactionHash);
         }
 
+        LOGGER.fine("Attempt to find transaction in dependent set.");
         return dependentTransactions.get(transactionHash);
     }
 
@@ -153,6 +159,7 @@ public class TransactionPool {
      * found from the orphan pool.
      */
     public @Nullable Transaction findOrphan(@NotNull Hash transactionHash) {
+        LOGGER.fine("Attempt to find orphan transaction.");
         return orphanTransactions.get(transactionHash);
     }
 
