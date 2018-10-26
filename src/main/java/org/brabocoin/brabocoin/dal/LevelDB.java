@@ -22,7 +22,7 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
  * LevelDB Data Access Layer for the LevelDB Java Native Interface provided by fusesource.
  */
 public class LevelDB implements KeyValueStore {
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(LevelDB.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(LevelDB.class.getName());
     private DB database;
     private File databasePath;
     private Options options;

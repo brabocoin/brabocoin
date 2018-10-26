@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * A representation of an peer in the network.
  */
 public class Peer {
-    private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Peer.class.getName());
     /**
      * The socket for this peer.
      */
