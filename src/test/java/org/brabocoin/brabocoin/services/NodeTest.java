@@ -9,6 +9,8 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.messages.BlockHeight;
+import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -351,9 +353,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -425,9 +427,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -500,9 +502,9 @@ class NodeTest {
         };
 
         Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5,5),2);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
         for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(),t);
+            transactionPool.put(t.computeHash(), t);
         }
 
         Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
@@ -724,6 +726,144 @@ class NodeTest {
         });
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+    }
+
+    @Test
+    void discoverTopBlockHeightTest() throws DatabaseException, IOException, InterruptedException {
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        }) {
+            @Override
+            public long getTopBlockHeight() {
+                return 1234L;
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+
+        BlockHeight blockHeight = ProtoConverter.toDomain(nodeBpeer.getBlockingStub().discoverTopBlockHeight(Empty.newBuilder().build()), BlockHeight.Builder.class);
+
+        assert blockHeight != null;
+
+        assertEquals(1234L, blockHeight.getHeight());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+    }
+
+    @Test
+    void checkChainCompatibleTest() throws DatabaseException, IOException, InterruptedException {
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        }) {
+            @Override
+            public boolean isChainCompatible(@NotNull Hash blockHash) {
+                return false;
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+
+        ChainCompatibility chainCompatibility = ProtoConverter.toDomain(
+                nodeBpeer.getBlockingStub().checkChainCompatible(
+                        ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class)
+                ), ChainCompatibility.Builder.class);
+
+        assert chainCompatibility != null;
+
+        assertFalse(chainCompatibility.isCompatible());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+    }
+
+    @Test
+    void seekBlockchainTest() throws DatabaseException, IOException, InterruptedException {
+        List<Hash> hashes = Simulation.repeatedBuilder(Simulation::randomHash, 10);
+
+        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+        }) {
+            @Override
+            public Iterator<Hash> getBlocksAbove(Hash blockHash) {
+                return hashes.iterator();
+            }
+        });
+
+        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }));
+
+        nodeA.start();
+        nodeB.start();
+
+        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+
+        Iterator<BrabocoinProtos.Hash> hashIterator = nodeBpeer.getBlockingStub().seekBlockchain(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+
+        List<BrabocoinProtos.Hash> receivedProtoHashes = new ArrayList<>();
+        for (Iterator<BrabocoinProtos.Hash> it = hashIterator; it.hasNext(); ) {
+            BrabocoinProtos.Hash h = it.next();
+
+            receivedProtoHashes.add(h);
+        }
+
+        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
+
+        for (Hash h : hashes) {
+            assertTrue(receivedHashes.contains(h));
+        }
+
+        for (Hash h : receivedHashes) {
+            assertTrue(hashes.contains(h));
+        }
 
         nodeA.stop();
         nodeA.blockUntilShutdown();
