@@ -21,6 +21,10 @@ public class ChainCompatibility implements ProtoModel<ChainCompatibility> {
         return Builder.class;
     }
 
+    public boolean isCompatible() {
+        return compatible;
+    }
+
     @ProtoClass(BrabocoinProtos.ChainCompatibility.class)
     public static class Builder implements ProtoBuilder<ChainCompatibility> {
 

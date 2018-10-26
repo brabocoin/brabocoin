@@ -21,6 +21,10 @@ public class BlockHeight implements ProtoModel<BlockHeight> {
         return Builder.class;
     }
 
+    public long getHeight() {
+        return height;
+    }
+
     @ProtoClass(BrabocoinProtos.BlockHeight.class)
     public static class Builder implements ProtoBuilder<BlockHeight> {
 
