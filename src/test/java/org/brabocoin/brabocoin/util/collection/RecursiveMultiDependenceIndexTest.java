@@ -96,7 +96,7 @@ class RecursiveMultiDependenceIndexTest {
     }
 
     @Test
-    void removeMatchingDependants() {
+    void findSomeMatchingDependants() {
         index.put("out of");
         index.put("out of the");
         index.put("out of the blue");
@@ -108,5 +108,40 @@ class RecursiveMultiDependenceIndexTest {
         assertNotEquals(matching.get(0), matching.get(1));
         assertTrue("out of".equals(matching.get(0)) || "out of".equals(matching.get(1)));
         assertTrue("out to".equals(matching.get(0)) || "out to".equals(matching.get(1)));
+    }
+
+    @Test
+    void removeAllMatchingDependents() {
+        index.put("out of");
+        index.put("out of the");
+        index.put("out of the blue");
+        index.put("out to");
+        index.put("to out");
+
+        List<String> matching = index.removeMatchingDependants("out", s -> true);
+        for (String match : matching) {
+            assertFalse(index.containsKey(match));
+        }
+
+        assertTrue(index.containsKey("to out"));
+    }
+
+    @Test
+    void removeSomeMatchingDependants() {
+        index.put("out of");
+        index.put("out of the");
+        index.put("out of the blue");
+        index.put("out to");
+        index.put("to out");
+
+        List<String> matching = index.removeMatchingDependants("out", s -> s.split(" ").length % 2 == 0);
+
+        for (String match : matching) {
+            assertFalse(index.containsKey(match));
+        }
+
+        assertTrue(index.containsKey("to out"));
+        assertTrue(index.containsKey("out of the"));
+        assertTrue(index.containsKey("out of the blue"));
     }
 }
