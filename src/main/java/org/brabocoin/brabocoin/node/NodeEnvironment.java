@@ -150,7 +150,7 @@ public class NodeEnvironment {
      *
      * @return Top block height.
      */
-    public long getTopBlockHeight() {
+    public int getTopBlockHeight() {
         LOGGER.fine("Top block height requested.");
         // TODO: magic here
         return 0;

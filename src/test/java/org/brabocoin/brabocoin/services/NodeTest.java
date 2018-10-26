@@ -742,8 +742,8 @@ class NodeTest {
             }
         }) {
             @Override
-            public long getTopBlockHeight() {
-                return 1234L;
+            public int getTopBlockHeight() {
+                return 1234;
             }
         });
 
@@ -765,7 +765,7 @@ class NodeTest {
 
         assert blockHeight != null;
 
-        assertEquals(1234L, blockHeight.getHeight());
+        assertEquals(1234, blockHeight.getHeight());
 
         nodeA.stop();
         nodeA.blockUntilShutdown();

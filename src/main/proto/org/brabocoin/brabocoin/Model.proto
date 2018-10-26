@@ -50,7 +50,7 @@ message HandshakeResponse {
 }
 
 message BlockHeight {
-    int64 height = 1;
+    int32 height = 1;
 }
 
 message ChainCompatibility {

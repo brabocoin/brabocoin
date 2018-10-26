@@ -10,9 +10,9 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 public class BlockHeight implements ProtoModel<BlockHeight> {
 
     @ProtoField
-    private long height;
+    private int height;
 
-    public BlockHeight(long height) {
+    public BlockHeight(int height) {
         this.height = height;
     }
 
@@ -21,7 +21,7 @@ public class BlockHeight implements ProtoModel<BlockHeight> {
         return Builder.class;
     }
 
-    public long getHeight() {
+    public int getHeight() {
         return height;
     }
 
@@ -29,9 +29,9 @@ public class BlockHeight implements ProtoModel<BlockHeight> {
     public static class Builder implements ProtoBuilder<BlockHeight> {
 
         @ProtoField
-        private long height;
+        private int height;
 
-        public Builder setHeight(long height) {
+        public Builder setHeight(int height) {
             this.height = height;
             return this;
         }
