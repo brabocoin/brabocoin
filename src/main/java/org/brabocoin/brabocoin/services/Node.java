@@ -75,7 +75,7 @@ public class Node {
     }
 
     private void logIncomingCall(String call, MessageOrBuilder receivedMessage, Level receivedLogLevel) {
-        LOGGER.log(receivedLogLevel, "Received '{0}' call.", call);
+        LOGGER.log(receivedLogLevel, "Received {0} call.", call);
         LOGGER.log(Level.FINEST, () -> {
             try {
                 return MessageFormat.format("Received data: {0}", JsonFormat.printer().print(receivedMessage));
@@ -117,20 +117,36 @@ public class Node {
 
         @Override
         public void announceBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            logIncomingCall("sendBlock", request);
+            logIncomingCall("announceBlock", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
-            environment.onReceiveBlockHash(hash);
+            responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
+            if (environment.hasPropagatedMessage(hash)) {
+                LOGGER.fine("Abort processing a duplicate block announce message");
+                return;
+            }
+            environment.onReceiveBlockHash(hash);
+
+            // TODO: Async stub usage for propagation throws cancellation exceptions from GRPC.
+            new Thread(() -> environment.propagateMessage(hash, (Peer p) -> p.getBlockingStub().announceBlock(request))).start();
         }
 
         @Override
         public void announceTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
-            logIncomingCall("sendTransaction", request);
+            logIncomingCall("announceTransaction", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
-            environment.onReceiveTransaction(hash);
+            responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
+            if (environment.hasPropagatedMessage(hash)) {
+                LOGGER.fine("Abort processing a duplicate block announce message");
+                return;
+            }
+            environment.onReceiveTransaction(hash);
+
+            // TODO: Async stub usage for propagation throws cancellation exceptions from GRPC.
+            new Thread(() -> environment.propagateMessage(hash, (Peer p) -> p.getBlockingStub().announceTransaction(request))).start();
         }
 
         @Override

@@ -50,7 +50,7 @@ public class PeerProcessor {
                 LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer created and added to peer set: {0}", p));
             } catch (MalformedSocketException e) {
                 LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
-                    peerSocket, e.getMessage()
+                        peerSocket, e.getMessage()
                 });
                 // TODO: Handle invalid peer socket representation in the config.
                 // Exit throwing an error to the user or skip this peer?
@@ -76,37 +76,42 @@ public class PeerProcessor {
         }
 
         while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
-            Peer handshakePeer = handshakePeers.remove(0);
-            LOGGER.log(Level.FINEST,"Bootstrapping on peer: {0}", handshakePeer);
+            Peer handshakePeer = handshakePeers.get(0);
+            LOGGER.log(Level.FINEST, "Bootstrapping on peer: {0}", handshakePeer);
             try {
-                LOGGER.log(Level.FINEST,"Performing handshake.");
+                LOGGER.log(Level.FINEST, "Performing handshake.");
                 // Perform a handshake with the peer
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
-                    .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                    .handshake(Empty.newBuilder().build());
+                        .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
+                        .handshake(Empty.newBuilder().build());
                 HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
-                LOGGER.log(Level.FINEST,"Response acquired, got {0} peers.", response.getPeers().size());
+                LOGGER.log(Level.FINEST, "Response acquired, got {0} peers.", response.getPeers().size());
 
-                LOGGER.log(Level.FINEST,"Adding handshake peer to peer list, as handshake was successful.");
+                LOGGER.log(Level.FINEST, "Adding handshake peer to peer list, as handshake was successful.");
                 // We got a response from the current handshake peer, register this peer as valid
                 peers.add(handshakePeer);
 
                 // Add the discovered peers to the list of handshake peers
                 for (final String peerSocket : response.getPeers()) {
-                    LOGGER.log(Level.FINEST,"Discovered new peer, raw socket string: {0}", peerSocket);
+                    LOGGER.log(Level.FINEST, "Discovered new peer, raw socket string: {0}", peerSocket);
                     try {
                         final Peer discoveredPeer = new Peer(peerSocket);
-                        LOGGER.log(Level.FINEST,"Discovered new peer parsed: {0}", discoveredPeer);
-                        handshakePeers.add(discoveredPeer);
+                        LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
+                        if (!peers.contains(discoveredPeer)) {
+                                // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
+                            handshakePeers.add(discoveredPeer);
+                        }
                     } catch (MalformedSocketException e) {
-                        LOGGER.log(Level.WARNING,"Error while parsing raw peer socket string: {0}", e.getMessage());
+                        LOGGER.log(Level.WARNING, "Error while parsing raw peer socket string: {0}", e.getMessage());
                         // TODO: Ignore and continue?
                     }
                 }
             } catch (StatusRuntimeException e) {
-                LOGGER.log(Level.WARNING,"Error while handshaking with peer: {0}", e.getMessage());
+                LOGGER.log(Level.WARNING, "Error while handshaking with peer: {0}", e.getMessage());
                 // TODO: Ignore and continue?
             }
+
+            handshakePeers.remove(0);
         }
 
         // TODO: Update peers when connection is lost.

@@ -15,6 +15,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.function.Consumer;
 
 /**
  * Represents a node environment.
@@ -26,6 +27,7 @@ public class NodeEnvironment {
     private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
     private Map<Hash, Transaction> transactionPool;
+    private Set<Hash> propagatedHashes = new HashSet<>();
 
     private PeerProcessor peerProcessor;
 
@@ -120,6 +122,38 @@ public class NodeEnvironment {
             LOGGER.log(Level.SEVERE, "Database error while trying to acquire block, error: {0}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Check whether the given hash was already propagated.
+     *
+     * @param hash Hash to check.
+     * @return Whether this hash was already propagated.
+     */
+    public boolean hasPropagatedMessage(Hash hash) {
+        return propagatedHashes.contains(hash);
+    }
+
+    /**
+     * Propagate a peer consuming lambda expression to all known peers.
+     * Only if the given hash was not already propagated.
+     *
+     * @param hash         Hash that is to be propagated.
+     * @param peerConsumer The lambda expression evaluated on all peers.
+     */
+    public void propagateMessage(Hash hash, Consumer<Peer> peerConsumer) {
+        if (propagatedHashes.contains(hash)) {
+            LOGGER.fine("Cancelling duplicate message propagation.");
+            return;
+        }
+
+        propagatedHashes.add(hash);
+
+        for (Peer peer : peers) {
+            peerConsumer.accept(peer);
+        }
+
+        LOGGER.info("Message propagated to all peers.");
     }
 
     /**
