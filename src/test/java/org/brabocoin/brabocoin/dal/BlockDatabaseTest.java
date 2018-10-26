@@ -230,6 +230,7 @@ class BlockDatabaseTest {
 
         BlockFileInfo fileInfo = database.findBlockFileInfo(0);
         long timestamp = blocks.get(0).getTimestamp();
+        long timestampEnd = blocks.get(2).getTimestamp();
 
         assertNotNull(fileInfo);
         assertEquals(3, fileInfo.getNumberOfBlocks());
@@ -237,7 +238,7 @@ class BlockDatabaseTest {
         assertEquals(0, fileInfo.getLowestBlockHeight());
         assertEquals(2, fileInfo.getHighestBlockHeight());
         assertEquals(timestamp, fileInfo.getLowestBlockTimestamp());
-        assertEquals(timestamp, fileInfo.getHighestBlockTimestamp());
+        assertEquals(timestampEnd, fileInfo.getHighestBlockTimestamp());
     }
 
     @Test

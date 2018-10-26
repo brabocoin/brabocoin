@@ -34,7 +34,7 @@ class TransactionPoolTest {
 
     @Test
     void addFindIndependentTransaction() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addIndependentTransaction(transaction);
 
@@ -45,7 +45,7 @@ class TransactionPoolTest {
 
     @Test
     void addFindDependentTransaction() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addDependentTransaction(transaction);
 
@@ -56,7 +56,7 @@ class TransactionPoolTest {
 
     @Test
     void addFindOrphan() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addOrphanTransaction(transaction);
 
@@ -67,7 +67,7 @@ class TransactionPoolTest {
 
     @Test
     void orphanIsNotValidated() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addOrphanTransaction(transaction);
 
@@ -76,7 +76,7 @@ class TransactionPoolTest {
 
     @Test
     void independentIsNotOrphan() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addIndependentTransaction(transaction);
 
@@ -85,7 +85,7 @@ class TransactionPoolTest {
 
     @Test
     void dependentIsNotOrphan() {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         pool.addDependentTransaction(transaction);
 
