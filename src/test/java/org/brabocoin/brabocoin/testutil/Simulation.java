@@ -28,17 +28,9 @@ public class Simulation {
 
     public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
         List<Block> list = new ArrayList<>();
-        long creationTime = new Date().getTime();
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
-            Block block = new Block(
-                    previousHash,
-                    randomHash(),
-                    randomHash(),
-                    randomByteString(),
-                    creationTime,
-                    i,
-                    repeatedBuilder(Simulation::randomTransaction, 30));
+            Block block = randomBlock(previousHash, i, 5, 5, 30);
             previousHash = block.computeHash();
             list.add(block);
         }
@@ -55,14 +47,11 @@ public class Simulation {
         long creationTime = new Date().getTime();
 
         for (int i = startBlockHeight; i < startBlockHeight + length; i++) {
-            Block block = new Block(
+            Block block = randomBlock(
                 previousHash,
-                randomHash(),
-                randomHash(),
-                randomByteString(),
-                creationTime,
+
                 i,
-                repeatedBuilder(Simulation::randomTransaction, 30));
+                5, 5, 30);
 
             BlockInfo info = new BlockInfo(
                 block.getPreviousBlockHash(),
@@ -88,14 +77,27 @@ public class Simulation {
         return list;
     }
 
-    public static Transaction randomTransaction() {
-        List<Input> inputs = repeatedBuilder(Simulation::randomInput, 5);
-        List<Output> outputs = repeatedBuilder(Simulation::randomOutput, 5);
+    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+        long creationTime = new Date().getTime();
+
+        return new Block(
+                previousHash,
+                randomHash(),
+                randomHash(),
+                randomByteString(),
+                creationTime,
+                blockHeight,
+                repeatedBuilder(() -> randomTransaction(transactionInputBound,transactionOutputBound), transactionsBound));
+    }
+
+    public static Transaction randomTransaction(int inputBound, int outputBound) {
+        List<Input> inputs = repeatedBuilder(Simulation::randomInput, inputBound);
+        List<Output> outputs = repeatedBuilder(Simulation::randomOutput, outputBound);
         return new Transaction(inputs, outputs);
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
-        return IntStream.of(RANDOM.nextInt(bound - 1) + 1).mapToObj(i -> {
+        return IntStream.range(0, RANDOM.nextInt(bound) + 1).mapToObj(i -> {
             try {
                 return builder.call();
             } catch (Exception e) {

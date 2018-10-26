@@ -1,14 +1,16 @@
 package org.brabocoin.brabocoin.model;
 
 import com.google.protobuf.ByteString;
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.junit.jupiter.api.*;
+import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class TransactionTest {
     static Hash transactionHash = new Hash(ByteString.copyFromUtf8("test"));
@@ -31,8 +33,7 @@ class TransactionTest {
     @Test
     void protoConvertToDTOTransactionTest() {
         Transaction transaction = new Transaction(inputList, outputList);
-        BrabocoinProtos.Transaction protoTransaction = Converter.create()
-                .toProtobuf(BrabocoinProtos.Transaction.class, transaction);
+        BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
 
 
         assertEquals(2, protoTransaction.getInputsCount());
@@ -42,10 +43,8 @@ class TransactionTest {
     @Test
     void protoConvertToDOMTransactionTest() {
         Transaction transaction = new Transaction(inputList, outputList);
-        BrabocoinProtos.Transaction protoTransaction = Converter.create()
-                .toProtobuf(BrabocoinProtos.Transaction.class, transaction);
-        Transaction transactionReflection = Converter.create()
-                .toDomain(Transaction.Builder.class, protoTransaction).build();
+        BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
+        Transaction transactionReflection = ProtoConverter.toDomain(protoTransaction, Transaction.Builder.class);
 
         assertEquals(2, transactionReflection.getInputs().size());
         assertEquals(2, transactionReflection.getOutputs().size());

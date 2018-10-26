@@ -1,6 +1,5 @@
 package org.brabocoin.brabocoin.node;
 
-import net.badata.protobuf.converter.Converter;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -13,11 +12,7 @@ import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,32 +23,42 @@ public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     protected BraboConfig config;
 
-    protected BlockDatabase database;
+    private BlockDatabase database;
     private Set<Peer> peers = new HashSet<>();
-    private Converter converter = Converter.create();
-    private Map<Hash, Transaction> transactionPool = new HashMap<>();
+    private Map<Hash, Transaction> transactionPool;
 
     private PeerProcessor peerProcessor;
 
-    public NodeEnvironment(BlockDatabase database, BraboConfig config) {
+    public NodeEnvironment(BlockDatabase database, Map<Hash, Transaction> transactionPool, BraboConfig config) {
         this.config = config;
         this.database = database;
+        this.transactionPool = transactionPool;
         this.peerProcessor = new PeerProcessor(peers, config);
     }
 
-    public NodeEnvironment(KeyValueStore store, BraboConfig config) throws DatabaseException {
+    public NodeEnvironment(KeyValueStore store, Map<Hash, Transaction> transactionPool, BraboConfig config) throws DatabaseException {
         this.config = config;
         this.database = new BlockDatabase(store, config);
         this.peerProcessor = new PeerProcessor(peers, config);
+        this.transactionPool = transactionPool;
     }
 
     /**
-     * Setup the environment, loading the config and bootstrapping peers.
+     * Adds a peer to the list of peers known to this node.
+     *
+     * @param peer The peer to add to the peer list known to this node.
      */
-    public void setup() {
-        LOGGER.info("Setting up the node environment.");
-        peerProcessor.bootstrap();
-        LOGGER.info("Environment setup done.");
+    public void addPeer(Peer peer) {
+        peers.add(peer);
+    }
+
+    /**
+     * Adds a list of peers to the list of peers known to this node.
+     *
+     * @param peer The peers to add to the peer list known to this node.
+     */
+    public void addPeers(List<Peer> peer) {
+        peers.addAll(peer);
     }
 
     /**
@@ -64,6 +69,15 @@ public class NodeEnvironment {
     public Set<Peer> getPeers() {
         LOGGER.fine("Creating a copy of the set of peers.");
         return new HashSet<>(peers);
+    }
+
+    /**
+     * Setup the environment, loading the config and bootstrapping peers.
+     */
+    public void setup() {
+        LOGGER.info("Setting up the node environment.");
+        peerProcessor.bootstrap();
+        LOGGER.info("Environment setup done.");
     }
 
     /**
@@ -118,7 +132,7 @@ public class NodeEnvironment {
     public Transaction getTransaction(@NotNull Hash transactionHash) {
         LOGGER.fine("Transaction requested by hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
-        return null;
+        return transactionPool.get(transactionHash);
     }
 
     /**

@@ -40,7 +40,7 @@ class UTXODatabaseTest {
 
     @Test
     void transactionUnspentByIndex() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, 0);
 
@@ -51,7 +51,7 @@ class UTXODatabaseTest {
 
     @Test
     void transactionUnspentByInput() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, 0);
 
@@ -63,7 +63,7 @@ class UTXODatabaseTest {
 
     @Test
     void transactionUnspentOnlyFirst() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 
@@ -72,7 +72,7 @@ class UTXODatabaseTest {
 
     @Test
     void markUnspentSpent() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 
@@ -83,7 +83,7 @@ class UTXODatabaseTest {
 
     @Test
     void findUnspentOutputInfo() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 
@@ -94,7 +94,7 @@ class UTXODatabaseTest {
 
     @Test
     void findUnspentOutputInfoByInput() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction();
+        Transaction transaction = Simulation.randomTransaction(5, 5);
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 

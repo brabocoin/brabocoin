@@ -13,8 +13,8 @@ option java_outer_classname = "NodeServiceProto";
 service Node {
     rpc Handshake(google.protobuf.Empty) returns (HandshakeResponse);
 
-    rpc SendBlock(Hash) returns (google.protobuf.Empty);
-    rpc SendTransaction(Hash) returns (google.protobuf.Empty);
+    rpc AnnounceBlock(Hash) returns (google.protobuf.Empty);
+    rpc AnnounceTransaction(Hash) returns (google.protobuf.Empty);
     rpc GetBlocks(stream Hash) returns (stream Block);
     rpc GetTransactions(stream Hash) returns (stream Transaction);
     rpc SeekTransactionPool(google.protobuf.Empty) returns (stream Hash);
