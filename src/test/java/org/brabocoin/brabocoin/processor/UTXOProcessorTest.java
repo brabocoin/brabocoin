@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -29,14 +29,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class UTXOProcessorTest {
 
-    private UTXODatabase database;
+    private ChainUTXODatabase database;
     private Consensus consensus;
     private UTXOProcessor processor;
 
     @BeforeEach
     void setUp() throws DatabaseException {
         consensus = new Consensus();
-        database = new UTXODatabase(new HashMapDB(), consensus);
+        database = new ChainUTXODatabase(new HashMapDB(), consensus);
         processor = new UTXOProcessor(database);
     }
 

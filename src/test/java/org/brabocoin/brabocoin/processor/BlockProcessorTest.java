@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -57,7 +57,7 @@ class BlockProcessorTest {
     void setUp() throws DatabaseException {
         validator = new BlockValidator();
         consensus = new Consensus();
-        utxoProcessor = new UTXOProcessor(new UTXODatabase(new HashMapDB(), consensus));
+        utxoProcessor = new UTXOProcessor(new ChainUTXODatabase(new HashMapDB(), consensus));
         blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         blockProcessor = new BlockProcessor(blockchain, utxoProcessor, consensus, validator);
     }

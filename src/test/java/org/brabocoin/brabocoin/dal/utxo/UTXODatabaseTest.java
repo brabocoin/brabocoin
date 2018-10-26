@@ -10,32 +10,28 @@ import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * UTXO Database tests.
+ * Test {@link org.brabocoin.brabocoin.dal.UTXODatabase}.
  */
-class UTXODatabaseTest {
+public class UTXODatabaseTest {
 
-    private Consensus consensus;
-    private UTXODatabase database;
-    private KeyValueStore storage;
+    protected UTXODatabase database;
+    protected KeyValueStore storage;
 
     @BeforeEach
-    void setUp() throws DatabaseException {
+    void setUp() {
         storage = new HashMapDB();
-        consensus = new Consensus();
-        database = new UTXODatabase(storage, consensus);
+        database = new UTXODatabase(storage);
     }
 
     @Test
@@ -112,20 +108,5 @@ class UTXODatabaseTest {
     @Test
     void nonExistingUnspentOutputInfo() throws DatabaseException {
         assertNull(database.findUnspentOutputInfo(Simulation.randomHash(), 0));
-    }
-
-    @Test
-    void genesisProcessedBlockHash() throws DatabaseException {
-        assertEquals(consensus.getGenesisBlock().computeHash(), database.getLastProcessedBlockHash());
-    }
-
-    @Test
-    void lastProcessedBlockHash() throws DatabaseException {
-        Hash hash = Simulation.randomHash();
-
-        database.setLastProcessedBlockHash(hash);
-        Hash storedHash = database.getLastProcessedBlockHash();
-
-        assertEquals(hash, storedHash);
     }
 }

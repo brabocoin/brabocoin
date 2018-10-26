@@ -2,7 +2,7 @@ package org.brabocoin.brabocoin.model.dal;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
@@ -11,7 +11,7 @@ import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 /**
  * Data class holding unspent output information that is stored in the blocks database.
  *
- * @see UTXODatabase
+ * @see ChainUTXODatabase
  */
 @ProtoClass(BrabocoinStorageProtos.UnspentOutputInfo.class)
 public class UnspentOutputInfo implements ProtoModel<UnspentOutputInfo> {

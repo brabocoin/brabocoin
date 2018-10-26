@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -163,4 +165,34 @@ public class TransactionPool {
         return orphanTransactions.get(transactionHash);
     }
 
+    /**
+     * Remove all orphans descending from the given parent when the orphan is valid according to
+     * {@code orphanValidator}.
+     *
+     * @param parentHash
+     *     The hash of the parent.
+     * @param orphanValidator
+     *     Function validating whether the orphan can be removed.
+     * @return The list of removed orphans.
+     */
+    public @NotNull List<Transaction> removeValidOrphansFromParent(@NotNull Hash parentHash,
+                                                                   @NotNull Function<Transaction,
+                                                                       Boolean> orphanValidator) {
+        return orphanTransactions.removeMatchingDependants(parentHash, orphanValidator);
+    }
+
+    /**
+     * Checks whether the transaction is known to the transaction pool, either as validated or
+     * orphan transaction.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     * @return Whether the transaction is known.
+     */
+    public boolean isHashKnown(@NotNull Hash hash) {
+        LOGGER.fine("Checking if hash is known.");
+        return independentTransactions.containsKey(hash)
+            || dependentTransactions.containsKey(hash)
+            || orphanTransactions.containsKey(hash);
+    }
 }
