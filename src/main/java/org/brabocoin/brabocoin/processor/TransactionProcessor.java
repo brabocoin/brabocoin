@@ -1,10 +1,11 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Magic;
-import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 
 /**
  * Processes transactions to and from the {@link org.brabocoin.brabocoin.dal.TransactionPool}.
@@ -77,44 +80,50 @@ public class TransactionProcessor {
      */
     public ProcessedTransactionResult processNewTransaction(@NotNull Transaction transaction) throws DatabaseException {
         LOGGER.fine("Processing new transaction.");
-        ProcessedTransactionStatus status = processSingleTransaction(transaction);
+        ProcessedTransactionStatus status = processTransaction(transaction);
+        List<Transaction> orphans = addValidOrphans(transaction.computeHash());
 
-        // Check if any orphan transactions can be added as well
-        List<Transaction> removed = removeValidOrphans(transaction.computeHash());
-        LOGGER.info(() -> MessageFormat.format("{0} orphans can be added as well (as dependent).", removed.size()));
 
-        // Set removed orphan as dependent and set outputs as unspent
-        for (Transaction orphan : removed) {
-            ProcessedTransactionStatus orphanStatus = processSingleTransaction(orphan);
-            assert orphanStatus == ProcessedTransactionStatus.DEPENDENT;
-            // TODO: what if assert fails?
-        }
-
-        return new ProcessedTransactionResult(status, removed);
+        return new ProcessedTransactionResult(status, orphans);
     }
 
-    @NotNull
-    private List<Transaction> removeValidOrphans(@NotNull Hash hash) {
+    private @NotNull List<Transaction> addValidOrphans(@NotNull Hash hash) {
+        // Check if any orphan transactions can be added as well
+        List<Transaction> removed = removeValidOrphans(hash);
+        LOGGER.info(() -> MessageFormat.format("{0} orphans are added to the transaction pool.", removed.size()));
+
+        return removed;
+    }
+
+    private @NotNull List<Transaction> removeValidOrphans(@NotNull Hash hash) {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
-                return checkInputs(t) != ProcessedTransactionStatus.ORPHAN;
+                if (checkInputs(t) != ProcessedTransactionStatus.ORPHAN) {
+                    ProcessedTransactionStatus status =  processTransaction(t);
+                    return status == ProcessedTransactionStatus.DEPENDENT || status == ProcessedTransactionStatus.INDEPENDENT;
+                }
             }
-            catch (DatabaseException e) {
-                return false;
+            catch (DatabaseException ignored) {
             }
+
+            return false;
         });
     }
 
-    private ProcessedTransactionStatus processSingleTransaction(@NotNull Transaction transaction) throws DatabaseException {
+    private ProcessedTransactionStatus processTransaction(@NotNull Transaction transaction) throws DatabaseException {
         if (!transactionValidator.checkTransactionValid(transaction)) {
             LOGGER.info("New transaction is invalid.");
             return ProcessedTransactionStatus.INVALID;
         }
 
+        return processTransactionWithoutValidation(transaction);
+    }
+
+    private ProcessedTransactionStatus processTransactionWithoutValidation(@NotNull Transaction transaction) throws DatabaseException {
         Hash hash = transaction.computeHash();
 
         // Check if already stored
-        if (transactionPool.isHashKnown(hash)) {
+        if (transactionPool.hasValidTransaction(hash)) {
             LOGGER.info("New transaction is already present in transaction pool.");
             return ProcessedTransactionStatus.ALREADY_STORED;
         }
@@ -124,6 +133,12 @@ public class TransactionProcessor {
 
         // If orphan, add to orphan set and do nothing
         if (status == ProcessedTransactionStatus.ORPHAN) {
+            // Check if already stored as orphan
+            if (transactionPool.hasOrphan(hash)) {
+                LOGGER.info("New transaction is already present as orphan.");
+                return ProcessedTransactionStatus.ALREADY_STORED;
+            }
+
             transactionPool.addOrphanTransaction(transaction);
             LOGGER.info("New transaction is added as orphan.");
             return ProcessedTransactionStatus.ORPHAN;
@@ -165,5 +180,90 @@ public class TransactionProcessor {
 
         LOGGER.finest("Transaction is independent.");
         return ProcessedTransactionStatus.INDEPENDENT;
+    }
+
+    /**
+     * Update the transaction pool on the event a new block is connected to the main chain.
+     * <p>
+     * All transactions in the connected block are now in the blockchain and are removed from the
+     * transaction pool. By this change, dependent transactions might be promoted to independent
+     * transactions.
+     *
+     * @param block
+     *     The block that is connected to the main chain.
+     * @throws DatabaseException
+     *     When the UTXO database is not available.
+     */
+    public void processTopBlockConnected(@NotNull Block block) throws DatabaseException {
+        LOGGER.fine("Processing top block connected.");
+
+        for (Transaction transaction : block.getTransactions()) {
+            Hash hash = transaction.computeHash();
+
+            // Remove from pool
+            LOGGER.finest(() -> MessageFormat.format("Removing transaction {0} from transaction pool.", toHexString(hash.getValue())));
+            transactionPool.removeValidatedTransaction(hash);
+
+            // Set UTXO from pool as spent
+            LOGGER.finest("Set outputs of transaction as spent in UTXO from pool.");
+            for (int i = 0; i < transaction.getOutputs().size(); i++) {
+                utxoFromPool.setOutputSpent(hash, i);
+            }
+        }
+
+        // Promote dependent transactions to independent when possible
+        // Do this in a separate loop to ensure UTXO from pool is in sync with the UTXO from chain
+        // Otherwise independent transactions might not be recognized at first
+        LOGGER.fine("Promoting dependent transactions to dependent when possible.");
+        for (Transaction transaction : block.getTransactions()) {
+            Hash hash = transaction.computeHash();
+            transactionPool.promoteDependentToIndependentFromParent(hash, t -> {
+                try {
+                    return checkInputs(t) == ProcessedTransactionStatus.INDEPENDENT;
+                }
+                catch (DatabaseException ignored) {
+                }
+
+                return false;
+            });
+        }
+    }
+
+    /**
+     * Update the transaction pool on the event the top block is disconnected from the main chain.
+     * <p>
+     * All transactions in the disconnected block are added back to the transaction pool. By this
+     * change, some independent transactions may become dependent, and some orphan transactions
+     * (that were double-spending) may become valid.
+     * <p>
+     * Note that all transactions in the block are already validated.
+     *
+     * @param block
+     *     The block that is disconnected from the main chain.
+     * @throws DatabaseException
+     *     When the UTXO database is not available.
+     */
+    public void processTopBlockDisconnected(@NotNull Block block) throws DatabaseException {
+        LOGGER.fine("Processing top block disconnected.");
+
+        for (Transaction transaction : block.getTransactions()) {
+            // Add transactions to pool and update pool UTXO set
+            ProcessedTransactionStatus status = processTransactionWithoutValidation(transaction);
+            LOGGER.finest(() -> MessageFormat.format(
+                "Added transaction {0} to transaction pool with status {1}.",
+                toHexString(transaction.computeHash().getValue()),
+                status
+            ));
+
+            // Some previously independent transactions may depend the processed transaction
+            // making it dependent
+            transactionPool.demoteIndependentToDependent(transaction);
+
+            // Some orphan transactions could be double-spending outputs that are used by the
+            // transactions in the disconnected block. These orphan transactions now become valid.
+            for (Input input : transaction.getInputs()) {
+                addValidOrphans(input.getReferencedTransaction());
+            }
+        }
     }
 }

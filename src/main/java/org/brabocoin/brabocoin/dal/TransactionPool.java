@@ -4,13 +4,14 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.util.collection.MultiDependenceIndex;
 import org.brabocoin.brabocoin.util.collection.RecursiveMultiDependenceIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -40,9 +41,10 @@ public class TransactionPool {
     private final static Logger LOGGER = Logger.getLogger(TransactionPool.class.getName());
 
     /**
-     * Index of independent transactions, indexed by the transaction hash.
+     * Index of independent transactions, indexed by the transaction hash and the transactions hash
+     * of all inputs.
      */
-    private final Map<Hash, Transaction> independentTransactions;
+    private final MultiDependenceIndex<Hash, Transaction, Hash> independentTransactions;
 
     /**
      * Index of dependent transactions, indexed by their hash and the transaction hash of all
@@ -65,10 +67,14 @@ public class TransactionPool {
     public TransactionPool(@NotNull BraboConfig config) {
         LOGGER.info("Initializing transaction pool.");
 
-        this.independentTransactions = new HashMap<>();
+        this.independentTransactions = new MultiDependenceIndex<>(Transaction::computeHash,
+            transaction -> transaction.getInputs()
+                .stream()
+                .map(Input::getReferencedTransaction)
+                .collect(Collectors.toSet())
+        );
 
-        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(
-            Transaction::computeHash,
+        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
             transaction -> transaction.getInputs()
                 .stream()
                 .map(Input::getReferencedTransaction)
@@ -76,8 +82,7 @@ public class TransactionPool {
             Transaction::computeHash
         );
 
-        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(
-            Transaction::computeHash,
+        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
             transaction -> transaction.getInputs()
                 .stream()
                 .map(Input::getReferencedTransaction)
@@ -93,13 +98,16 @@ public class TransactionPool {
      * recorded in the blockchain.
      * <p>
      * Note: the supplied transaction must be validated before being added to the transaction pool.
+     * When the transaction was previously stored as orphan transaction, it is removed from the
+     * orphan set.
      *
      * @param transaction
      *     The validated transaction to be stored as independent in the transaction pool.
      */
     public void addIndependentTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding independent transaction.");
-        independentTransactions.put(transaction.computeHash(), transaction);
+        orphanTransactions.removeValue(transaction);
+        independentTransactions.put(transaction);
     }
 
     /**
@@ -108,12 +116,15 @@ public class TransactionPool {
      * An dependent transaction has some dependencies on other transactions in the pool.
      * <p>
      * Note: the supplied transaction must be validated before being added to the transaction pool.
+     * When the transaction was previously stored as orphan transaction, it is removed from the
+     * orphan set.
      *
      * @param transaction
      *     The validated transaction to be stored as dependent in the transaction pool.
      */
     public void addDependentTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding dependent transaction.");
+        orphanTransactions.removeValue(transaction);
         dependentTransactions.put(transaction);
     }
 
@@ -153,6 +164,20 @@ public class TransactionPool {
     }
 
     /**
+     * Remove the transaction from the transaction pool.
+     * <p>
+     * Only transactions from the independent and dependent set are searched.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     */
+    public void removeValidatedTransaction(Hash hash) {
+        LOGGER.fine("Removing validated transaction from the transaction pool.");
+        independentTransactions.removeKey(hash);
+        dependentTransactions.removeKey(hash);
+    }
+
+    /**
      * Find an orphan transaction.
      *
      * @param transactionHash
@@ -182,17 +207,76 @@ public class TransactionPool {
     }
 
     /**
-     * Checks whether the transaction is known to the transaction pool, either as validated or
-     * orphan transaction.
+     * Promote all dependent transactions descending from the given parent when the dependent
+     * transaction recursively match {@code matcher}.
+     * <p>
+     * Matching transactions are removed from the dependent set and added to the independent set.
+     *
+     * @param parentHash
+     *     The hash of the parent.
+     * @param matcher
+     *     Function indicating whether the dependent transaction can be removed.
+     */
+    public void promoteDependentToIndependentFromParent(@NotNull Hash parentHash,
+                                                        @NotNull Function<Transaction, Boolean> matcher) {
+        List<Transaction> transactions = dependentTransactions.removeMatchingDependants(parentHash,
+            t -> {
+                if (matcher.apply(t)) {
+                    independentTransactions.put(t);
+                    return true;
+                }
+                return false;
+            }
+        );
+
+        LOGGER.fine(() -> MessageFormat.format(
+            "Promoted {0} transactions to independent.",
+            transactions.size()
+        ));
+    }
+
+    /**
+     * Demote all independent transactions that depend on {@code dependency} to dependent.
+     *
+     * @param dependency
+     *     The dependency.
+     */
+    public void demoteIndependentToDependent(@NotNull Transaction dependency) {
+        Hash hash = dependency.computeHash();
+        Collection<Transaction> transactions = independentTransactions.getFromDependency(hash);
+
+        for (Transaction transaction : transactions) {
+            independentTransactions.removeValue(transaction);
+            dependentTransactions.put(transaction);
+        }
+
+        LOGGER.fine(() -> MessageFormat.format(
+            "Demoted {0} transactions from dependent to independent.",
+            transactions.size()
+        ));
+    }
+
+    /**
+     * Checks whether the transaction is known to the transaction pool.
      *
      * @param hash
      *     The hash of the transaction.
-     * @return Whether the transaction is known.
+     * @return Whether the transaction is known as validated.
      */
-    public boolean isHashKnown(@NotNull Hash hash) {
-        LOGGER.fine("Checking if hash is known.");
-        return independentTransactions.containsKey(hash)
-            || dependentTransactions.containsKey(hash)
-            || orphanTransactions.containsKey(hash);
+    public boolean hasValidTransaction(@NotNull Hash hash) {
+        LOGGER.fine("Checking if valid transaction is known.");
+        return independentTransactions.containsKey(hash) || dependentTransactions.containsKey(hash);
+    }
+
+    /**
+     * Checks whether the transaction is known as orphan.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     * @return Whether the transaction is known as orphan.
+     */
+    public boolean hasOrphan(@NotNull Hash hash) {
+        LOGGER.fine("Checking if orphan is known.");
+        return orphanTransactions.containsKey(hash);
     }
 }

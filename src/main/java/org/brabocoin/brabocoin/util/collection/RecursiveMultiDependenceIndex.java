@@ -1,14 +1,9 @@
 package org.brabocoin.brabocoin.util.collection;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.function.Function;
 
@@ -26,27 +21,7 @@ import java.util.function.Function;
  * @param <D>
  *     The dependency.
  */
-public class RecursiveMultiDependenceIndex <K, V, D> {
-
-    /**
-     * Primary key index.
-     */
-    private final Map<K, V> primaryIndex;
-
-    /**
-     * Dependency index.
-     */
-    private final Multimap<D, V> dependenceIndex;
-
-    /**
-     * Calculates the key from the value.
-     */
-    private final Function<V, K> keySupplier;
-
-    /**
-     * Retrieves the dependencies for a given value.
-     */
-    private final Function<V, Iterable<D>> multiDependency;
+public class RecursiveMultiDependenceIndex <K, V, D> extends MultiDependenceIndex<K, V, D> {
 
     /**
      * Links the value to a dependency object, to traverse the dependencies within the index
@@ -68,91 +43,8 @@ public class RecursiveMultiDependenceIndex <K, V, D> {
     public RecursiveMultiDependenceIndex(Function<V, K> keySupplier,
                                          Function<V, Iterable<D>> multiDependency,
                                          Function<V, D> recursiveLink) {
-        this.primaryIndex = new HashMap<>();
-        this.dependenceIndex = HashMultimap.create();
-        this.keySupplier = keySupplier;
-        this.multiDependency = multiDependency;
+        super(keySupplier, multiDependency);
         this.recursiveLink = recursiveLink;
-    }
-
-    /**
-     * Stores a value in the index.
-     * <p>
-     * Keys must be If the key corresponding to the value is already present in the index, the
-     * new value is not stored instead. The original data is maintained.
-     *
-     * @param value
-     *     The value to store.
-     * @throws IllegalArgumentException
-     *     When the key corresponding to the value already exists in the index.
-     */
-    public void put(V value) {
-        K key = keySupplier.apply(value);
-        if (primaryIndex.containsKey(key)) {
-            throw new IllegalArgumentException(
-                "The computed key of the supplied value already exists in the index.");
-        }
-
-        primaryIndex.put(keySupplier.apply(value), value);
-
-        for (D dependency : multiDependency.apply(value)) {
-            dependenceIndex.put(dependency, value);
-        }
-    }
-
-    /**
-     * Checks whether the key is contained in the index.
-     *
-     * @param key
-     *     The key.
-     * @return Whether the key is contained in the index.
-     */
-    public boolean containsKey(K key) {
-        return primaryIndex.containsKey(key);
-    }
-
-    /**
-     * Retrieves the value from the given key.
-     *
-     * @param key
-     *     The key.
-     * @return The value corresponding to the key in the index, or {@code null} if the key is not
-     * present.
-     */
-    public V get(K key) {
-        return primaryIndex.get(key);
-    }
-
-    /**
-     * Removes the value from the index.
-     *
-     * @param value
-     *     The value
-     * @return The removed value, or {@code null} if the value could not be found.
-     */
-    public V removeValue(V value) {
-        return removeKey(keySupplier.apply(value));
-    }
-
-    /**
-     * Removes the value for the given key from the index.
-     *
-     * @param key
-     *     The key.
-     * @return The removed value, or {@code null} if the key could not be found.
-     */
-    public V removeKey(K key) {
-        V value = primaryIndex.remove(key);
-
-        if (value == null) {
-            return null;
-        }
-
-        for (D dependency : multiDependency.apply(value)) {
-            dependenceIndex.remove(dependency, value);
-        }
-
-        return value;
     }
 
     /**
