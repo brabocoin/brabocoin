@@ -1,12 +1,15 @@
 package org.brabocoin.brabocoin.processor;
 
+import org.brabocoin.brabocoin.Magic;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
@@ -319,5 +322,92 @@ class TransactionProcessorTest {
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
             assertFalse(utxoFromPool.isUnspent(hashB, i));
         }
+    }
+
+    @Test
+    void processTopBlockConnected() throws DatabaseException {
+        Block block = Simulation.randomBlock(Simulation.randomHash(), 1, 5, 5, 5);
+
+        // Add transactions to pool as independent forcefully
+        for (Transaction transaction : block.getTransactions()) {
+            pool.addIndependentTransaction(transaction);
+            utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+
+            // These transactions also exist in the blockchain now
+            utxoFromChain.setOutputsUnspent(transaction, block.getBlockHeight());
+        }
+
+        Transaction tFromBlock = block.getTransactions().get(0);
+
+        // Add a dependent transaction that will be promoted
+        Transaction transactionA = new Transaction(
+            Collections.singletonList(new Input(new Signature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash hashA = transactionA.computeHash();
+        pool.addDependentTransaction(transactionA);
+        utxoFromPool.setOutputsUnspent(transactionA, Magic.TRANSACTION_POOL_HEIGHT);
+
+        processor.processTopBlockConnected(block);
+
+        for (Transaction transaction : block.getTransactions()) {
+            Hash hash = transaction.computeHash();
+            assertFalse(pool.hasValidTransaction(hash));
+
+            List<Output> outputs = transaction.getOutputs();
+            for (int i = 0; i < outputs.size(); i++) {
+                assertFalse(utxoFromPool.isUnspent(hash, i));
+            }
+        }
+
+        // Assert promoted dependent transaction
+        assertTrue(pool.isIndependent(hashA));
+    }
+
+    @Test
+    void processTopBlockDisconnected() throws DatabaseException {
+        Block block = Simulation.randomBlock(Simulation.randomHash(), 2, 5, 5, 5);
+
+        // Add chain UTXO for the referenced transaction inputs
+        for (Transaction transaction : block.getTransactions()) {
+            for (Input input : transaction.getInputs()) {
+                utxoFromChain.addUnspentOutputInfo(
+                    input.getReferencedTransaction(),
+                    input.getReferencedOutputIndex(),
+                    new UnspentOutputInfo(false, 1, 10, Simulation.randomHash())
+                );
+            }
+        }
+
+        Transaction tFromBlock = block.getTransactions().get(0);
+        Input iFromBlock = tFromBlock.getInputs().get(0);
+
+        // Add independent transaction that will now become dependent
+        Transaction independent = new Transaction(
+            Collections.singletonList(new Input(new Signature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash independentHash = independent.computeHash();
+        pool.addIndependentTransaction(independent);
+        utxoFromPool.setOutputsUnspent(independent, Magic.TRANSACTION_POOL_HEIGHT);
+
+        // Add orphan transaction that will now become valid
+        Transaction orphan = new Transaction(
+            Collections.singletonList(new Input(new Signature(), iFromBlock.getReferencedTransaction(), iFromBlock.getReferencedOutputIndex())),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash orphanHash = orphan.computeHash();
+        pool.addOrphanTransaction(orphan);
+
+        processor.processTopBlockDisconnected(block);
+
+        for (Transaction transaction : block.getTransactions()) {
+            Hash hash = transaction.computeHash();
+            assertTrue(pool.hasValidTransaction(hash));
+        }
+
+        // Check independent transaction is demoted
+        assertTrue(pool.isDependent(independentHash));
+        assertTrue(pool.isIndependent(orphanHash));
     }
 }
