@@ -242,6 +242,37 @@ class TransactionProcessorTest {
     }
 
     @Test
+    void processNewTransactionAddChainedOrphans() throws DatabaseException {
+        // Construct the chain UTXO such that the transaction becomes independent
+        Transaction transactionA = createIndependentTransaction();
+        Hash hash = transactionA.computeHash();
+
+        // Add orphans such that C -> B -> A
+        Transaction transactionB = new Transaction(
+            Collections.singletonList(new Input(new Signature(), hash, 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash hashB = transactionB.computeHash();
+        processor.processNewTransaction(transactionB);
+
+        Transaction transactionC = new Transaction(
+            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash hashC = transactionC.computeHash();
+        ProcessedTransactionResult resultC = processor.processNewTransaction(transactionC);
+
+        assertEquals(ProcessedTransactionStatus.ORPHAN, resultC.getStatus());
+
+        ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
+        assertEquals(2, result.getAddedOrphans().size());
+
+        for (int i = 0; i < transactionC.getOutputs().size(); i++) {
+            assertTrue(utxoFromPool.isUnspent(hashC, i));
+        }
+    }
+
+    @Test
     void processNewTransactionIndependentAddOrphanInvalid() throws DatabaseException {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transactionA = createIndependentTransaction();
