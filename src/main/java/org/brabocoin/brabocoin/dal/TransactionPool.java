@@ -241,9 +241,8 @@ public class TransactionPool {
      * @param dependency
      *     The dependency.
      */
-    public void demoteIndependentToDependent(@NotNull Transaction dependency) {
-        Hash hash = dependency.computeHash();
-        Collection<Transaction> transactions = independentTransactions.getFromDependency(hash);
+    public void demoteIndependentToDependent(@NotNull Hash dependency) {
+        Collection<Transaction> transactions = independentTransactions.getFromDependency(dependency);
 
         for (Transaction transaction : transactions) {
             independentTransactions.removeValue(transaction);
@@ -265,7 +264,7 @@ public class TransactionPool {
      */
     public boolean hasValidTransaction(@NotNull Hash hash) {
         LOGGER.fine("Checking if valid transaction is known.");
-        return independentTransactions.containsKey(hash) || dependentTransactions.containsKey(hash);
+        return isIndependent(hash) || isDependent(hash);
     }
 
     /**
@@ -275,8 +274,30 @@ public class TransactionPool {
      *     The hash of the transaction.
      * @return Whether the transaction is known as orphan.
      */
-    public boolean hasOrphan(@NotNull Hash hash) {
+    public boolean isOrphan(@NotNull Hash hash) {
         LOGGER.fine("Checking if orphan is known.");
         return orphanTransactions.containsKey(hash);
+    }
+
+    /**
+     * Checks whether the transaction is known as dependent.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     * @return Whether the transaction is known as dependent.
+     */
+    public boolean isDependent(@NotNull Hash hash) {
+        return dependentTransactions.containsKey(hash);
+    }
+
+    /**
+     * Checks whether the transaction is known as independent.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     * @return Whether the transaction is known as independent.
+     */
+    public boolean isIndependent(@NotNull Hash hash) {
+        return independentTransactions.containsKey(hash);
     }
 }

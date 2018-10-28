@@ -134,7 +134,7 @@ public class TransactionProcessor {
         // If orphan, add to orphan set and do nothing
         if (status == ProcessedTransactionStatus.ORPHAN) {
             // Check if already stored as orphan
-            if (transactionPool.hasOrphan(hash)) {
+            if (transactionPool.isOrphan(hash)) {
                 LOGGER.info("New transaction is already present as orphan.");
                 return ProcessedTransactionStatus.ALREADY_STORED;
             }
@@ -257,7 +257,7 @@ public class TransactionProcessor {
 
             // Some previously independent transactions may depend the processed transaction
             // making it dependent
-            transactionPool.demoteIndependentToDependent(transaction);
+            transactionPool.demoteIndependentToDependent(transaction.computeHash());
 
             // Some orphan transactions could be double-spending outputs that are used by the
             // transactions in the disconnected block. These orphan transactions now become valid.
