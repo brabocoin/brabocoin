@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -26,7 +26,7 @@ public class UTXOProcessor {
     /**
      * UTXO database.
      */
-    private final @NotNull UTXODatabase database;
+    private final @NotNull ChainUTXODatabase database;
 
     /**
      * Creates a new UTXO processor for the given UTXO database.
@@ -34,7 +34,7 @@ public class UTXOProcessor {
      * @param database
      *     THhe UTXO database.
      */
-    public UTXOProcessor(@NotNull UTXODatabase database) {
+    public UTXOProcessor(@NotNull ChainUTXODatabase database) {
         this.database = database;
     }
 
