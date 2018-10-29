@@ -13,6 +13,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -364,5 +365,17 @@ public class TransactionPool {
      */
     public boolean isIndependent(@NotNull Hash hash) {
         return independentTransactions.containsKey(hash);
+    }
+
+    /**
+     * Get all validated transaction hashes.
+     *
+     * @return Set of all validated transaction hashes.
+     */
+    public Set<Hash> getValidatedTransactionHashes() {
+        Set<Hash> result = dependentTransactions.keySet();
+        result.addAll(independentTransactions.keySet());
+
+        return result;
     }
 }

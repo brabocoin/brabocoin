@@ -477,6 +477,9 @@ public class NodeEnvironment {
         }
     }
 
+    public void seekTransactionPoolRequest() {
+        // TODO: Implement, which peer to use? for logic, see seekBlockchainRequest.
+    }
 
     //================================================================================
     // Getters
@@ -584,8 +587,8 @@ public class NodeEnvironment {
      *
      * @return Transaction hash iterator.
      */
-    public Iterator<Hash> getTransactionIterator() {
+    public Set<Hash> getTransactionHashSet() {
         LOGGER.fine("Transaction iterator creation requested.");
-        return null;
+        return transactionPool.getValidatedTransactionHashes();
     }
 }

@@ -21,8 +21,8 @@ import org.brabocoin.brabocoin.util.ProtoConverter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -249,10 +249,8 @@ public class Node {
         @Override
         public void seekTransactionPool(Empty request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
             logIncomingCall("seekTransactionPool", request);
-            Iterator<Hash> transactionIterator = environment.getTransactionIterator();
-            for (Iterator<Hash> it = transactionIterator; it.hasNext(); ) {
-                Hash h = it.next();
-
+            Set<Hash> transactionHashSet = environment.getTransactionHashSet();
+            for (Hash h : transactionHashSet) {
                 BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(h, BrabocoinProtos.Hash.class);
                 logOutgoingResponse(protoHash);
                 responseObserver.onNext(protoHash);
