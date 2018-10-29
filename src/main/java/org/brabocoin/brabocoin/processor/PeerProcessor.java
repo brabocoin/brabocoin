@@ -1,21 +1,24 @@
 package org.brabocoin.brabocoin.processor;
 
-import com.google.protobuf.Empty;
 import io.grpc.StatusRuntimeException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
+import org.brabocoin.brabocoin.model.messages.HandshakeRequest;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 
+import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Manages all tasks related to a set of peers.
@@ -61,13 +64,15 @@ public class PeerProcessor {
     /**
      * Tries to handshake with bootstrapping peers until the desired number of peers are found.
      * This constant is defined in the config.
+     *
+     * @param servicePort The service port of the local node.
      */
-    public void bootstrap() {
+    public void bootstrap(int servicePort) {
         LOGGER.info("Bootstrapping initiated.");
         // Populate bootstrap peers
         instantiateBootstrapPeers();
         // A list of peers for which we need to do a handshake
-        List<Peer> handshakePeers = copyPeers();
+        List<Peer> handshakePeers = copyPeersList();
 
         if (handshakePeers.size() <= 0) {
             LOGGER.severe("No bootstrapping peers found.");
@@ -83,7 +88,11 @@ public class PeerProcessor {
                 // Perform a handshake with the peer
                 BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
                         .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                        .handshake(Empty.newBuilder().build());
+                        .handshake(
+                                ProtoConverter.toProto(
+                                        new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
+                                )
+                        );
                 HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
                 LOGGER.log(Level.FINEST, "Response acquired, got {0} peers.", response.getPeers().size());
 
@@ -98,7 +107,7 @@ public class PeerProcessor {
                         final Peer discoveredPeer = new Peer(peerSocket);
                         LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
                         if (!peers.contains(discoveredPeer)) {
-                                // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
+                            // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
                             handshakePeers.add(discoveredPeer);
                         }
                     } catch (MalformedSocketException e) {
@@ -122,8 +131,38 @@ public class PeerProcessor {
      *
      * @return List of peers.
      */
-    private List<Peer> copyPeers() {
+    public List<Peer> copyPeersList() {
         LOGGER.fine("Creating a list copy of the set of peers.");
         return new ArrayList<>(peers);
+    }
+
+    /**
+     * Get a copy of the set of peers.
+     *
+     * @return Set of peers.
+     */
+    public Set<Peer> copyPeers() {
+        LOGGER.fine("Creating a list copy of the set of peers.");
+        return new HashSet<>(peers);
+    }
+
+    /**
+     * Get all peers matching this client address
+     *
+     * @param address The address to match.
+     * @return The list of peers matching the address.
+     */
+    public List<Peer> findClientPeers(InetAddress address) {
+        return peers.stream().filter(p -> p.getAddress().equals(address))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Add the peer to the set of peers.
+     *
+     * @param peer The peer to add.
+     */
+    public void addPeer(Peer peer) {
+        peers.add(peer);
     }
 }

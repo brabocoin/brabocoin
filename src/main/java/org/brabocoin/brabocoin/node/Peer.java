@@ -203,7 +203,16 @@ public class Peer {
         if (getClass() != obj.getClass())
             return false;
         final Peer other = (Peer) obj;
-        return socket.getHostString().equals(other.socket.getHostString()) &&
+        return socket.getAddress().equals(other.socket.getAddress()) &&
                 socket.getPort() == other.socket.getPort();
+    }
+
+    /**
+     * Get the address of this peer.
+     *
+     * @return The peer address.
+     */
+    public InetAddress getAddress() {
+        return socket.getAddress();
     }
 }
