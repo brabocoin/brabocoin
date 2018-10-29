@@ -60,6 +60,8 @@ public class BlockProcessor {
      *     The blockchain.
      * @param utxoProcessor
      *     The UTXO processor.
+     * @param transactionProcessor
+     *     The transaction processor.
      * @param consensus
      *     The consensus on which to process blocks.
      * @param blockValidator

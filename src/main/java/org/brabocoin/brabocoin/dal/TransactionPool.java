@@ -79,6 +79,8 @@ public class TransactionPool {
      *
      * @param config
      *     The configuration.
+     * @param random
+     *     The random instance.
      */
     public TransactionPool(@NotNull BraboConfig config, @NotNull Random random) {
         LOGGER.info("Initializing transaction pool.");
