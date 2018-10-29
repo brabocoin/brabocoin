@@ -25,6 +25,8 @@ dependencies {
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
     compile('org.jetbrains:annotations:16.0.2')
+    compile('org.controlsfx:controlsfx:8.40.14')
+    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
 
     implementation('com.github.BAData:protobuf-converter:1.1.5')
 
