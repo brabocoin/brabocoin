@@ -6,7 +6,7 @@ import com.google.protobuf.util.JsonFormat;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.Block;
@@ -16,7 +16,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
+import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
@@ -41,23 +41,28 @@ public class NodeEnvironment {
      */
     private int servicePort;
     private Blockchain blockchain;
-    private UTXODatabase utxoDatabase;
-    private Map<Hash, Transaction> transactionPool = new HashMap<>();
+    private TransactionPool transactionPool;
 
     /**
      * Processors
      */
     private BlockProcessor blockProcessor;
-    private UTXOProcessor utxoProcessor;
     private PeerProcessor peerProcessor;
+    private TransactionProcessor transactionProcessor;
 
-    public NodeEnvironment(int servicePort, Blockchain blockchain, UTXODatabase utxoDatabase, BlockProcessor blockProcessor, UTXOProcessor utxoProcessor, PeerProcessor peerProcessor, BraboConfig config) {
+    public NodeEnvironment(int servicePort,
+                           Blockchain blockchain,
+                           BlockProcessor blockProcessor,
+                           PeerProcessor peerProcessor,
+                           TransactionPool transactionPool,
+                           TransactionProcessor transactionProcessor,
+                           BraboConfig config) {
         this.servicePort = servicePort;
         this.blockchain = blockchain;
-        this.utxoDatabase = utxoDatabase;
         this.blockProcessor = blockProcessor;
-        this.utxoProcessor = utxoProcessor;
         this.peerProcessor = peerProcessor;
+        this.transactionPool = transactionPool;
+        this.transactionProcessor = transactionProcessor;
         this.config = config;
     }
 
@@ -176,7 +181,8 @@ public class NodeEnvironment {
     public void onReceiveTransaction(@NotNull Hash transactionHash, List<Peer> peers) {
         LOGGER.fine("Transaction hash received.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
-        // TODO: Implement and log
+
+
     }
 
     /**
@@ -490,6 +496,6 @@ public class NodeEnvironment {
      */
     public Iterator<Hash> getTransactionIterator() {
         LOGGER.fine("Transaction iterator creation requested.");
-        return transactionPool.keySet().iterator();
+        return null;
     }
 }
