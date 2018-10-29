@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,7 +56,7 @@ class TransactionProcessorTest {
     @BeforeEach
     void setUp() throws DatabaseException {
         validator = new TransactionValidator();
-        pool = new TransactionPool(config);
+        pool = new TransactionPool(config, new Random());
         consensus = new Consensus();
         utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
         utxoFromPool = new UTXODatabase(new HashMapDB());

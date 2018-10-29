@@ -83,6 +83,7 @@ public class TransactionProcessor {
         ProcessedTransactionStatus status = processTransaction(transaction);
         List<Transaction> orphans = addValidOrphans(transaction.computeHash());
 
+        transactionPool.limitTransactionPoolSize();
 
         return new ProcessedTransactionResult(status, orphans);
     }
@@ -227,6 +228,8 @@ public class TransactionProcessor {
                 return false;
             });
         }
+
+        transactionPool.limitTransactionPoolSize();
     }
 
     /**
@@ -265,5 +268,7 @@ public class TransactionProcessor {
                 addValidOrphans(input.getReferencedTransaction());
             }
         }
+
+        transactionPool.limitTransactionPoolSize();
     }
 }

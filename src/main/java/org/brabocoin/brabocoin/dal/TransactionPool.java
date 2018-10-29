@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,6 +42,21 @@ public class TransactionPool {
     private final static Logger LOGGER = Logger.getLogger(TransactionPool.class.getName());
 
     /**
+     * The random instance.
+     */
+    private final Random random;
+
+    /**
+     * Maximum number of transactions in the orphan pool.
+     */
+    private final int maxOrphanPoolSize;
+
+    /**
+     * Maximum number of dependent and independent transactions (combined).
+     */
+    private final int maxPoolSize;
+
+    /**
      * Index of independent transactions, indexed by the transaction hash and the transactions hash
      * of all inputs.
      */
@@ -64,8 +80,12 @@ public class TransactionPool {
      * @param config
      *     The configuration.
      */
-    public TransactionPool(@NotNull BraboConfig config) {
+    public TransactionPool(@NotNull BraboConfig config, @NotNull Random random) {
         LOGGER.info("Initializing transaction pool.");
+
+        this.maxOrphanPoolSize = config.maxOrphanTransactions();
+        this.maxPoolSize = config.maxTransactionPoolSize();
+        this.random = random;
 
         this.independentTransactions = new MultiDependenceIndex<>(Transaction::computeHash,
             transaction -> transaction.getInputs()
@@ -108,6 +128,8 @@ public class TransactionPool {
         LOGGER.fine("Adding independent transaction.");
         orphanTransactions.removeValue(transaction);
         independentTransactions.put(transaction);
+
+        limitTransactionPoolSize();
     }
 
     /**
@@ -129,6 +151,28 @@ public class TransactionPool {
     }
 
     /**
+     * Limit the size of the transaction pool.
+     */
+    public void limitTransactionPoolSize() {
+        LOGGER.fine("Limiting the size of the transaction pool.");
+        // Remove dependent transactions first
+        while (dependentTransactions.size() + independentTransactions.size() > maxPoolSize) {
+            if (dependentTransactions.size() > 0) {
+                Hash remove = dependentTransactions.getKeyAt(random.nextInt(dependentTransactions.size()));
+                dependentTransactions.removeKey(remove);
+                List<Transaction> removed = dependentTransactions.removeMatchingDependants(remove, t -> true);
+
+                LOGGER.finest(() -> MessageFormat.format("Removed {0} dependent transactions from the pool.", removed.size() + 1));
+            }
+            else {
+                Hash remove = independentTransactions.getKeyAt(random.nextInt(independentTransactions.size()));
+                independentTransactions.removeKey(remove);
+                LOGGER.finest("Removed an independent transactions from the pool.");
+            }
+        }
+    }
+
+    /**
      * Add an orphan transaction to the transaction pool.
      * <p>
      * An orphan transaction has some dependencies on outputs that are not known to be unspent.
@@ -139,6 +183,13 @@ public class TransactionPool {
     public void addOrphanTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding orphan transaction.");
         orphanTransactions.put(transaction);
+
+        // Remove first orphan when size limit is reached
+        while (orphanTransactions.size() > maxOrphanPoolSize) {
+            Hash remove = orphanTransactions.getKeyAt(random.nextInt(orphanTransactions.size()));
+            orphanTransactions.removeKey(remove);
+            LOGGER.finest("Removed orphan transaction to limit max size of the pool.");
+        }
     }
 
     /**

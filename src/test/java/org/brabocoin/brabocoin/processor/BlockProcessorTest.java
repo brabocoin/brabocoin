@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,7 +70,7 @@ class BlockProcessorTest {
         utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
         utxoFromPool = new UTXODatabase(new HashMapDB());
         utxoProcessor = new UTXOProcessor(utxoFromChain);
-        transactionPool = new TransactionPool(config);
+        transactionPool = new TransactionPool(config, new Random());
         transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
         blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);

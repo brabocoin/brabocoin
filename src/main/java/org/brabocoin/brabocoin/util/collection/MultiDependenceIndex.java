@@ -3,8 +3,10 @@ package org.brabocoin.brabocoin.util.collection;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -28,6 +30,11 @@ public class MultiDependenceIndex <K, V, D> {
      * Primary key index.
      */
     protected final Map<K, V> primaryIndex;
+
+    /**
+     * Queue of keys maintaining the order in which keys were added to the index.
+     */
+    protected final List<K> keyList;
 
     /**
      * Dependency index.
@@ -56,6 +63,7 @@ public class MultiDependenceIndex <K, V, D> {
                                 Function<V, Iterable<D>> multiDependency) {
         this.primaryIndex = new HashMap<>();
         this.dependenceIndex = HashMultimap.create();
+        this.keyList = new ArrayList<>();
         this.keySupplier = keySupplier;
         this.multiDependency = multiDependency;
     }
@@ -78,7 +86,8 @@ public class MultiDependenceIndex <K, V, D> {
                 "The computed key of the supplied value already exists in the index.");
         }
 
-        primaryIndex.put(keySupplier.apply(value), value);
+        primaryIndex.put(key, value);
+        keyList.add(key);
 
         for (D dependency : multiDependency.apply(value)) {
             dependenceIndex.put(dependency, value);
@@ -145,10 +154,34 @@ public class MultiDependenceIndex <K, V, D> {
             return null;
         }
 
+        keyList.remove(key);
+
         for (D dependency : multiDependency.apply(value)) {
             dependenceIndex.remove(dependency, value);
         }
 
         return value;
+    }
+
+    /**
+     * The number of values stored in the index.
+     *
+     * @return The number of values stored in this index.
+     */
+    public int size() {
+        return primaryIndex.size();
+    }
+
+    /**
+     * Get the key at the given index.
+     *
+     * @param index
+     *     The index.
+     * @return The key at the given index.
+     * @throws IndexOutOfBoundsException
+     *     If no key at the given position exists.
+     */
+    public K getKeyAt(int index) {
+        return keyList.get(index);
     }
 }

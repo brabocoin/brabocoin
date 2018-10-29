@@ -39,16 +39,6 @@ public class ProcessedTransactionResult {
     }
 
     /**
-     * Create a new processed transaction result.
-     *
-     * @param status
-     *     The status of the newly added transaction.
-     */
-    public ProcessedTransactionResult(@NotNull ProcessedTransactionStatus status) {
-        this(status, Collections.emptyList());
-    }
-
-    /**
      * The status of the newly added transaction.
      *
      * @return The status of the newly added transaction.

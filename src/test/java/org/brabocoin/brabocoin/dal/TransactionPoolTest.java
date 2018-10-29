@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,7 +38,7 @@ class TransactionPoolTest {
 
     @BeforeEach
     void setUp() {
-        pool = new TransactionPool(config);
+        pool = new TransactionPool(config, new Random());
     }
 
     @Test
@@ -252,5 +254,165 @@ class TransactionPoolTest {
     @Test
     void hasOrphanNonexistent() {
         assertFalse(pool.isOrphan(Simulation.randomHash()));
+    }
+
+    @Test
+    void limitTransactionPoolSizeChildOnly() {
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public int maxTransactionPoolSize() {
+                return 2;
+            }
+        };
+
+        Random mockRandom = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return 1;  // Random enough
+            }
+        };
+
+        pool = new TransactionPool(newConfig, mockRandom);
+
+        Transaction transactionA = Simulation.randomTransaction(5, 5);
+        Hash hashA = transactionA.computeHash();
+
+        Transaction transactionB = Simulation.randomTransaction(5, 5);
+        Hash hashB = transactionB.computeHash();
+
+        Transaction transactionC = new Transaction(
+            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash hashC = transactionC.computeHash();
+
+        pool.addIndependentTransaction(transactionA);
+        pool.addDependentTransaction(transactionB);
+        pool.addDependentTransaction(transactionC);
+
+        pool.limitTransactionPoolSize();
+
+        // Assert the dependent transaction is removed first
+        assertFalse(pool.isDependent(hashC));
+        assertTrue(pool.isDependent(hashB));
+        assertTrue(pool.isIndependent(hashA));
+    }
+
+    @Test
+    void limitTransactionPoolSizeParentFirst() {
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public int maxTransactionPoolSize() {
+                return 1;
+            }
+        };
+
+        Random mockRandom = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return 0;  // Random enough
+            }
+        };
+
+        pool = new TransactionPool(newConfig, mockRandom);
+
+        Transaction transactionA = Simulation.randomTransaction(5, 5);
+        Hash hashA = transactionA.computeHash();
+
+        Transaction transactionB = Simulation.randomTransaction(5, 5);
+        Hash hashB = transactionB.computeHash();
+
+        Transaction transactionC = new Transaction(
+            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput())
+        );
+        Hash hashC = transactionC.computeHash();
+
+        pool.addIndependentTransaction(transactionA);
+        pool.addDependentTransaction(transactionB);
+        pool.addDependentTransaction(transactionC);
+
+        pool.limitTransactionPoolSize();
+
+        // Assert the dependent transaction is removed first
+        assertFalse(pool.isDependent(hashB));
+        assertFalse(pool.isDependent(hashC));
+        assertTrue(pool.isIndependent(hashA));
+    }
+
+    @Test
+    void limitTransactionPoolSizeIndependent() {
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public int maxTransactionPoolSize() {
+                return 1;
+            }
+        };
+
+        Random mockRandom = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return 0;  // Random enough
+            }
+        };
+
+        pool = new TransactionPool(newConfig, mockRandom);
+
+        Transaction transactionA = Simulation.randomTransaction(5, 5);
+        Hash hashA = transactionA.computeHash();
+
+        Transaction transactionB = Simulation.randomTransaction(5, 5);
+        Hash hashB = transactionB.computeHash();
+
+        Transaction transactionC = Simulation.randomTransaction(5, 5);
+        Hash hashC = transactionC.computeHash();
+
+        pool.addIndependentTransaction(transactionA);
+        pool.addIndependentTransaction(transactionB);
+        pool.addDependentTransaction(transactionC);
+
+        pool.limitTransactionPoolSize();
+
+        // Assert the dependent transaction is removed first
+        assertFalse(pool.isIndependent(hashA));
+        assertTrue(pool.isIndependent(hashB));
+        assertFalse(pool.isDependent(hashC));
+    }
+
+    @Test
+    void maxOrphanTransactions() {
+        BraboConfig newConfig = new MockBraboConfig(config) {
+            @Override
+            public int maxOrphanTransactions() {
+                return 2;
+            }
+        };
+
+        Random mockRandom = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return 0;  // Random enough
+            }
+        };
+
+        pool = new TransactionPool(newConfig, mockRandom);
+
+        Transaction transactionA = Simulation.randomTransaction(5, 5);
+        Hash hashA = transactionA.computeHash();
+
+        Transaction transactionB = Simulation.randomTransaction(5, 5);
+        Hash hashB = transactionB.computeHash();
+
+        Transaction transactionC = Simulation.randomTransaction(5, 5);
+        Hash hashC = transactionC.computeHash();
+
+        pool.addOrphanTransaction(transactionA);
+        pool.addOrphanTransaction(transactionB);
+        pool.addOrphanTransaction(transactionC);
+
+        // Assert the dependent transaction is removed first
+        assertFalse(pool.isOrphan(hashA));
+        assertTrue(pool.isOrphan(hashB));
+        assertTrue(pool.isOrphan(hashC));
     }
 }
