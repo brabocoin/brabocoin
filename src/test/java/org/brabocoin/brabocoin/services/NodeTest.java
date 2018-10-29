@@ -844,7 +844,7 @@ class NodeTest {
                 transactionProcessor,
                 config) {
             @Override
-            public void onReceiveTransaction(@NotNull Hash transactionHash, List<Peer> peers) {
+            public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
                 finishLatch.countDown();
             }
         });
@@ -1107,7 +1107,7 @@ class NodeTest {
 //        }) {
 //
 //            @Override
-//            public void onReceiveTransaction(@NotNull Hash transactionHash) {
+//            public void onReceiveTransactionHash(@NotNull Hash transactionHash) {
 //                finishLatch.countDown();
 //            }
 //        });
@@ -1255,7 +1255,7 @@ class NodeTest {
 //        }) {
 //
 //            @Override
-//            public void onReceiveTransaction(@NotNull Hash transactionHash) {
+//            public void onReceiveTransactionHash(@NotNull Hash transactionHash) {
 //                finishLatch.countDown();
 //            }
 //        });

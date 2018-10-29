@@ -13,10 +13,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.processor.BlockProcessor;
-import org.brabocoin.brabocoin.processor.PeerProcessor;
-import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
+import org.brabocoin.brabocoin.processor.*;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
@@ -130,18 +127,17 @@ public class NodeEnvironment {
             switch (processedBlockStatus) {
                 case ORPHAN:
                 case ADDED_TO_BLOCKCHAIN:
-                    BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
-
                     if (propagate) {
+                        final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
                         new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceBlock(protoBlockHash))).start();
                     }
-                    return;
+                    break;
 
                 case INVALID:
                 case ALREADY_STORED:
                     LOGGER.log(Level.FINE, "Block invalid or already stored.");
-                    return;
+                    break;
             }
         } catch (DatabaseException e) {
             LOGGER.log(Level.SEVERE, "Could not store received block: {0}", e.getMessage());
@@ -174,15 +170,23 @@ public class NodeEnvironment {
 
     /**
      * Handles the receival of a new transaction.
-     * TODO: Describe logic
+     * Checks whether the transaction is already processed, and if not requests the transaction from the peers.
      *
      * @param transactionHash Hash of the new block.
+     * @param peers           The peers to request the transaction from.
      */
-    public void onReceiveTransaction(@NotNull Hash transactionHash, List<Peer> peers) {
+    public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
         LOGGER.fine("Transaction hash received.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
 
+        if (transactionPool.contains(transactionHash)) {
+            LOGGER.log(Level.FINE, "Transaction was already processed, ignoring.");
+            return;
+        }
 
+        getTransactionRequest(new ArrayList<Hash>() {{
+            add(transactionHash);
+        }}, peers, true);
     }
 
     /**
@@ -215,6 +219,46 @@ public class NodeEnvironment {
         return false;
     }
 
+    /**
+     * Callback on receival of transaction after a {@code getTransactions} message.
+     *
+     * @param transaction The received transaction
+     * @param propagate   Whether or not to propagate the message to peers.
+     */
+    private void onReceiveTransaction(Transaction transaction, boolean propagate) {
+        try {
+            ProcessedTransactionResult result = transactionProcessor.processNewTransaction(transaction);
+
+            switch (result.getStatus()) {
+                case DEPENDENT:
+                case INDEPENDENT:
+                    if (propagate) {
+                        final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class);
+                        // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
+                        new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash))).start();
+                    }
+                    break;
+
+                case ORPHAN:
+                case ALREADY_STORED:
+                case INVALID:
+                    LOGGER.log(Level.FINE, "Transaction invalid, already stored or orphan.");
+                    break;
+            }
+
+            if (propagate) {
+                // Propagate any remaining transactions that became valid.
+                for (Transaction t : result.getValidatedOrphans()) {
+                    final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.computeHash(), BrabocoinProtos.Hash.class);
+                    new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash))).start();
+                }
+            }
+        } catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Could not store received block: {0}", e.getMessage());
+        }
+
+    }
+
     //================================================================================
     // Requests
     //================================================================================
@@ -228,7 +272,7 @@ public class NodeEnvironment {
      * @param propagate Whether or not to propagate an announce message to all peers.
      */
     public void getBlocksRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
-        LOGGER.info("Getting a list of blocks from one peer.");
+        LOGGER.info("Getting a list of blocks from peers.");
 
         for (Peer peer : peers) {
             // TODO: Check if async processing is done correctly.
@@ -296,7 +340,6 @@ public class NodeEnvironment {
             });
         }
     }
-
 
     /**
      * Requests any blocks that are mined on top of its current top block.
@@ -385,6 +428,53 @@ public class NodeEnvironment {
 
         LOGGER.log(Level.FINE, "Chain compatiblity found.");
         return currentBlockHash;
+    }
+
+    /**
+     * Requests transactions from (a given list of) peers, given the transaction hashes.
+     * Also determine whether or not to propagate when transactions are received.
+     *
+     * @param hashes    The hashes to request.
+     * @param peers     The peers to request transactions from.
+     * @param propagate Whether or not to propagate.
+     */
+    public void getTransactionRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
+        LOGGER.info("Getting a list of transactions from peers.");
+
+        for (Peer peer : peers) {
+            // TODO: Check if async processing is done correctly.
+            StreamObserver<BrabocoinProtos.Hash> hashStreamObserver = peer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+                @Override
+                public void onNext(BrabocoinProtos.Transaction value) {
+                    LOGGER.log(Level.FINEST, () -> {
+                        try {
+                            return MessageFormat.format("Received peer transaction: {0}", JsonFormat.printer().print(value));
+                        } catch (InvalidProtocolBufferException e) {
+                            LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.", e);
+                        }
+
+                        return "";
+                    });
+                    onReceiveTransaction(ProtoConverter.toDomain(value, Transaction.Builder.class), propagate);
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    LOGGER.log(Level.WARNING, "Peer returned an error while getting transaction: {0}", t.getMessage());
+                }
+
+                @Override
+                public void onCompleted() {
+                    LOGGER.log(Level.FINE, "Peer transaction stream completed.");
+                }
+            });
+
+            for (Hash hash : hashes) {
+                BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(hash, BrabocoinProtos.Hash.class);
+                hashStreamObserver.onNext(protoBlockHash);
+            }
+            hashStreamObserver.onCompleted();
+        }
     }
 
 

@@ -172,7 +172,7 @@ public class Node {
             InetSocketAddress clientAddress = (InetSocketAddress) serverCallCapture.get().getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             if (clientAddress != null) {
                 List<Peer> peers = environment.findClientPeers(clientAddress.getAddress());
-                environment.onReceiveTransaction(hash, peers);
+                environment.onReceiveTransactionHash(hash, peers);
             } else {
                 LOGGER.log(Level.WARNING, "Could not find the client peer announcing the block hash, ignoring.");
             }

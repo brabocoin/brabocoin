@@ -321,6 +321,18 @@ public class TransactionPool {
     }
 
     /**
+     * Checks whether the transaction is known to the transaction pool or is an orphan.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     * @return Whether the transaction is known.
+     */
+    public boolean contains(@NotNull Hash hash) {
+        LOGGER.fine("Checking if valid transaction is known or orphan.");
+        return hasValidTransaction(hash) || isOrphan(hash);
+    }
+
+    /**
      * Checks whether the transaction is known as orphan.
      *
      * @param hash
