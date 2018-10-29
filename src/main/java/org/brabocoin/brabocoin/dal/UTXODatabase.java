@@ -5,7 +5,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
@@ -14,10 +13,8 @@ import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,37 +31,19 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * Provides the functionality of storing the unspent transaction outputs (UTXO) set.
  */
 public class UTXODatabase {
+
     private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
-
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");
-    private static final ByteString KEY_BLOCK_MARKER = ByteString.copyFromUtf8("B");
-
-    private final @NotNull KeyValueStore storage;
+    protected final @NotNull KeyValueStore storage;
 
     /**
      * Creates a new UTXO set database using the provided key-value store.
      *
      * @param storage
      *     The key-value store to use for the database.
-     * @param consensus
-     *     The consensus on which this UTXO needs to be initialized, if necessary.
-     * @throws DatabaseException
-     *     When the database could not be initialized.
      */
-    public UTXODatabase(@NotNull KeyValueStore storage, @NotNull Consensus consensus) throws DatabaseException {
+    public UTXODatabase(@NotNull KeyValueStore storage) {
         this.storage = storage;
-        initialize(consensus.getGenesisBlock());
-    }
-
-    private void initialize(@NotNull Block genesisBlock) throws DatabaseException {
-        LOGGER.info("Initializing UTXO database.");
-        ByteString key = getBlockMarkerKey();
-
-        if (!storage.has(key)) {
-            LOGGER.fine("Storage block marker key not found.");
-            setLastProcessedBlockHash(genesisBlock.computeHash());
-            LOGGER.fine("Storage block marker key created from consensus genesis block hash.");
-        }
     }
 
     /**
@@ -144,14 +123,15 @@ public class UTXODatabase {
         );
     }
 
-    private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
+    @Nullable
+    protected ByteString retrieve(ByteString key) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Retrieving ByteString from key: {0}", toHexString(key)));
         ByteString bytes = storage.get(key);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Got ByteString: {0}", toHexString(bytes)));
         return bytes;
     }
 
-    private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
+    protected <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Parsing proto value from byte array: {0}", value));
         try {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
@@ -236,11 +216,11 @@ public class UTXODatabase {
         store(key, value);
     }
 
-    private <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+    protected <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
         return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
-    private void store(ByteString key, ByteString value) throws DatabaseException {
+    protected void store(ByteString key, ByteString value) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Storing key: {0}, value: {1}",
             toHexString(key),
             toHexString(value)
@@ -262,50 +242,5 @@ public class UTXODatabase {
         ByteString key = getOutputKey(transactionHash, outputIndex);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         storage.delete(key);
-    }
-
-    /**
-     * Retrieve the hash of the last block up to which the UTXO set is up-to-date.
-     *
-     * @return The block hash of the last processed block.
-     * @throws DatabaseException     When the data could not be retrieved.
-     */
-    public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
-        LOGGER.log(Level.FINE, "Getting last processed block hash.");
-        ByteString key = getBlockMarkerKey();
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
-        ByteString value = retrieve(key);
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
-
-        Hash hash = parseProtoValue(value, Hash.Builder.class, BrabocoinProtos.Hash.parser());
-
-        if (hash == null) {
-            LOGGER.severe("Could not find last processed block");
-            throw new DatabaseException("Last processed block hash could not be found.");
-        }
-
-        return hash;
-    }
-
-    /**
-     * Sets the hash of the last block up to which the UTXO set is up-to-date.
-     *
-     * @param hash     The hash of the last processed block.
-     * @throws DatabaseException
-          When the data could not be stored.
-     */
-    public void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
-        LOGGER.log(Level.FINE, "Sets the hash of the last block up to which the UTXO set is up-to-date.");
-        ByteString key = getBlockMarkerKey();
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
-        ByteString value = getRawProtoValue(hash, BrabocoinProtos.Hash.class);
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
-
-        store(key, value);
-    }
-
-    private ByteString getBlockMarkerKey() {
-        LOGGER.log(Level.FINE, "Block marker key value: {0}", toHexString(KEY_BLOCK_MARKER));
-        return KEY_BLOCK_MARKER;
     }
 }

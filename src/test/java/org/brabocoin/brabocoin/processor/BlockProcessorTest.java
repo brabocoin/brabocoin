@@ -3,7 +3,9 @@ package org.brabocoin.brabocoin.processor;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
@@ -14,6 +16,7 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,9 +42,14 @@ class BlockProcessorTest {
 
     private UTXOProcessor utxoProcessor;
     private Blockchain blockchain;
-    private BlockValidator validator;
+    private BlockValidator blockValidator;
+    private TransactionValidator transactionValidator;
     private Consensus consensus;
     private BlockProcessor blockProcessor;
+    private TransactionProcessor transactionProcessor;
+    private TransactionPool transactionPool;
+    private ChainUTXODatabase utxoFromChain;
+    private UTXODatabase utxoFromPool;
 
     @BeforeAll
     static void loadConfig() {
@@ -55,11 +64,16 @@ class BlockProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        validator = new BlockValidator();
+        blockValidator = new BlockValidator();
+        transactionValidator = new TransactionValidator();
         consensus = new Consensus();
-        utxoProcessor = new UTXOProcessor(new UTXODatabase(new HashMapDB(), consensus));
+        utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
+        utxoFromPool = new UTXODatabase(new HashMapDB());
+        utxoProcessor = new UTXOProcessor(utxoFromChain);
+        transactionPool = new TransactionPool(config, new Random());
+        transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
         blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, consensus, validator);
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
     }
 
     @AfterEach
@@ -72,14 +86,14 @@ class BlockProcessorTest {
 
     @Test
     void invalidBlock() throws DatabaseException {
-        validator = new BlockValidator() {
+        blockValidator = new BlockValidator() {
             @Override
             public boolean checkBlockValid(@NotNull Block block) {
                 return false;
             }
         };
 
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, consensus, validator);
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
 
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
 

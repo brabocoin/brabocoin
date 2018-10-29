@@ -2,11 +2,11 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,11 @@ public class BlockProcessor {
     private final @NotNull UTXOProcessor utxoProcessor;
 
     /**
+     * Transaction processor.
+     */
+    private final @NotNull TransactionProcessor transactionProcessor;
+
+    /**
      * Block validator.
      */
     private final @NotNull BlockValidator blockValidator;
@@ -55,16 +60,20 @@ public class BlockProcessor {
      *     The blockchain.
      * @param utxoProcessor
      *     The UTXO processor.
+     * @param transactionProcessor
+     *     The transaction processor.
      * @param consensus
      *     The consensus on which to process blocks.
      * @param blockValidator
      *     The block validator.
      */
     public BlockProcessor(@NotNull Blockchain blockchain, @NotNull UTXOProcessor utxoProcessor,
+                          @NotNull TransactionProcessor transactionProcessor,
                           @NotNull Consensus consensus, @NotNull BlockValidator blockValidator) {
         LOGGER.fine("Initializing BlockProcessor.");
         this.blockchain = blockchain;
         this.utxoProcessor = utxoProcessor;
+        this.transactionProcessor = transactionProcessor;
         this.consensus = consensus;
         this.blockValidator = blockValidator;
     }
@@ -169,7 +178,10 @@ public class BlockProcessor {
                 // When this orphan has no more known descendants, make top candidate
                 // TODO: maybe check if it actually supersedes the current top?
                 topCandidates.add(orphan);
-                LOGGER.finest(() -> MessageFormat.format("Added orphan {0} as top candidate.", toHexString(orphan.getHash().getValue())));
+                LOGGER.finest(() -> MessageFormat.format(
+                    "Added orphan {0} as top candidate.",
+                    toHexString(orphan.getHash().getValue())
+                ));
             } else {
                 // Add the removed blocks to the queue to find further descendant orphans
                 queue.addAll(descendants);
@@ -217,7 +229,10 @@ public class BlockProcessor {
 
         // Get block at up to which the main chain needs to be reverted
         IndexedBlock revertTargetBlock = fork.pop();
-        LOGGER.finest(() -> MessageFormat.format("Target block to revert main chain to {0}.", toHexString(revertTargetBlock.getHash().getValue())));
+        LOGGER.finest(() -> MessageFormat.format(
+            "Target block to revert main chain to {0}.",
+            toHexString(revertTargetBlock.getHash().getValue())
+        ));
 
         // Revert chain state to target block by disconnecting top blocks
         while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
@@ -231,7 +246,10 @@ public class BlockProcessor {
         }
 
         LOGGER.info("Main chain is updated with new top block.");
-        LOGGER.finest(MessageFormat.format("New top block {0}.", toHexString(blockchain.getMainChain().getTopBlock().getHash().getValue())));
+        LOGGER.finest(MessageFormat.format(
+            "New top block {0}.",
+            toHexString(blockchain.getMainChain().getTopBlock().getHash().getValue())
+        ));
     }
 
     /**
@@ -287,7 +305,10 @@ public class BlockProcessor {
         IndexedBlock top = blockchain.getMainChain().getTopBlock();
 
         Hash hash = top.getHash();
-        LOGGER.finest(() -> MessageFormat.format("Disconnecting block {0}", toHexString(hash.getValue())));
+        LOGGER.finest(() -> MessageFormat.format(
+            "Disconnecting block {0}",
+            toHexString(hash.getValue())
+        ));
 
         // Read block from disk
         Block block = blockchain.getBlock(hash);
@@ -300,7 +321,8 @@ public class BlockProcessor {
         // Update UTXO set
         utxoProcessor.processBlockDisconnected(block, blockUndo);
 
-        // TODO: update mempool
+        // Update transaction pool
+        transactionProcessor.processTopBlockDisconnected(block);
 
         // Set the new top to the parent of the previous top
         blockchain.popTopBlock();
@@ -319,7 +341,10 @@ public class BlockProcessor {
      *     When the blocks database is not available.
      */
     private void connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
-        LOGGER.finest(() -> MessageFormat.format("Connecting block {0}", toHexString(top.getHash().getValue())));
+        LOGGER.finest(() -> MessageFormat.format(
+            "Connecting block {0}",
+            toHexString(top.getHash().getValue())
+        ));
 
         // Read block from disk
         Block block = blockchain.getBlock(top.getHash());
@@ -330,7 +355,8 @@ public class BlockProcessor {
         // Store undo data
         blockchain.storeBlockUndo(top, undo);
 
-        // TODO: remove transactions from mempool
+        // Update transaction pool
+        transactionProcessor.processTopBlockConnected(block);
 
         // Set the new top in the main chain
         blockchain.pushTopBlock(top);

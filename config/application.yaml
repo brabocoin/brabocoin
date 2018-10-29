@@ -7,3 +7,5 @@ brabo:
   blockStoreDirectory: data/blocks    # Subfolder to store block data
   utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data
   maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)
+  maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
+  maxOrphanTransactions: 100          # Max number of orphan transactions

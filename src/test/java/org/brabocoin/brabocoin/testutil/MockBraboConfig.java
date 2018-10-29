@@ -45,4 +45,14 @@ public class MockBraboConfig implements BraboConfig {
     public int maxBlockFileSize() {
         return delegator.maxBlockFileSize();
     }
+
+    @Override
+    public int maxTransactionPoolSize() {
+        return delegator.maxTransactionPoolSize();
+    }
+
+    @Override
+    public int maxOrphanTransactions() {
+        return delegator.maxOrphanTransactions();
+    }
 }
