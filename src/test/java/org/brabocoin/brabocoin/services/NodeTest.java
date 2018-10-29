@@ -4,9 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -18,6 +16,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
@@ -25,6 +24,7 @@ import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -71,13 +71,16 @@ class NodeTest {
     private Node generateNode(int port, BraboConfig config, BlockDatabase blockDatabase) throws DatabaseException {
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(blockDatabase, nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
@@ -672,13 +675,16 @@ class NodeTest {
         };
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
@@ -690,7 +696,7 @@ class NodeTest {
                 nodeApeerProcessor,
                 config) {
             @Override
-            public void onReceiveBlockHash(@NotNull Hash blockHash, Peer peer) {
+            public void onReceiveBlockHash(@NotNull Hash blockHash, List<Peer> peer) {
                 finishLatch.countDown();
             }
         });
@@ -814,13 +820,16 @@ class NodeTest {
         };
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
@@ -832,7 +841,7 @@ class NodeTest {
                 nodeApeerProcessor,
                 config) {
             @Override
-            public void onReceiveTransaction(@NotNull Hash transactionHash) {
+            public void onReceiveTransaction(@NotNull Hash transactionHash, List<Peer> peers) {
                 finishLatch.countDown();
             }
         });
@@ -887,13 +896,16 @@ class NodeTest {
         };
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
@@ -946,13 +958,16 @@ class NodeTest {
         };
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
@@ -1010,13 +1025,16 @@ class NodeTest {
         };
         Consensus nodeAconsensus = new Consensus();
         Blockchain nodeAblockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), nodeAconsensus);
-        UTXODatabase nodeAutxoDatabase = new UTXODatabase(new HashMapDB(), nodeAconsensus);
+        ChainUTXODatabase nodeAutxoDatabase = new ChainUTXODatabase(new HashMapDB(), nodeAconsensus);
         UTXOProcessor nodeAutxoProcessor = new UTXOProcessor(nodeAutxoDatabase);
         BlockValidator nodeAblockValidator = new BlockValidator();
         PeerProcessor nodeApeerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionProcessor nodeAtransactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                new TransactionPool(config, new Random()), nodeAutxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor nodeAblockProcessor = new BlockProcessor(
                 nodeAblockchain,
                 nodeAutxoProcessor,
+                nodeAtransactionProcessor,
                 nodeAconsensus,
                 nodeAblockValidator);
 
