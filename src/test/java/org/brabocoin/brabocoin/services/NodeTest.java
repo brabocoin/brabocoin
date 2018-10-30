@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -51,12 +55,12 @@ public class NodeTest {
             }
         };
 
-//        Logger log = Logger.getLogger("org.brabocoin");
-//        log.setLevel(Level.FINE);
-//        Handler handler = new ConsoleHandler();
-//        handler.setLevel(Level.FINE);
-//
-//        log.addHandler(handler);
+        Logger log = Logger.getLogger("org.brabocoin");
+        log.setLevel(Level.FINE);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.FINE);
+
+        log.addHandler(handler);
     }
 
     @AfterEach
@@ -446,7 +450,7 @@ public class NodeTest {
         nodeB.start();
         nodeC.start();
 
-        await().atMost(40, TimeUnit.SECONDS)
+        await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight() &&
                         nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight()
                 );
