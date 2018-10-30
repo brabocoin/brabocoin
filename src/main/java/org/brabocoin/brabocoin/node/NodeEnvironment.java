@@ -34,11 +34,17 @@ public class NodeEnvironment {
     protected BraboConfig config;
 
     /**
+     * Main loop timer
+     */
+    Timer mainLoopTimer;
+
+    /**
      * Data holders
      */
     private int servicePort;
     private Blockchain blockchain;
     private TransactionPool transactionPool;
+    private Queue<Runnable> messageQueue = new LinkedList<>();
 
     /**
      * Processors
@@ -71,6 +77,18 @@ public class NodeEnvironment {
         LOGGER.info("Setting up the node environment.");
         peerProcessor.bootstrap(servicePort);
         LOGGER.info("Environment setup done.");
+
+        mainLoopTimer = new Timer();
+        mainLoopTimer.schedule(new MainLoopTask(), 0, 5);
+    }
+
+    class MainLoopTask extends TimerTask {
+        @Override
+        public void run() {
+            while (!messageQueue.isEmpty()) {
+                messageQueue.remove().run();
+            }
+        }
     }
 
     //================================================================================
@@ -123,14 +141,16 @@ public class NodeEnvironment {
      */
     private void onReceiveBlock(Block block, boolean propagate) {
         try {
+            LOGGER.info("Received new block from peer.");
             ProcessedBlockStatus processedBlockStatus = blockProcessor.processNewBlock(block);
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus));
             switch (processedBlockStatus) {
                 case ORPHAN:
                 case ADDED_TO_BLOCKCHAIN:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
-                        new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceBlock(protoBlockHash))).start();
+                        messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceBlock(protoBlockHash)));
                     }
                     break;
 
@@ -160,9 +180,9 @@ public class NodeEnvironment {
                 return;
             }
 
-            getBlocksRequest(new ArrayList<Hash>() {{
+            messageQueue.add(() -> getBlocksRequest(new ArrayList<Hash>() {{
                 add(blockHash);
-            }}, peers, true);
+            }}, peers, true));
         } catch (DatabaseException e) {
             LOGGER.log(Level.SEVERE, "Could not check if block was already stored: {0}", e.getMessage());
         }
@@ -184,9 +204,9 @@ public class NodeEnvironment {
             return;
         }
 
-        getTransactionRequest(new ArrayList<Hash>() {{
+        messageQueue.add(() -> getTransactionRequest(new ArrayList<Hash>() {{
             add(transactionHash);
-        }}, peers, true);
+        }}, peers, true));
     }
 
     /**
@@ -235,7 +255,7 @@ public class NodeEnvironment {
                     if (propagate) {
                         final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
-                        new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash))).start();
+                        messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash)));
                     }
                     break;
 
@@ -250,7 +270,7 @@ public class NodeEnvironment {
                 // Propagate any remaining transactions that became valid.
                 for (Transaction t : result.getValidatedOrphans()) {
                     final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.computeHash(), BrabocoinProtos.Hash.class);
-                    new Thread(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash))).start();
+                    messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash)));
                 }
             }
         } catch (DatabaseException e) {
