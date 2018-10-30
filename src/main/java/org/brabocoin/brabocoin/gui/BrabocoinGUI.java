@@ -17,7 +17,7 @@ public class BrabocoinGUI extends Application {
     @Override
     public void start(Stage primaryStage) {
         MainView mainView = new MainView();
-        Scene scene = new Scene(mainView.getRoot());
+        Scene scene = new Scene(mainView);
 
         // Add base stylesheet
         scene.getStylesheets().add(getClass().getResource("brabocoin.css").toExternalForm());
