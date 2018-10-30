@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.brabocoin.brabocoin.gui.view.MainView">
    <children>
       <Button fx:id="blockchain" layoutX="274.0" layoutY="188.0" mnemonicParsing="false" onAction="#onBlockchain" text="Blockchain" />
    </children>

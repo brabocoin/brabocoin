@@ -40,7 +40,7 @@ public abstract class BraboControl {
      */
     public BraboControl() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(fxmlFilePath()));
-        fxmlLoader.setController(this);
+        fxmlLoader.setControllerFactory(a -> this);
 
         try {
             root = fxmlLoader.load();
