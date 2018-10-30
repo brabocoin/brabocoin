@@ -87,6 +87,8 @@ public class Node {
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
             p.stop();
         }
+
+        environment.stop();
     }
 
     public void blockUntilShutdown() throws InterruptedException {
@@ -127,7 +129,6 @@ public class Node {
         @Override
         public void handshake(BrabocoinProtos.HandshakeRequest request, StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
             logIncomingCall("handshake", request);
-
 
             HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
             BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(response, BrabocoinProtos.HandshakeResponse.class);

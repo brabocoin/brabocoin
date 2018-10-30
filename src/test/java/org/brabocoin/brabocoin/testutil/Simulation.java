@@ -30,10 +30,14 @@ public class Simulation {
     }
 
     public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
+        return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5);
+    }
+
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight, int inputs, int outputs) {
         List<Block> list = new ArrayList<>();
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
-            Block block = randomBlock(previousHash, i, 5, 5, 30);
+            Block block = randomBlock(previousHash, i, inputs, outputs, 30);
             previousHash = block.computeHash();
             list.add(block);
         }
@@ -159,7 +163,7 @@ public class Simulation {
                 config));
     }
 
-    public static Node generateNode(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
+    public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
@@ -178,6 +182,36 @@ public class Simulation {
 
         for (Block b : blocks) {
             blockProcessor.processNewBlock(b);
+        }
+
+        return new Node(port, new NodeEnvironment(port,
+                blockchain,
+                blockProcessor,
+                peerProcessor,
+                transactionPool,
+                transactionProcessor,
+                config));
+    }
+
+    public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, List<Transaction> transactions) throws DatabaseException {
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionPool transactionPool = new TransactionPool(config, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        for (Transaction t : transactions) {
+            transactionProcessor.processNewTransaction(t);
         }
 
         return new Node(port, new NodeEnvironment(port,

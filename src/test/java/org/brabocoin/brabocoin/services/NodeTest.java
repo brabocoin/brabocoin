@@ -4,29 +4,32 @@ import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.brabocoin.brabocoin.testutil.Simulation.generateNode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
+import static org.brabocoin.brabocoin.testutil.Simulation.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class NodeTest {
-    private Random random = new Random();
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
     @BeforeAll
@@ -48,23 +51,40 @@ public class NodeTest {
             }
         };
 
-        Logger log = Logger.getLogger("org.brabocoin");
-        log.setLevel(Level.ALL);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
+//        Logger log = Logger.getLogger("org.brabocoin");
+//        log.setLevel(Level.FINE);
+//        Handler handler = new ConsoleHandler();
+//        handler.setLevel(Level.FINE);
+//
+//        log.addHandler(handler);
+    }
 
-        log.addHandler(handler);
+    @AfterEach
+    void afterEach() throws IOException {
+        Files.walkFileTree(Paths.get("src/test/resources/data/"), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     /**
      * <em>Setup:</em>
      * Two nodes: A and B.
-     * A has a block X unknown to B.
+     * B has a block X unknown to A.
      * X is a block mined on top of the genesis block.
-     * B's blockchain is empty and consists only of the genesis block.
+     * A's blockchain is empty and consists only of the genesis block.
      *
      * <em>Expected result:</em>
-     * After announcing the block to B, B should eventually fetch the block from A and put it on the blockchain.
+     * After announcing the block to A, A should eventually fetch the block from B and put it on the blockchain.
      */
     @Test
     void announceBlockToPeer() throws DatabaseException, IOException, InterruptedException {
@@ -73,6 +93,78 @@ public class NodeTest {
             @Override
             public String blockStoreDirectory() {
                 return super.blockStoreDirectory() + "/nodeA";
+            }
+        });
+
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+
+        Block newBlock = new Block(consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                ByteString.copyFromUtf8("randomNonce"),
+                new Date().getTime(),
+                1,
+                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
+        Hash newBlockHash = newBlock.computeHash();
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }, consensus, new ArrayList<Block>() {{
+            add(newBlock);
+        }});
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+
+        nodeB.environment.announceBlockRequest(nodeB.environment.getBlock(newBlockHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
+
+        assertNotNull(nodeA.environment.getBlock(newBlockHash));
+        assertEquals(1, nodeA.environment.getTopBlockHeight());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a block X unknown to A and B.
+     * X is a block mined on top of the genesis block.
+     * A and B's blockchains are empty and consist only of the genesis block.
+     *
+     * <em>Expected result:</em>
+     * After announcing the block to B, B should eventually fetch the block from C and put it on the blockchain.
+     * B should then announce the block to A, which should in turn fetch the block from B and add it to its local blockchain.
+     */
+    @Test
+    void announceBlockPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
             }
         });
 
@@ -100,28 +192,277 @@ public class NodeTest {
                     add("localhost:8090");
                 }};
             }
-        }, consensus, new ArrayList<Block>() {{ add(newBlock); }});
+        });
+
+        Node nodeC = generateNodeWithBlocks(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }, consensus, new ArrayList<Block>() {{
+            add(newBlock);
+        }});
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        nodeC.environment.announceBlockRequest(nodeC.environment.getBlock(newBlockHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
+
+        assertNotNull(nodeA.environment.getBlock(newBlockHash));
+        assertEquals(1, nodeA.environment.getTopBlockHeight());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+        nodeC.stop();
+        nodeC.blockUntilShutdown();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes: A and B.
+     * B has transaction X unknown to A.
+     * A's transaction pool is empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to A, A should eventually fetch the transaction from B and put it in the transaction pool.
+     */
+    @Test
+    void announceTransactionToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        });
+
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
+
+        Node nodeB = generateNodeWithTransactions(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }, consensus, new ArrayList<Transaction>() {{
+            add(newTransaction);
+        }});
 
         // Start nodes
         nodeA.start();
         nodeB.start();
 
-        nodeB.environment.announceBlockRequest(nodeB.environment.getBlock(newBlockHash));
+        nodeB.environment.announceTransactionRequest(nodeB.environment.getTransaction(newTransactionHash));
 
-        boolean blockFound = false;
-        int remainingWaitingTime = 20000;
-        int loopWaitintTime = 100;
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
 
-        while (!blockFound) {
-            if (remainingWaitingTime <= 0) {
-                break;
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a transaction X unknown to A and B.
+     * A and B's transaction pools are empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to B, B should eventually fetch the transaction from C and put it in in the transaction pool.
+     * B should then announce the transaction to A, which should in turn fetch the transaction from B and add it to its transaction pool.
+     */
+    @Test
+    void announceTransactionPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
-            blockFound = nodeA.environment.getTopBlockHeight() >= 1;
-            Thread.sleep(loopWaitintTime);
-            remainingWaitingTime -= loopWaitintTime;
-        }
 
-        assertNotNull(nodeA.environment.getBlock(newBlockHash));
-        assertEquals(1, nodeA.environment.getTopBlockHeight());
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        });
+
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        });
+
+        Node nodeC = generateNodeWithTransactions(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }, consensus, new ArrayList<Transaction>() {{
+            add(newTransaction);
+        }});
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+        nodeC.stop();
+        nodeC.blockUntilShutdown();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * A has the longest blockchain.
+     * B has the shortest blockchain.
+     * C's blockchain length is between A's and B's blockchain length and has a fork with respect to A's blockchain.
+     *
+     * <em>Expected result:</em>
+     * A, B and C's blockchains are identical and equal to A's blockchain.
+     */
+    @Test
+    void updateBlockchain() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+
+        Node nodeA = generateNodeWithBlocks(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        }, new Consensus(), chainA);
+
+        List<Block> chainB = IntStream.range(0, 8).mapToObj(chainA::get).collect(Collectors.toList());
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }, new Consensus(), chainB);
+
+        List<Block> chainC = IntStream.range(0, 10).mapToObj(chainA::get).collect(Collectors.toList());
+        List<Block> chainCfork = Simulation.randomBlockChainGenerator(8, chainC.get(chainC.size() - 1).computeHash(), chainC.size(), 0, 5);
+
+        chainC.addAll(chainCfork);
+
+        Node nodeC = generateNodeWithBlocks(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }, new Consensus(), chainC);
+
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        await().atMost(40, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight() &&
+                        nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight()
+                );
+
+        assertEquals(nodeA.environment.getTopBlockHeight(), chainA.size());
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeC.environment.getTopBlockHeight());
+
+        assertEquals(chainA.get(chainA.size() - 1).computeHash(),
+                nodeC.environment.getBlocksAbove(chainA.get(chainA.size() - 2).computeHash()).get(0));
+
+        nodeA.stop();
+        nodeA.blockUntilShutdown();
+        nodeB.stop();
+        nodeB.blockUntilShutdown();
+        nodeC.stop();
+        nodeC.blockUntilShutdown();
     }
 }

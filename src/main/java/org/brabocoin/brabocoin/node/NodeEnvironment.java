@@ -79,7 +79,36 @@ public class NodeEnvironment {
         LOGGER.info("Environment setup done.");
 
         mainLoopTimer = new Timer();
-        mainLoopTimer.schedule(new MainLoopTask(), 0, 5);
+        mainLoopTimer.schedule(new MainLoopTask(), 0, 500);
+
+        updateBlockchain();
+    }
+
+    public void stop() {
+        mainLoopTimer.cancel();
+    }
+
+    private void updateBlockchain() {
+        Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
+        Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
+                .entrySet()
+                .stream()
+                .max(Comparator.comparing(Map.Entry::getValue));
+
+        if (maxHeightEntryOptional.isPresent()) {
+            Peer maxHeightPeer = maxHeightEntryOptional.get().getKey();
+            Integer maxHeight = maxHeightEntryOptional.get().getValue();
+            LOGGER.log(Level.FINE, () -> MessageFormat.format("Max height peer found: {0} at value {1}", maxHeightPeer, maxHeight));
+
+            if (maxHeight > blockchain.getMainChain().getHeight()) {
+                // Peer has a longer chain, need to update.
+                Hash matchingBlockHash = checkChainCompatibleRequest(maxHeightPeer);
+
+                seekBlockchainRequest(maxHeightPeer, matchingBlockHash);
+            }
+        } else {
+            LOGGER.warning("Could not retrieve max height from peers, no entry found.");
+        }
     }
 
     class MainLoopTask extends TimerTask {
@@ -362,6 +391,37 @@ public class NodeEnvironment {
     }
 
     /**
+     * Announce the transaction's hash to all known peers.
+     *
+     * @param transaction The transaction to announce.
+     */
+    public void announceTransactionRequest(Transaction transaction) {
+        LOGGER.info("Announcing transaction to peers.");
+        Hash transactionHash = transaction.computeHash();
+        LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
+        BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transactionHash, BrabocoinProtos.Hash.class);
+
+        for (Peer peer : getPeers()) {
+            peer.getAsyncStub().announceTransaction(protoTransactionHash, new StreamObserver<Empty>() {
+                @Override
+                public void onNext(Empty value) {
+                    LOGGER.log(Level.FINEST, "Received transaction announce response from peer.");
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    LOGGER.log(Level.WARNING, "Received transaction announce error from peer: {0}", t.getMessage());
+                }
+
+                @Override
+                public void onCompleted() {
+                    LOGGER.log(Level.FINEST, "Received transaction announce completion from peer.");
+                }
+            });
+        }
+    }
+
+    /**
      * Requests any blocks that are mined on top of its current top block.
      * <p>
      * The peer looks up the block corresponding to the received block hash in its main chain.
@@ -380,9 +440,9 @@ public class NodeEnvironment {
         List<Hash> hashes = new ArrayList<>();
         hashesAbove.forEachRemaining(h -> hashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
 
-        getBlocksRequest(hashes, new ArrayList<Peer>() {{
+        messageQueue.add(() -> getBlocksRequest(hashes, new ArrayList<Peer>() {{
             add(peer);
-        }}, false);
+        }}, false));
     }
 
     /**
@@ -599,7 +659,8 @@ public class NodeEnvironment {
     public Transaction getTransaction(@NotNull Hash transactionHash) {
         LOGGER.fine("Transaction requested by hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
-        return null;
+
+        return transactionPool.findValidatedTransaction(transactionHash);
     }
 
     /**

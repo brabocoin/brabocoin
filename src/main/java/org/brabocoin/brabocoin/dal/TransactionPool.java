@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -373,7 +370,7 @@ public class TransactionPool {
      * @return Set of all validated transaction hashes.
      */
     public Set<Hash> getValidatedTransactionHashes() {
-        Set<Hash> result = dependentTransactions.keySet();
+        Set<Hash> result = new HashSet<>(dependentTransactions.keySet());
         result.addAll(independentTransactions.keySet());
 
         return result;

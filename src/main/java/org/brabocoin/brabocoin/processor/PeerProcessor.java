@@ -42,14 +42,17 @@ public class PeerProcessor {
 
     /**
      * Initializes the set of peers.
+     *
+     * @return The peers read from config.
      */
-    private void instantiateBootstrapPeers() {
+    private List<Peer> getBootstrapPeers() {
         LOGGER.fine("Instantiating bootstrap peers.");
+        List<Peer> configPeers = new ArrayList<>();
         for (final String peerSocket : config.bootstrapPeers()) {
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer socket read from config: {0}", peerSocket));
             try {
                 Peer p = new Peer(peerSocket);
-                peers.add(p);
+                configPeers.add(p);
                 LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer created and added to peer set: {0}", p));
             } catch (MalformedSocketException e) {
                 LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
@@ -59,6 +62,8 @@ public class PeerProcessor {
                 // Exit throwing an error to the user or skip this peer?
             }
         }
+
+        return configPeers;
     }
 
     /**
@@ -69,10 +74,9 @@ public class PeerProcessor {
      */
     public void bootstrap(int servicePort) {
         LOGGER.info("Bootstrapping initiated.");
-        // Populate bootstrap peers
-        instantiateBootstrapPeers();
+
         // A list of peers for which we need to do a handshake
-        List<Peer> handshakePeers = copyPeersList();
+        List<Peer> handshakePeers = getBootstrapPeers();
 
         if (handshakePeers.size() <= 0) {
             LOGGER.severe("No bootstrapping peers found.");
