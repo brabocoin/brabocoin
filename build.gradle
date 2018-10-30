@@ -5,13 +5,15 @@ plugins {
 }
 
 group 'org.brabocoin'
-version '1.0-SNAPSHOT'
+version '0.1-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    jcenter()
     maven { url 'https://jitpack.io' }
+    maven { url 'http://maven.bestsolution.at/efxclipse-releases/' }
 }
 
 dependencies {
@@ -25,6 +27,8 @@ dependencies {
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
     compile('org.jetbrains:annotations:16.0.2')
+    compile('org.controlsfx:controlsfx:8.40.14')
+    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
 
     implementation('com.github.BAData:protobuf-converter:1.1.5')
 
@@ -65,4 +69,25 @@ clean {
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes(
+            'Implementation-Version': version,
+            'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+        )
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest.from jar.manifest
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+    with jar
 }
