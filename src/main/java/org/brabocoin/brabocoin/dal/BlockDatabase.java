@@ -9,7 +9,6 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.model.dal.BlockFileInfo;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
@@ -191,8 +190,8 @@ public class BlockDatabase {
             fileNumber,
             offsetInFile,
             size,
-            0,
-            0
+            -1,
+            -1
         );
         LOGGER.fine("Created BlockInfo for block to be stored.");
 
@@ -218,6 +217,11 @@ public class BlockDatabase {
                                              @NotNull BlockUndo undo) throws DatabaseException {
         LOGGER.fine("Store block undo data.");
         BlockInfo info = block.getBlockInfo();
+
+        if (info.getSizeInUndoFile() >= 0) {
+            LOGGER.fine("Block undo data already exists, skipping storing twice.");
+            return info;
+        }
 
         BrabocoinStorageProtos.BlockUndo protoUndo = ProtoConverter.toProto(undo,
             BrabocoinStorageProtos.BlockUndo.class
@@ -533,6 +537,11 @@ public class BlockDatabase {
      *     When the block undo data could not be retrieved.
      */
     public @Nullable BlockUndo findBlockUndo(@NotNull BlockInfo info) throws DatabaseException {
+        // Check if undo data is not stored
+        if (info.getSizeInUndoFile() == -1 && info.getOffsetInUndoFile() == -1) {
+            return null;
+        }
+
         ByteString rawUndo = readRawUndoFromFile(info);
         return parseProtoValue(rawUndo,
             BlockUndo.Builder.class,
