@@ -21,10 +21,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,13 +50,6 @@ public class NodeTest {
                 return new ArrayList<>();
             }
         };
-
-        Logger log = Logger.getLogger("org.brabocoin");
-        log.setLevel(Level.FINE);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.FINE);
-
-        log.addHandler(handler);
     }
 
     @AfterEach
