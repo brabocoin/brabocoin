@@ -73,10 +73,10 @@ public class NodeEnvironment {
      * Setup the environment.
      * This instantiates the following:
      * <ol>
-     *  <li>Bootstrapping process of peers.</li>
-     *  <li>Start the main loop.</li>
-     *  <li>Initiate blockchain update.</li>
-     *  <li>Initiate transaction pool population.</li>
+     * <li>Bootstrapping process of peers.</li>
+     * <li>Start the main loop.</li>
+     * <li>Initiate blockchain update.</li>
+     * <li>Initiate transaction pool population.</li>
      * </ol>
      */
     public void setup() {
@@ -85,7 +85,12 @@ public class NodeEnvironment {
         LOGGER.info("Environment setup done.");
 
         mainLoopTimer = new Timer();
-        mainLoopTimer.schedule(new MainLoopTask(), 0, config.loopInterval());
+        mainLoopTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                main();
+            }
+        }, 0, config.loopInterval());
 
         updateBlockchain();
         seekTransactionPoolRequest();
@@ -98,12 +103,12 @@ public class NodeEnvironment {
         mainLoopTimer.cancel();
     }
 
-    class MainLoopTask extends TimerTask {
-        @Override
-        public void run() {
-            while (!messageQueue.isEmpty()) {
-                messageQueue.remove().run();
-            }
+    /**
+     * The main execution logic, ran every {@link BraboConfig#loopInterval()} millisecond by the Timer {@link #mainLoopTimer}.
+     */
+    private void main() {
+        while (!messageQueue.isEmpty()) {
+            messageQueue.remove().run();
         }
     }
 
