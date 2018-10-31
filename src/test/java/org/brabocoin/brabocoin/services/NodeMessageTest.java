@@ -33,10 +33,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.brabocoin.brabocoin.testutil.Simulation.generateNode;
@@ -57,12 +53,12 @@ class NodeMessageTest {
             }
         };
 
-        Logger log = Logger.getLogger("org.brabocoin");
-        log.setLevel(Level.ALL);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
-
-        log.addHandler(handler);
+//        Logger log = Logger.getLogger("org.brabocoin");
+//        log.setLevel(Level.ALL);
+//        Handler handler = new ConsoleHandler();
+//        handler.setLevel(Level.ALL);
+//
+//        log.addHandler(handler);
     }
 
     @Test
