@@ -16,7 +16,7 @@ public class HashMapDB implements KeyValueStore {
     private Map<ByteString, ByteString> map = new HashMap<>();
 
     @Override
-    public void put(ByteString key, ByteString value) {
+    public synchronized void put(ByteString key, ByteString value) {
         LOGGER.fine("Putting key-value pair.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
@@ -24,21 +24,21 @@ public class HashMapDB implements KeyValueStore {
     }
 
     @Override
-    public ByteString get(ByteString key) {
+    public synchronized ByteString get(ByteString key) {
         LOGGER.fine("Getting value using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         return map.get(key);
     }
 
     @Override
-    public void delete(ByteString key) {
+    public synchronized void delete(ByteString key) {
         LOGGER.fine("Deleting key-value pair using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         map.remove(key);
     }
 
     @Override
-    public boolean has(ByteString key) {
+    public synchronized boolean has(ByteString key) {
         LOGGER.fine("Checking if store has key-value pair using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         final boolean hasKey = map.containsKey(key);
@@ -57,7 +57,7 @@ public class HashMapDB implements KeyValueStore {
     }
 
     @Override
-    public Iterator<Map.Entry<ByteString, ByteString>> iterator() {
+    public synchronized Iterator<Map.Entry<ByteString, ByteString>> iterator() {
         LOGGER.fine("HashMapDB iterator constructor.");
         return map.entrySet().iterator();
     }

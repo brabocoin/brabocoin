@@ -45,7 +45,7 @@ public class PeerProcessor {
      *
      * @return The peers read from config.
      */
-    private List<Peer> getBootstrapPeers() {
+    private synchronized List<Peer> getBootstrapPeers() {
         LOGGER.fine("Instantiating bootstrap peers.");
         List<Peer> configPeers = new ArrayList<>();
         for (final String peerSocket : config.bootstrapPeers()) {
@@ -72,7 +72,7 @@ public class PeerProcessor {
      *
      * @param servicePort The service port of the local node.
      */
-    public void bootstrap(int servicePort) {
+    public synchronized void bootstrap(int servicePort) {
         LOGGER.info("Bootstrapping initiated.");
 
         // A list of peers for which we need to do a handshake
@@ -135,7 +135,7 @@ public class PeerProcessor {
      *
      * @return List of peers.
      */
-    public List<Peer> copyPeersList() {
+    public synchronized List<Peer> copyPeersList() {
         LOGGER.fine("Creating a list copy of the set of peers.");
         return new ArrayList<>(peers);
     }
@@ -145,7 +145,7 @@ public class PeerProcessor {
      *
      * @return Set of peers.
      */
-    public Set<Peer> copyPeers() {
+    public synchronized Set<Peer> copyPeers() {
         LOGGER.fine("Creating a list copy of the set of peers.");
         return new HashSet<>(peers);
     }
@@ -156,7 +156,7 @@ public class PeerProcessor {
      * @param address The address to match.
      * @return The list of peers matching the address.
      */
-    public List<Peer> findClientPeers(InetAddress address) {
+    public synchronized List<Peer> findClientPeers(InetAddress address) {
         return peers.stream().filter(p -> p.getAddress().equals(address))
                 .collect(Collectors.toList());
     }
@@ -166,7 +166,7 @@ public class PeerProcessor {
      *
      * @param peer The peer to add.
      */
-    public void addPeer(Peer peer) {
+    public synchronized void addPeer(Peer peer) {
         peers.add(peer);
     }
 }

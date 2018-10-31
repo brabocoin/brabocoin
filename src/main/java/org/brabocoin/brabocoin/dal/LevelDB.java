@@ -43,19 +43,19 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public void open() throws IOException {
+    public synchronized void open() throws IOException {
         LOGGER.fine("LevelDB open called.");
         database = factory.open(databasePath, options);
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         LOGGER.fine("LevelDB close called.");
         database.close();
     }
 
     @Override
-    public void put(final ByteString key, final ByteString value) throws DatabaseException {
+    public synchronized void put(final ByteString key, final ByteString value) throws DatabaseException {
         LOGGER.fine("Putting key-value pair.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
@@ -68,7 +68,7 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public ByteString get(final ByteString key) throws DatabaseException {
+    public synchronized ByteString get(final ByteString key) throws DatabaseException {
         LOGGER.fine("Getting value using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         try {
@@ -88,7 +88,7 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public void delete(final ByteString key) throws DatabaseException {
+    public synchronized void delete(final ByteString key) throws DatabaseException {
         LOGGER.fine("Deleting key-value pair using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         try {
@@ -100,7 +100,7 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public boolean has(ByteString key) {
+    public synchronized boolean has(ByteString key) {
         LOGGER.fine("Checking whether store has key-value pair using key.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         final boolean hasKey = database.get(key.toByteArray()) != null;
@@ -109,7 +109,7 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public Iterator<Map.Entry<ByteString, ByteString>> iterator() {
+    public synchronized Iterator<Map.Entry<ByteString, ByteString>> iterator() {
         LOGGER.fine("LevelDB iterator constructor.");
         return new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();

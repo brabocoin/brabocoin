@@ -43,7 +43,7 @@ public class ProcessedTransactionResult {
      *
      * @return The status of the newly added transaction.
      */
-    public ProcessedTransactionStatus getStatus() {
+    public synchronized ProcessedTransactionStatus getStatus() {
         return status;
     }
 
@@ -53,7 +53,7 @@ public class ProcessedTransactionResult {
      *
      * @return List of orphans.
      */
-    public List<Transaction> getValidatedOrphans() {
+    public synchronized List<Transaction> getValidatedOrphans() {
         return Collections.unmodifiableList(addedOrphans);
     }
 }

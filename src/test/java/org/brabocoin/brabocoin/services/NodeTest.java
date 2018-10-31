@@ -11,7 +11,6 @@ import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -649,7 +648,6 @@ public class NodeTest {
      * Then, after announcing another two blocks on the other fork (what used to be the main chain), B should again switch the main chain.
      */
     @Test
-    @Ignore // This test seems to be flaky
     void forkSwitchingPropagated() throws DatabaseException, IOException, InterruptedException {
         // Create a blockchain with a block mined on top of genesis block.
         Consensus consensus = new Consensus();
