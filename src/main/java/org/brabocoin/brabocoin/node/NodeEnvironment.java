@@ -559,6 +559,7 @@ public class NodeEnvironment {
                 @Override
                 public void onError(Throwable t) {
                     LOGGER.log(Level.WARNING, "Peer returned an error while getting transaction: {0}", t.getMessage());
+                    t.getCause().printStackTrace();
                 }
 
                 @Override
