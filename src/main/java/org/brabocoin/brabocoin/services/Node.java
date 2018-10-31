@@ -91,6 +91,11 @@ public class Node {
         environment.stop();
     }
 
+    public void stopAndBlock() throws InterruptedException {
+        stop();
+        blockUntilShutdown();
+    }
+
     public void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();

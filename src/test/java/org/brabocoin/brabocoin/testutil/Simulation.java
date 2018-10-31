@@ -164,6 +164,10 @@ public class Simulation {
     }
 
     public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
+        return generateNodeAndProcessorWithBlocks(port, config, consensus, blocks).getKey();
+    }
+
+    public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
@@ -184,13 +188,13 @@ public class Simulation {
             blockProcessor.processNewBlock(b);
         }
 
-        return new Node(port, new NodeEnvironment(port,
+        return new AbstractMap.SimpleEntry<>(new Node(port, new NodeEnvironment(port,
                 blockchain,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
                 transactionProcessor,
-                config));
+                config)), blockProcessor);
     }
 
     public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, List<Transaction> transactions) throws DatabaseException {

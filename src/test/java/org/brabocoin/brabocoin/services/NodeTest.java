@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -20,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -129,10 +131,8 @@ public class NodeTest {
         assertNotNull(nodeA.environment.getBlock(newBlockHash));
         assertEquals(1, nodeA.environment.getTopBlockHeight());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     /**
@@ -221,12 +221,9 @@ public class NodeTest {
         assertNotNull(nodeA.environment.getBlock(newBlockHash));
         assertEquals(1, nodeA.environment.getTopBlockHeight());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
     }
 
     /**
@@ -282,10 +279,8 @@ public class NodeTest {
         assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
         assertEquals(1, nodeA.environment.getTransactionHashSet().size());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     /**
@@ -299,7 +294,7 @@ public class NodeTest {
      * B should then announce the transaction to A, which should in turn fetch the transaction from B and add it to its transaction pool.
      */
     @Test
-    void announceTransactionPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+    void announceTransactionPropagatedToPeerLimitedPeers() throws DatabaseException, IOException, InterruptedException {
         // Create default node A
         Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
             @Override
@@ -367,12 +362,83 @@ public class NodeTest {
         assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
         assertEquals(1, nodeA.environment.getTransactionHashSet().size());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a transaction X unknown to A and B.
+     * A and B's transaction pools are empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to B, B should eventually fetch the transaction from C and put it in in the transaction pool.
+     * B should then announce the transaction to A, which should in turn fetch the transaction from B and add it to its transaction pool.
+     */
+    @Test
+    void announceTransactionPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        });
+
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        });
+
+        Node nodeC = generateNodeWithTransactions(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+        }, consensus, new ArrayList<Transaction>() {{
+            add(newTransaction);
+        }});
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
     }
 
     /**
@@ -451,11 +517,261 @@ public class NodeTest {
         assertEquals(chainA.get(chainA.size() - 1).computeHash(),
                 nodeC.environment.getBlocksAbove(chainA.get(chainA.size() - 2).computeHash()).get(0));
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes A and B.
+     * B's blockchain is in sync with A's blockchain.
+     * A also has a fork that is one blockheight less than the main chain.
+     *
+     *
+     * <em>Expected result:</em>
+     * When we mine two blocks on top of the fork, only announcing the second block, B should sync with this fork, requesting both blocks.
+     * Then, after announcing another two blocks on the other fork (what used to be the main chain), B should again switch the main chain.
+     */
+    @Test
+    void forkSwitching() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+        Block mainChainTopBlock = chainA.get(chainA.size() - 1);
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }, new Consensus(), chainA);
+
+
+        Block forkMatchingBlock = chainA.get(10);
+        List<Block> chainAfork = Simulation.randomBlockChainGenerator(8, forkMatchingBlock.computeHash(), forkMatchingBlock.getBlockHeight() + 1, 0, 5);
+
+        Block forkTopBlock = chainAfork.get(chainAfork.size() - 1);
+
+        assert forkTopBlock.getBlockHeight() == mainChainTopBlock.getBlockHeight() - 1;
+
+        chainA.addAll(chainAfork);
+        Map.Entry<Node, BlockProcessor> fullNodeA = generateNodeAndProcessorWithBlocks(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        }, new Consensus(), chainA);
+
+        Node nodeA = fullNodeA.getKey();
+        BlockProcessor blockProcessor = fullNodeA.getValue();
+
+        nodeA.start();
+        nodeB.start();
+
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+
+        // Mine two block on top of fork of A
+        Block forkBlock1 = Simulation.randomBlock(
+                forkTopBlock.computeHash(),
+                forkTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block forkBlock2 = Simulation.randomBlock(
+                forkBlock1.computeHash(),
+                forkBlock1.getBlockHeight() + 1,
+                0, 5, 20
+        );
+
+        blockProcessor.processNewBlock(forkBlock1);
+        blockProcessor.processNewBlock(forkBlock2);
+
+        assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
+
+        nodeA.environment.announceBlockRequest(forkBlock2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(forkBlock1.computeHash()).get(0),
+                nodeB.environment.getBlocksAbove(forkBlock1.computeHash()).get(0));
+
+        // Mine two block on top of new fork of A, what used to be the main chain
+        Block fork2Block1 = Simulation.randomBlock(
+                mainChainTopBlock.computeHash(),
+                mainChainTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block fork2Block2 = Simulation.randomBlock(
+                fork2Block1.computeHash(),
+                fork2Block1.getBlockHeight() + 1,
+                0, 5, 20
+        );
+
+        blockProcessor.processNewBlock(fork2Block1);
+        blockProcessor.processNewBlock(fork2Block2);
+
+        assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
+
+        nodeA.environment.announceBlockRequest(fork2Block2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(fork2Block1.computeHash()).get(0),
+                nodeB.environment.getBlocksAbove(fork2Block1.computeHash()).get(0));
+
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes A, B and C.
+     * B's blockchain is in sync with A's blockchain.
+     * C's blockchain is empty and only consists of the genesis block and only has peer B.
+     * A also has a fork that is one blockheight less than the main chain.
+     *
+     *
+     * <em>Expected result:</em>
+     * When we mine two blocks on top of the fork, only announcing the second block, B should sync with this fork, requesting both blocks.
+     * Then, after announcing another two blocks on the other fork (what used to be the main chain), B should again switch the main chain.
+     */
+    @Test
+    void forkSwitchingPropagated() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+        Block mainChainTopBlock = chainA.get(chainA.size() - 1);
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        }, new Consensus(), chainA);
+
+
+        Block forkMatchingBlock = chainA.get(10);
+        List<Block> chainAfork = Simulation.randomBlockChainGenerator(8, forkMatchingBlock.computeHash(), forkMatchingBlock.getBlockHeight() + 1, 0, 5);
+
+        Block forkTopBlock = chainAfork.get(chainAfork.size() - 1);
+
+        assert forkTopBlock.getBlockHeight() == mainChainTopBlock.getBlockHeight() - 1;
+
+        chainA.addAll(chainAfork);
+        Map.Entry<Node, BlockProcessor> fullNodeA = generateNodeAndProcessorWithBlocks(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }, new Consensus(), chainA);
+
+        Node nodeC = generateNode(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8091");
+                }};
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        });
+
+        Node nodeA = fullNodeA.getKey();
+        BlockProcessor blockProcessor = fullNodeA.getValue();
+
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+
+        // Mine two block on top of fork of A
+        Block forkBlock1 = Simulation.randomBlock(
+                forkTopBlock.computeHash(),
+                forkTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block forkBlock2 = Simulation.randomBlock(
+                forkBlock1.computeHash(),
+                forkBlock1.getBlockHeight() + 1,
+                0, 5, 20
+        );
+
+        blockProcessor.processNewBlock(forkBlock1);
+        blockProcessor.processNewBlock(forkBlock2);
+
+        assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
+
+        nodeA.environment.announceBlockRequest(forkBlock2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(forkBlock1.computeHash()).get(0),
+                nodeC.environment.getBlocksAbove(forkBlock1.computeHash()).get(0));
+
+        // Mine two block on top of new fork of A, what used to be the main chain
+        Block fork2Block1 = Simulation.randomBlock(
+                mainChainTopBlock.computeHash(),
+                mainChainTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block fork2Block2 = Simulation.randomBlock(
+                fork2Block1.computeHash(),
+                fork2Block1.getBlockHeight() + 1,
+                0, 5, 20
+        );
+
+        blockProcessor.processNewBlock(fork2Block1);
+        blockProcessor.processNewBlock(fork2Block2);
+
+        assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
+
+        nodeA.environment.announceBlockRequest(fork2Block2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(fork2Block1.computeHash()).get(0),
+                nodeC.environment.getBlocksAbove(fork2Block1.computeHash()).get(0));
+
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
     }
 }

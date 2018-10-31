@@ -88,6 +88,16 @@ public class NodeEnvironment {
         mainLoopTimer.cancel();
     }
 
+    class MainLoopTask extends TimerTask {
+
+        @Override
+        public void run() {
+            while (!messageQueue.isEmpty()) {
+                messageQueue.remove().run();
+            }
+        }
+    }
+
     private void updateBlockchain() {
         Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
         Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
@@ -108,15 +118,6 @@ public class NodeEnvironment {
             }
         } else {
             LOGGER.warning("Could not retrieve max height from peers, no entry found.");
-        }
-    }
-
-    class MainLoopTask extends TimerTask {
-        @Override
-        public void run() {
-            while (!messageQueue.isEmpty()) {
-                messageQueue.remove().run();
-            }
         }
     }
 
@@ -166,15 +167,21 @@ public class NodeEnvironment {
      * Callback on receival of block after a {@code getBlocks} message.
      *
      * @param block     The received block
+     * @param peers     The peers for which we request the parent block, if needed.
      * @param propagate Whether or not to propagate the message to peers.
      */
-    private void onReceiveBlock(Block block, boolean propagate) {
+    private void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         try {
             LOGGER.info("Received new block from peer.");
             ProcessedBlockStatus processedBlockStatus = blockProcessor.processNewBlock(block);
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus));
             switch (processedBlockStatus) {
                 case ORPHAN:
+                    messageQueue.add(() -> getBlocksRequest(
+                            new ArrayList<Hash>() {{ add(block.getPreviousBlockHash()); }},
+                            peers,
+                            propagate
+                            ));
                 case ADDED_TO_BLOCKCHAIN:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
@@ -337,7 +344,7 @@ public class NodeEnvironment {
 
                         return "";
                     });
-                    onReceiveBlock(ProtoConverter.toDomain(value, Block.Builder.class), propagate);
+                    onReceiveBlock(ProtoConverter.toDomain(value, Block.Builder.class), peers, propagate);
                 }
 
                 @Override

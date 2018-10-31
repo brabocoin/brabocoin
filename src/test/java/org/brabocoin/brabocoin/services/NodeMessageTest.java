@@ -109,10 +109,8 @@ class NodeMessageTest {
 
         assertEquals(3, greeter.environment.getPeers().size());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
 
         responder.stop();
         responder.blockUntilShutdown();
@@ -189,10 +187,8 @@ class NodeMessageTest {
             assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
         }
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     @Test
@@ -264,10 +260,8 @@ class NodeMessageTest {
             assertFalse(receivedBlockHashes.contains(block.computeHash().getValue()));
         }
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     @Test
@@ -348,10 +342,8 @@ class NodeMessageTest {
             assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
         }
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     //
@@ -708,10 +700,8 @@ class NodeMessageTest {
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
 //    @Test
@@ -854,10 +844,8 @@ class NodeMessageTest {
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     @Test
@@ -917,10 +905,8 @@ class NodeMessageTest {
 
         assertEquals(1234, blockHeight.getHeight());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     @Test
@@ -983,10 +969,8 @@ class NodeMessageTest {
 
         assertFalse(chainCompatibility.isCompatible());
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
     @Test
@@ -1061,10 +1045,8 @@ class NodeMessageTest {
             assertTrue(hashes.contains(h));
         }
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
 //    @Test
