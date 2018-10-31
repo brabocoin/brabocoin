@@ -776,4 +776,43 @@ public class NodeTest {
         nodeB.stopAndBlock();
         nodeC.stopAndBlock();
     }
+
+    /**
+     * node B tries to acquire the transaction pool from its peer A on startup.
+     */
+    @Test
+    void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 200);
+
+        Node nodeA = generateNodeWithTransactions(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        }, new Consensus(), transactions);
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<String>() {{
+                    add("localhost:8090");
+                }};
+            }
+        });
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeB.environment.getTransactionHashSet().size() == transactions.size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+    }
 }

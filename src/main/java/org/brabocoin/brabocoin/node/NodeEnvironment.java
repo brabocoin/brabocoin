@@ -82,6 +82,7 @@ public class NodeEnvironment {
         mainLoopTimer.schedule(new MainLoopTask(), 0, 500);
 
         updateBlockchain();
+        seekTransactionPoolRequest();
     }
 
     public void stop() {
@@ -564,8 +565,17 @@ public class NodeEnvironment {
         }
     }
 
+
     public void seekTransactionPoolRequest() {
-        // TODO: Implement, which peer to use? for logic, see seekBlockchainRequest.
+        List<Hash> hashes = new ArrayList<>();
+        for (Peer peer : getPeers()) {
+            Iterator<BrabocoinProtos.Hash> transactionHashes = peer
+                    .getBlockingStub()
+                    .seekTransactionPool(Empty.newBuilder().build());
+
+            transactionHashes.forEachRemaining(h -> hashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
+        }
+        messageQueue.add(() -> getTransactionRequest(hashes, new ArrayList<>(getPeers()), false));
     }
 
     //================================================================================
