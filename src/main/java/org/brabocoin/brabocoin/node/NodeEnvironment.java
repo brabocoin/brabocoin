@@ -114,14 +114,14 @@ public class NodeEnvironment {
     /**
      * Gracefully shutdown the node environment, cancelling the main loop timer.
      */
-    public void stop() {
+    public synchronized void stop() {
         mainLoopTimer.cancel();
     }
 
     /**
      * The main execution logic, ran every {@link BraboConfig#loopInterval()} millisecond by the Timer {@link #mainLoopTimer}.
      */
-    private void main() {
+    private synchronized void main() {
         while (!messageQueue.isEmpty()) {
             messageQueue.remove().run();
         }
@@ -131,7 +131,7 @@ public class NodeEnvironment {
      * Update the blockchain, requesting the top heights of each peer.
      * Also call  {@link #seekBlockchainRequest} on the peer with the longest chain, if the chain is longer than the current chain.
      */
-    private void updateBlockchain() {
+    private synchronized void updateBlockchain() {
         LOGGER.info("Update blockchain.");
         Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
         Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
@@ -167,7 +167,7 @@ public class NodeEnvironment {
      * @param address The address of the client.
      * @param port    The port of the Client
      */
-    public void addClientPeer(InetAddress address, int port) {
+    public synchronized void addClientPeer(InetAddress address, int port) {
         Peer clientPeer;
         try {
             clientPeer = new Peer(address, port);
@@ -185,7 +185,7 @@ public class NodeEnvironment {
      * @param clientAddress The address to match.
      * @return The list of peers matching the address.
      */
-    public List<Peer> findClientPeers(InetAddress clientAddress) {
+    public synchronized List<Peer> findClientPeers(InetAddress clientAddress) {
         return peerProcessor.findClientPeers(clientAddress);
     }
 
@@ -194,7 +194,7 @@ public class NodeEnvironment {
      *
      * @param blockingStubConsumer The lambda expression evaluated on all peer's blocking stubs.
      */
-    private void propagateMessageBlocking(Consumer<NodeGrpc.NodeBlockingStub> blockingStubConsumer) {
+    private synchronized void propagateMessageBlocking(Consumer<NodeGrpc.NodeBlockingStub> blockingStubConsumer) {
         for (NodeGrpc.NodeBlockingStub stub : getPeerStubs()) {
             blockingStubConsumer.accept(stub);
         }
@@ -213,7 +213,7 @@ public class NodeEnvironment {
      * @param peers     The peers for which we request the parent block, if needed.
      * @param propagate Whether or not to propagate the message to peers.
      */
-    private void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
+    private synchronized void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         try {
             LOGGER.info("Received new block from peer.");
             ProcessedBlockStatus processedBlockStatus = blockProcessor.processNewBlock(block);
@@ -251,7 +251,7 @@ public class NodeEnvironment {
      * @param blockHash Hash of the new block.
      * @param peers     The peers for which we request the block, if needed.
      */
-    public void onReceiveBlockHash(@NotNull Hash blockHash, @NotNull List<Peer> peers) {
+    public synchronized void onReceiveBlockHash(@NotNull Hash blockHash, @NotNull List<Peer> peers) {
         LOGGER.fine("Block hash received.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
 
@@ -274,7 +274,7 @@ public class NodeEnvironment {
      * @param transactionHash Hash of the new block.
      * @param peers           The peers to request the transaction from.
      */
-    public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
+    public synchronized void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
         LOGGER.fine("Transaction hash received.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
 
@@ -292,7 +292,7 @@ public class NodeEnvironment {
      * @param transaction The received transaction
      * @param propagate   Whether or not to propagate the message to peers.
      */
-    private void onReceiveTransaction(Transaction transaction, boolean propagate) {
+    private synchronized void onReceiveTransaction(Transaction transaction, boolean propagate) {
         try {
             ProcessedTransactionResult result = transactionProcessor.processNewTransaction(transaction);
 
@@ -339,7 +339,7 @@ public class NodeEnvironment {
      * @param peers     The list of peers used to request the blocks.
      * @param propagate Whether or not to propagate an announce message to all peers.
      */
-    public void getBlocksRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
+    public synchronized void getBlocksRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
         LOGGER.info("Getting a list of blocks from peers.");
 
         for (Peer peer : peers) {
@@ -383,7 +383,7 @@ public class NodeEnvironment {
      *
      * @param block The block to announce.
      */
-    public void announceBlockRequest(Block block) {
+    public synchronized void announceBlockRequest(Block block) {
         LOGGER.info("Announcing block to peers.");
         Hash blockHash = block.computeHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
@@ -414,7 +414,7 @@ public class NodeEnvironment {
      *
      * @param transaction The transaction to announce.
      */
-    public void announceTransactionRequest(Transaction transaction) {
+    public synchronized void announceTransactionRequest(Transaction transaction) {
         LOGGER.info("Announcing transaction to peers.");
         Hash transactionHash = transaction.computeHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
@@ -451,7 +451,7 @@ public class NodeEnvironment {
      * @param peer         The peer used to seek the blockchain.
      * @param startingHash The hash to start from.
      */
-    public void seekBlockchainRequest(Peer peer, Hash startingHash) {
+    public synchronized void seekBlockchainRequest(Peer peer, Hash startingHash) {
         LOGGER.info("Seek blockchain request.");
         Iterator<BrabocoinProtos.Hash> hashesAbove = peer
                 .getBlockingStub()
@@ -468,7 +468,7 @@ public class NodeEnvironment {
      *
      * @return A map of peer matching its block height.
      */
-    public Map<Peer, Integer> discoverTopBlockHeightRequest() {
+    public synchronized Map<Peer, Integer> discoverTopBlockHeightRequest() {
         LOGGER.fine("Requesting peers for top block height.");
 
         Map<Peer, Integer> peerHeights = new HashMap<>();
@@ -494,7 +494,7 @@ public class NodeEnvironment {
      * @param peer The peer to check chain compatibility with.
      * @return The hash of the matched block on the peer's chain.
      */
-    public Hash checkChainCompatibleRequest(Peer peer) {
+    public synchronized Hash checkChainCompatibleRequest(Peer peer) {
         LOGGER.info("Checking chain compatibility with given peer.");
         int depth = 0;
         Hash currentBlockHash = blockchain.getMainChain().getTopBlock().getHash();
@@ -536,7 +536,7 @@ public class NodeEnvironment {
      * @param peers     The peers to request transactions from.
      * @param propagate Whether or not to propagate.
      */
-    public void getTransactionRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
+    public synchronized void getTransactionRequest(List<Hash> hashes, List<Peer> peers, boolean propagate) {
         LOGGER.info("Getting a list of transactions from peers.");
 
         for (Peer peer : peers) {
@@ -581,7 +581,7 @@ public class NodeEnvironment {
      * Requests the transaction pool hashes on each peer.
      * Also calls {@link #getTransactionRequest} for all gathered hashes to all peers.
      */
-    public void seekTransactionPoolRequest() {
+    public synchronized void seekTransactionPoolRequest() {
         LOGGER.info("Seek transaction pool request.");
         List<Hash> hashes = new ArrayList<>();
         for (Peer peer : getPeers()) {
@@ -604,7 +604,7 @@ public class NodeEnvironment {
      *
      * @return Set of peers.
      */
-    public Set<Peer> getPeers() {
+    public synchronized Set<Peer> getPeers() {
         LOGGER.fine("Creating a copy of the set of peers.");
         return peerProcessor.copyPeers();
     }
@@ -616,7 +616,7 @@ public class NodeEnvironment {
      * @param blockHash Hash of the block to get.
      * @return Block instance or null if not found.
      */
-    public Block getBlock(@NotNull Hash blockHash) {
+    public synchronized Block getBlock(@NotNull Hash blockHash) {
         LOGGER.fine("Block requested by hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
         try {
@@ -633,7 +633,7 @@ public class NodeEnvironment {
      * @param blockHash The block hash to indicate the starting position.
      * @return List over block hashes above the given block or null if not found on the main chain or the block is not found.
      */
-    public List<Hash> getBlocksAbove(Hash blockHash) {
+    public synchronized List<Hash> getBlocksAbove(Hash blockHash) {
         LOGGER.fine("Block hashes requested above a given block hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
 
@@ -672,7 +672,7 @@ public class NodeEnvironment {
      *
      * @return Top block height.
      */
-    public int getTopBlockHeight() {
+    public synchronized int getTopBlockHeight() {
         LOGGER.fine("Top block height requested.");
         int height = blockchain.getMainChain().getHeight();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Top height: {0}", height));
@@ -686,7 +686,7 @@ public class NodeEnvironment {
      * @param transactionHash Hash of the transaction to get.
      * @return Transaction instance or null if not found.
      */
-    public Transaction getTransaction(@NotNull Hash transactionHash) {
+    public synchronized Transaction getTransaction(@NotNull Hash transactionHash) {
         LOGGER.fine("Transaction requested by hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(transactionHash.getValue())));
 
@@ -698,7 +698,7 @@ public class NodeEnvironment {
      *
      * @return Transaction hash iterator.
      */
-    public Set<Hash> getTransactionHashSet() {
+    public synchronized Set<Hash> getTransactionHashSet() {
         LOGGER.fine("Transaction iterator creation requested.");
         return transactionPool.getValidatedTransactionHashes();
     }
@@ -709,7 +709,7 @@ public class NodeEnvironment {
      * @param blockHash Hash of the block to check.
      * @return True if it is contained in the main chain.
      */
-    public boolean isChainCompatible(@NotNull Hash blockHash) {
+    public synchronized boolean isChainCompatible(@NotNull Hash blockHash) {
         LOGGER.fine("Chain compatibility check requested for block hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
 
@@ -737,7 +737,7 @@ public class NodeEnvironment {
      *
      * @return List of blocking stubs.
      */
-    private List<NodeGrpc.NodeBlockingStub> getPeerStubs() {
+    private synchronized List<NodeGrpc.NodeBlockingStub> getPeerStubs() {
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 }
