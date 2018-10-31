@@ -33,12 +33,12 @@ public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
     protected BraboConfig config;
 
-    /**
+    /*
      * Main loop timer
      */
-    Timer mainLoopTimer;
+    private Timer mainLoopTimer;
 
-    /**
+    /*
      * Data holders
      */
     private int servicePort;
@@ -46,7 +46,7 @@ public class NodeEnvironment {
     private TransactionPool transactionPool;
     private Queue<Runnable> messageQueue = new LinkedList<>();
 
-    /**
+    /*
      * Processors
      */
     private BlockProcessor blockProcessor;
@@ -71,7 +71,13 @@ public class NodeEnvironment {
 
     /**
      * Setup the environment.
-     * This instantiates the bootstrapping process of peers.
+     * This instantiates the following:
+     * <ol>
+     *  <li>Bootstrapping process of peers.</li>
+     *  <li>Start the main loop.</li>
+     *  <li>Initiate blockchain update.</li>
+     *  <li>Initiate transaction pool population.</li>
+     * </ol>
      */
     public void setup() {
         LOGGER.info("Setting up the node environment.");
@@ -79,18 +85,20 @@ public class NodeEnvironment {
         LOGGER.info("Environment setup done.");
 
         mainLoopTimer = new Timer();
-        mainLoopTimer.schedule(new MainLoopTask(), 0, 500);
+        mainLoopTimer.schedule(new MainLoopTask(), 0, config.loopInterval());
 
         updateBlockchain();
         seekTransactionPoolRequest();
     }
 
+    /**
+     * Gracefully shutdown the node environment, cancelling the main loop timer.
+     */
     public void stop() {
         mainLoopTimer.cancel();
     }
 
     class MainLoopTask extends TimerTask {
-
         @Override
         public void run() {
             while (!messageQueue.isEmpty()) {
@@ -99,6 +107,10 @@ public class NodeEnvironment {
         }
     }
 
+    /**
+     * Update the blockchain, requesting the top heights of each peer.
+     * Also call  {@link #seekBlockchainRequest} on the peer with the longest chain, if the chain is longer than the current chain.
+     */
     private void updateBlockchain() {
         Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
         Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
@@ -142,6 +154,12 @@ public class NodeEnvironment {
         }
     }
 
+    /**
+     * Get all peers matching this client address
+     *
+     * @param clientAddress The address to match.
+     * @return The list of peers matching the address.
+     */
     public List<Peer> findClientPeers(InetAddress clientAddress) {
         return peerProcessor.findClientPeers(clientAddress);
     }
@@ -152,7 +170,7 @@ public class NodeEnvironment {
      *
      * @param peerConsumer The lambda expression evaluated on all peers.
      */
-    public void propagateMessage(Consumer<Peer> peerConsumer) {
+    private void propagateMessage(Consumer<Peer> peerConsumer) {
         for (Peer peer : peerProcessor.copyPeers()) {
             peerConsumer.accept(peer);
         }
@@ -179,10 +197,12 @@ public class NodeEnvironment {
             switch (processedBlockStatus) {
                 case ORPHAN:
                     messageQueue.add(() -> getBlocksRequest(
-                            new ArrayList<Hash>() {{ add(block.getPreviousBlockHash()); }},
+                            new ArrayList<Hash>() {{
+                                add(block.getPreviousBlockHash());
+                            }},
                             peers,
                             propagate
-                            ));
+                    ));
                 case ADDED_TO_BLOCKCHAIN:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
@@ -206,6 +226,7 @@ public class NodeEnvironment {
      * Tries to store the block in the blockchain.
      *
      * @param blockHash Hash of the new block.
+     * @param peers     The peers for which we request the block, if needed.
      */
     public void onReceiveBlockHash(@NotNull Hash blockHash, @NotNull List<Peer> peers) {
         LOGGER.fine("Block hash received.");
@@ -566,6 +587,10 @@ public class NodeEnvironment {
     }
 
 
+    /**
+     * Requests the transaction pool hashes on each peer.
+     * Also calls {@link #getTransactionRequest} for all gathered hashes to all peers.
+     */
     public void seekTransactionPoolRequest() {
         List<Hash> hashes = new ArrayList<>();
         for (Peer peer : getPeers()) {
