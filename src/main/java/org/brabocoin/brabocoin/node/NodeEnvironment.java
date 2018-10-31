@@ -117,6 +117,7 @@ public class NodeEnvironment {
      * Also call  {@link #seekBlockchainRequest} on the peer with the longest chain, if the chain is longer than the current chain.
      */
     private void updateBlockchain() {
+        LOGGER.info("Update blockchain.");
         Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
         Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
                 .entrySet()
@@ -463,10 +464,11 @@ public class NodeEnvironment {
      * the main chain are returned. If the requested block is not on the main chain, the node will return no
      * hashes.
      *
-     * @param peer         The peer used to seek the blockhain.
+     * @param peer         The peer used to seek the blockchain.
      * @param startingHash The hash to start from.
      */
     public void seekBlockchainRequest(Peer peer, Hash startingHash) {
+        LOGGER.info("Seek blockchain request.");
         Iterator<BrabocoinProtos.Hash> hashesAbove = peer
                 .getBlockingStub()
                 .seekBlockchain(ProtoConverter.toProto(startingHash, BrabocoinProtos.Hash.class));
@@ -597,6 +599,7 @@ public class NodeEnvironment {
      * Also calls {@link #getTransactionRequest} for all gathered hashes to all peers.
      */
     public void seekTransactionPoolRequest() {
+        LOGGER.info("Seek transaction pool request.");
         List<Hash> hashes = new ArrayList<>();
         for (Peer peer : getPeers()) {
             Iterator<BrabocoinProtos.Hash> transactionHashes = peer
