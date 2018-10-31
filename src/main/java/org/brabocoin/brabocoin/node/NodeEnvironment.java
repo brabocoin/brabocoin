@@ -15,6 +15,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.*;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +27,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Represents a node environment.
  */
 public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
-    protected BraboConfig config;
+    private BraboConfig config;
 
     /*
      * Main loop timer
@@ -45,7 +47,7 @@ public class NodeEnvironment {
     private int servicePort;
     private Blockchain blockchain;
     private TransactionPool transactionPool;
-    private Queue<Runnable> messageQueue = new LinkedBlockingQueue<>();
+    private Queue<Runnable> messageQueue;
 
     /*
      * Processors
@@ -54,6 +56,17 @@ public class NodeEnvironment {
     private PeerProcessor peerProcessor;
     private TransactionProcessor transactionProcessor;
 
+    /**
+     * Construct a new node environment.
+     *
+     * @param servicePort          The port on which the service is running.
+     * @param blockchain           The blockchain used in this node.
+     * @param blockProcessor       The processor used to process blocks.
+     * @param peerProcessor        The processor used to manipulate the peer set.
+     * @param transactionPool      The transaction pool.
+     * @param transactionProcessor The transaction processor.
+     * @param config               The config used for this node.
+     */
     public NodeEnvironment(int servicePort,
                            Blockchain blockchain,
                            BlockProcessor blockProcessor,
@@ -68,6 +81,7 @@ public class NodeEnvironment {
         this.transactionPool = transactionPool;
         this.transactionProcessor = transactionProcessor;
         this.config = config;
+        this.messageQueue = new LinkedBlockingQueue<>();
     }
 
     /**
@@ -125,19 +139,20 @@ public class NodeEnvironment {
                 .stream()
                 .max(Comparator.comparing(Map.Entry::getValue));
 
-        if (maxHeightEntryOptional.isPresent()) {
-            Peer maxHeightPeer = maxHeightEntryOptional.get().getKey();
-            Integer maxHeight = maxHeightEntryOptional.get().getValue();
-            LOGGER.log(Level.FINE, () -> MessageFormat.format("Max height peer found: {0} at value {1}", maxHeightPeer, maxHeight));
-
-            if (maxHeight > blockchain.getMainChain().getHeight()) {
-                // Peer has a longer chain, need to update.
-                Hash matchingBlockHash = checkChainCompatibleRequest(maxHeightPeer);
-
-                seekBlockchainRequest(maxHeightPeer, matchingBlockHash);
-            }
-        } else {
+        if (!maxHeightEntryOptional.isPresent()) {
             LOGGER.warning("Could not retrieve max height from peers, no entry found.");
+            return;
+        }
+
+        Peer maxHeightPeer = maxHeightEntryOptional.get().getKey();
+        Integer maxHeight = maxHeightEntryOptional.get().getValue();
+        LOGGER.log(Level.FINE, () -> MessageFormat.format("Max height peer found: {0} at value {1}", maxHeightPeer, maxHeight));
+
+        if (maxHeight > blockchain.getMainChain().getHeight()) {
+            // Peer has a longer chain, need to update.
+            Hash matchingBlockHash = checkChainCompatibleRequest(maxHeightPeer);
+
+            seekBlockchainRequest(maxHeightPeer, matchingBlockHash);
         }
     }
 
@@ -153,12 +168,15 @@ public class NodeEnvironment {
      * @param port    The port of the Client
      */
     public void addClientPeer(InetAddress address, int port) {
+        Peer clientPeer;
         try {
-            Peer clientPeer = new Peer(address, port);
-            peerProcessor.addPeer(clientPeer);
+            clientPeer = new Peer(address, port);
         } catch (MalformedSocketException e) {
             LOGGER.log(Level.WARNING, "Could not add client peer: {0}", e.getMessage());
+            return;
         }
+        
+        peerProcessor.addPeer(clientPeer);
     }
 
     /**
@@ -172,14 +190,13 @@ public class NodeEnvironment {
     }
 
     /**
-     * Propagate a peer consuming lambda expression to all known peers.
-     * Only if the given hash was not already propagated.
+     * Propagate a blocking stub consuming lambda expression to all known peers.
      *
-     * @param peerConsumer The lambda expression evaluated on all peers.
+     * @param blockingStubConsumer The lambda expression evaluated on all peer's blocking stubs.
      */
-    private void propagateMessage(Consumer<Peer> peerConsumer) {
-        for (Peer peer : peerProcessor.copyPeers()) {
-            peerConsumer.accept(peer);
+    private void propagateMessageBlocking(Consumer<NodeGrpc.NodeBlockingStub> blockingStubConsumer) {
+        for (NodeGrpc.NodeBlockingStub stub : getPeerStubs()) {
+            blockingStubConsumer.accept(stub);
         }
 
         LOGGER.info("Message propagated to all peers.");
@@ -204,17 +221,16 @@ public class NodeEnvironment {
             switch (processedBlockStatus) {
                 case ORPHAN:
                     messageQueue.add(() -> getBlocksRequest(
-                            new ArrayList<Hash>() {{
-                                add(block.getPreviousBlockHash());
-                            }},
+                            Collections.singletonList(block.getPreviousBlockHash()),
                             peers,
                             propagate
                     ));
+                    // Fall-through intended
                 case ADDED_TO_BLOCKCHAIN:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
-                        messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceBlock(protoBlockHash)));
+                        messageQueue.add(() -> propagateMessageBlocking(s -> s.announceBlock(protoBlockHash)));
                     }
                     break;
 
@@ -245,9 +261,7 @@ public class NodeEnvironment {
                 return;
             }
 
-            messageQueue.add(() -> getBlocksRequest(new ArrayList<Hash>() {{
-                add(blockHash);
-            }}, peers, true));
+            messageQueue.add(() -> getBlocksRequest(Collections.singletonList(blockHash), peers, true));
         } catch (DatabaseException e) {
             LOGGER.log(Level.SEVERE, "Could not check if block was already stored: {0}", e.getMessage());
         }
@@ -269,39 +283,7 @@ public class NodeEnvironment {
             return;
         }
 
-        messageQueue.add(() -> getTransactionRequest(new ArrayList<Hash>() {{
-            add(transactionHash);
-        }}, peers, true));
-    }
-
-    /**
-     * Check whether the given block hash is contained in the main chain.
-     *
-     * @param blockHash Hash of the block to check.
-     * @return True if it is contained in the main chain.
-     */
-    public boolean isChainCompatible(@NotNull Hash blockHash) {
-        LOGGER.fine("Chain compatibility check requested for block hash.");
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
-
-        try {
-            final IndexedBlock indexedBlock = blockchain.getIndexedBlock(blockHash);
-
-            if (indexedBlock == null) {
-                LOGGER.log(Level.FINEST, "Hash not found");
-                return false;
-            }
-
-            final boolean contains = blockchain.getMainChain().contains(indexedBlock);
-
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash contained in main chain: {0}", contains));
-
-            return contains;
-        } catch (DatabaseException e) {
-            LOGGER.log(Level.SEVERE, "Indexed block not available: {0}", e.getMessage());
-        }
-
-        return false;
+        messageQueue.add(() -> getTransactionRequest(Collections.singletonList(transactionHash), peers, true));
     }
 
     /**
@@ -320,7 +302,7 @@ public class NodeEnvironment {
                     if (propagate) {
                         final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
-                        messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash)));
+                        messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                     }
                     break;
 
@@ -335,7 +317,7 @@ public class NodeEnvironment {
                 // Propagate any remaining transactions that became valid.
                 for (Transaction t : result.getValidatedOrphans()) {
                     final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.computeHash(), BrabocoinProtos.Hash.class);
-                    messageQueue.add(() -> propagateMessage((Peer p) -> p.getBlockingStub().announceTransaction(protoTransactionHash)));
+                    messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                 }
             }
         } catch (DatabaseException e) {
@@ -343,6 +325,7 @@ public class NodeEnvironment {
         }
 
     }
+
 
     //================================================================================
     // Requests
@@ -477,9 +460,7 @@ public class NodeEnvironment {
         List<Hash> hashes = new ArrayList<>();
         hashesAbove.forEachRemaining(h -> hashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
 
-        messageQueue.add(() -> getBlocksRequest(hashes, new ArrayList<Peer>() {{
-            add(peer);
-        }}, false));
+        messageQueue.add(() -> getBlocksRequest(hashes, Collections.singletonList(peer), false));
     }
 
     /**
@@ -612,6 +593,7 @@ public class NodeEnvironment {
         messageQueue.add(() -> getTransactionRequest(hashes, new ArrayList<>(getPeers()), false));
     }
 
+
     //================================================================================
     // Getters
     //================================================================================
@@ -628,7 +610,7 @@ public class NodeEnvironment {
 
     /**
      * Handles the request for a block.
-     * TODO: Describe logic
+     * Gets the block from the blockchain.
      *
      * @param blockHash Hash of the block to get.
      * @return Block instance or null if not found.
@@ -655,28 +637,24 @@ public class NodeEnvironment {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
 
         try {
-            final IndexedBlock indexedBlock = blockchain.getIndexedBlock(blockHash);
+            IndexedBlock indexedBlock = blockchain.getIndexedBlock(blockHash);
 
             if (indexedBlock == null) {
-                return new ArrayList<>();
+                return Collections.emptyList();
             }
 
             boolean inMainChain = blockchain.getMainChain().contains(indexedBlock);
 
             if (!inMainChain) {
-                return new ArrayList<>();
+                return Collections.emptyList();
             }
 
             List<Hash> blocksAbove = new ArrayList<>();
-            final int chainHeight = blockchain.getMainChain().getHeight();
 
-            for (int i = indexedBlock.getBlockInfo().getBlockHeight() + 1; i <= chainHeight; i++) {
-                IndexedBlock block = blockchain.getMainChain().getBlockAtHeight(i);
-                if (block != null) {
-                    blocksAbove.add(block.getHash());
-                } else {
-                    LOGGER.log(Level.SEVERE, "Could not get indexed block in main chain.");
-                    throw new IllegalStateException("Intermediate block in chain not found.");
+            while(indexedBlock != null) {
+                indexedBlock = blockchain.getMainChain().getNextBlock(indexedBlock);
+                if (indexedBlock != null) {
+                    blocksAbove.add(indexedBlock.getHash());
                 }
             }
 
@@ -685,7 +663,7 @@ public class NodeEnvironment {
             LOGGER.log(Level.SEVERE, "Indexed block not available: {0}", e.getMessage());
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -702,7 +680,7 @@ public class NodeEnvironment {
 
     /**
      * Handles the request for a transaction.
-     * TODO: Describe logic
+     * Gets the validated transaction by the given transaction hash.
      *
      * @param transactionHash Hash of the transaction to get.
      * @return Transaction instance or null if not found.
@@ -722,5 +700,43 @@ public class NodeEnvironment {
     public Set<Hash> getTransactionHashSet() {
         LOGGER.fine("Transaction iterator creation requested.");
         return transactionPool.getValidatedTransactionHashes();
+    }
+
+    /**
+     * Check whether the given block hash is contained in the main chain.
+     *
+     * @param blockHash Hash of the block to check.
+     * @return True if it is contained in the main chain.
+     */
+    public boolean isChainCompatible(@NotNull Hash blockHash) {
+        LOGGER.fine("Chain compatibility check requested for block hash.");
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue())));
+
+        IndexedBlock indexedBlock = null;
+        try {
+            indexedBlock = blockchain.getIndexedBlock(blockHash);
+        } catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Indexed block not available: {0}", e.getMessage());
+        }
+
+        if (indexedBlock == null) {
+            LOGGER.log(Level.FINEST, "Hash not found");
+            return false;
+        }
+
+        final boolean contains = blockchain.getMainChain().contains(indexedBlock);
+
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash contained in main chain: {0}", contains));
+
+        return contains;
+    }
+
+    /**
+     * Get the blocking stubs of all peers.
+     *
+     * @return List of blocking stubs.
+     */
+    private List<NodeGrpc.NodeBlockingStub> getPeerStubs() {
+        return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 }

@@ -87,47 +87,64 @@ public class PeerProcessor {
         while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.get(0);
             LOGGER.log(Level.FINEST, "Bootstrapping on peer: {0}", handshakePeer);
-            try {
-                LOGGER.log(Level.FINEST, "Performing handshake.");
-                // Perform a handshake with the peer
-                BrabocoinProtos.HandshakeResponse protoResponse = handshakePeer.getBlockingStub()
-                        .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                        .handshake(
-                                ProtoConverter.toProto(
-                                        new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
-                                )
-                        );
-                HandshakeResponse response = ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
-                LOGGER.log(Level.FINEST, "Response acquired, got {0} peers.", response.getPeers().size());
+            LOGGER.log(Level.FINEST, "Performing handshake.");
+            // Perform a handshake with the peer
+            HandshakeResponse response = handshake(handshakePeer, servicePort);
+            if (response == null) {
+                handshakePeers.remove(0);
+                continue;
+            }
 
-                LOGGER.log(Level.FINEST, "Adding handshake peer to peer list, as handshake was successful.");
-                // We got a response from the current handshake peer, register this peer as valid
-                peers.add(handshakePeer);
+            LOGGER.log(Level.FINEST, "Response acquired, got {0} peers.", response.getPeers().size());
 
-                // Add the discovered peers to the list of handshake peers
-                for (final String peerSocket : response.getPeers()) {
-                    LOGGER.log(Level.FINEST, "Discovered new peer, raw socket string: {0}", peerSocket);
-                    try {
-                        final Peer discoveredPeer = new Peer(peerSocket);
-                        LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
-                        if (!peers.contains(discoveredPeer)) {
-                            // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
-                            handshakePeers.add(discoveredPeer);
-                        }
-                    } catch (MalformedSocketException e) {
-                        LOGGER.log(Level.WARNING, "Error while parsing raw peer socket string: {0}", e.getMessage());
-                        // TODO: Ignore and continue?
+            LOGGER.log(Level.FINEST, "Adding handshake peer to peer list, as handshake was successful.");
+            // We got a response from the current handshake peer, register this peer as valid
+            peers.add(handshakePeer);
+
+            // Add the discovered peers to the list of handshake peers
+            for (final String peerSocket : response.getPeers()) {
+                LOGGER.log(Level.FINEST, "Discovered new peer, raw socket string: {0}", peerSocket);
+                try {
+                    final Peer discoveredPeer = new Peer(peerSocket);
+                    LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
+                    if (!peers.contains(discoveredPeer)) {
+                        // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
+                        handshakePeers.add(discoveredPeer);
                     }
+                } catch (MalformedSocketException e) {
+                    LOGGER.log(Level.WARNING, "Error while parsing raw peer socket string: {0}", e.getMessage());
+                    // TODO: Ignore and continue?
                 }
-            } catch (StatusRuntimeException e) {
-                LOGGER.log(Level.WARNING, "Error while handshaking with peer: {0}", e.getMessage());
-                // TODO: Ignore and continue?
             }
 
             handshakePeers.remove(0);
         }
 
         // TODO: Update peers when connection is lost.
+    }
+
+    /**
+     * Handshake with the given port, sending the local service port number.
+     *
+     * @param peer        Peer to handshake with
+     * @param servicePort Local service port
+     * @return HandshakeResponse object.
+     */
+    public HandshakeResponse handshake(Peer peer, int servicePort) {
+        BrabocoinProtos.HandshakeResponse protoResponse;
+        try {
+            protoResponse = peer.getBlockingStub()
+                    .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
+                    .handshake(
+                            ProtoConverter.toProto(
+                                    new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
+                            )
+                    );
+        } catch (StatusRuntimeException e) {
+            LOGGER.log(Level.WARNING, "Error while handshaking with peer: {0}", e.getMessage());
+            return null;
+        }
+        return ProtoConverter.toDomain(protoResponse, HandshakeResponse.Builder.class);
     }
 
     /**

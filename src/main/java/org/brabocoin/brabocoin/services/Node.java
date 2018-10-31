@@ -137,17 +137,16 @@ public class Node {
 
             HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
             BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(response, BrabocoinProtos.HandshakeResponse.class);
+            logOutgoingResponse(protoResponse);
+
+            responseObserver.onNext(protoResponse);
+            responseObserver.onCompleted();
 
             // Add the client as a valid peer.
             InetSocketAddress clientAddress = (InetSocketAddress) serverCallCapture.get().getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             if (clientAddress != null) {
                 environment.addClientPeer(clientAddress.getAddress(), request.getServicePort());
             }
-
-            logOutgoingResponse(protoResponse);
-
-            responseObserver.onNext(protoResponse);
-            responseObserver.onCompleted();
         }
 
         @Override

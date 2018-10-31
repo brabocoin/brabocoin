@@ -18,10 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -111,13 +108,9 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
-        }, consensus, new ArrayList<Block>() {{
-            add(newBlock);
-        }});
+        }, consensus, Collections.singletonList(newBlock));
 
         // Start nodes
         nodeA.start();
@@ -181,9 +174,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         });
 
@@ -195,18 +186,14 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
 
             @Override
             public int targetPeerCount() {
                 return 1;
             }
-        }, consensus, new ArrayList<Block>() {{
-            add(newBlock);
-        }});
+        }, consensus, Collections.singletonList(newBlock));
 
         // Start nodes
         nodeA.start();
@@ -259,13 +246,9 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
-        }, consensus, new ArrayList<Transaction>() {{
-            add(newTransaction);
-        }});
+        }, consensus, Collections.singletonList(newTransaction));
 
         // Start nodes
         nodeA.start();
@@ -322,9 +305,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         });
 
@@ -336,18 +317,14 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
 
             @Override
             public int targetPeerCount() {
                 return 1;
             }
-        }, consensus, new ArrayList<Transaction>() {{
-            add(newTransaction);
-        }});
+        }, consensus, Collections.singletonList(newTransaction));
 
         // Start nodes
         nodeA.start();
@@ -356,7 +333,7 @@ public class NodeTest {
 
         nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
 
-        await().atMost(20, TimeUnit.SECONDS)
+        await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
 
         assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
@@ -401,9 +378,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         });
 
@@ -415,13 +390,9 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
-        }, consensus, new ArrayList<Transaction>() {{
-            add(newTransaction);
-        }});
+        }, consensus, Collections.singletonList(newTransaction));
 
         // Start nodes
         nodeA.start();
@@ -474,9 +445,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         }, new Consensus(), chainB);
 
@@ -493,9 +462,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
         }, new Consensus(), chainC);
 
@@ -548,9 +515,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         }, new Consensus(), chainA);
 
@@ -662,9 +627,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         }, new Consensus(), chainA);
 
@@ -697,9 +660,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
 
             @Override
@@ -797,9 +758,7 @@ public class NodeTest {
 
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
         });
 
