@@ -273,8 +273,8 @@ class BlockDatabaseTest {
 
         BlockInfo info = database.storeBlock(block, false);
         assertNotNull(info);
-        assertEquals(0, info.getOffsetInUndoFile());
-        assertEquals(0, info.getSizeInUndoFile());
+        assertEquals(-1, info.getOffsetInUndoFile());
+        assertEquals(-1, info.getSizeInUndoFile());
 
         IndexedBlock indexedBlock = new IndexedBlock(hash, info);
         BlockUndo undo = new BlockUndo(new ArrayList<>());
@@ -284,10 +284,27 @@ class BlockDatabaseTest {
         BlockInfo newInfo = database.findBlockInfo(hash);
 
         assertNotNull(newInfo);
-        assertTrue(info.getSizeInFile() > 0);
+        assertTrue(newInfo.getSizeInUndoFile() >= 0);
 
         BlockUndo retrievedUndo = database.findBlockUndo(hash);
         assertNotNull(retrievedUndo);
+    }
+
+    @Test
+    void storeBlockUndoTwice() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash hash = block.computeHash();
+
+        BlockInfo oldInfo = database.storeBlock(block, false);
+
+        IndexedBlock indexedBlock = new IndexedBlock(hash, oldInfo);
+        BlockUndo undo = new BlockUndo(new ArrayList<>());
+
+        BlockInfo info = database.storeBlockUndo(indexedBlock, undo);
+        BlockInfo newInfo = database.storeBlockUndo(indexedBlock, undo);
+
+        assertEquals(info.getSizeInUndoFile(), newInfo.getSizeInUndoFile());
+        assertEquals(info.getOffsetInUndoFile(), newInfo.getOffsetInUndoFile());
     }
 
     @Test
