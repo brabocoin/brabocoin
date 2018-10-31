@@ -460,7 +460,9 @@ public class NodeEnvironment {
         List<Hash> hashes = new ArrayList<>();
         hashesAbove.forEachRemaining(h -> hashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
 
-        messageQueue.add(() -> getBlocksRequest(hashes, Collections.singletonList(peer), false));
+        if (hashes.size() > 0) {
+            messageQueue.add(() -> getBlocksRequest(hashes, Collections.singletonList(peer), false));
+        }
     }
 
     /**
