@@ -591,7 +591,9 @@ public class NodeEnvironment {
 
             transactionHashes.forEachRemaining(h -> hashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
         }
-        messageQueue.add(() -> getTransactionRequest(hashes, new ArrayList<>(getPeers()), false));
+        if (hashes.size() > 0) {
+            messageQueue.add(() -> getTransactionRequest(hashes, new ArrayList<>(getPeers()), false));
+        }
     }
 
 
