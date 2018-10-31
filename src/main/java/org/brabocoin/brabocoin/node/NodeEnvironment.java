@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +45,7 @@ public class NodeEnvironment {
     private int servicePort;
     private Blockchain blockchain;
     private TransactionPool transactionPool;
-    private Queue<Runnable> messageQueue = new LinkedList<>();
+    private Queue<Runnable> messageQueue = new LinkedBlockingQueue<>();
 
     /*
      * Processors
