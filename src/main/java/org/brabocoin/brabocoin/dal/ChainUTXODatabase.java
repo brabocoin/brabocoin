@@ -55,7 +55,7 @@ public class ChainUTXODatabase extends UTXODatabase {
      * @return The block hash of the last processed block.
      * @throws DatabaseException     When the data could not be retrieved.
      */
-    public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
+    public synchronized @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
         LOGGER.log(Level.FINE, "Getting last processed block hash.");
         ByteString key = getBlockMarkerKey();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
@@ -79,7 +79,7 @@ public class ChainUTXODatabase extends UTXODatabase {
      * @throws DatabaseException
           When the data could not be stored.
      */
-    public void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
+    public synchronized void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
         LOGGER.log(Level.FINE, "Sets the hash of the last block up to which the UTXO set is up-to-date.");
         ByteString key = getBlockMarkerKey();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
@@ -89,7 +89,7 @@ public class ChainUTXODatabase extends UTXODatabase {
         store(key, value);
     }
 
-    private ByteString getBlockMarkerKey() {
+    private synchronized ByteString getBlockMarkerKey() {
         LOGGER.log(Level.FINE, "Block marker key value: {0}", toHexString(KEY_BLOCK_MARKER));
         return KEY_BLOCK_MARKER;
     }

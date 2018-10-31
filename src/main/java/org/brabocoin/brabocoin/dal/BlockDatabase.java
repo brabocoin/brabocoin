@@ -1,10 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Message;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+import com.google.protobuf.*;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
@@ -54,12 +50,9 @@ public class BlockDatabase {
      * Creates a new block database using provided the key-value store and directory for the
      * block files.
      *
-     * @param storage
-     *     The key-value store to use for the database.
-     * @param config
-     *     The config used for this block database.
-     * @throws DatabaseException
-     *     When the database could not be initialized.
+     * @param storage The key-value store to use for the database.
+     * @param config  The config used for this block database.
+     * @throws DatabaseException When the database could not be initialized.
      */
     public BlockDatabase(@NotNull KeyValueStore storage, BraboConfig config) throws DatabaseException {
         this.storage = storage;
@@ -107,25 +100,22 @@ public class BlockDatabase {
     /**
      * Set the file information record in the database.
      *
-     * @param fileNumber
-     *     The file number of which to set the information record.
-     * @param fileInfo
-     *     The file information record to store.
-     * @throws DatabaseException
-     *     When the file information could not be stored.
+     * @param fileNumber The file number of which to set the information record.
+     * @param fileInfo   The file information record to store.
+     * @throws DatabaseException When the file information could not be stored.
      */
-    private void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
+    private synchronized void setBlockFileInfo(int fileNumber, @NotNull BlockFileInfo fileInfo) throws DatabaseException {
         ByteString key = getFileKey(fileNumber);
         ByteString value = ProtoConverter.toProtoBytes(fileInfo, BrabocoinStorageProtos.BlockFileInfo.class);
 
         store(key, value);
     }
 
-    private ByteString getFileKey(int fileNumber) {
+    private synchronized ByteString getFileKey(int fileNumber) {
         return KEY_PREFIX_FILE.concat(ByteUtil.toByteString(fileNumber));
     }
 
-    private void store(ByteString key, ByteString value) throws DatabaseException {
+    private synchronized void store(ByteString key, ByteString value) throws DatabaseException {
         storage.put(key, value);
     }
 
@@ -139,15 +129,12 @@ public class BlockDatabase {
      * {@link BlockDatabase#storeBlockUndo(IndexedBlock, BlockUndo)} has not yet been called on
      * the block. In that case, the offset and size field for the undo file are set to {@code 0}.
      *
-     * @param block
-     *     The block to store.
-     * @param validated
-     *     Whether the block is validated.
+     * @param block     The block to store.
+     * @param validated Whether the block is validated.
      * @return The block information of the added block.
-     * @throws DatabaseException
-     *     When the block could not be stored.
+     * @throws DatabaseException When the block could not be stored.
      */
-    public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
+    public synchronized @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
         LOGGER.fine("Storing block.");
         Hash hash = block.computeHash();
         ByteString key = getBlockKey(hash);
@@ -161,7 +148,7 @@ public class BlockDatabase {
 
         // Get serialized block
         BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block,
-            BrabocoinProtos.Block.class
+                BrabocoinProtos.Block.class
         );
         int size = protoBlock.getSerializedSize();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("size: {0}", size));
@@ -180,18 +167,18 @@ public class BlockDatabase {
 
         // Write the block info to database
         BlockInfo blockInfo = new BlockInfo(block.getPreviousBlockHash(),
-            block.getMerkleRoot(),
-            block.getTargetValue(),
-            block.getNonce(),
-            block.getTimestamp(),
-            block.getBlockHeight(),
-            block.getTransactions().size(),
-            validated,
-            fileNumber,
-            offsetInFile,
-            size,
-            -1,
-            -1
+                block.getMerkleRoot(),
+                block.getTargetValue(),
+                block.getNonce(),
+                block.getTimestamp(),
+                block.getBlockHeight(),
+                block.getTransactions().size(),
+                validated,
+                fileNumber,
+                offsetInFile,
+                size,
+                -1,
+                -1
         );
         LOGGER.fine("Created BlockInfo for block to be stored.");
 
@@ -205,16 +192,13 @@ public class BlockDatabase {
     /**
      * Stores the block undo data and returns the updated block info record.
      *
-     * @param block
-     *     The block to store the undo data of.
-     * @param undo
-     *     The block undo data.
+     * @param block The block to store the undo data of.
+     * @param undo  The block undo data.
      * @return The updated block information record.
-     * @throws DatabaseException
-     *     When the undo data could not be stored.
+     * @throws DatabaseException When the undo data could not be stored.
      */
-    public @NotNull BlockInfo storeBlockUndo(@NotNull IndexedBlock block,
-                                             @NotNull BlockUndo undo) throws DatabaseException {
+    public synchronized @NotNull BlockInfo storeBlockUndo(@NotNull IndexedBlock block,
+                                                          @NotNull BlockUndo undo) throws DatabaseException {
         LOGGER.fine("Store block undo data.");
         BlockInfo info = block.getBlockInfo();
 
@@ -224,30 +208,30 @@ public class BlockDatabase {
         }
 
         BrabocoinStorageProtos.BlockUndo protoUndo = ProtoConverter.toProto(undo,
-            BrabocoinStorageProtos.BlockUndo.class
+                BrabocoinStorageProtos.BlockUndo.class
         );
         int undoSize = protoUndo.getSerializedSize();
         LOGGER.finest(() -> MessageFormat.format("undoSize={0}", undoSize));
 
         int offsetInUndoFile = writeProtoToFile(
-            getUndoFileName(info.getFileNumber()),
-            protoUndo
+                getUndoFileName(info.getFileNumber()),
+                protoUndo
         );
         LOGGER.finest(() -> MessageFormat.format("offsetInUndoFile={0}", offsetInUndoFile));
 
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
-            info.getMerkleRoot(),
-            info.getTargetValue(),
-            info.getNonce(),
-            info.getTimestamp(),
-            info.getBlockHeight(),
-            info.getTransactionCount(),
-            info.isValidated(),
-            info.getFileNumber(),
-            info.getOffsetInFile(),
-            info.getSizeInFile(),
-            offsetInUndoFile,
-            undoSize
+                info.getMerkleRoot(),
+                info.getTargetValue(),
+                info.getNonce(),
+                info.getTimestamp(),
+                info.getBlockHeight(),
+                info.getTransactionCount(),
+                info.isValidated(),
+                info.getFileNumber(),
+                info.getOffsetInFile(),
+                info.getSizeInFile(),
+                offsetInUndoFile,
+                undoSize
         );
 
         ByteString key = getBlockKey(block.getHash());
@@ -257,14 +241,13 @@ public class BlockDatabase {
         return newInfo;
     }
 
-    private int writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
+    private synchronized int writeProtoToFile(String fileName, @NotNull MessageLite proto) throws DatabaseException {
         int offsetInFile;
         try (RandomAccessFile file = new RandomAccessFile(fileName, "rw")) {
             file.seek(file.length());
             offsetInFile = Math.toIntExact(file.getFilePointer());
             file.write(proto.toByteArray());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Data could not be written to disk.", e);
             throw new DatabaseException("Data could not be written to disk.", e);
         }
@@ -272,11 +255,11 @@ public class BlockDatabase {
         return offsetInFile;
     }
 
-    private String getUndoFileName(int fileNumber) {
+    private synchronized String getUndoFileName(int fileNumber) {
         return Paths.get(this.directory.getPath(), "und" + fileNumber + ".dat").toString();
     }
 
-    private ByteString getBlockKey(@NotNull Hash hash) {
+    private synchronized ByteString getBlockKey(@NotNull Hash hash) {
         LOGGER.fine("Getting block key.");
         ByteString key = KEY_PREFIX_BLOCK.concat(hash.getValue());
         LOGGER.log(Level.FINEST, "Block key: {0}", toHexString(key));
@@ -286,17 +269,14 @@ public class BlockDatabase {
     /**
      * Sets the validation status of the block with the given hash.
      *
-     * @param blockHash
-     *     The hash of the block.
-     * @param validated
-     *     The validation status.
+     * @param blockHash The hash of the block.
+     * @param validated The validation status.
      * @return The updated block information.
-     * @throws DatabaseException
-     *     When the block is not stored in the database, or when the new status could not be
-     *     written to the database.
+     * @throws DatabaseException When the block is not stored in the database, or when the new status could not be
+     *                           written to the database.
      */
-    public @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash,
-                                                       boolean validated) throws DatabaseException {
+    public synchronized @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash,
+                                                                    boolean validated) throws DatabaseException {
         LOGGER.fine("Set block validation status.");
 
         ByteString key = getBlockKey(blockHash);
@@ -308,18 +288,18 @@ public class BlockDatabase {
         }
 
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
-            info.getMerkleRoot(),
-            info.getTargetValue(),
-            info.getNonce(),
-            info.getTimestamp(),
-            info.getBlockHeight(),
-            info.getTransactionCount(),
-            validated,
-            info.getFileNumber(),
-            info.getOffsetInFile(),
-            info.getSizeInFile(),
-            info.getOffsetInUndoFile(),
-            info.getSizeInUndoFile()
+                info.getMerkleRoot(),
+                info.getTargetValue(),
+                info.getNonce(),
+                info.getTimestamp(),
+                info.getBlockHeight(),
+                info.getTransactionCount(),
+                validated,
+                info.getFileNumber(),
+                info.getOffsetInFile(),
+                info.getSizeInFile(),
+                info.getOffsetInUndoFile(),
+                info.getSizeInUndoFile()
         );
 
         ByteString value = ProtoConverter.toProtoBytes(newInfo, BrabocoinStorageProtos.BlockInfo.class);
@@ -331,16 +311,12 @@ public class BlockDatabase {
     /**
      * Update the file info record in the database.
      *
-     * @param fileNumber
-     *     The file number to update the record for.
-     * @param block
-     *     The newly added block to the specified file.
-     * @param serializedSize
-     *     The size of the newly added block.
-     * @throws DatabaseException
-     *     When the data could not be stored.
+     * @param fileNumber     The file number to update the record for.
+     * @param block          The newly added block to the specified file.
+     * @param serializedSize The size of the newly added block.
+     * @throws DatabaseException When the data could not be stored.
      */
-    private void updateFileInfo(int fileNumber, @NotNull Block block, int serializedSize) throws DatabaseException {
+    private synchronized void updateFileInfo(int fileNumber, @NotNull Block block, int serializedSize) throws DatabaseException {
         LOGGER.fine("Updating file info.");
         BlockFileInfo fileInfo = findBlockFileInfo(fileNumber);
 
@@ -351,11 +327,11 @@ public class BlockDatabase {
         LOGGER.fine("Found file info.");
 
         BlockFileInfo newFileInfo = new BlockFileInfo(fileInfo.getNumberOfBlocks() + 1,
-            fileInfo.getSize() + serializedSize,
-            Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
-            Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
-            Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
-            Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
+                fileInfo.getSize() + serializedSize,
+                Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
+                Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
+                Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
+                Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
         );
         LOGGER.fine("Created new file info for updated version.");
 
@@ -368,13 +344,11 @@ public class BlockDatabase {
      * When the new block is too large to be put in the current file (such that the maximum file
      * size is not exceeded), the current file number is incremented.
      *
-     * @param blockSize
-     *     The serialized size of the new block to store.
+     * @param blockSize The serialized size of the new block to store.
      * @return The file number in which the block can be stored.
-     * @throws DatabaseException
-     *     When the file data could not be retrieved.
+     * @throws DatabaseException When the file data could not be retrieved.
      */
-    private int nextFileNumber(int blockSize) throws DatabaseException {
+    private synchronized int nextFileNumber(int blockSize) throws DatabaseException {
         LOGGER.fine("Getting next file number.");
         int current = getCurrentFileNumber();
 
@@ -387,7 +361,7 @@ public class BlockDatabase {
         LOGGER.fine("Found file info.");
 
         if (fileInfo.getSize() + blockSize <= maxFileSize) {
-           LOGGER.fine("Block fits in current file.");
+            LOGGER.fine("Block fits in current file.");
             return current;
         } else {
             LOGGER.fine("Registering next block file, block does not fit in current file.");
@@ -396,7 +370,7 @@ public class BlockDatabase {
         }
     }
 
-    private void registerNewBlockFile(int fileNumber) throws DatabaseException {
+    private synchronized void registerNewBlockFile(int fileNumber) throws DatabaseException {
         LOGGER.fine("Registering new block file.");
         BlockFileInfo fileInfo = BlockFileInfo.createEmpty();
         LOGGER.fine("Setting block file info and file number.");
@@ -407,14 +381,12 @@ public class BlockDatabase {
     /**
      * Find the block with the given block hash.
      *
-     * @param hash
-     *     The hash of the block to find.
+     * @param hash The hash of the block to find.
      * @return The full block with the given hash, or {@code null} if no block with that hash is
      * stored in the database.
-     * @throws DatabaseException
-     *     When the block could not be retrieved.
+     * @throws DatabaseException When the block could not be retrieved.
      */
-    public @Nullable Block findBlock(@NotNull Hash hash) throws DatabaseException {
+    public synchronized @Nullable Block findBlock(@NotNull Hash hash) throws DatabaseException {
         LOGGER.fine("Finding block for a given hash.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Hash: {0}", toHexString(hash.getValue())));
         BlockInfo blockInfo = findBlockInfo(hash);
@@ -433,14 +405,12 @@ public class BlockDatabase {
     /**
      * Find the block information from the database for the block with the given hash.
      *
-     * @param hash
-     *     The hash of the block to find the block information for.
+     * @param hash The hash of the block to find the block information for.
      * @return The block information from the database for the given block hash, or {@code null}
      * when the block hash is not present in the database.
-     * @throws DatabaseException
-     *     When the block information could not be retrieved.
+     * @throws DatabaseException When the block information could not be retrieved.
      */
-    public @Nullable BlockInfo findBlockInfo(@NotNull Hash hash) throws DatabaseException {
+    public synchronized @Nullable BlockInfo findBlockInfo(@NotNull Hash hash) throws DatabaseException {
         LOGGER.fine("Finding block info for a given hash.");
         ByteString key = getBlockKey(hash);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
@@ -448,12 +418,12 @@ public class BlockDatabase {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
 
         return parseProtoValue(value,
-            BlockInfo.Builder.class,
-            BrabocoinStorageProtos.BlockInfo.parser()
+                BlockInfo.Builder.class,
+                BrabocoinStorageProtos.BlockInfo.parser()
         );
     }
 
-    private @NotNull ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
+    private synchronized @NotNull ByteString readRawBlockFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         LOGGER.fine("Read raw block from file.");
         String fileName = getBlockFileName(blockInfo.getFileNumber());
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("filename: {0}", fileName));
@@ -465,29 +435,28 @@ public class BlockDatabase {
         return readBytesFromFile(fileName, offset, size);
     }
 
-    private <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
+    private synchronized <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
         try {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
-        }
-        catch (InvalidProtocolBufferException e) {
+        } catch (InvalidProtocolBufferException e) {
             LOGGER.log(Level.SEVERE, "Data could not be parsed: {0}", e.getMessage());
             throw new DatabaseException("Data could not be parsed.", e);
         }
     }
 
-    private @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
+    private synchronized @Nullable ByteString retrieve(ByteString key) throws DatabaseException {
         LOGGER.fine("Getting ByteString from storage.");
         return storage.get(key);
     }
 
-    private String getBlockFileName(int fileNumber) {
+    private synchronized String getBlockFileName(int fileNumber) {
         LOGGER.fine("Getting block file name.");
         String path = Paths.get(this.directory.getPath(), "blk" + fileNumber + ".dat").toString();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("path: {0}", path));
         return path;
     }
 
-    private @NotNull ByteString readBytesFromFile(@NotNull String fileName, int offset,
+    private synchronized @NotNull ByteString readBytesFromFile(@NotNull String fileName, int offset,
                                                   int size) throws DatabaseException {
         LOGGER.fine("Read raw bytes from file.");
         byte[] data;
@@ -497,8 +466,7 @@ public class BlockDatabase {
             file.seek(offset);
             file.readFully(data);
             LOGGER.fine("Read file into input stream.");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Could not read file: {0}", e.getMessage());
             throw new DatabaseException("Data could not be read from file.", e);
         }
@@ -509,14 +477,12 @@ public class BlockDatabase {
     /**
      * Retrieve the block undo data from the database.
      *
-     * @param hash
-     *     The hash of the block of which to find the undo data of, or {@code null} when the undo
-     *     data could not be found.
+     * @param hash The hash of the block of which to find the undo data of, or {@code null} when the undo
+     *             data could not be found.
      * @return The block undo data.
-     * @throws DatabaseException
-     *     When the block undo data could not be retrieved.
+     * @throws DatabaseException When the block undo data could not be retrieved.
      */
-    public @Nullable BlockUndo findBlockUndo(@NotNull Hash hash) throws DatabaseException {
+    public synchronized @Nullable BlockUndo findBlockUndo(@NotNull Hash hash) throws DatabaseException {
         BlockInfo info = findBlockInfo(hash);
 
         if (info == null) {
@@ -529,27 +495,24 @@ public class BlockDatabase {
     /**
      * Retrieve the block undo data from the database.
      *
-     * @param info
-     *     The block information record of the block of which to find the undo data of, or {@code
-     *     null} when the undo data could not be found.
+     * @param info The block information record of the block of which to find the undo data of, or {@code
+     *             null} when the undo data could not be found.
      * @return The block undo data.
-     * @throws DatabaseException
-     *     When the block undo data could not be retrieved.
+     * @throws DatabaseException When the block undo data could not be retrieved.
      */
-    public @Nullable BlockUndo findBlockUndo(@NotNull BlockInfo info) throws DatabaseException {
+    public synchronized @Nullable BlockUndo findBlockUndo(@NotNull BlockInfo info) throws DatabaseException {
         // Check if undo data is not stored
         if (info.getSizeInUndoFile() == -1 && info.getOffsetInUndoFile() == -1) {
             return null;
         }
-
         ByteString rawUndo = readRawUndoFromFile(info);
         return parseProtoValue(rawUndo,
-            BlockUndo.Builder.class,
-            BrabocoinStorageProtos.BlockUndo.parser()
+                BlockUndo.Builder.class,
+                BrabocoinStorageProtos.BlockUndo.parser()
         );
     }
 
-    private @NotNull ByteString readRawUndoFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
+    private synchronized @NotNull ByteString readRawUndoFromFile(@NotNull BlockInfo blockInfo) throws DatabaseException {
         LOGGER.fine("Read raw undo data from file.");
         String fileName = getUndoFileName(blockInfo.getFileNumber());
         LOGGER.log(Level.FINEST, "filename: {0}", fileName);
@@ -564,13 +527,11 @@ public class BlockDatabase {
     /**
      * Check whether the block with the given hash is stored in the database.
      *
-     * @param hash
-     *     The hash of the block.
+     * @param hash The hash of the block.
      * @return Whether the block is stored in the database.
-     * @throws DatabaseException
-     *     When the block information could not be retrieved.
+     * @throws DatabaseException When the block information could not be retrieved.
      */
-    public boolean hasBlock(@NotNull Hash hash) throws DatabaseException {
+    public synchronized boolean hasBlock(@NotNull Hash hash) throws DatabaseException {
         ByteString key = getBlockKey(hash);
         return storage.has(key);
     }
@@ -578,14 +539,12 @@ public class BlockDatabase {
     /**
      * Find the file information for the given file number.
      *
-     * @param fileNumber
-     *     The file number to find the file information for.
+     * @param fileNumber The file number to find the file information for.
      * @return The file information record, or {@code null} if the record for the given file
      * number is not present in the database.
-     * @throws DatabaseException
-     *     When the file information could not be retrieved.
+     * @throws DatabaseException When the file information could not be retrieved.
      */
-    public @Nullable BlockFileInfo findBlockFileInfo(int fileNumber) throws DatabaseException {
+    public synchronized @Nullable BlockFileInfo findBlockFileInfo(int fileNumber) throws DatabaseException {
         LOGGER.fine("Getting block file info.");
         ByteString key = getFileKey(fileNumber);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
@@ -593,8 +552,8 @@ public class BlockDatabase {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
 
         return parseProtoValue(value,
-            BlockFileInfo.Builder.class,
-            BrabocoinStorageProtos.BlockFileInfo.parser()
+                BlockFileInfo.Builder.class,
+                BrabocoinStorageProtos.BlockFileInfo.parser()
         );
     }
 
@@ -602,10 +561,9 @@ public class BlockDatabase {
      * Retrieves the current file number.
      *
      * @return The current file number.
-     * @throws DatabaseException
-     *     When the data could not be retrieved.
+     * @throws DatabaseException When the data could not be retrieved.
      */
-    private int getCurrentFileNumber() throws DatabaseException {
+    private synchronized int getCurrentFileNumber() throws DatabaseException {
         LOGGER.fine("Getting current file number.");
         ByteString key = getCurrentFileKey();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
@@ -624,12 +582,10 @@ public class BlockDatabase {
     /**
      * Sets the current file number.
      *
-     * @param fileNumber
-     *     The file number.
-     * @throws DatabaseException
-     *     When the data could not be stored.
+     * @param fileNumber The file number.
+     * @throws DatabaseException When the data could not be stored.
      */
-    private void setCurrentFileNumber(int fileNumber) throws DatabaseException {
+    private synchronized void setCurrentFileNumber(int fileNumber) throws DatabaseException {
         LOGGER.fine("Setting current file number.");
         ByteString key = getCurrentFileKey();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));

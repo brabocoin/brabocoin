@@ -168,7 +168,7 @@ public class Blockchain {
      *     The block to check.
      * @return Whether the block is an orphan.
      */
-    public boolean isOrphan(@NotNull IndexedBlock block) {
+    public synchronized boolean isOrphan(@NotNull IndexedBlock block) {
         LOGGER.fine("Check if block is orphan.");
 
         boolean isOrphan = orphanMap.containsValue(block);
@@ -187,7 +187,7 @@ public class Blockchain {
      * @param block
      *     The block to add as orphan.
      */
-    public void addOrphan(@NotNull IndexedBlock block) {
+    public synchronized void addOrphan(@NotNull IndexedBlock block) {
         LOGGER.fine("Adding block as orphan.");
         orphanMap.put(block.getBlockInfo().getPreviousBlockHash(), block);
     }
@@ -229,7 +229,7 @@ public class Blockchain {
      *     The hash of the parent.
      * @return The set of orphan block that are removed, or an empty set if no orphans are removed.
      */
-    public @NotNull Set<IndexedBlock> removeOrphansOfParent(@NotNull Hash parentHash) {
+    public synchronized @NotNull Set<IndexedBlock> removeOrphansOfParent(@NotNull Hash parentHash) {
         LOGGER.fine("Removing all orphans of parent.");
         return orphanMap.removeAll(parentHash);
     }

@@ -53,7 +53,7 @@ public class ProcessedTransactionResult {
      *
      * @return List of orphans.
      */
-    public List<Transaction> getAddedOrphans() {
+    public List<Transaction> getValidatedOrphans() {
         return Collections.unmodifiableList(addedOrphans);
     }
 }

@@ -78,7 +78,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
 
         assertEquals(ProcessedTransactionStatus.INVALID, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -88,7 +88,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -98,7 +98,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -108,7 +108,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -118,7 +118,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(orphan);
         assertEquals(ProcessedTransactionStatus.ORPHAN, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < orphan.getOutputs().size(); i++) {
             assertFalse(utxoFromPool.isUnspent(hash, i));
@@ -133,7 +133,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.INDEPENDENT, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hash, i));
@@ -161,7 +161,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.DEPENDENT, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hash, i));
@@ -216,7 +216,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(1, result.getAddedOrphans().size());
+        assertEquals(1, result.getValidatedOrphans().size());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -237,7 +237,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(1, result.getAddedOrphans().size());
+        assertEquals(1, result.getValidatedOrphans().size());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -269,7 +269,7 @@ class TransactionProcessorTest {
         assertEquals(ProcessedTransactionStatus.ORPHAN, resultC.getStatus());
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(2, result.getAddedOrphans().size());
+        assertEquals(2, result.getValidatedOrphans().size());
 
         for (int i = 0; i < transactionC.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hashC, i));
@@ -293,7 +293,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -317,7 +317,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {

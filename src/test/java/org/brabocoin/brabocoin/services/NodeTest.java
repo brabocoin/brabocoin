@@ -1,42 +1,34 @@
 package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Empty;
-import io.grpc.stub.StreamObserver;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.model.messages.BlockHeight;
-import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
-import org.brabocoin.brabocoin.node.NodeEnvironment;
-import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.jetbrains.annotations.NotNull;
+import org.brabocoin.brabocoin.validation.Consensus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
+import static org.brabocoin.brabocoin.testutil.Simulation.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class NodeTest {
-    private Random random = new Random();
+public class NodeTest {
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
     @BeforeAll
@@ -46,1119 +38,738 @@ class NodeTest {
             public String blockStoreDirectory() {
                 return "src/test/resources/" + super.blockStoreDirectory();
             }
-        };
 
-        Logger log = Logger.getLogger("org.brabocoin");
-        log.setLevel(Level.ALL);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
+            @Override
+            public String utxoStoreDirectory() {
+                return "src/test/resources/" + super.utxoStoreDirectory();
+            }
 
-        log.addHandler(handler);
-    }
-
-    @Test
-    void handshakeTest() throws IOException, DatabaseException, InterruptedException {
-        Node nodeA = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        }));
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }));
-
-        Node responder = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                    add("localhost:8092");
-                }};
-            }
-        }));
-        Node greeter = new Node(8089, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        responder.start();
-        greeter.start();
-
-        assertEquals(3, greeter.environment.getPeers().size());
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-
-        responder.stop();
-        responder.blockUntilShutdown();
-        greeter.stop();
-        greeter.blockUntilShutdown();
+        };
     }
 
+    @AfterEach
+    void afterEach() throws IOException {
+        Files.walkFileTree(Paths.get("src/test/resources/data/"), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes: A and B.
+     * B has a block X unknown to A.
+     * X is a block mined on top of the genesis block.
+     * A's blockchain is empty and consists only of the genesis block.
+     *
+     * <em>Expected result:</em>
+     * After announcing the block to A, A should eventually fetch the block from B and put it on the blockchain.
+     */
     @Test
-    void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+    void announceBlockToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
-            }
-        };
-
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        for (Block b : blocks) {
-            database.storeBlock(b, true);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(database, new HashMap<>(), config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Block> receivedBlocks = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
-            @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
         });
 
-        for (Block block : blocks) {
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
-        }
-        requestObserver.onCompleted();
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
 
-        finishLatch.await(1, TimeUnit.MINUTES);
+        Block newBlock = new Block(consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                ByteString.copyFromUtf8("randomNonce"),
+                new Date().getTime(),
+                1,
+                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
+        Hash newBlockHash = newBlock.computeHash();
 
-        List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
 
-        assertEquals(blocks.size(), receivedBlocks.size());
-        for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void getBlocksNotFoundTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
-        };
+        }, consensus, Collections.singletonList(newBlock));
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        for (Block b : blocks) {
-            database.storeBlock(b, true);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(database, new HashMap<>(), config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
+        // Start nodes
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Block> receivedBlocks = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+        nodeB.environment.announceBlockRequest(nodeB.environment.getBlock(newBlockHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
+
+        assertNotNull(nodeA.environment.getBlock(newBlockHash));
+        assertEquals(1, nodeA.environment.getTopBlockHeight());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a block X unknown to A and B.
+     * X is a block mined on top of the genesis block.
+     * A and B's blockchains are empty and consist only of the genesis block.
+     *
+     * <em>Expected result:</em>
+     * After announcing the block to B, B should eventually fetch the block from C and put it on the blockchain.
+     * B should then announce the block to A, which should in turn fetch the block from B and add it to its local blockchain.
+     */
+    @Test
+    void announceBlockPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
 
             @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+            public int targetPeerCount() {
+                return 1;
             }
         });
 
-        for (int i = 0; i < random.nextInt(50); i++) {
-            // send random hash
-            requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
-        }
-        requestObserver.onCompleted();
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
 
-        finishLatch.await(1, TimeUnit.MINUTES);
+        Block newBlock = new Block(consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                ByteString.copyFromUtf8("randomNonce"),
+                new Date().getTime(),
+                1,
+                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
+        Hash newBlockHash = newBlock.computeHash();
 
-        List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
 
-        assertEquals(0, receivedBlocks.size());
-        for (Block block : blocks) {
-            assertFalse(receivedBlockHashes.contains(block.computeHash().getValue()));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void getBlocksIntermediateInvalidTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
-            }
-        };
-
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        for (Block b : blocks) {
-            database.storeBlock(b, true);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(database, new HashMap<>(), config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Block> receivedBlocks = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
-            @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+                return Collections.singletonList("localhost:8090");
             }
         });
 
-        for (Block block : blocks) {
-            for (int i = 0; i < random.nextInt(10); i++) {
-                // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+        Node nodeC = generateNodeWithBlocks(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
             }
 
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
-
-            for (int i = 0; i < random.nextInt(10); i++) {
-                // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
-            }
-        }
-        requestObserver.onCompleted();
-
-        finishLatch.await(1, TimeUnit.MINUTES);
-
-        List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
-
-        assertEquals(blocks.size(), receivedBlocks.size());
-        for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void getTransactionsTest() throws IOException, InterruptedException, DatabaseException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
-        };
 
-        Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
-        for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(), t);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+            public int targetPeerCount() {
+                return 1;
             }
-        }));
+        }, consensus, Collections.singletonList(newBlock));
 
+        // Start nodes
         nodeA.start();
         nodeB.start();
+        nodeC.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Transaction> receivedTransactions = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
-            @Override
-            public void onNext(BrabocoinProtos.Transaction value) {
-                receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
-            }
+        nodeC.environment.announceBlockRequest(nodeC.environment.getBlock(newBlockHash));
 
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
 
+        assertNotNull(nodeA.environment.getBlock(newBlockHash));
+        assertEquals(1, nodeA.environment.getTopBlockHeight());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes: A and B.
+     * B has transaction X unknown to A.
+     * A's transaction pool is empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to A, A should eventually fetch the transaction from B and put it in the transaction pool.
+     */
+    @Test
+    void announceTransactionToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
         });
 
-        for (Transaction transaction : transactions) {
-            requestObserver.onNext(ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class));
-        }
-        requestObserver.onCompleted();
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
 
-        finishLatch.await(1, TimeUnit.MINUTES);
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
 
-        List<ByteString> receivedTransactionHashes = receivedTransactions.stream()
-                .map(Transaction::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+        Node nodeB = generateNodeWithTransactions(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
 
-        assertEquals(transactions.size(), receivedTransactions.size());
-        for (Transaction transaction : transactions) {
-            assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void getTransactionsNotFoundTest() throws IOException, InterruptedException, DatabaseException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
-        };
+        }, consensus, Collections.singletonList(newTransaction));
 
-        Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
-        for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(), t);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
+        // Start nodes
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Transaction> receivedTransactions = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
+        nodeB.environment.announceTransactionRequest(nodeB.environment.getTransaction(newTransactionHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a transaction X unknown to A and B.
+     * A and B's transaction pools are empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to B, B should eventually fetch the transaction from C and put it in in the transaction pool.
+     * B should then announce the transaction to A, which should in turn fetch the transaction from B and add it to its transaction pool.
+     */
+    @Test
+    void announceTransactionPropagatedToPeerLimitedPeers() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public void onNext(BrabocoinProtos.Transaction value) {
-                receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
 
             @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+            public int targetPeerCount() {
+                return 1;
             }
         });
 
-        for (int i = 0; i < random.nextInt(50); i++) {
-            // send random hash
-            requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
-        }
-        requestObserver.onCompleted();
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
 
-        finishLatch.await(1, TimeUnit.MINUTES);
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
 
-        List<ByteString> receivedTransactionHashes = receivedTransactions.stream()
-                .map(Transaction::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
 
-        assertEquals(0, receivedTransactions.size());
-        for (Transaction transaction : transactions) {
-            assertFalse(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void getTransactionsIntermediateInvalidTest() throws IOException, InterruptedException, DatabaseException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
-            }
-        };
-
-        Map<Hash, Transaction> transactionPool = new HashMap<>();
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(5, 5), 2);
-        for (Transaction t : transactions) {
-            transactionPool.put(t.computeHash(), t);
-        }
-
-        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        List<Transaction> receivedTransactions = new ArrayList<>();
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getTransactions(new StreamObserver<BrabocoinProtos.Transaction>() {
-            @Override
-            public void onNext(BrabocoinProtos.Transaction value) {
-                receivedTransactions.add(ProtoConverter.toDomain(value, Transaction.Builder.class));
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
+                return Collections.singletonList("localhost:8090");
             }
         });
 
-        for (Transaction transaction : transactions) {
-            for (int i = 0; i < random.nextInt(10); i++) {
-                // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+        Node nodeC = generateNodeWithTransactions(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
             }
 
-            requestObserver.onNext(ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class));
-
-            for (int i = 0; i < random.nextInt(10); i++) {
-                // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8091");
             }
-        }
-        requestObserver.onCompleted();
 
-        finishLatch.await(1, TimeUnit.MINUTES);
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }, consensus, Collections.singletonList(newTransaction));
 
-        List<ByteString> receivedTransactionHashes = receivedTransactions.stream()
-                .map(Transaction::computeHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
 
-        assertEquals(transactions.size(), receivedTransactions.size());
-        for (Transaction transaction : transactions) {
-            assertTrue(receivedTransactionHashes.contains(transaction.computeHash().getValue()));
-        }
+        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
     }
 
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a transaction X unknown to A and B.
+     * A and B's transaction pools are empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to B, B should eventually fetch the transaction from C and put it in in the transaction pool.
+     * B should then announce the transaction to A, which should in turn fetch the transaction from B and add it to its transaction pool.
+     */
     @Test
-    void seekTransactionPoolTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+    void announceTransactionPropagatedToPeer() throws DatabaseException, IOException, InterruptedException {
+        // Create default node A
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        });
+
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+
+        Transaction newTransaction = Simulation.randomTransaction(0, 5);
+        Hash newTransactionHash = newTransaction.computeHash();
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8092");
-                }};
+                return Collections.singletonList("localhost:8090");
             }
-        };
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(20, 20), 100);
-        Map<Hash, Transaction> transactionPool = new HashMap<>();
-        transactions.stream().forEach(t -> transactionPool.put(t.computeHash(), t));
+        });
 
+        Node nodeC = generateNodeWithTransactions(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
 
-        Node nodeA = new Node(8091, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), transactionPool, config));
-
-        Node nodeB = new Node(8092, new NodeEnvironment(new BlockDatabase(new HashMapDB(), config), new HashMap<>(), new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+                return Collections.singletonList("localhost:8091");
             }
-        }));
+        }, consensus, Collections.singletonList(newTransaction));
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+
+        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * A has the longest blockchain.
+     * B has the shortest blockchain.
+     * C's blockchain length is between A's and B's blockchain length and has a fork with respect to A's blockchain.
+     *
+     * <em>Expected result:</em>
+     * A, B and C's blockchains are identical and equal to A's blockchain.
+     */
+    @Test
+    void updateBlockchain() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+
+        Node nodeA = generateNodeWithBlocks(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        }, new Consensus(), chainA);
+
+        List<Block> chainB = IntStream.range(0, 8).mapToObj(chainA::get).collect(Collectors.toList());
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8090");
+            }
+        }, new Consensus(), chainB);
+
+        List<Block> chainC = IntStream.range(0, 10).mapToObj(chainA::get).collect(Collectors.toList());
+        List<Block> chainCfork = Simulation.randomBlockChainGenerator(8, chainC.get(chainC.size() - 1).computeHash(), chainC.size(), 0, 5);
+
+        chainC.addAll(chainCfork);
+
+        Node nodeC = generateNodeWithBlocks(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8091");
+            }
+        }, new Consensus(), chainC);
+
+
+        // Start nodes
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight() &&
+                        nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight()
+                );
+
+        assertEquals(nodeA.environment.getTopBlockHeight(), chainA.size());
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeC.environment.getTopBlockHeight());
+
+        assertEquals(chainA.get(chainA.size() - 1).computeHash(),
+                nodeC.environment.getBlocksAbove(chainA.get(chainA.size() - 2).computeHash()).get(0));
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
+    }
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes A and B.
+     * B's blockchain is in sync with A's blockchain.
+     * A also has a fork that is one blockheight less than the main chain.
+     *
+     *
+     * <em>Expected result:</em>
+     * When we mine two blocks on top of the fork, only announcing the second block, B should sync with this fork, requesting both blocks.
+     * Then, after announcing another two blocks on the other fork (what used to be the main chain), B should again switch the main chain.
+     */
+    @Test
+    void forkSwitching() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+        Block mainChainTopBlock = chainA.get(chainA.size() - 1);
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8090");
+            }
+        }, new Consensus(), chainA);
+
+
+        Block forkMatchingBlock = chainA.get(10);
+        List<Block> chainAfork = Simulation.randomBlockChainGenerator(8, forkMatchingBlock.computeHash(), forkMatchingBlock.getBlockHeight() + 1, 0, 5);
+
+        Block forkTopBlock = chainAfork.get(chainAfork.size() - 1);
+
+        assert forkTopBlock.getBlockHeight() == mainChainTopBlock.getBlockHeight() - 1;
+
+        chainA.addAll(chainAfork);
+        Map.Entry<Node, BlockProcessor> fullNodeA = generateNodeAndProcessorWithBlocks(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+        }, new Consensus(), chainA);
+
+        Node nodeA = fullNodeA.getKey();
+        BlockProcessor blockProcessor = fullNodeA.getValue();
 
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        Iterator<BrabocoinProtos.Hash> receivedHashStream = nodeBpeer.getBlockingStub().seekTransactionPool(
-                Empty.newBuilder().build()
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+
+        // Mine two block on top of fork of A
+        Block forkBlock1 = Simulation.randomBlock(
+                forkTopBlock.computeHash(),
+                forkTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block forkBlock2 = Simulation.randomBlock(
+                forkBlock1.computeHash(),
+                forkBlock1.getBlockHeight() + 1,
+                0, 5, 20
         );
 
-        List<Hash> receivedHashes = new ArrayList<>();
-        receivedHashStream.forEachRemaining(h -> receivedHashes.add(ProtoConverter.toDomain(h, Hash.Builder.class)));
+        blockProcessor.processNewBlock(forkBlock1);
+        blockProcessor.processNewBlock(forkBlock2);
 
-        assertEquals(transactions.size(), receivedHashes.size());
-        for (Transaction transaction : transactions) {
-            assertTrue(receivedHashes.contains(transaction.computeHash()));
-        }
+        assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
+        nodeA.environment.announceBlockRequest(forkBlock2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(forkBlock1.computeHash()).get(0),
+                nodeB.environment.getBlocksAbove(forkBlock1.computeHash()).get(0));
+
+        // Mine two block on top of new fork of A, what used to be the main chain
+        Block fork2Block1 = Simulation.randomBlock(
+                mainChainTopBlock.computeHash(),
+                mainChainTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block fork2Block2 = Simulation.randomBlock(
+                fork2Block1.computeHash(),
+                fork2Block1.getBlockHeight() + 1,
+                0, 5, 20
+        );
+
+        blockProcessor.processNewBlock(fork2Block1);
+        blockProcessor.processNewBlock(fork2Block2);
+
+        assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
+
+        nodeA.environment.announceBlockRequest(fork2Block2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(fork2Block1.computeHash()).get(0),
+                nodeB.environment.getBlocksAbove(fork2Block1.computeHash()).get(0));
+
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 
+    /**
+     * <em>Setup:</em>
+     * Three nodes A, B and C.
+     * B's blockchain is in sync with A's blockchain.
+     * C's blockchain is empty and only consists of the genesis block and only has peer B.
+     * A also has a fork that is one blockheight less than the main chain.
+     *
+     *
+     * <em>Expected result:</em>
+     * When we mine two blocks on top of the fork, only announcing the second block, B should sync with this fork, requesting both blocks.
+     * Then, after announcing another two blocks on the other fork (what used to be the main chain), B should again switch the main chain.
+     */
     @Test
-    void announceBlockTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+    void forkSwitchingPropagated() throws DatabaseException, IOException, InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
+        Consensus consensus = new Consensus();
+        List<Block> chainA = Simulation.randomBlockChainGenerator(20, consensus.getGenesisBlock().computeHash(), 1, 0, 5);
+        Block mainChainTopBlock = chainA.get(chainA.size() - 1);
+
+        Node nodeB = generateNodeWithBlocks(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
             @Override
             public List<String> bootstrapPeers() {
-                return new ArrayList<>();
+                return Collections.singletonList("localhost:8090");
             }
-        }) {
+        }, new Consensus(), chainA);
+
+
+        Block forkMatchingBlock = chainA.get(10);
+        List<Block> chainAfork = Simulation.randomBlockChainGenerator(8, forkMatchingBlock.computeHash(), forkMatchingBlock.getBlockHeight() + 1, 0, 5);
+
+        Block forkTopBlock = chainAfork.get(chainAfork.size() - 1);
+
+        assert forkTopBlock.getBlockHeight() == mainChainTopBlock.getBlockHeight() - 1;
+
+        chainA.addAll(chainAfork);
+        Map.Entry<Node, BlockProcessor> fullNodeA = generateNodeAndProcessorWithBlocks(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public void onReceiveBlockHash(Hash blockHash) {
-                finishLatch.countDown();
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }, new Consensus(), chainA);
+
+        Node nodeC = generateNode(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8091");
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
             }
         });
 
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Hash announceHash = Simulation.randomHash();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        nodeBpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void announceBlockPropagationTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-            @Override
-            public void onReceiveBlockHash(Hash blockHash) {
-                finishLatch.countDown();
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-        nodeC.start();
-
-        Hash announceHash = Simulation.randomHash();
-
-        Peer nodeCpeer = nodeC.environment.getPeers().iterator().next();
-        nodeCpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
-    }
-
-    @Test
-    void announceTransactionTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-
-            @Override
-            public void onReceiveTransaction(@NotNull Hash transactionHash) {
-                finishLatch.countDown();
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Hash announceHash = Simulation.randomHash();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-        nodeBpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void discoverTopBlockHeightTest() throws DatabaseException, IOException, InterruptedException {
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-            @Override
-            public int getTopBlockHeight() {
-                return 1234;
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-
-        BlockHeight blockHeight = ProtoConverter.toDomain(nodeBpeer.getBlockingStub().discoverTopBlockHeight(Empty.newBuilder().build()), BlockHeight.Builder.class);
-
-        assert blockHeight != null;
-
-        assertEquals(1234, blockHeight.getHeight());
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void checkChainCompatibleTest() throws DatabaseException, IOException, InterruptedException {
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-            @Override
-            public boolean isChainCompatible(@NotNull Hash blockHash) {
-                return false;
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-
-        ChainCompatibility chainCompatibility = ProtoConverter.toDomain(
-                nodeBpeer.getBlockingStub().checkChainCompatible(
-                        ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class)
-                ), ChainCompatibility.Builder.class);
-
-        assert chainCompatibility != null;
-
-        assertFalse(chainCompatibility.isCompatible());
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void seekBlockchainTest() throws DatabaseException, IOException, InterruptedException {
-        List<Hash> hashes = Simulation.repeatedBuilder(Simulation::randomHash, 10);
-
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-            @Override
-            public Iterator<Hash> getBlocksAbove(Hash blockHash) {
-                return hashes.iterator();
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
-
-        Iterator<BrabocoinProtos.Hash> hashIterator = nodeBpeer.getBlockingStub().seekBlockchain(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
-
-        List<BrabocoinProtos.Hash> receivedProtoHashes = new ArrayList<>();
-        for (Iterator<BrabocoinProtos.Hash> it = hashIterator; it.hasNext(); ) {
-            BrabocoinProtos.Hash h = it.next();
-
-            receivedProtoHashes.add(h);
-        }
-
-        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
-
-        for (Hash h : hashes) {
-            assertTrue(receivedHashes.contains(h));
-        }
-
-        for (Hash h : receivedHashes) {
-            assertTrue(hashes.contains(h));
-        }
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-    }
-
-    @Test
-    void announceTransactionPropagationTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(1);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<>();
-            }
-        }) {
-
-            @Override
-            public void onReceiveTransaction(@NotNull Hash transactionHash) {
-                finishLatch.countDown();
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
+        Node nodeA = fullNodeA.getKey();
+        BlockProcessor blockProcessor = fullNodeA.getValue();
 
         nodeA.start();
         nodeB.start();
         nodeC.start();
 
-        Hash announceHash = Simulation.randomHash();
+        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
 
-        Peer nodeCpeer = nodeC.environment.getPeers().iterator().next();
-        nodeCpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
+        // Mine two block on top of fork of A
+        Block forkBlock1 = Simulation.randomBlock(
+                forkTopBlock.computeHash(),
+                forkTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block forkBlock2 = Simulation.randomBlock(
+                forkBlock1.computeHash(),
+                forkBlock1.getBlockHeight() + 1,
+                0, 5, 20
+        );
 
-            }
+        blockProcessor.processNewBlock(forkBlock1);
+        blockProcessor.processNewBlock(forkBlock2);
 
-            @Override
-            public void onError(Throwable t) {
+        assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
 
-            }
+        nodeA.environment.announceBlockRequest(forkBlock2);
 
-            @Override
-            public void onCompleted() {
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
 
-            }
-        });
+        assertEquals(
+                nodeA.environment.getBlocksAbove(forkBlock1.computeHash()).get(0),
+                nodeC.environment.getBlocksAbove(forkBlock1.computeHash()).get(0));
 
-        assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
+        // Mine two block on top of new fork of A, what used to be the main chain
+        Block fork2Block1 = Simulation.randomBlock(
+                mainChainTopBlock.computeHash(),
+                mainChainTopBlock.getBlockHeight() + 1,
+                0, 5, 20
+        );
+        Block fork2Block2 = Simulation.randomBlock(
+                fork2Block1.computeHash(),
+                fork2Block1.getBlockHeight() + 1,
+                0, 5, 20
+        );
 
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
+        blockProcessor.processNewBlock(fork2Block1);
+        blockProcessor.processNewBlock(fork2Block2);
+
+        assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
+
+        nodeA.environment.announceBlockRequest(fork2Block2);
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
+
+        assertEquals(
+                nodeA.environment.getBlocksAbove(fork2Block1.computeHash()).get(0),
+                nodeC.environment.getBlocksAbove(fork2Block1.computeHash()).get(0));
+
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeC.stopAndBlock();
     }
 
+    /**
+     * node B tries to acquire the transaction pool from its peer A on startup.
+     */
     @Test
-    void announceBlockDuplicatePropagationTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(2);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
+    void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 200);
+
+        Node nodeA = generateNodeWithTransactions(8090, new MockBraboConfig(defaultConfig) {
             @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
             }
-        }) {
+        }, new Consensus(), transactions);
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
 
             @Override
-            public void onReceiveBlockHash(@NotNull Hash blockHash) {
-                finishLatch.countDown();
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8090");
             }
         });
 
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
+        // Start nodes
         nodeA.start();
         nodeB.start();
-        nodeC.start();
 
-        Hash announceHash = Simulation.randomHash();
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> nodeB.environment.getTransactionHashSet().size() == transactions.size());
 
-        Optional<Peer> nodeCpeerO = nodeC.environment.getPeers()
-                .stream()
-                .filter(p -> p.getPort() == 8091)
-                .findFirst();
-
-        assertTrue(nodeCpeerO.isPresent());
-
-        Peer nodeCpeer = nodeCpeerO.get();
-
-        nodeCpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        assertFalse(finishLatch.await(10, TimeUnit.SECONDS));
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
-    }
-
-    @Test
-    void announceTransactionDuplicatePropagationTest() throws DatabaseException, IOException, InterruptedException {
-        final CountDownLatch finishLatch = new CountDownLatch(2);
-        Node nodeA = new Node(8090, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }) {
-
-            @Override
-            public void onReceiveTransaction(@NotNull Hash transactionHash) {
-                finishLatch.countDown();
-            }
-        });
-
-        Node nodeB = new Node(8091, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8090");
-                }};
-            }
-        }));
-
-        Node nodeC = new Node(8092, new NodeEnvironment(new HashMapDB(), new HashMap<>(), new MockBraboConfig(defaultConfig) {
-            @Override
-            public List<String> bootstrapPeers() {
-                return new ArrayList<String>() {{
-                    add("localhost:8091");
-                }};
-            }
-        }));
-
-        nodeA.start();
-        nodeB.start();
-        nodeC.start();
-
-        Hash announceHash = Simulation.randomHash();
-
-        Optional<Peer> nodeCpeerO = nodeC.environment.getPeers()
-                .stream()
-                .filter(p -> p.getPort() == 8091)
-                .findFirst();
-
-        assertTrue(nodeCpeerO.isPresent());
-
-        Peer nodeCpeer = nodeCpeerO.get();
-
-        nodeCpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        assertFalse(finishLatch.await(10, TimeUnit.SECONDS));
-
-        nodeA.stop();
-        nodeA.blockUntilShutdown();
-        nodeB.stop();
-        nodeB.blockUntilShutdown();
-        nodeC.stop();
-        nodeC.blockUntilShutdown();
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
     }
 }
