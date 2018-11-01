@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.Magic;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
@@ -165,7 +165,7 @@ class BlockProcessorTest {
 
         // Add to transaction pool manually
         transactionPool.addIndependentTransaction(transaction);
-        utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
         ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
 
@@ -282,7 +282,7 @@ class BlockProcessorTest {
 
         // Add to transaction pool manually
         transactionPool.addIndependentTransaction(transaction);
-        utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
         blockProcessor.processNewBlock(blockA);
         blockProcessor.processNewBlock(blockB);

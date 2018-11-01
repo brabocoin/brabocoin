@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.Magic;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
@@ -147,7 +147,7 @@ public class TransactionProcessor {
 
         // Validated transaction: update pool UTXO set
         LOGGER.fine("New transaction can be added to transaction pool. Set outputs unspent in transaction pool UTXO.");
-        utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
         if (status == ProcessedTransactionStatus.DEPENDENT) {
             LOGGER.info("New transaction is added as dependent.");

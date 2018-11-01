@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.Magic;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
@@ -332,7 +332,7 @@ class TransactionProcessorTest {
         // Add transactions to pool as independent forcefully
         for (Transaction transaction : block.getTransactions()) {
             pool.addIndependentTransaction(transaction);
-            utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+            utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
             // These transactions also exist in the blockchain now
             utxoFromChain.setOutputsUnspent(transaction, block.getBlockHeight());
@@ -347,7 +347,7 @@ class TransactionProcessorTest {
         );
         Hash hashA = transactionA.computeHash();
         pool.addDependentTransaction(transactionA);
-        utxoFromPool.setOutputsUnspent(transactionA, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(transactionA, Constants.TRANSACTION_POOL_HEIGHT);
 
         processor.processTopBlockConnected(block);
 
@@ -390,7 +390,7 @@ class TransactionProcessorTest {
         );
         Hash independentHash = independent.computeHash();
         pool.addIndependentTransaction(independent);
-        utxoFromPool.setOutputsUnspent(independent, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(independent, Constants.TRANSACTION_POOL_HEIGHT);
 
         // Add orphan transaction that will now become valid
         Transaction orphan = new Transaction(
