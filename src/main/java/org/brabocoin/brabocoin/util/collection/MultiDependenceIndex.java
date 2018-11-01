@@ -175,4 +175,13 @@ public class MultiDependenceIndex<K, V, D> {
     public Set<K> keySet() {
         return primaryIndex.keySet();
     }
+
+    /**
+     * Return an iterator over the values.
+     *
+     * @return Iterator of values.
+     */
+    public Iterator<V> getIterator() {
+        return primaryIndex.values().iterator();
+    }
 }

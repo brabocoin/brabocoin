@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.common.collect.Iterators;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -241,8 +242,8 @@ public class TransactionPool {
      * @return The list of removed orphans.
      */
     public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(@NotNull Hash parentHash,
-                                                                   @NotNull Function<Transaction,
-                                                                           Boolean> orphanValidator) {
+                                                                                @NotNull Function<Transaction,
+                                                                                        Boolean> orphanValidator) {
         return orphanTransactions.removeMatchingDependants(parentHash, orphanValidator);
     }
 
@@ -256,7 +257,7 @@ public class TransactionPool {
      * @param matcher    Function indicating whether the dependent transaction can be removed.
      */
     public synchronized void promoteDependentToIndependentFromParent(@NotNull Hash parentHash,
-                                                        @NotNull Function<Transaction, Boolean> matcher) {
+                                                                     @NotNull Function<Transaction, Boolean> matcher) {
         List<Transaction> transactions = dependentTransactions.removeMatchingDependants(parentHash,
                 t -> {
                     if (matcher.apply(t)) {
@@ -355,5 +356,19 @@ public class TransactionPool {
         result.addAll(independentTransactions.keySet());
 
         return result;
+    }
+
+    /**
+     * Get the iterator over all transactions in the transaction pool.
+     * This includes independent, dependent and orphan transactions.
+     *
+     * @return Iterator over all transactions.
+     */
+    public Iterator<Transaction> getIterator() {
+        return Iterators.concat(
+                independentTransactions.getIterator(),
+                dependentTransactions.getIterator(),
+                orphanTransactions.getIterator()
+        );
     }
 }

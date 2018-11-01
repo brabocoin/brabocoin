@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.validation;
+package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.model.Block;
 import org.jetbrains.annotations.NotNull;

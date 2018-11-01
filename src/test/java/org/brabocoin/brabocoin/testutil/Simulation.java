@@ -15,9 +15,9 @@ import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.validation.BlockValidator;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.TransactionValidator;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 
 import java.util.*;
 import java.util.concurrent.Callable;
