@@ -24,6 +24,9 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @FXML private LogPane logPane;
 
+    /**
+     * Create the main view.
+     */
     public MainView() {
         super();
         BraboControlInitializer.initialize(this);

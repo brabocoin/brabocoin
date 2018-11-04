@@ -7,12 +7,23 @@ import javafx.scene.control.TextArea;
 
 
 /**
- * @author Sten Wessel
+ * A modified text area control that is suitable for displaying (console) log output.
+ * <p>
+ * Provides the capability to enable/disable auto-scroll to end when a new log message is added.
+ * <p>
+ * By default, a {@link TextArea} does auto-scroll to the end, but it is not possible to disable
+ * this behavior.
  */
 public class LogTextArea extends TextArea {
 
+    /**
+     * Indicates whether to auto-scroll to end when a new log message is added.
+     */
     private final BooleanProperty autoScrollToEnd = new SimpleBooleanProperty(true);
 
+    /**
+     * Create a new log text area.
+     */
     public LogTextArea() {
         super();
 
@@ -38,18 +49,31 @@ public class LogTextArea extends TextArea {
             super.replaceText(start, end, text);
         }
         else {
+            // Remember caret position and selection
             IndexRange range = this.getSelection();
             int position = this.getCaretPosition();
+
             super.replaceText(start, end, text);
+
             this.positionCaret(position);
             this.selectRange(range.getStart(), range.getEnd());
         }
     }
 
+    /**
+     * Indicates whether to auto-scroll to end when a new log message is added.
+     *
+     * @return The auto scroll property.
+     */
     public BooleanProperty autoScrollToEndProperty() {
         return autoScrollToEnd;
     }
 
+    /**
+     * Indicates whether to auto-scroll to end when a new log message is added.
+     *
+     * @return Whether auto-scroll is enabled.
+     */
     public boolean isAutoScrollToEnd() {
         return autoScrollToEnd.get();
     }

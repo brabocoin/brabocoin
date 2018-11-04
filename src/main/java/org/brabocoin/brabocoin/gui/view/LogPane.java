@@ -19,6 +19,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.LogTextArea;
 import org.brabocoin.brabocoin.logging.BraboLogLevel;
 import org.brabocoin.brabocoin.logging.TextAreaHandler;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * @author Sten Wessel
+ * Pinned pane showing the application logs.
  */
 public class LogPane extends BorderPane implements BraboControl, Initializable {
 
@@ -45,8 +46,15 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
     @FXML private ToggleButton wordWrapToggleButton;
     @FXML private ToggleButton scrollToEndToggleButton;
 
-    private Runnable onCloseRequest;
+    /**
+     * Called when the log pane wants to close itself. This should be set by the parent element
+     * that can actually close this pane.
+     */
+    private @Nullable Runnable onCloseRequest;
 
+    /**
+     * Create a new log pane.
+     */
     public LogPane() {
         super();
         BraboControlInitializer.initialize(this);
@@ -108,17 +116,20 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
         wordWrapToggleButton.selectedProperty().bindBidirectional(logTextArea.wrapTextProperty());
 
         // Bind scroll to end toggle
-        scrollToEndToggleButton.selectedProperty().bindBidirectional(logTextArea.autoScrollToEndProperty());
-
-        AtomicReference<Double> mouseLocationY = new AtomicReference<>();
+        scrollToEndToggleButton.selectedProperty()
+            .bindBidirectional(logTextArea.autoScrollToEndProperty());
 
         // Setup resize of pane by dragging pane bar
+        AtomicReference<Double> mouseLocationY = new AtomicReference<>();
+
         paneBar.setOnMousePressed(event -> {
             mouseLocationY.set(event.getSceneY());
         });
 
         paneBar.setOnMouseDragged(event -> {
             double y = event.getSceneY();
+
+            // Make sure pane cannot be resized out of window
             if (y >= 0 && y <= this.getScene().getHeight() - this.getMinHeight()) {
                 double deltaY = y - mouseLocationY.get();
                 double newHeight = this.getPrefHeight() - deltaY;
@@ -137,7 +148,15 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
         }
     }
 
-    public void setOnCloseRequest(Runnable closeRequest) {
+    /**
+     * Sets the close request handler.
+     * <p>
+     * The handler is when the log pane wants to close itself. This should be set by the parent
+     * element that can actually close this pane.
+     *
+     * @param closeRequest The close request handler.
+     */
+    public void setOnCloseRequest(@Nullable Runnable closeRequest) {
         this.onCloseRequest = closeRequest;
     }
 }

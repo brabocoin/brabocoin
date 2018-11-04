@@ -16,10 +16,24 @@ public class TextAreaHandler extends Handler {
 
     private final @NotNull TextArea textArea;
 
+    /**
+     * Create a new text area handler for the provided text area.
+     *
+     * @param textArea
+     *     The text area to log to.
+     */
     public TextAreaHandler(@NotNull TextArea textArea) {
         this(textArea, new SimpleFormatter());
     }
 
+    /**
+     * Create a new text area handler for the provided text area and formatter.
+     *
+     * @param textArea
+     *     The text area to log to.
+     * @param formatter
+     *     The formatter to use.
+     */
     public TextAreaHandler(@NotNull TextArea textArea, @NotNull Formatter formatter) {
         this.textArea = textArea;
         setFormatter(formatter);

@@ -6,20 +6,37 @@ import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Sten Wessel
+ * Provides glyphs for the Brabocoin application.
  */
 public class BraboGlyph extends Glyph {
 
     private static final int DEFAULT_SIZE = 14;
 
+    /**
+     * Create an empty glyph.
+     */
     public BraboGlyph() {
         super();
     }
 
+    /**
+     * Create a glyph with the icon name matching one of the constants in {@link Icon}.
+     *
+     * @param icon
+     *     The icon to display.
+     * @throws IllegalArgumentException
+     *     When the icon nome could not be found.
+     */
     public BraboGlyph(@NotNull String icon) {
         super(Icon.valueOf(icon).font.getName(), icon);
     }
 
+    /**
+     * Create a glyph with a given icon.
+     *
+     * @param icon
+     *     The icon to display.
+     */
     public BraboGlyph(@NotNull Icon icon) {
         super(icon.font.getName(), icon);
     }
@@ -36,6 +53,9 @@ public class BraboGlyph extends Glyph {
         super.setIcon(iconValue);
     }
 
+    /**
+     * The registered icon fonts.
+     */
     public enum Font {
         FONT_AWESOME("Font Awesome 5 Free", "fa-regular-400.ttf", "fa-solid-900.ttf"),
         FONT_AWESOME_BRANDS("Font Awesome 5 Brands", "fa-brands-400.ttf");
@@ -61,6 +81,9 @@ public class BraboGlyph extends Glyph {
         }
     }
 
+    /**
+     * Registered icons.
+     */
     public enum Icon {
         ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME, '\uf103'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),

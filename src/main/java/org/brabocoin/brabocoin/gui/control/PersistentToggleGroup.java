@@ -7,6 +7,9 @@ import javafx.scene.control.ToggleGroup;
  */
 public class PersistentToggleGroup extends ToggleGroup {
 
+    /**
+     * Create a new persistent toggle group.
+     */
     public PersistentToggleGroup() {
         super();
 

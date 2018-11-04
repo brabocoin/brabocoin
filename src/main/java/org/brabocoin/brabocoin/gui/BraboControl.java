@@ -35,6 +35,11 @@ public interface BraboControl {
         return Collections.singletonList(resourceName() + ".css");
     }
 
+    /**
+     * Gets the associated resource name for this control, without file extension.
+     *
+     * @return The base resource name.
+     */
     default @NotNull String resourceName() {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName());
     }
