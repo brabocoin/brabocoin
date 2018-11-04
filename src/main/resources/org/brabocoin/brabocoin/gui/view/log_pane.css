@@ -1,5 +1,4 @@
 .tool-bar {
-    /*-fx-cursor: v-resize;*/
     -fx-background-color: -fx-box-border, -brabo-pane-toolbar-background;
 }
 
@@ -31,6 +30,15 @@
     -fx-background-color: derive(-brabo-pane-toolbar-background, -8%);
     -fx-background-insets: 0;
     -fx-background-radius: 0px;
+}
+
+#paneBar {
+    -fx-cursor: v-resize;
+}
+
+#paneBar .combo-box,
+#paneBar .button {
+    -fx-cursor: default;
 }
 
 #logTextArea {

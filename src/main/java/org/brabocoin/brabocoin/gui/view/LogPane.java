@@ -10,6 +10,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
 import org.apache.commons.lang.StringUtils;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,6 +36,8 @@ import java.util.stream.Collectors;
  * @author Sten Wessel
  */
 public class LogPane extends BorderPane implements BraboControl, Initializable {
+
+    @FXML private ToolBar paneBar;
 
     @FXML private ComboBox<Level> logLevelComboBox;
     @FXML private LogTextArea logTextArea;
@@ -105,6 +109,25 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
 
         // Bind scroll to end toggle
         scrollToEndToggleButton.selectedProperty().bindBidirectional(logTextArea.autoScrollToEndProperty());
+
+        AtomicReference<Double> mouseLocationY = new AtomicReference<>();
+
+        // Setup resize of pane by dragging pane bar
+        paneBar.setOnMousePressed(event -> {
+            mouseLocationY.set(event.getSceneY());
+        });
+
+        paneBar.setOnMouseDragged(event -> {
+            double y = event.getSceneY();
+            if (y >= 0 && y <= this.getScene().getHeight() - this.getMinHeight()) {
+                double deltaY = y - mouseLocationY.get();
+                double newHeight = this.getPrefHeight() - deltaY;
+                this.setPrefHeight(newHeight);
+                this.getParent().requestLayout();
+
+                mouseLocationY.set(y);
+            }
+        });
     }
 
     @FXML
