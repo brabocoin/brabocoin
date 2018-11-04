@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import org.brabocoin.brabocoin.gui.control.LogTextArea?>
 <?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import javafx.scene.layout.VBox?>
 <fx:root type="javafx.scene.layout.BorderPane"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -52,9 +53,20 @@
                     <Tooltip text="Scroll to the end"/>
                 </tooltip>
             </ToggleButton>
+            <Separator/>
+            <ToggleButton styleClass="icon-button" fx:id="findToggleButton">
+                <graphic>
+                    <BraboGlyph icon="SEARCH"/>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Find"/>
+                </tooltip>
+            </ToggleButton>
         </ToolBar>
     </left>
     <center>
-        <LogTextArea fx:id="logTextArea" editable="false" BorderPane.alignment="CENTER"/>
+        <VBox fx:id="contentWrapper">
+            <LogTextArea fx:id="logTextArea" editable="false" VBox.vgrow="ALWAYS"/>
+        </VBox>
     </center>
 </fx:root>

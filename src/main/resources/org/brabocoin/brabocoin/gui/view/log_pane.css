@@ -6,6 +6,7 @@
     -fx-padding: 1 10;
     -fx-max-height: 27;
     -fx-pref-height: 27;
+    -fx-min-height: 27;
     -fx-background-insets: 0, 1 0;
 }
 
@@ -13,6 +14,7 @@
     -fx-padding: 5 3;
     -fx-max-width: 32;
     -fx-pref-width: 32;
+    -fx-min-width: 32;
     -fx-background-insets: 0, 0 1 0 0;
 }
 
@@ -55,6 +57,14 @@
     -fx-background-radius: 0;
 }
 
+#logTextArea.search-enabled {
+    -fx-highlight-fill: yellow;
+}
+
+#logTextArea.search-enabled:focused {
+    -fx-highlight-fill: -fx-accent;
+}
+
 #logTextArea .content {
     -fx-background-color: -fx-control-inner-background;
     -fx-background-radius: 0;
@@ -87,6 +97,10 @@
     -fx-background-color: -brabo-pane-toolbar-background;
     -fx-background-insets: 0;
     -fx-background-radius: 0;
+}
+
+.icon-button .glyph-font {
+    -fx-text-overrun: clip;
 }
 
 .icon-button:hover {

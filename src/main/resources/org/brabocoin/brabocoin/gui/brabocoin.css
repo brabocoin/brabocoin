@@ -36,3 +36,7 @@
     /* Custom Brabocoin definitions */
     -brabo-pane-toolbar-background: -fx-base;
 }
+
+.custom-text-field .left-pane .glyph-font {
+    -fx-text-fill: derive(-fx-text-inner-color, 110%);
+}
