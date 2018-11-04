@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyCode;
@@ -27,6 +28,7 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
     @FXML private CustomTextField searchField;
     @FXML private CheckBox regexCheckBox;
     @FXML private CheckBox caseCheckBox;
+    @FXML private Label errorText;
 
     private final @NotNull TextArea textArea;
     private Pattern pattern;
@@ -68,7 +70,7 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
     }
 
     private void performFind() {
-        clearMatch();
+        clear();
 
         String text = searchField.getText();
 
@@ -90,6 +92,7 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
             pattern = Pattern.compile(text, flags);
         }
         catch (Exception e) {
+            errorText.setText("Invalid expression");
             // TODO: show error
             return;
         }
@@ -97,7 +100,8 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
         matchNext();
     }
 
-    private void clearMatch() {
+    private void clear() {
+        errorText.setText(null);
         currentIndex = 0;
     }
 
@@ -114,7 +118,7 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
             selectCurrentMatch(matcher.start(), matcher.end());
         }
         else {
-            // TODO: show no found elements
+            errorText.setText("No matches");
         }
     }
 

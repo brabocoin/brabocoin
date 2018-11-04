@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <?import org.controlsfx.control.textfield.CustomTextField?>
+<?import javafx.scene.control.Label?>
 <fx:root type="javafx.scene.control.ToolBar"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -31,6 +32,8 @@
     <CheckBox fx:id="caseCheckBox" text="Match case"/>
     <Pane prefWidth="10"/>
     <CheckBox fx:id="regexCheckBox" text="Regex"/>
+    <Pane prefWidth="10"/>
+    <Label fx:id="errorText" style="-fx-font-weight: bold;"/>
     <Pane HBox.hgrow="ALWAYS"/>
     <Button styleClass="icon-button" onAction="#close">
         <graphic>
