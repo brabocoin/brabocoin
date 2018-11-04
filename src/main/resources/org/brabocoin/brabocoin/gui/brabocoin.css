@@ -32,4 +32,7 @@
     CHART_COLOR_8_TRANS_70: #CCCCCCb3;
 
     -fx-cell-hover-color: #f7d7d8;
+
+    /* Custom Brabocoin definitions */
+    -brabo-pane-toolbar-background: -fx-base;
 }

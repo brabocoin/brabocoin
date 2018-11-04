@@ -62,13 +62,15 @@ public class BraboGlyph extends Glyph {
     }
 
     public enum Icon {
+        ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME, '\uf103'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
         BROADCAST_TOWER(Font.FONT_AWESOME, '\uf519'),
         DATABASE(Font.FONT_AWESOME, '\uf1c0'),
+        LEVEL_DOWN_ALT(Font.FONT_AWESOME, '\uf3be'),
         MICROCHIP(Font.FONT_AWESOME, '\uf2db'),
+        MINUS(Font.FONT_AWESOME, '\uf068'),
         TASKS(Font.FONT_AWESOME, '\uf0ae'),
-        WALLET(Font.FONT_AWESOME, '\uf555'),
-        ;
+        WALLET(Font.FONT_AWESOME, '\uf555');
 
         private final @NotNull Font font;
         private final char ch;

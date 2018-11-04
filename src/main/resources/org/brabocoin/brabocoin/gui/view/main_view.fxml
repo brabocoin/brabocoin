@@ -79,7 +79,7 @@
                 </BorderPane>
             </content>
             <bottom>
-                <LogPane/>
+                <LogPane fx:id="logPane"/>
             </bottom>
         </HiddenSidesPane>
     </center>

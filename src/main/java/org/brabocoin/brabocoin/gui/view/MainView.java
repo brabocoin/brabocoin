@@ -22,7 +22,10 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @FXML private ToggleButton logPaneToggleButton;
     @FXML private HiddenSidesPane sidesPane;
 
+    @FXML private LogPane logPane;
+
     public MainView() {
+        super();
         BraboControlInitializer.initialize(this);
     }
 
@@ -34,5 +37,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             logPaneToggleButton.selectedProperty()
         );
         sidesPane.pinnedSideProperty().bind(paneSideBinding);
+
+        // Set log pane close binding
+        logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
     }
 }
