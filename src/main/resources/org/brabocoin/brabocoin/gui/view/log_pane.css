@@ -75,17 +75,30 @@
 }
 
 .icon-button {
-    -fx-max-width: 25;
-    -fx-max-height: 25;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
 
-    -fx-pref-width: 25;
-    -fx-pref-height: 25;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
 
     -fx-min-width: 0;
     -fx-min-height: 0;
 
-    -fx-background-color: transparent;
+    -fx-background-color: -brabo-pane-toolbar-background;
     -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.icon-button:hover {
+    -fx-background-color: -fx-box-border, derive(-brabo-pane-toolbar-background, -4%);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 0;
+}
+
+.icon-button:selected {
+    -fx-background-color: -fx-box-border, derive(-brabo-pane-toolbar-background, -8%);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 0;
 }
 
 .icon-button .label {
