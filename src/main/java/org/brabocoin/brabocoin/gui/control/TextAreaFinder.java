@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Sten Wessel
+ * Find toolbar for a text area.
  */
 public class TextAreaFinder extends ToolBar implements BraboControl, Initializable {
 
@@ -30,8 +30,19 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
     @FXML private CheckBox caseCheckBox;
     @FXML private Label errorText;
 
+    /**
+     * The text area to perform search on.
+     */
     private final @NotNull TextArea textArea;
+
+    /**
+     * The current pattern that is searched.
+     */
     private Pattern pattern;
+
+    /**
+     * The current index at which the search should start.
+     */
     private int currentIndex;
 
     /**
@@ -42,6 +53,9 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
 
     /**
      * Create a text area finder for the given text area.
+     *
+     * @param textArea
+     *     The text area that is searched.
      */
     public TextAreaFinder(@NotNull TextArea textArea) {
         super();
@@ -69,6 +83,9 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
         Platform.runLater(() -> searchField.requestFocus());
     }
 
+    /**
+     * Start a new search with a new pattern.
+     */
     private void performFind() {
         clear();
 
@@ -93,22 +110,37 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
         }
         catch (Exception e) {
             errorText.setText("Invalid expression");
-            // TODO: show error
             return;
         }
 
         matchNext();
     }
 
+    /**
+     * Clear the search.
+     */
     private void clear() {
         errorText.setText(null);
         currentIndex = 0;
     }
 
+    /**
+     * Select the current match in the text area.
+     *
+     * @param start
+     *     The start index of the match.
+     * @param end
+     *     The end index of the match.
+     */
     private void selectCurrentMatch(int start, int end) {
         textArea.selectRange(start, end);
     }
 
+    /**
+     * Find the next matching range, starting from the current index.
+     * <p>
+     * Loops back to the beginning of the text if the end was reached.
+     */
     @FXML
     private void matchNext() {
         Matcher matcher = pattern.matcher(textArea.getText());
@@ -122,6 +154,9 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
         }
     }
 
+    /**
+     * Close this toolbar.
+     */
     @FXML
     private void close() {
         if (onCloseRequest != null) {
@@ -129,6 +164,12 @@ public class TextAreaFinder extends ToolBar implements BraboControl, Initializab
         }
     }
 
+    /**
+     * Set the close request handler.
+     * <p>
+     * The handler is called when the finder wants to close itself. This should be set by the
+     * parent element that can actually close this node.
+     */
     public void setOnCloseRequest(@Nullable Runnable onCloseRequest) {
         this.onCloseRequest = onCloseRequest;
     }
