@@ -19,6 +19,7 @@ import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.TransactionValidator;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -116,7 +117,7 @@ public class Simulation {
     }
 
     public static Input randomInput() {
-        return new Input(new Signature(), randomHash(), RANDOM.nextInt(5));
+        return new Input(randomSignature(), randomHash(), RANDOM.nextInt(5));
     }
 
     public static Output randomOutput() {
@@ -131,6 +132,10 @@ public class Simulation {
         byte[] randomBytes = new byte[64];
         RANDOM.nextBytes(randomBytes);
         return ByteString.copyFrom(randomBytes);
+    }
+
+    public static Signature randomSignature() {
+        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM));
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {

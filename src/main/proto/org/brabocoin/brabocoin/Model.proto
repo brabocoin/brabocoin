@@ -12,7 +12,8 @@ message Hash {
 }
 
 message Signature {
-
+    bytes r = 1;
+    bytes s = 2;
 }
 
 message BlockChain {
