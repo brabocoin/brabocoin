@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.util.EllipticCurve;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

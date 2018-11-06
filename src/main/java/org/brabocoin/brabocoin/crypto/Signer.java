@@ -9,35 +9,116 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
-import org.brabocoin.brabocoin.util.EllipticCurve;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
+import java.text.MessageFormat;
 import java.util.logging.Logger;
 
+import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
+
 /**
- * Digital signature creator and verifier.
+ * Digital signature signer and verifier.
+ * <p>
+ * Encapsulates crypto library signer implementation.
  */
 public class Signer {
 
     private static final Logger LOGGER = Logger.getLogger(Signer.class.getName());
 
+    /**
+     * The elliptic curve used for signing.
+     */
     private final @NotNull EllipticCurve curve;
+
+    /**
+     * Actual signer implementation.
+     */
     private final @NotNull ECDSASigner signer;
 
+    /**
+     * Create a new signing using the given elliptic curve.
+     *
+     * @param curve
+     *     The elliptic curve.
+     */
     public Signer(@NotNull EllipticCurve curve) {
         this.curve = curve;
         this.signer = new ECDSASigner();
     }
 
+    /**
+     * Sign a message with the given private key.
+     *
+     * @param message
+     *     The message to sign.
+     * @param privateKey
+     *     The private key used to sign the message.
+     * @return The signature, containing the private key, of the message.
+     */
+    public @NotNull Signature signMessage(@NotNull ByteString message,
+                                          @NotNull BigInteger privateKey) {
+        LOGGER.fine("Signing a message.");
+
+        // Check if private key is in bounds
+        if (!BigIntegerUtil.isInRangeExclusive(privateKey,
+            BigInteger.ZERO,
+            curve.getDomain().getN()
+        )) {
+            LOGGER.warning("Private key is out of valid range.");
+            throw new IllegalArgumentException("Private key is not within range (0, n).");
+        }
+
+        CipherParameters parameters = new ECPrivateKeyParameters(privateKey, curve.getDomain());
+
+        LOGGER.fine("Initializing crypto library signer.");
+        signer.init(true, parameters);
+
+        LOGGER.fine("Generating crypto library signature.");
+        BigInteger[] rAndS = signer.generateSignature(message.toByteArray());
+
+        BigInteger r = rAndS[0];
+        BigInteger s = rAndS[1];
+
+        LOGGER.fine("Generating public key from private key.");
+        ECPoint publicKey = curve.getPublicKeyFromPrivateKey(privateKey);
+        ByteString compressed = ByteString.copyFrom(publicKey.getEncoded(true));
+
+        LOGGER.finest(() -> MessageFormat.format(
+            "Compressed public key={0}, r={1}, s={2}",
+            toHexString(compressed),
+            r,
+            s
+        ));
+
+        return new Signature(r, s, compressed);
+    }
+
+    /**
+     * Verify a signature.
+     * <p>
+     * A signature is only valid if the public key in the signature corresponds to the given
+     * address.
+     *
+     * @param signature
+     *     The signature to verify.
+     * @param address
+     *     The address corresponding to the public key that is used in the signature.
+     * @param message
+     *     The message that is signed.
+     * @return Whether the signature is valid.
+     */
     public boolean verifySignature(@NotNull Signature signature, @NotNull Hash address,
                                    @NotNull ByteString message) {
+        LOGGER.fine("Verifying a signature.");
 
         ECPoint publicKey = curve.decodePoint(signature.getPublicKey());
         CipherParameters parameters = new ECPublicKeyParameters(publicKey, curve.getDomain());
 
+        LOGGER.fine("Initializing crypto library signer.");
         signer.init(false, parameters);
 
+        LOGGER.fine("Verifying crypto library signature.");
         boolean valid = signer.verifySignature(message.toByteArray(),
             signature.getR(),
             signature.getS()
@@ -46,23 +127,5 @@ public class Signer {
         // TODO: verify that the pub key in the signature corresponds to the given address.
 
         return valid;
-    }
-
-    public @NotNull Signature signMessage(@NotNull ByteString message, @NotNull BigInteger privateKey) {
-        // Check if private key is in bounds
-        if (!BigIntegerUtil.isInRangeExclusive(privateKey, BigInteger.ZERO, curve.getDomain().getN())) {
-            throw new IllegalArgumentException("Private key is not within range (0, n).");
-        }
-
-        CipherParameters parameters = new ECPrivateKeyParameters(privateKey, curve.getDomain());
-
-        signer.init(true, parameters);
-
-        BigInteger[] rAndS = signer.generateSignature(message.toByteArray());
-
-        ECPoint publicKey = curve.getPublicKeyFromPrivateKey(privateKey);
-        ByteString compressed = ByteString.copyFrom(publicKey.getEncoded(true));
-
-        return new Signature(rAndS[0], rAndS[1], compressed);
     }
 }
