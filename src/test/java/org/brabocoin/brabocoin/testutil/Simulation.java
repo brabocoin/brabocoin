@@ -135,7 +135,7 @@ public class Simulation {
     }
 
     public static Signature randomSignature() {
-        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM));
+        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), randomByteString());
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {

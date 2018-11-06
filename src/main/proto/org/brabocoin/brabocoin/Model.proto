@@ -14,6 +14,7 @@ message Hash {
 message Signature {
     bytes r = 1;
     bytes s = 2;
+    bytes publicKey = 3;
 }
 
 message BlockChain {

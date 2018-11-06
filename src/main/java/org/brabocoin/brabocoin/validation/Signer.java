@@ -3,9 +3,11 @@ package org.brabocoin.brabocoin.validation;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Signature;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +37,8 @@ public class Signer {
     public boolean verifySignature(@NotNull Signature signature, @NotNull Hash address,
                                    @NotNull ByteString message) {
 
-        // TODO: add pub key to signature
-        ECPublicKeyParameters pubKeyParams = new ECPublicKeyParameters(null, DOMAIN);
+        ECPoint publicKey = CURVE.getCurve().decodePoint(signature.getPublicKey().toByteArray());
+        CipherParameters pubKeyParams = new ECPublicKeyParameters(publicKey, DOMAIN);
 
         signer.init(false, pubKeyParams);
 
