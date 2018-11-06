@@ -111,20 +111,25 @@ public class Signer {
                                    @NotNull ByteString message) {
         LOGGER.fine("Verifying a signature.");
 
-        ECPoint publicKey = signature.getPublicKey().getPoint();
-        CipherParameters parameters = new ECPublicKeyParameters(publicKey, curve.getDomain());
+        LOGGER.fine("Checking if public key hash corresponds to public key in signature.");
+        if (!signature.getPublicKey().computeHash().equals(publicKeyHash)) {
+            LOGGER.fine("Public key hash does not match signature public key: signature invalid.");
+            return false;
+        }
+
+        LOGGER.fine("Public key hash matches signature public key.");
+
+        ECPoint publicKeyPoint = signature.getPublicKey().getPoint();
+        CipherParameters parameters = new ECPublicKeyParameters(publicKeyPoint, curve.getDomain());
 
         LOGGER.fine("Initializing crypto library signer.");
         signer.init(false, parameters);
 
         LOGGER.fine("Verifying crypto library signature.");
-        boolean valid = signer.verifySignature(message.toByteArray(),
+
+        return signer.verifySignature(message.toByteArray(),
             signature.getR(),
             signature.getS()
         );
-
-        // TODO: verify that the pub key in the signature corresponds to the given address.
-
-        return valid;
     }
 }
