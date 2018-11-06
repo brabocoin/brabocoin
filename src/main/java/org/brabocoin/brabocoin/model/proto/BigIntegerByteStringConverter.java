@@ -6,7 +6,7 @@ import net.badata.protobuf.converter.type.TypeConverter;
 import java.math.BigInteger;
 
 /**
- * @author Sten Wessel
+ * Converts a {@link BigInteger} to a {@link ByteString}.
  */
 public class BigIntegerByteStringConverter implements TypeConverter<BigInteger, ByteString> {
 

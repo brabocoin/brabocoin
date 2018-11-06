@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
-import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +54,7 @@ class SignerTest {
         Signature signature = new Signature(
             BigInteger.ZERO,
             BigInteger.ZERO,
-            ByteString.copyFrom(new byte[] {0x00})
+            new PublicKey(CURVE.getDomain().getCurve().getInfinity())
         );
         assertThrows(
             IllegalArgumentException.class,
@@ -65,10 +64,9 @@ class SignerTest {
 
     @Test
     void verifySignatureAttackSZero() {
-        ECPoint publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
-        ByteString encoded = ByteString.copyFrom(publicKey.getEncoded(true));
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
-        Signature signature = new Signature(BigInteger.ZERO, BigInteger.ZERO, encoded);
+        Signature signature = new Signature(BigInteger.ZERO, BigInteger.ZERO, publicKey);
         boolean valid = signer.verifySignature(signature, Simulation.randomHash(), ZERO);
 
         assertFalse(valid);
@@ -76,10 +74,9 @@ class SignerTest {
 
     @Test
     void verifySignatureAttackSNotZero() {
-        ECPoint publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
-        ByteString encoded = ByteString.copyFrom(publicKey.getEncoded(true));
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
-        Signature signature = new Signature(BigInteger.ZERO, BigInteger.TEN, encoded);
+        Signature signature = new Signature(BigInteger.ZERO, BigInteger.TEN, publicKey);
         boolean valid = signer.verifySignature(signature, Simulation.randomHash(), ZERO);
 
         assertFalse(valid);
@@ -87,10 +84,9 @@ class SignerTest {
 
     @Test
     void verifySignatureAttackSNotZeroRN() {
-        ECPoint publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
-        ByteString encoded = ByteString.copyFrom(publicKey.getEncoded(true));
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
-        Signature signature = new Signature(CURVE.getDomain().getN(), BigInteger.TEN, encoded);
+        Signature signature = new Signature(CURVE.getDomain().getN(), BigInteger.TEN, publicKey);
         boolean valid = signer.verifySignature(signature, Simulation.randomHash(), ZERO);
 
         assertFalse(valid);
@@ -156,12 +152,12 @@ class SignerTest {
 
         Signature signature = signer.signMessage(message, privateKey);
 
-        ECPoint corruptedPublicKey = CURVE.getPublicKeyFromPrivateKey(privateKey.add(BigInteger.ONE));
+        PublicKey corruptedPublicKey = CURVE.getPublicKeyFromPrivateKey(privateKey.add(BigInteger.ONE));
 
         Signature corruptedSignature = new Signature(
             signature.getR(),
             signature.getS().add(BigInteger.ONE),
-            ByteString.copyFrom(corruptedPublicKey.getEncoded(true))
+            corruptedPublicKey
         );
 
         assertFalse(signer.verifySignature(corruptedSignature, Simulation.randomHash(), message));

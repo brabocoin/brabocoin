@@ -81,17 +81,16 @@ public class Signer {
         BigInteger s = rAndS[1];
 
         LOGGER.fine("Generating public key from private key.");
-        ECPoint publicKey = curve.getPublicKeyFromPrivateKey(privateKey);
-        ByteString compressed = ByteString.copyFrom(publicKey.getEncoded(true));
+        PublicKey publicKey = curve.getPublicKeyFromPrivateKey(privateKey);
 
         LOGGER.finest(() -> MessageFormat.format(
             "Compressed public key={0}, r={1}, s={2}",
-            toHexString(compressed),
+            toHexString(publicKey.toCompressed()),
             r,
             s
         ));
 
-        return new Signature(r, s, compressed);
+        return new Signature(r, s, publicKey);
     }
 
     /**
@@ -102,17 +101,17 @@ public class Signer {
      *
      * @param signature
      *     The signature to verify.
-     * @param address
-     *     The address corresponding to the public key that is used in the signature.
+     * @param publicKeyHash
+     *     The hash of the public key that is used in the signature.
      * @param message
      *     The message that is signed.
      * @return Whether the signature is valid.
      */
-    public boolean verifySignature(@NotNull Signature signature, @NotNull Hash address,
+    public boolean verifySignature(@NotNull Signature signature, @NotNull Hash publicKeyHash,
                                    @NotNull ByteString message) {
         LOGGER.fine("Verifying a signature.");
 
-        ECPoint publicKey = curve.decodePoint(signature.getPublicKey());
+        ECPoint publicKey = signature.getPublicKey().getPoint();
         CipherParameters parameters = new ECPublicKeyParameters(publicKey, curve.getDomain());
 
         LOGGER.fine("Initializing crypto library signer.");

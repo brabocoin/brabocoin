@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.testutil;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.*;
@@ -25,6 +27,7 @@ import java.util.concurrent.Callable;
 
 public class Simulation {
     private static Random RANDOM = new Random();
+    private static EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     public static List<Block> randomBlockChainGenerator(int length) {
         return randomBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
@@ -135,7 +138,8 @@ public class Simulation {
     }
 
     public static Signature randomSignature() {
-        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), randomByteString());
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(new BigInteger(255, RANDOM));
+        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), publicKey);
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {

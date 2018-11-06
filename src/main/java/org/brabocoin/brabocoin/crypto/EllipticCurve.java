@@ -54,9 +54,9 @@ public class EllipticCurve {
      *     The private key.
      * @return The public key point.
      */
-    public @NotNull ECPoint getPublicKeyFromPrivateKey(@NotNull BigInteger privateKey) {
+    public @NotNull PublicKey getPublicKeyFromPrivateKey(@NotNull BigInteger privateKey) {
         LOGGER.fine("Generating public key from private key.");
-        return domain.getG().multiply(privateKey);
+        return new PublicKey(domain.getG().multiply(privateKey));
     }
 
     /**
@@ -79,4 +79,5 @@ public class EllipticCurve {
     public @NotNull ECDomainParameters getDomain() {
         return domain;
     }
+
 }
