@@ -37,7 +37,7 @@ public class IndexedChain {
      *
      * @return The genesis block of this chain.
      */
-    public @NotNull IndexedBlock getGenesisBlock() {
+    public synchronized @NotNull IndexedBlock getGenesisBlock() {
         LOGGER.fine("Find genesis block.");
         return this.chain.get(0);
     }
@@ -47,7 +47,7 @@ public class IndexedChain {
      *
      * @return The top block.
      */
-    public @NotNull IndexedBlock getTopBlock() {
+    public synchronized @NotNull IndexedBlock getTopBlock() {
         LOGGER.fine("Find top block.");
         return this.chain.get(this.chain.size() - 1);
     }
@@ -59,7 +59,7 @@ public class IndexedChain {
      *     The block of which to retrieve the successor of.
      * @return The successor of the given block, or {@code null} no successor block is found.
      */
-    public @Nullable IndexedBlock getNextBlock(@NotNull IndexedBlock block) {
+    public synchronized @Nullable IndexedBlock getNextBlock(@NotNull IndexedBlock block) {
         LOGGER.fine("Get next block.");
         return contains(block) ? getBlockAtHeight(block.getBlockInfo().getBlockHeight() + 1) : null;
     }
@@ -71,7 +71,7 @@ public class IndexedChain {
      *     The block to check.
      * @return Whether the block is present on the chain.
      */
-    public boolean contains(@NotNull IndexedBlock block) {
+    public synchronized boolean contains(@NotNull IndexedBlock block) {
         LOGGER.fine("Check if block is contained in chain.");
         boolean contains = block.equals(getBlockAtHeight(block.getBlockInfo().getBlockHeight()));
         LOGGER.finest(() -> MessageFormat.format("contains={0}", contains));
@@ -87,7 +87,7 @@ public class IndexedChain {
      * @return The block at the specified height, or {@code null} if no block at such height
      * exists in this chain.
      */
-    public @Nullable IndexedBlock getBlockAtHeight(int height) {
+    public synchronized @Nullable IndexedBlock getBlockAtHeight(int height) {
         LOGGER.fine("Get block at specific height.");
         if (height < 0 || height >= this.chain.size()) {
             LOGGER.fine("Height was out of bounds.");
@@ -104,7 +104,7 @@ public class IndexedChain {
      *
      * @return The height of the top (highest) block in the chain.
      */
-    public int getHeight() {
+    public synchronized int getHeight() {
         LOGGER.fine("Get chain height.");
         return this.chain.size() - 1;
     }
@@ -118,7 +118,7 @@ public class IndexedChain {
      * @throws IllegalStateException
      *     When the current top block is the genesis block.
      */
-    @NotNull IndexedBlock popTopBlock() throws IllegalStateException {
+    @NotNull synchronized IndexedBlock popTopBlock() throws IllegalStateException {
         LOGGER.fine("Pop top block from chain.");
         if (getHeight() == 0) {
             LOGGER.warning("Not popped, only genesis block is left.");
@@ -133,7 +133,7 @@ public class IndexedChain {
      * @param block
      *     The block to add.
      */
-    void pushTopBlock(@NotNull IndexedBlock block) {
+    synchronized void pushTopBlock(@NotNull IndexedBlock block) {
         LOGGER.fine("Top block pushed on chain.");
         // TODO: (validation): check if the blockheight matches the height in chain?
         this.chain.add(block);

@@ -58,6 +58,24 @@ public class Peer {
     }
 
     /**
+     * Check whether this peer is a connection to the local machine.
+     *
+     * @return Whether this peer is the local machine.
+     */
+    public boolean isLocal() {
+        return socket.getAddress().isAnyLocalAddress() || socket.getAddress().isLoopbackAddress();
+    }
+
+    /**
+     * Get the port of this peer.
+     *
+     * @return Port of this peer.
+     */
+    public int getPort() {
+        return socket.getPort();
+    }
+
+    /**
      * Create a channel for the peer address and setup stubs to communicate with this peer.
      * Also add a shutdown handler for the channel.
      */
@@ -185,7 +203,16 @@ public class Peer {
         if (getClass() != obj.getClass())
             return false;
         final Peer other = (Peer) obj;
-        return socket.getHostString().equals(other.socket.getHostString()) &&
+        return socket.getAddress().equals(other.socket.getAddress()) &&
                 socket.getPort() == other.socket.getPort();
+    }
+
+    /**
+     * Get the address of this peer.
+     *
+     * @return The peer address.
+     */
+    public InetAddress getAddress() {
+        return socket.getAddress();
     }
 }

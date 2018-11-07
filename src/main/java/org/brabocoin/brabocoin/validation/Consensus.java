@@ -1,29 +1,29 @@
 package org.brabocoin.brabocoin.validation;
 
 import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 
 /**
  * Consensus rules.
  */
 public class Consensus {
-
     private final @NotNull Block genesisBlock = new Block(
-        new Hash(ByteString.copyFromUtf8("brabo")),
-        new Hash(ByteString.copyFromUtf8("root")),
-        new Hash(ByteString.copyFromUtf8("easy")),
-        ByteString.copyFromUtf8("blabla"),
+        new Hash(ByteString.EMPTY),
+        new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
+        new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
+        ByteString.copyFromUtf8("genesis"),
+        0, // TODO: Determine genesis block timestamp
         0,
-        0,
-        new ArrayList<>()
+        Collections.emptyList()
     );
 
     /**
@@ -41,6 +41,15 @@ public class Consensus {
                 .getBlockHeight()).thenComparing(Comparator.<IndexedBlock>comparingLong(b -> b.getBlockInfo()
                 .getTimestamp()).reversed()))
             .orElse(null);
+    }
+
+    /**
+     * Determine amount of Brabocoin in an coinbase output.
+     *
+     * @return Amount in miniBrabo's
+     */
+    public long getCoinbaseOutputAmount() {
+        return Constants.COIN * 10;
     }
 
     public @NotNull Block getGenesisBlock() {

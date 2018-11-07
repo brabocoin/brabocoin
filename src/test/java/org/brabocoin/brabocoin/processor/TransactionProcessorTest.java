@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
-import org.brabocoin.brabocoin.Magic;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
@@ -78,7 +78,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
 
         assertEquals(ProcessedTransactionStatus.INVALID, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -88,7 +88,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -98,7 +98,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -108,7 +108,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
     @Test
@@ -118,7 +118,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(orphan);
         assertEquals(ProcessedTransactionStatus.ORPHAN, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < orphan.getOutputs().size(); i++) {
             assertFalse(utxoFromPool.isUnspent(hash, i));
@@ -133,7 +133,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.INDEPENDENT, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hash, i));
@@ -161,7 +161,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.DEPENDENT, result.getStatus());
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hash, i));
@@ -216,7 +216,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(1, result.getAddedOrphans().size());
+        assertEquals(1, result.getValidatedOrphans().size());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -237,7 +237,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(1, result.getAddedOrphans().size());
+        assertEquals(1, result.getValidatedOrphans().size());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -269,7 +269,7 @@ class TransactionProcessorTest {
         assertEquals(ProcessedTransactionStatus.ORPHAN, resultC.getStatus());
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertEquals(2, result.getAddedOrphans().size());
+        assertEquals(2, result.getValidatedOrphans().size());
 
         for (int i = 0; i < transactionC.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hashC, i));
@@ -293,7 +293,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -317,7 +317,7 @@ class TransactionProcessorTest {
         processor.processNewTransaction(transactionB);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
-        assertTrue(result.getAddedOrphans().isEmpty());
+        assertTrue(result.getValidatedOrphans().isEmpty());
 
         Hash hashB = transactionB.computeHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
@@ -332,7 +332,7 @@ class TransactionProcessorTest {
         // Add transactions to pool as independent forcefully
         for (Transaction transaction : block.getTransactions()) {
             pool.addIndependentTransaction(transaction);
-            utxoFromPool.setOutputsUnspent(transaction, Magic.TRANSACTION_POOL_HEIGHT);
+            utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
             // These transactions also exist in the blockchain now
             utxoFromChain.setOutputsUnspent(transaction, block.getBlockHeight());
@@ -347,7 +347,7 @@ class TransactionProcessorTest {
         );
         Hash hashA = transactionA.computeHash();
         pool.addDependentTransaction(transactionA);
-        utxoFromPool.setOutputsUnspent(transactionA, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(transactionA, Constants.TRANSACTION_POOL_HEIGHT);
 
         processor.processTopBlockConnected(block);
 
@@ -390,7 +390,7 @@ class TransactionProcessorTest {
         );
         Hash independentHash = independent.computeHash();
         pool.addIndependentTransaction(independent);
-        utxoFromPool.setOutputsUnspent(independent, Magic.TRANSACTION_POOL_HEIGHT);
+        utxoFromPool.setOutputsUnspent(independent, Constants.TRANSACTION_POOL_HEIGHT);
 
         // Add orphan transaction that will now become valid
         Transaction orphan = new Transaction(

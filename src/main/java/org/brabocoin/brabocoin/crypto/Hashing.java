@@ -51,7 +51,7 @@ public final class Hashing {
         return digestSHA256(message.getValue());
     }
 
-    private static @NotNull Hash digest(@NotNull MessageDigest messageDigest,
+    private synchronized static @NotNull Hash digest(@NotNull MessageDigest messageDigest,
                                         @NotNull ByteString message) {
         LOGGER.log(Level.FINE, "Digest for ByteString message using MessageDigest: {0}", messageDigest.getAlgorithm());
         Hash hash = new Hash(ByteString.copyFrom(messageDigest.digest(message.toByteArray())));

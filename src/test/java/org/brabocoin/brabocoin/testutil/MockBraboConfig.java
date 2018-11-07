@@ -12,6 +12,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public int loopInterval() {
+        return delegator.loopInterval();
+    }
+
+    @Override
     public int targetPeerCount() {
         return delegator.targetPeerCount();
     }

@@ -53,7 +53,7 @@ public class UTXODatabase {
      * @return Whether the input is unspent.
      * @throws DatabaseException     When the output data could not be read.
      */
-    public boolean isUnspent(@NotNull Input input) throws DatabaseException {
+    public synchronized boolean isUnspent(@NotNull Input input) throws DatabaseException {
         LOGGER.fine("Checking whether input is unspent.");
         return this.isUnspent(input.getReferencedTransaction(), input.getReferencedOutputIndex());
     }
@@ -67,7 +67,7 @@ public class UTXODatabase {
      * @return Whether the output is unspent.
      * @throws DatabaseException     When the output data could not be read.
      */
-    public boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
+    public synchronized boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.fine("Checking whether a transaction hash with given output index is unspent.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         boolean has = storage.has(key);
@@ -79,7 +79,7 @@ public class UTXODatabase {
         return has;
     }
 
-    private ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
+    private synchronized ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
         ByteString outputKey = KEY_PREFIX_OUTPUT.concat(transactionHash.getValue())
             .concat(ByteUtil.toByteString(outputIndex));
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Output key: {0}", toHexString(outputKey)));
@@ -93,7 +93,7 @@ public class UTXODatabase {
      * @return The unspent output information, or {@code null} when the output is already spent.
      * @throws DatabaseException     When the output data could not be read.
      */
-    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Input input) throws DatabaseException {
+    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Input input) throws DatabaseException {
         LOGGER.fine("Getting unspent output info for the output referenced by the given input.");
         return this.findUnspentOutputInfo(input.getReferencedTransaction(),
             input.getReferencedOutputIndex()
@@ -109,7 +109,7 @@ public class UTXODatabase {
      * @return The unspent output information, or {@code null} when the output is already spent.
      * @throws DatabaseException     When the output data could not be read.
      */
-    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
+    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
                                                              int outputIndex) throws DatabaseException {
         LOGGER.fine("Getting unspent output info for a given transaction hash and output index.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
@@ -124,14 +124,14 @@ public class UTXODatabase {
     }
 
     @Nullable
-    protected ByteString retrieve(ByteString key) throws DatabaseException {
+    protected synchronized ByteString retrieve(ByteString key) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Retrieving ByteString from key: {0}", toHexString(key)));
         ByteString bytes = storage.get(key);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Got ByteString: {0}", toHexString(bytes)));
         return bytes;
     }
 
-    protected <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
+    protected synchronized <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Parsing proto value from byte array: {0}", value));
         try {
             return ProtoConverter.parseProtoValue(value, domainClassBuilder, parser);
@@ -150,7 +150,7 @@ public class UTXODatabase {
      * @throws DatabaseException
           When the data could not be stored.
      */
-    public void setOutputsUnspent(@NotNull Transaction transaction, int blockHeight) throws DatabaseException {
+    public synchronized void setOutputsUnspent(@NotNull Transaction transaction, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark all outputs of the given transaction as unspent.");
         List<Integer> allOutputs = IntStream.range(0, transaction.getOutputs().size())
             .boxed()
@@ -169,7 +169,7 @@ public class UTXODatabase {
      * @throws DatabaseException
           When the data could not be stored.
      */
-    public void setOutputsUnspent(@NotNull Transaction transaction,
+    public synchronized void setOutputsUnspent(@NotNull Transaction transaction,
                                   @NotNull List<Integer> outputIndices, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark outputs of the given transaction as unspent.");
         Hash transactionHash = transaction.computeHash();
@@ -207,7 +207,7 @@ public class UTXODatabase {
      * @throws DatabaseException
      *     When the data could not be stored.
      */
-    public void addUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex,
+    public synchronized void addUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex,
                                      @NotNull UnspentOutputInfo info) throws DatabaseException {
         ByteString key = getOutputKey(transactionHash, outputIndex);
         ByteString value = getRawProtoValue(info, BrabocoinStorageProtos.UnspentOutputInfo.class);
@@ -216,11 +216,11 @@ public class UTXODatabase {
         store(key, value);
     }
 
-    protected <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
+    protected synchronized <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(D domainObject, Class<P> protoClass) {
         return ProtoConverter.toProto(domainObject, protoClass).toByteString();
     }
 
-    protected void store(ByteString key, ByteString value) throws DatabaseException {
+    protected synchronized void store(ByteString key, ByteString value) throws DatabaseException {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Storing key: {0}, value: {1}",
             toHexString(key),
             toHexString(value)
@@ -237,7 +237,7 @@ public class UTXODatabase {
      * @throws DatabaseException
           When the data could not be stored.
      */
-    public void setOutputSpent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
+    public synchronized void setOutputSpent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.log(Level.FINE, "Marking output as spent");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));

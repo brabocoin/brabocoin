@@ -55,12 +55,12 @@ public class Transaction implements ProtoModel<Transaction> {
 
     /**
      * Whether the transaction is a coinbase transaction.
+     * No inputs are allowed, and only one output.
      *
      * @return Whether the transaction is a coinbase transaction.
      */
     public boolean isCoinbase() {
-        // TODO: implement
-        return false;
+        return inputs.size() == 0 && outputs.size() == 1;
     }
 
     /**

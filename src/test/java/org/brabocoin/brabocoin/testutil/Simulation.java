@@ -1,23 +1,26 @@
 package org.brabocoin.brabocoin.testutil;
 
 import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
-import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
+import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.processor.TransactionProcessor;
+import org.brabocoin.brabocoin.processor.UTXOProcessor;
+import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.BlockValidator;
+import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.TransactionValidator;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Simulation {
     private static Random RANDOM = new Random();
@@ -27,10 +30,14 @@ public class Simulation {
     }
 
     public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
+        return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5);
+    }
+
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight, int inputs, int outputs) {
         List<Block> list = new ArrayList<>();
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
-            Block block = randomBlock(previousHash, i, 5, 5, 30);
+            Block block = randomBlock(previousHash, i, inputs, outputs, 30);
             previousHash = block.computeHash();
             list.add(block);
         }
@@ -65,8 +72,8 @@ public class Simulation {
                 0,
                 0,
                 0,
-                0,
-                0
+                -1,
+                -1
             );
 
             previousHash = block.computeHash();
@@ -97,13 +104,15 @@ public class Simulation {
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
-        return IntStream.range(0, RANDOM.nextInt(bound) + 1).mapToObj(i -> {
+        List<U> list = new ArrayList<>();
+        for (int i = 0; i < bound; i++) {
             try {
-                return builder.call();
+                list.add(builder.call());
             } catch (Exception e) {
-                return null;
+                e.printStackTrace();
             }
-        }).collect(Collectors.toList());
+        }
+        return list;
     }
 
     public static Input randomInput() {
@@ -122,5 +131,99 @@ public class Simulation {
         byte[] randomBytes = new byte[64];
         RANDOM.nextBytes(randomBytes);
         return ByteString.copyFrom(randomBytes);
+    }
+
+    public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
+        return generateNode(port, config, new BlockDatabase(new HashMapDB(), config));
+    }
+
+    public static Node generateNode(int port, BraboConfig config, BlockDatabase blockDatabase) throws DatabaseException {
+        Consensus consensus = new Consensus();
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionPool transactionPool = new TransactionPool(config, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        return new Node(port, new NodeEnvironment(port,
+                blockchain,
+                blockProcessor,
+                peerProcessor,
+                transactionPool,
+                transactionProcessor,
+                config));
+    }
+
+    public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
+        return generateNodeAndProcessorWithBlocks(port, config, consensus, blocks).getKey();
+    }
+
+    public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionPool transactionPool = new TransactionPool(config, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        for (Block b : blocks) {
+            blockProcessor.processNewBlock(b);
+        }
+
+        return new AbstractMap.SimpleEntry<>(new Node(port, new NodeEnvironment(port,
+                blockchain,
+                blockProcessor,
+                peerProcessor,
+                transactionPool,
+                transactionProcessor,
+                config)), blockProcessor);
+    }
+
+    public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, List<Transaction> transactions) throws DatabaseException {
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
+        TransactionPool transactionPool = new TransactionPool(config, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        for (Transaction t : transactions) {
+            transactionProcessor.processNewTransaction(t);
+        }
+
+        return new Node(port, new NodeEnvironment(port,
+                blockchain,
+                blockProcessor,
+                peerProcessor,
+                transactionPool,
+                transactionProcessor,
+                config));
     }
 }

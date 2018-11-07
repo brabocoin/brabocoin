@@ -11,7 +11,7 @@ option java_package = "org.brabocoin.brabocoin.proto.services";
 option java_outer_classname = "NodeServiceProto";
 
 service Node {
-    rpc Handshake(google.protobuf.Empty) returns (HandshakeResponse);
+    rpc Handshake(HandshakeRequest) returns (HandshakeResponse);
 
     rpc AnnounceBlock(Hash) returns (google.protobuf.Empty);
     rpc AnnounceTransaction(Hash) returns (google.protobuf.Empty);

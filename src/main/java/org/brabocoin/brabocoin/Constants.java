@@ -1,11 +1,11 @@
 package org.brabocoin.brabocoin;
 
 /**
- * Collection of all magic constants.
+ * Collection of all constants.
  */
-public final class Magic {
+public final class Constants {
 
-    private Magic() {
+    private Constants() {
     }
 
     /**
@@ -13,4 +13,9 @@ public final class Magic {
      * entries in the transaction pool UTXO set.
      */
     public static final int TRANSACTION_POOL_HEIGHT = Integer.MAX_VALUE;
+
+    /**
+     * The amount of miniBrabos that equals one Brabocoin.
+     */
+    public static final long COIN = 1000000L;
 }

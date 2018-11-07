@@ -45,6 +45,9 @@ message Block {
     repeated Transaction transactions = 7;
 }
 
+message HandshakeRequest {
+    int32 servicePort = 1;
+}
 message HandshakeResponse {
     repeated string peers = 1;
 }

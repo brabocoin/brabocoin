@@ -3,11 +3,7 @@ package org.brabocoin.brabocoin.util.collection;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -17,14 +13,11 @@ import java.util.function.Function;
  * A primary key index is maintained for every value, as well as an dependence index for every
  * dependency.
  *
- * @param <K>
- *     The key for the primary index.
- * @param <V>
- *     The value.
- * @param <D>
- *     The dependency.
+ * @param <K> The key for the primary index.
+ * @param <V> The value.
+ * @param <D> The dependency.
  */
-public class MultiDependenceIndex <K, V, D> {
+public class MultiDependenceIndex<K, V, D> {
 
     /**
      * Primary key index.
@@ -54,10 +47,8 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Creates a new index.
      *
-     * @param keySupplier
-     *     Calculates the key from the value. Note that keys must be unique for every value.
-     * @param multiDependency
-     *     Retrieves the dependencies for a given value.
+     * @param keySupplier     Calculates the key from the value. Note that keys must be unique for every value.
+     * @param multiDependency Retrieves the dependencies for a given value.
      */
     public MultiDependenceIndex(Function<V, K> keySupplier,
                                 Function<V, Iterable<D>> multiDependency) {
@@ -74,16 +65,14 @@ public class MultiDependenceIndex <K, V, D> {
      * Keys must be If the key corresponding to the value is already present in the index, the
      * new value is not stored instead. The original data is maintained.
      *
-     * @param value
-     *     The value to store.
-     * @throws IllegalArgumentException
-     *     When the key corresponding to the value already exists in the index.
+     * @param value The value to store.
+     * @throws IllegalArgumentException When the key corresponding to the value already exists in the index.
      */
     public void put(V value) {
         K key = keySupplier.apply(value);
         if (primaryIndex.containsKey(key)) {
             throw new IllegalArgumentException(
-                "The computed key of the supplied value already exists in the index.");
+                    "The computed key of the supplied value already exists in the index.");
         }
 
         primaryIndex.put(key, value);
@@ -97,8 +86,7 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Checks whether the key is contained in the index.
      *
-     * @param key
-     *     The key.
+     * @param key The key.
      * @return Whether the key is contained in the index.
      */
     public boolean containsKey(K key) {
@@ -108,8 +96,7 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Retrieves the value from the given key.
      *
-     * @param key
-     *     The key.
+     * @param key The key.
      * @return The value corresponding to the key in the index, or {@code null} if the key is not
      * present.
      */
@@ -120,8 +107,7 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Retrieves all values that depend on {@code dependency}.
      *
-     * @param dependency
-     *     The dependency.
+     * @param dependency The dependency.
      * @return All values that depend on {@code dependency}, or an empty collection if no such
      * values exist.
      */
@@ -132,8 +118,7 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Removes the value from the index.
      *
-     * @param value
-     *     The value
+     * @param value The value
      * @return The removed value, or {@code null} if the value could not be found.
      */
     public V removeValue(V value) {
@@ -143,8 +128,7 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Removes the value for the given key from the index.
      *
-     * @param key
-     *     The key.
+     * @param key The key.
      * @return The removed value, or {@code null} if the key could not be found.
      */
     public V removeKey(K key) {
@@ -175,13 +159,20 @@ public class MultiDependenceIndex <K, V, D> {
     /**
      * Get the key at the given index.
      *
-     * @param index
-     *     The index.
+     * @param index The index.
      * @return The key at the given index.
-     * @throws IndexOutOfBoundsException
-     *     If no key at the given position exists.
+     * @throws IndexOutOfBoundsException If no key at the given position exists.
      */
     public K getKeyAt(int index) {
         return keyList.get(index);
+    }
+
+    /**
+     * Get the keyset of the primary index.
+     *
+     * @return Set of keys in the primary index.
+     */
+    public Set<K> keySet() {
+        return primaryIndex.keySet();
     }
 }
