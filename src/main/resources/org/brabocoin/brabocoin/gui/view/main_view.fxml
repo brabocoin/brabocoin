@@ -38,7 +38,7 @@
     <center>
         <HiddenSidesPane fx:id="sidesPane" triggerDistance="0" animationDelay="0s" BorderPane.alignment="CENTER">
             <content>
-                <BorderPane>
+                <BorderPane fx:id="viewContainer">
                     <left>
                         <VBox id="main-nav">
                             <StackPane styleClass="logo">
