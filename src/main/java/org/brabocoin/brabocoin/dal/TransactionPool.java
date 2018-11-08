@@ -312,7 +312,7 @@ public class TransactionPool {
      */
     public synchronized boolean contains(@NotNull Hash hash) {
         LOGGER.fine("Checking if valid transaction is known or orphan.");
-        return hasValidTransaction(hash) || isOrphan(hash);
+        return isOrphan(hash) || hasValidTransaction(hash);
     }
 
     /**
@@ -366,9 +366,9 @@ public class TransactionPool {
      */
     public Iterator<Transaction> getIterator() {
         return Iterators.concat(
+                orphanTransactions.getIterator(),
                 independentTransactions.getIterator(),
-                dependentTransactions.getIterator(),
-                orphanTransactions.getIterator()
+                dependentTransactions.getIterator()
         );
     }
 }

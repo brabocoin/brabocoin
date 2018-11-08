@@ -7,6 +7,8 @@ import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Input of a transaction.
  * <p>
@@ -96,5 +98,19 @@ public class Input implements ProtoModel<Input> {
         public Input build() {
             return new Input(signature, referencedTransaction.build(), referencedOutputIndex);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Input input = (Input) o;
+        return referencedOutputIndex == input.referencedOutputIndex &&
+                referencedTransaction.equals(input.referencedTransaction);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(referencedTransaction, referencedOutputIndex);
     }
 }

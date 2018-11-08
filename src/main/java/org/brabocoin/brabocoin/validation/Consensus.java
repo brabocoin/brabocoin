@@ -16,6 +16,15 @@ import java.util.Comparator;
  * Consensus rules.
  */
 public class Consensus {
+    // The max block size, excluding the nonce.
+    private static final long MAX_BLOCK_SIZE = 1000; // In bytes
+    // The max nonce size.
+    private static final long MAX_NONCE_SIZE = 16; // In bytes
+    // Block maturity depth.
+    private static final int BLOCK_MATURITY_DEPTH = 100;
+    // Max transaction value range.
+    private static final long MAX_TRANSACTION_RANGE = (long) (3 * 10E8);
+
     private final @NotNull Block genesisBlock = new Block(
         new Hash(ByteString.EMPTY),
         new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
@@ -55,5 +64,13 @@ public class Consensus {
     public @NotNull Block getGenesisBlock() {
         return genesisBlock;
     }
+
+    public @NotNull long getMaxBlockSize() { return MAX_BLOCK_SIZE; }
+
+    public @NotNull long getMaxNonceSize() { return MAX_NONCE_SIZE; }
+
+    public @NotNull int getBlockMaturityDepth() { return BLOCK_MATURITY_DEPTH; }
+
+    public @NotNull long getMaxTransactionRange() { return MAX_TRANSACTION_RANGE; }
 
 }
