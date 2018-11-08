@@ -1,15 +1,14 @@
 package org.brabocoin.brabocoin.crypto;
 
+import com.google.common.collect.Lists;
 import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -21,9 +20,6 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * The Merkle tree is defined by its leaves and forms a fully balanced binary tree. The interior
  * nodes (including the root node) are defined as {@code H(child1 || child2)}, where {@code
  * ||} denotes the concatenation of hashes and {@code H} is a hashing function.
- * <p>
- * Note that the Merkle tree must have an even number of leaves. If an uneven number of leaves is
- * supplied, the last node is duplicated to fill up the tree.
  */
 public class MerkleTree {
 
@@ -35,7 +31,7 @@ public class MerkleTree {
     private final @NotNull Function<Hash, Hash> hashingFunction;
 
     /**
-     * Leaves of the tree. The number of leaves is always even.
+     * Leaves of the tree.
      */
     private final @NotNull List<Hash> leaves;
 
@@ -98,7 +94,7 @@ public class MerkleTree {
      *
      * @param leaf
      *     The leaf element to find a proof for.
-     * @return The proof showing that the given leaf is in the tree, or {@code null} of the
+     * @return The proof showing that the given leaf is in the tree, or {@code null} if the
      * supplied leaf is {@code null}.
      */
     @Contract("!null -> !null; null -> null")
@@ -106,40 +102,53 @@ public class MerkleTree {
         LOGGER.fine("Computing proof for leaf.");
 
         // Working queue of nodes to process
-        Queue<Hash> nodes = new ArrayDeque<>(leaves);
+        List<Hash> nodes = new ArrayList<>(leaves);
 
         List<MerkleProof.Step> proof = new ArrayList<>();
         Hash onPath = leaf;
 
+        // Create pairs of hashes
         while (nodes.size() > 1) {
-            // Remove the next two nodes from the queue
-            Hash leftChild = nodes.remove();
-            Hash rightChild = nodes.remove();
+            List<List<Hash>> partitioned = Lists.partition(nodes, 2);
+            nodes = new ArrayList<>();
 
-            // Compute the next inner node and add to the queue
-            Hash innerNode = hashingFunction.apply(leftChild.concat(rightChild));
-            nodes.add(innerNode);
+            for (List<Hash> hashes : partitioned) {
+                if (hashes.size() < 2) {
+                    // Just add the last hash if number of hashes was uneven
+                    nodes.add(hashes.get(0));
+                    continue;
+                }
 
-            LOGGER.finest(() -> MessageFormat.format("Hash of next inner node: {0}",
-                toHexString(innerNode.getValue())
-            ));
+                // Combine the two child hashes
+                // Remove the next two nodes from the queue
+                Hash leftChild = hashes.get(0);
+                Hash rightChild = hashes.get(1);
 
-            // Check if either child is the desired path
-            if (leftChild.equals(onPath)) {
-                LOGGER.finest("Left child is on the proof path, add right sibling to proof.");
-                proof.add(MerkleProof.Step.right(rightChild));
-                onPath = innerNode;
-            }
-            else if (rightChild.equals(onPath)) {
-                LOGGER.finest("Right child is on the proof path, add left sibling to proof.");
-                proof.add(MerkleProof.Step.left(leftChild));
-                onPath = innerNode;
+                // Compute the next inner node and add to the queue
+                Hash innerNode = hashingFunction.apply(leftChild.concat(rightChild));
+                nodes.add(innerNode);
+
+                LOGGER.finest(() -> MessageFormat.format("Hash of next inner node: {0}",
+                    toHexString(innerNode.getValue())
+                ));
+
+                // Check if either child is the desired path
+                if (leftChild.equals(onPath)) {
+                    LOGGER.finest("Left child is on the proof path, add right sibling to proof.");
+                    proof.add(MerkleProof.Step.right(rightChild));
+                    onPath = innerNode;
+                }
+                else if (rightChild.equals(onPath)) {
+                    LOGGER.finest("Right child is on the proof path, add left sibling to proof.");
+                    proof.add(MerkleProof.Step.left(leftChild));
+                    onPath = innerNode;
+                }
             }
         }
 
         // There is now only one node left in the queue, which is the root node
         if (root == null) {
-            root = nodes.remove();
+            root = nodes.get(0);
             LOGGER.finest(() -> MessageFormat.format(
                 "Setting the root of the tree: {0}",
                 toHexString(root != null ? root.getValue() : null)
