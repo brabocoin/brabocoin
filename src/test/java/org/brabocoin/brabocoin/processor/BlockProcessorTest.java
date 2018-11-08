@@ -13,7 +13,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -205,7 +204,7 @@ class BlockProcessorTest {
         Hash tHashA = transactionA.computeHash();
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), tHashA, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), tHashA, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Block blockB = new Block(

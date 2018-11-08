@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
+import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.bouncycastle.jcajce.provider.digest.SHA256;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.brabocoin.brabocoin.model.Hash;
@@ -20,6 +21,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 public final class Hashing {
     private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
     private static SHA256.Digest SHA256Digest = new SHA256.Digest();
+    private static RIPEMD160.Digest RIPEMD160Digest = new RIPEMD160.Digest();
 
     static {
         LOGGER.fine("Hashing class initializing.");
@@ -49,6 +51,28 @@ public final class Hashing {
     public static Hash digestSHA256(@NotNull Hash message) {
         LOGGER.fine("Digest SHA256 for Hash message.");
         return digestSHA256(message.getValue());
+    }
+
+    /**
+     * Compute the RIPEMD-160 hash of a message.
+     *
+     * @param message The message to be hashed.
+     * @return The hashed message.
+     */
+    public static Hash digestRIPEMD160(@NotNull ByteString message) {
+        LOGGER.fine("Digest RIPEMD160 for ByteString message.");
+        return digest(RIPEMD160Digest, message);
+    }
+
+    /**
+     * Compute the RIPEMD-160 hash of a message.
+     *
+     * @param message The message to be hashed.
+     * @return The hashed message.
+     */
+    public static Hash digestRIPEMD160(@NotNull Hash message) {
+        LOGGER.fine("Digest RIPEMD160 for Hash message.");
+        return digestRIPEMD160(message.getValue());
     }
 
     private synchronized static @NotNull Hash digest(@NotNull MessageDigest messageDigest,

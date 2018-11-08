@@ -30,6 +30,18 @@ public class Hash implements ProtoModel<Hash> {
         this.value = value;
     }
 
+    /**
+     * Returns a new hash object representing the concatenated value of the current hash and the
+     * provided hash.
+     *
+     * @param hash
+     *     The hash to concatenate to this hash.
+     * @return The concatenated hash.
+     */
+    public @NotNull Hash concat(@NotNull Hash hash) {
+        return new Hash(this.getValue().concat(hash.getValue()));
+    }
+
     public @NotNull ByteString getValue() {
         return value;
     }
