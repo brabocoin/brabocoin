@@ -25,6 +25,7 @@ public class CoinbaseMaturityTxRule {
                     try {
                         return chainUTXODatabase.findUnspentOutputInfo(i);
                     } catch (DatabaseException e) {
+                        e.printStackTrace();
                         return null;
                     }
                 })

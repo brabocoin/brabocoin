@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
@@ -13,11 +14,23 @@ import org.jeasy.rules.annotation.Rule;
 /**
  * Transaction rule
  */
-@Rule(name = "Input value rule", description = "The amount of the referenced output of the input must be positive and the sum of these amounts must be smaller than the max transaction range decided by consensus.")
-public class InputValueTxRange {
+@Rule(name = "Valid input amount for the outputs", description = "The sum of inputs must be greater than the sum of outputs.")
+public class SufficientInputTxRule {
     @Condition
-    public boolean valid(@Fact("transaction") Transaction transaction, @Fact("transactionProcessor") TransactionProcessor transactionProcessor, @Fact("consensus") Consensus consensus) {
-        long sum = 0L;
+    public boolean valid(@Fact("transaction") Transaction transaction, @Fact("TransactionProcessor") TransactionProcessor transactionProcessor, @Fact("consensus") Consensus consensus) {
+        long outputSum = 0L;
+        for (Output output : transaction.getOutputs()) {
+            if (output.getAmount() <= 0) {
+                return false;
+            }
+
+            outputSum += output.getAmount();
+            if (outputSum > consensus.getMaxTransactionRange()) {
+                return false;
+            }
+        }
+
+        long inputSum = 0L;
         for (Input input : transaction.getInputs()) {
             UnspentOutputInfo unspentOutputInfo;
             try {
@@ -31,16 +44,12 @@ public class InputValueTxRange {
                 return false;
             }
 
-            if (unspentOutputInfo.getAmount() <= 0) {
-                return false;
-            }
-
-            sum += unspentOutputInfo.getAmount();
-            if (sum > consensus.getMaxTransactionRange()) {
+            inputSum += unspentOutputInfo.getAmount();
+            if (inputSum > consensus.getMaxTransactionRange()) {
                 return false;
             }
         }
 
-        return true;
+        return inputSum > outputSum;
     }
 }

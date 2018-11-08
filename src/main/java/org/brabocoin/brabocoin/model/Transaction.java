@@ -111,4 +111,17 @@ public class Transaction implements ProtoModel<Transaction> {
             );
         }
     }
+
+    public ByteString getSignableTransactionData() {
+        return ProtoConverter.toProtoBytes(new Transaction(
+                inputs.stream().map(
+                        i -> new Input(
+                                null,
+                                i.getReferencedTransaction(),
+                                i.getReferencedOutputIndex()
+                        )
+                ).collect(Collectors.toList()),
+                outputs
+        ), BrabocoinProtos.Transaction.class);
+    }
 }
