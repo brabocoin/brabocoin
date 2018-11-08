@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.model;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,8 +21,8 @@ class TransactionTest {
     @BeforeAll
     static void setUp() {
         inputList = new ArrayList<Input>() {{
-            add(new Input(new Signature(), transactionHash, 0));
-            add(new Input(new Signature(), transactionHash, 0));
+            add(new Input(Simulation.randomSignature(), transactionHash, 0));
+            add(new Input(Simulation.randomSignature(), transactionHash, 0));
         }};
 
         outputList = new ArrayList<Output>() {{

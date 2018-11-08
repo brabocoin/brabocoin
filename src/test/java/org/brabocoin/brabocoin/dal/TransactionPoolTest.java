@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.dal;
 
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -148,14 +147,14 @@ class TransactionPoolTest {
         pool.addOrphanTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashA, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashB = transactionB.computeHash();
         pool.addOrphanTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashC = transactionC.computeHash();
@@ -179,14 +178,14 @@ class TransactionPoolTest {
         pool.addDependentTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashA, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashB = transactionB.computeHash();
         pool.addDependentTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashC = transactionC.computeHash();
@@ -281,7 +280,7 @@ class TransactionPoolTest {
         Hash hashB = transactionB.computeHash();
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashC = transactionC.computeHash();
@@ -323,7 +322,7 @@ class TransactionPoolTest {
         Hash hashB = transactionB.computeHash();
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashC = transactionC.computeHash();

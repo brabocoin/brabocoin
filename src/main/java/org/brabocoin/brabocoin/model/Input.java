@@ -72,13 +72,13 @@ public class Input implements ProtoModel<Input> {
     public static class Builder implements ProtoBuilder<Input> {
 
         @ProtoField
-        private Signature signature;
+        private Signature.Builder signature;
         @ProtoField
         private Hash.Builder referencedTransaction;
         @ProtoField
         private int referencedOutputIndex;
 
-        public Builder setSignature(Signature signature) {
+        public Builder setSignature(Signature.Builder signature) {
             this.signature = signature;
             return this;
         }
@@ -94,7 +94,7 @@ public class Input implements ProtoModel<Input> {
 
         @Override
         public Input build() {
-            return new Input(signature, referencedTransaction.build(), referencedOutputIndex);
+            return new Input(signature.build(), referencedTransaction.build(), referencedOutputIndex);
         }
     }
 }

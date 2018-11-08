@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.testutil;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.*;
@@ -19,11 +21,13 @@ import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.TransactionValidator;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.Callable;
 
 public class Simulation {
     private static Random RANDOM = new Random();
+    private static EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     public static List<Block> randomBlockChainGenerator(int length) {
         return randomBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
@@ -116,7 +120,7 @@ public class Simulation {
     }
 
     public static Input randomInput() {
-        return new Input(new Signature(), randomHash(), RANDOM.nextInt(5));
+        return new Input(randomSignature(), randomHash(), RANDOM.nextInt(5));
     }
 
     public static Output randomOutput() {
@@ -131,6 +135,11 @@ public class Simulation {
         byte[] randomBytes = new byte[64];
         RANDOM.nextBytes(randomBytes);
         return ByteString.copyFrom(randomBytes);
+    }
+
+    public static Signature randomSignature() {
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(new BigInteger(255, RANDOM));
+        return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), publicKey);
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
