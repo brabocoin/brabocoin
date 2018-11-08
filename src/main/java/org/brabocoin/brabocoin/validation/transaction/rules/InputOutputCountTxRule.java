@@ -12,7 +12,7 @@ import org.jeasy.rules.annotation.Rule;
 public class InputOutputCountTxRule {
     @Condition
     public boolean valid(@Fact("transaction") Transaction transaction) {
-        if (!transaction.isCoinbase()) {
+        if (transaction.isCoinbase()) {
             // If coinbase, inputs can be empty, only check outputs
             return transaction.getOutputs().size() > 0;
         } else {
