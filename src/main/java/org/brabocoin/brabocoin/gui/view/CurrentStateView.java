@@ -17,6 +17,7 @@ import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
+import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -30,6 +31,8 @@ import java.util.ResourceBundle;
  * View for the current state.
  */
 public class CurrentStateView extends TabPane implements BraboControl, Initializable {
+
+    @FXML private MasterDetailPane masterDetailPane;
 
     @FXML private TableView<IndexedBlock> blockchainTable;
     @FXML private TableColumn<IndexedBlock, Integer> heightColumn;
@@ -90,6 +93,11 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             return new ReadOnlyObjectWrapper<>(sizeKiloBytes);
         });
         sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
+
+        blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
+            masterDetailPane.setDetailNode(new BlockDetailView(indexedBlock));
+            masterDetailPane.setShowDetailNode(true);
+        });
     }
 
     private void loadMainChain() {

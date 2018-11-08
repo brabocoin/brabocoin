@@ -17,7 +17,7 @@
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.CurrentStateView">
     <Tab closable="false" text="Blockchain">
-        <MasterDetailPane dividerPosition="0.7">
+        <MasterDetailPane fx:id="masterDetailPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
                 <VBox>
                     <ToolBar VBox.vgrow="NEVER">

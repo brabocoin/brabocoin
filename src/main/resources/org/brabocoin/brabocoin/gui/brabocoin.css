@@ -37,6 +37,19 @@
     -brabo-pane-toolbar-background: -fx-base;
 }
 
+* {
+    -fx-ellipsis-string: "…";
+}
+
 .custom-text-field .left-pane .glyph-font {
     -fx-text-fill: derive(-fx-text-inner-color, 110%);
+}
+
+.hash {
+    -fx-font-family: monospace;
+}
+
+.side-pane-title {
+    -fx-text-fill: derive(-fx-mid-text-color, 30%);
+    -fx-font-size: 2em;
 }
