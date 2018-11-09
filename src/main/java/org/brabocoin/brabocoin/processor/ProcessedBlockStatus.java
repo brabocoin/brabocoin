@@ -11,15 +11,9 @@ public enum ProcessedBlockStatus {
     ORPHAN,
 
     /**
-     * The new block is successfully added to the blockchain, either on the main chain or as
-     * a fork.
+     * The new block is valid.
      */
-    ADDED_TO_BLOCKCHAIN,
-
-    /**
-     * The block has already been processed and stored.
-     */
-    ALREADY_STORED,
+    VALID,
 
     /**
      * The block is invalid and has not been stored.

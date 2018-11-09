@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -40,7 +42,12 @@ public class Blockchain {
     /**
      * Stores orphan blocks indexed by their parent block hash.
      */
-    private final @NotNull SetMultimap<Hash, IndexedBlock> orphanMap;
+    private final @NotNull SetMultimap<Hash, Block> orphanMap;
+
+    /**
+     * Index orphans by their hash.
+     */
+    private final @NotNull Map<Hash, Block> orphanIndex;
 
     /**
      * Initializes a blockchain with a genesis block with the given database backend.
@@ -55,6 +62,7 @@ public class Blockchain {
     public Blockchain(@NotNull BlockDatabase database, @NotNull Consensus consensus) throws DatabaseException {
         this.database = database;
         this.orphanMap = HashMultimap.create();
+        this.orphanIndex = new HashMap<>();
 
         IndexedBlock genesis = storeGenesisBlock(consensus.getGenesisBlock());
         this.mainChain = new IndexedChain(genesis);
@@ -164,15 +172,15 @@ public class Blockchain {
      * Checks whether the given block is known to be an orphan, e.g. the parent of the block is
      * not recorded in the blockchain (either on a fork or on the main chain).
      *
-     * @param block
-     *     The block to check.
+     * @param blockHash
+     *     The hash of the block to check.
      * @return Whether the block is an orphan.
      */
-    public synchronized boolean isOrphan(@NotNull IndexedBlock block) {
+    public synchronized boolean isOrphan(@NotNull Hash blockHash) {
         LOGGER.fine("Check if block is orphan.");
 
-        boolean isOrphan = orphanMap.containsValue(block);
-        LOGGER.finest(() -> MessageFormat.format("Block {0} isOrphan={1}", toHexString(block.getHash().getValue()), isOrphan));
+        boolean isOrphan = orphanIndex.containsKey(blockHash);
+        LOGGER.finest(() -> MessageFormat.format("Block {0} isOrphan={1}", toHexString(blockHash.getValue()), isOrphan));
 
         return isOrphan;
     }
@@ -187,9 +195,10 @@ public class Blockchain {
      * @param block
      *     The block to add as orphan.
      */
-    public synchronized void addOrphan(@NotNull IndexedBlock block) {
+    public synchronized void addOrphan(@NotNull Block block) {
         LOGGER.fine("Adding block as orphan.");
-        orphanMap.put(block.getBlockInfo().getPreviousBlockHash(), block);
+        orphanMap.put(block.getPreviousBlockHash(), block);
+        orphanIndex.put(block.computeHash(), block);
     }
 
     /**
@@ -229,9 +238,15 @@ public class Blockchain {
      *     The hash of the parent.
      * @return The set of orphan block that are removed, or an empty set if no orphans are removed.
      */
-    public synchronized @NotNull Set<IndexedBlock> removeOrphansOfParent(@NotNull Hash parentHash) {
+    public synchronized @NotNull Set<Block> removeOrphansOfParent(@NotNull Hash parentHash) {
         LOGGER.fine("Removing all orphans of parent.");
-        return orphanMap.removeAll(parentHash);
+        Set<Block> removed = orphanMap.removeAll(parentHash);
+
+        for (Block removedBlock : removed) {
+            orphanIndex.remove(removedBlock.computeHash());
+        }
+
+        return removed;
     }
 
     /**

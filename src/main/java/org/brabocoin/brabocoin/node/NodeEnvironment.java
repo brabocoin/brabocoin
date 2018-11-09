@@ -226,7 +226,7 @@ public class NodeEnvironment {
                             propagate
                     ));
                     // Fall-through intended
-                case ADDED_TO_BLOCKCHAIN:
+                case VALID:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
@@ -235,8 +235,7 @@ public class NodeEnvironment {
                     break;
 
                 case INVALID:
-                case ALREADY_STORED:
-                    LOGGER.log(Level.FINE, "Block invalid or already stored.");
+                    LOGGER.log(Level.FINE, "Block invalid.");
                     break;
             }
         } catch (DatabaseException e) {
