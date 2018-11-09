@@ -17,7 +17,7 @@ import java.util.Comparator;
  */
 public class Consensus {
     // The max block size, excluding the nonce.
-    private static final long MAX_BLOCK_SIZE = 1000; // In bytes
+    private static final long MAX_BLOCK_SIZE = 1000000; // In bytes
     // The max nonce size.
     private static final long MAX_NONCE_SIZE = 16; // In bytes
     // Block maturity depth.

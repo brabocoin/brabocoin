@@ -1,17 +1,18 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import org.brabocoin.brabocoin.model.Transaction;
-import org.jeasy.rules.annotation.Condition;
-import org.jeasy.rules.annotation.Fact;
-import org.jeasy.rules.annotation.Rule;
+import com.deliveredtechnologies.rulebook.annotation.Rule;
+import com.deliveredtechnologies.rulebook.annotation.When;
+import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
+ *
+ * Reject if the transaction is a coinbase transaction.
  */
-@Rule(name = "Coinbase creation rule", description = "Reject if the transaction is a coinbase transaction.")
-public class CoinbaseCreationTxRule {
-    @Condition
-    public boolean valid(@Fact("transaction") Transaction transaction) {
+@Rule(name = "Coinbase creation rule")
+public class CoinbaseCreationTxRule extends TransactionRule {
+    @When
+    public boolean valid() {
         return !transaction.isCoinbase();
     }
 }

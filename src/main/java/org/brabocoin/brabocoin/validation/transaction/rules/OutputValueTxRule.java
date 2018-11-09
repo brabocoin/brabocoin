@@ -1,19 +1,19 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
+import com.deliveredtechnologies.rulebook.annotation.Rule;
+import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.validation.Consensus;
-import org.jeasy.rules.annotation.Condition;
-import org.jeasy.rules.annotation.Fact;
-import org.jeasy.rules.annotation.Rule;
+import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
+ *
+ * Output values must be positive and the sum must be smaller than the max transaction range decided by consensus.
  */
-@Rule(name = "Output value rule", description = "Output values must be positive and the sum must be smaller than the max transaction range decided by consensus.")
-public class OutputValueTxRule {
-    @Condition
-    public boolean valid(@Fact("transaction") Transaction transaction, @Fact("consensus") Consensus consensus) {
+@Rule(name = "Output value rule")
+public class OutputValueTxRule extends TransactionRule {
+    @When
+    public boolean valid() {
         long sum = 0L;
         for (Output output : transaction.getOutputs()) {
             if (output.getAmount() <= 0) {

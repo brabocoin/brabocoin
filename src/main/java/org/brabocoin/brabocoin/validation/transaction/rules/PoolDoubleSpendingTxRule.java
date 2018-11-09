@@ -1,21 +1,27 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
+import com.deliveredtechnologies.rulebook.annotation.Given;
+import com.deliveredtechnologies.rulebook.annotation.Rule;
+import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.jeasy.rules.annotation.Condition;
-import org.jeasy.rules.annotation.Fact;
-import org.jeasy.rules.annotation.Rule;
+import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Iterator;
 
 /**
  * Transaction rule
+ *
+ * Double spending of an output in the transaction pool rejects the transaction.
  */
-@Rule(name = "Double spending in transaction pool rule", description = "Double spending of an output in the transaction pool rejects the transaction.")
-public class PoolDoubleSpendingTxRule {
-    @Condition
-    public boolean valid(@Fact("transaction") Transaction transaction, @Fact("pool") TransactionPool pool) {
+@Rule(name = "Double spending in transaction pool rule")
+public class PoolDoubleSpendingTxRule extends TransactionRule {
+    @Given("pool")
+    private TransactionPool pool;
+
+    @When
+    public boolean valid() {
         for (Iterator<Transaction> it = pool.getIterator(); it.hasNext(); ) {
             Transaction poolTransaction = it.next();
 
