@@ -95,7 +95,6 @@ public class NodeTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 ByteString.copyFromUtf8("randomNonce"),
-                new Date().getTime(),
                 1,
                 Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
         Hash newBlockHash = newBlock.computeHash();
@@ -161,7 +160,6 @@ public class NodeTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 ByteString.copyFromUtf8("randomNonce"),
-                new Date().getTime(),
                 1,
                 Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
         Hash newBlockHash = newBlock.computeHash();

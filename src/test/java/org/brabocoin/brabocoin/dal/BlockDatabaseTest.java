@@ -182,8 +182,6 @@ class BlockDatabaseTest {
         assertEquals(block.getMerkleRoot(), info.getMerkleRoot());
         assertEquals(block.getTargetValue(), info.getTargetValue());
         assertEquals(block.getNonce(), info.getNonce());
-        assertEquals(block.getTimestamp(), info.getTimestamp());
-        assertEquals(block.getBlockHeight(), info.getBlockHeight());
         assertEquals(block.getTransactions().size(), info.getTransactionCount());
         assertTrue(info.isValidated());
     }
@@ -211,8 +209,6 @@ class BlockDatabaseTest {
         assertTrue(fileInfo.getSize() > 0);
         assertEquals(0, fileInfo.getLowestBlockHeight());
         assertEquals(0, fileInfo.getHighestBlockHeight());
-        assertEquals(block.getTimestamp(), fileInfo.getLowestBlockTimestamp());
-        assertEquals(block.getTimestamp(), fileInfo.getHighestBlockTimestamp());
     }
 
     @Test
@@ -229,16 +225,12 @@ class BlockDatabaseTest {
         }
 
         BlockFileInfo fileInfo = database.findBlockFileInfo(0);
-        long timestamp = blocks.get(0).getTimestamp();
-        long timestampEnd = blocks.get(2).getTimestamp();
 
         assertNotNull(fileInfo);
         assertEquals(3, fileInfo.getNumberOfBlocks());
         assertTrue(fileInfo.getSize() > 0);
         assertEquals(0, fileInfo.getLowestBlockHeight());
         assertEquals(2, fileInfo.getHighestBlockHeight());
-        assertEquals(timestamp, fileInfo.getLowestBlockTimestamp());
-        assertEquals(timestampEnd, fileInfo.getHighestBlockTimestamp());
     }
 
     @Test

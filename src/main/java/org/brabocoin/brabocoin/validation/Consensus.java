@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,7 +22,6 @@ public class Consensus {
         new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
         new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
         ByteString.copyFromUtf8("genesis"),
-        0, // TODO: Determine genesis block timestamp
         0,
         Collections.emptyList()
     );
@@ -34,12 +34,9 @@ public class Consensus {
      * @return The best block, or {@code null} if the given collection contained no blocks.
      */
     public @Nullable IndexedBlock bestBlock(@NotNull Collection<IndexedBlock> blocks) {
-        // TODO: change to earliest time received instead of time stamp for tiebreaker
-        // TODO: when loading from disk, use different tiebreaker (hashCode or similar)
         return blocks.stream()
             .max(Comparator.<IndexedBlock>comparingInt(b -> b.getBlockInfo()
-                .getBlockHeight()).thenComparing(Comparator.<IndexedBlock>comparingLong(b -> b.getBlockInfo()
-                .getTimestamp()).reversed()))
+                .getBlockHeight()).thenComparing(Comparator.<IndexedBlock, BigInteger>comparing(b -> new BigInteger(b.getHash().getValue().toByteArray())).reversed()))
             .orElse(null);
     }
 

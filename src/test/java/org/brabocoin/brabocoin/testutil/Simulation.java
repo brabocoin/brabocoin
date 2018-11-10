@@ -68,11 +68,10 @@ public class Simulation {
                 block.getPreviousBlockHash(),
                 block.getMerkleRoot(),
                 block.getTargetValue(),
-                block.getNonce(),
-                block.getTimestamp(),
-                block.getBlockHeight(),
+                block.getNonce(), block.getBlockHeight(),
                 block.getTransactions().size(),
                 false,
+                0,
                 0,
                 0,
                 0,
@@ -95,9 +94,7 @@ public class Simulation {
                 previousHash,
                 randomHash(),
                 randomHash(),
-                randomByteString(),
-                creationTime,
-                blockHeight,
+                randomByteString(), blockHeight,
                 repeatedBuilder(() -> randomTransaction(transactionInputBound,transactionOutputBound), transactionsBound));
     }
 
