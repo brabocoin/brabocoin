@@ -111,7 +111,7 @@ class BlockProcessorTest {
     @Test
     void alreadyStored() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        blockchain.storeBlock(block, true);
+        blockchain.storeBlock(block);
 
         ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
         assertEquals(ProcessedBlockStatus.ALREADY_STORED, status);
@@ -133,7 +133,7 @@ class BlockProcessorTest {
         Block parent = blocks.get(0);
         Block child = blocks.get(1);
 
-        blockchain.storeBlock(parent, false);
+        blockchain.storeBlock(parent);
         IndexedBlock indexedParent = blockchain.getIndexedBlock(parent.computeHash());
         blockchain.addOrphan(indexedParent);
 

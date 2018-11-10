@@ -122,7 +122,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -194,7 +194,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -267,7 +267,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);

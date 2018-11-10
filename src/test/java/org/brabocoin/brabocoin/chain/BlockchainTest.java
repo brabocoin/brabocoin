@@ -109,7 +109,7 @@ class BlockchainTest {
 
     @Test
     void storeBlock() throws DatabaseException {
-        BlockInfo info = blockchain.storeBlock(TEST_BLOCK, true);
+        BlockInfo info = blockchain.storeBlock(TEST_BLOCK);
         assertNotNull(info);
     }
 

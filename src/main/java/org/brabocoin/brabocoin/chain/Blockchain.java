@@ -62,7 +62,7 @@ public class Blockchain {
 
     private @NotNull IndexedBlock storeGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
-        database.storeBlock(genesisBlock, true);
+        database.storeBlock(genesisBlock);
         IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.computeHash());
         if (indexedGenesis == null) {
             LOGGER.severe("Genesis block could not be stored.");
@@ -128,15 +128,13 @@ public class Blockchain {
      *
      * @param block
      *     The block to store
-     * @param validated
-     *     Validation status.
      * @return The stored block information.
      * @throws DatabaseException
      *     When the block database is not available.
-     * @see BlockDatabase#storeBlock(Block, boolean)
+     * @see #storeBlock(Block)
      */
-    public @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
-        return database.storeBlock(block, validated);
+    public @NotNull BlockInfo storeBlock(@NotNull Block block) throws DatabaseException {
+        return database.storeBlock(block);
     }
 
     /**

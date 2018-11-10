@@ -111,7 +111,7 @@ public class BlockProcessor {
         }
 
         // Store the block on disk
-        BlockInfo info = blockchain.storeBlock(block, true);
+        BlockInfo info = blockchain.storeBlock(block);
         IndexedBlock indexedBlock = new IndexedBlock(hash, info);
 
         // Find the parent block
