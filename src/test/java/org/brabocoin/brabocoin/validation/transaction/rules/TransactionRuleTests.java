@@ -2,13 +2,14 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import com.deliveredtechnologies.rulebook.FactMap;
 import com.deliveredtechnologies.rulebook.NameValueReferableMap;
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.PublicKey;
+import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
@@ -21,8 +22,10 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,6 +34,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TransactionRuleTests {
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
     Consensus consensus = new Consensus();
+
+    private static final ByteString ZERO = ByteString.copyFrom(new byte[]{0});
+    private static final EllipticCurve CURVE = EllipticCurve.secp256k1();
+
+    private static Signer signer;
+
 
     @BeforeAll
     static void setUp() {
@@ -45,6 +54,8 @@ class TransactionRuleTests {
                 return "src/test/resources/" + super.utxoStoreDirectory();
             }
         };
+
+        signer = new Signer(CURVE);
     }
 
     @Test
@@ -953,5 +964,853 @@ class TransactionRuleTests {
 
         ruleBook.run(facts);
         assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void PoolDoubleSpendingTxRuleFail() throws DatabaseException {
+        Input input = new Input(
+                Simulation.randomSignature(),
+                Simulation.randomHash(),
+                0
+        );
+        Transaction spendingTx = new Transaction(
+                Collections.singletonList(input),
+                Collections.singletonList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        )
+                )
+        );
+
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        transactionPool.addIndependentTransaction(spendingTx);
+
+        Transaction doubleSpendingTx = new Transaction(
+                Collections.singletonList(input),
+                Collections.singletonList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        )
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(PoolDoubleSpendingTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", doubleSpendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("pool", transactionPool);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+    @Test
+    void PoolDoubleSpendingTxRuleSuccess() throws DatabaseException {
+        Input input = new Input(
+                Simulation.randomSignature(),
+                Simulation.randomHash(),
+                0
+        );
+        Transaction spendingTx = new Transaction(
+                Collections.singletonList(Simulation.randomInput()),
+                Collections.singletonList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        )
+                )
+        );
+
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        transactionPool.addIndependentTransaction(spendingTx);
+
+        Transaction doubleSpendingTx = new Transaction(
+                Collections.singletonList(input),
+                Collections.singletonList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        )
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(PoolDoubleSpendingTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", doubleSpendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("pool", transactionPool);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void SignatureTxRuleSuccess() throws DatabaseException {
+        BigInteger privateKey = BigInteger.TEN;
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
+
+        Hash coinbaseOutputAddress = publicKey.computeHash();
+
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Collections.singletonList(
+                        new Output(
+                                coinbaseOutputAddress,
+                                20L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Signature signature = signer.signMessage(coinbase.getSignableTransactionData(), privateKey);
+        Transaction spendingTx = new Transaction(
+                Collections.singletonList(
+                        new Input(
+                                signature,
+                                coinbase.computeHash(),
+                                0
+                        )
+                ),
+                Collections.emptyList()
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SignatureTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+        facts.setValue("signer", signer);
+        facts.setValue("blockchain", blockchain);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void SignatureTxRuleFailInvalid() throws DatabaseException {
+        BigInteger privateKey = BigInteger.TEN;
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
+
+        Hash coinbaseOutputAddress = publicKey.computeHash();
+
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Collections.singletonList(
+                        new Output(
+                                coinbaseOutputAddress,
+                                20L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Signature signature = signer.signMessage(coinbase.getSignableTransactionData(), BigInteger.ONE);
+        Transaction spendingTx = new Transaction(
+                Collections.singletonList(
+                        new Input(
+                                signature,
+                                coinbase.computeHash(),
+                                0
+                        )
+                ),
+                Collections.emptyList()
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SignatureTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+        facts.setValue("signer", signer);
+        facts.setValue("blockchain", blockchain);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+    @Test
+    void SufficientInputTxRuleFailInsufficient() throws DatabaseException {
+        Transaction coinbaseOne = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+
+        Transaction coinbaseTwo = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                25L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                10L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Arrays.asList(coinbaseOne, coinbaseTwo)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                0
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                1
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseTwo.computeHash(),
+                                1
+                        )),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                40L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                6L
+                        )
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SufficientInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+
+    @Test
+    void SufficientInputTxRuleFailExact() throws DatabaseException {
+        Transaction coinbaseOne = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+
+        Transaction coinbaseTwo = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                25L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                10L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Arrays.asList(coinbaseOne, coinbaseTwo)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                0
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                1
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseTwo.computeHash(),
+                                1
+                        )),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                40L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                5L
+                        )
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SufficientInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+    @Test
+    void SufficientInputTxRuleSuccess() throws DatabaseException {
+        Transaction coinbaseOne = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+
+        Transaction coinbaseTwo = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                25L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                10L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Arrays.asList(coinbaseOne, coinbaseTwo)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                0
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseOne.computeHash(),
+                                1
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbaseTwo.computeHash(),
+                                1
+                        )),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                40L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                4L
+                        )
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SufficientInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void ValidInputChainUTXOTxRuleFail() throws DatabaseException {
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                        Simulation.randomSignature(),
+                        coinbase.computeHash(),
+                        0
+                )),
+                Collections.singletonList(
+                        Simulation.randomOutput()
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(ValidInputChainUTXOTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+    @Test
+    void ValidInputChainUTXOTxRuleSuccess() throws DatabaseException {
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                        Simulation.randomSignature(),
+                        coinbase.computeHash(),
+                        0
+                )),
+                Collections.singletonList(
+                        Simulation.randomOutput()
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(ValidInputChainUTXOTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void ValidInputTxRuleSuccessChain() throws DatabaseException {
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                        Simulation.randomSignature(),
+                        coinbase.computeHash(),
+                        0
+                )),
+                Collections.singletonList(
+                        Simulation.randomOutput()
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(ValidInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void ValidInputTxRuleSuccessPool() throws DatabaseException {
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        transactionProcessor.processNewTransaction(coinbase);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(new Input(
+                        Simulation.randomSignature(),
+                        coinbase.computeHash(),
+                        0
+                )),
+                Collections.singletonList(
+                        Simulation.randomOutput()
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(ValidInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertTrue(ruleBook.passed());
+    }
+
+    @Test
+    void ValidInputTxRuleFail() throws DatabaseException {
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        Transaction coinbaseTwo = new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                        new Output(
+                                Simulation.randomHash(),
+                                20L
+                        ),
+                        new Output(
+                                Simulation.randomHash(),
+                                15L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        transactionProcessor.processNewTransaction(coinbaseTwo);
+
+        Transaction spendingTx = new Transaction(
+                Arrays.asList(
+                        new Input(
+                                Simulation.randomSignature(),
+                                coinbase.computeHash(),
+                                0
+                        ),
+                        new Input(
+                                Simulation.randomSignature(),
+                                Simulation.randomHash(),
+                                0
+                        )),
+                Collections.singletonList(
+                        Simulation.randomOutput()
+                )
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(ValidInputTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
     }
 }
