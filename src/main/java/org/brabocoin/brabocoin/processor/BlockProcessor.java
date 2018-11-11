@@ -98,31 +98,21 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        if (!checkBlockValid(block)) {
+        ProcessedBlockStatus status = blockValidator.checkBlockValid(block);
+
+        if (status == ProcessedBlockStatus.INVALID) {
             LOGGER.info("New block is invalid.");
             return ProcessedBlockStatus.INVALID;
         }
 
-        // Check if we already have the block
-        Hash hash = block.computeHash();
-        if (blockchain.isBlockStored(hash)) {
-            LOGGER.info("New block was already stored.");
-            return ProcessedBlockStatus.ALREADY_STORED;
+        if (status == ProcessedBlockStatus.ORPHAN) {
+            LOGGER.info("New block is added as orphan.");
+            blockchain.addOrphan(block);
+            return ProcessedBlockStatus.ORPHAN;
         }
 
         // Store the block on disk
-        BlockInfo info = blockchain.storeBlock(block);
-        IndexedBlock indexedBlock = new IndexedBlock(hash, info);
-
-        // Find the parent block
-        IndexedBlock parent = blockchain.getIndexedBlock(block.getPreviousBlockHash());
-
-        // If parent is unknown or orphan, this block is an orphan as well
-        if (parent == null || blockchain.isOrphan(parent)) {
-            blockchain.addOrphan(indexedBlock);
-            LOGGER.info("New block is added as orphan.");
-            return ProcessedBlockStatus.ORPHAN;
-        }
+        IndexedBlock indexedBlock = storeBlock(block);
 
         // Check if any orphan blocks are descendants and can be added as well
         // Return the leaf blocks of the new family, which are new top candidates
@@ -132,19 +122,13 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
-        return ProcessedBlockStatus.ADDED_TO_BLOCKCHAIN;
+        return ProcessedBlockStatus.VALID;
     }
 
-    /**
-     * Checks whether a block is valid.
-     *
-     * @param block
-     *     The block to check.
-     * @return Whether the block is valid.
-     * @see BlockValidator
-     */
-    private boolean checkBlockValid(@NotNull Block block) {
-        return blockValidator.checkBlockValid(block);
+    private @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {
+        BlockInfo info = blockchain.storeBlock(block);
+        Hash hash = block.computeHash();
+        return new IndexedBlock(hash, info);
     }
 
     /**
@@ -160,31 +144,45 @@ public class BlockProcessor {
      * @return The set of new top candidates from the orphan pool (that are now removed as
      * orphans and are added to the blockchain).
      */
-    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) {
+    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) throws DatabaseException {
         LOGGER.fine("Processing orphans for top candidates.");
 
         Set<IndexedBlock> topCandidates = new HashSet<>();
+        topCandidates.add(newParent);
 
         Deque<IndexedBlock> queue = new ArrayDeque<>();
         queue.add(newParent);
 
         while (!queue.isEmpty()) {
-            IndexedBlock orphan = queue.remove();
+            IndexedBlock parent = queue.remove();
 
             // Find any orphan descendants and mark them as part of the chain
-            Set<IndexedBlock> descendants = blockchain.removeOrphansOfParent(orphan.getHash());
+            Set<Block> descendants = blockchain.removeOrphansOfParent(parent.getHash());
 
-            if (descendants.isEmpty()) {
-                // When this orphan has no more known descendants, make top candidate
-                // TODO: maybe check if it actually supersedes the current top?
-                topCandidates.add(orphan);
-                LOGGER.finest(() -> MessageFormat.format(
-                    "Added orphan {0} as top candidate.",
-                    toHexString(orphan.getHash().getValue())
-                ));
-            } else {
-                // Add the removed blocks to the queue to find further descendant orphans
-                queue.addAll(descendants);
+            // For every descendant, check if it is valid now
+            for (Block descendant : descendants) {
+                ProcessedBlockStatus status = blockValidator.checkOrphanBlockValid(descendant);
+
+                // Re-add to orphans if not status is orphan again (should not happen)
+                if (status == ProcessedBlockStatus.ORPHAN) {
+                    blockchain.addOrphan(descendant);
+                }
+
+                if (status == ProcessedBlockStatus.VALID) {
+                    // The orphan is now valid, store on disk
+                    IndexedBlock indexedDescendant = storeBlock(descendant);
+
+                    // Add to top candidates
+                    topCandidates.add(indexedDescendant);
+
+                    // Look deeper for more descendants
+                    queue.add(indexedDescendant);
+
+                    LOGGER.finest(() -> MessageFormat.format(
+                        "Added orphan {0} as top candidate.",
+                        toHexString(indexedDescendant.getHash().getValue())
+                    ));
+                }
             }
         }
 

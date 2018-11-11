@@ -131,14 +131,14 @@ class BlockchainTest {
     @Test
     void isOrphanNonExistent() {
         IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        assertFalse(blockchain.isOrphan(block));
+        assertFalse(blockchain.isOrphan(block.getHash()));
     }
 
     @Test
     void addOrphan() {
-        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
         blockchain.addOrphan(block);
-        assertTrue(blockchain.isOrphan(block));
+        assertTrue(blockchain.isOrphan(block.computeHash()));
     }
 
     @Test
@@ -157,8 +157,8 @@ class BlockchainTest {
 
     @Test
     void removeOrphansOfParentEmpty() {
-        List<IndexedBlock> blocks = Simulation.randomIndexedBlockChainGenerator(2);
-        Hash parent = blocks.get(0).getBlockInfo().getPreviousBlockHash();
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Hash parent = blocks.get(0).getPreviousBlockHash();
         assertTrue(blockchain.removeOrphansOfParent(parent).isEmpty());
 
         blockchain.addOrphan(blocks.get(1));
@@ -167,40 +167,36 @@ class BlockchainTest {
 
     @Test
     void removeSingleOrphanOfParent() {
-        List<IndexedBlock> blocks = Simulation.randomIndexedBlockChainGenerator(2);
-        IndexedBlock orphan =  blocks.get(0);
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Block orphan =  blocks.get(0);
 
         blockchain.addOrphan(orphan);
         blockchain.addOrphan(blocks.get(1));
 
-        Set<IndexedBlock> orphans = blockchain.removeOrphansOfParent(orphan.getBlockInfo().getPreviousBlockHash());
+        Set<Block> orphans = blockchain.removeOrphansOfParent(orphan.getPreviousBlockHash());
 
         assertEquals(1, orphans.size());
-        assertEquals(orphan.getHash(), orphans.stream().findFirst().get().getHash());
+        assertEquals(orphan.computeHash(), orphans.stream().findFirst().get().computeHash());
     }
 
     @Test
     void removeMultipleOrphansOfParent() {
-        IndexedBlock block1 = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        Hash parent = block1.getBlockInfo().getPreviousBlockHash();
-        BlockInfo newBlockInfo = new BlockInfo(
+        Block block1 = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash parent = block1.getPreviousBlockHash();
+        Block block2 = new Block(
             parent,
-            block1.getBlockInfo().getMerkleRoot(),
-            block1.getBlockInfo().getTargetValue(),
-            block1.getBlockInfo().getNonce(),
+            block1.getMerkleRoot(),
+            block1.getTargetValue(),
+            block1.getNonce(),
             0,
             0,
-            block1.getBlockInfo().getTransactionCount(),
-            true,
-            0,0,0,0,0
+            block1.getTransactions()
         );
-
-        IndexedBlock block2 = new IndexedBlock(Simulation.randomHash(), newBlockInfo);
 
         blockchain.addOrphan(block1);
         blockchain.addOrphan(block2);
 
-        Set<IndexedBlock> orphans = blockchain.removeOrphansOfParent(parent);
+        Set<Block> orphans = blockchain.removeOrphansOfParent(parent);
         assertEquals(2, orphans.size());
     }
 
