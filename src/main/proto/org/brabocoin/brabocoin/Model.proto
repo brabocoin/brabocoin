@@ -43,8 +43,7 @@ message Block {
     Hash targetValue = 3;
     bytes nonce = 4;
     int32 blockHeight = 5;
-    int64 timestamp = 6;
-    repeated Transaction transactions = 7;
+    repeated Transaction transactions = 6;
 }
 
 message HandshakeRequest {

@@ -187,11 +187,10 @@ class BlockchainTest {
             parent,
             block1.getBlockInfo().getMerkleRoot(),
             block1.getBlockInfo().getTargetValue(),
-            block1.getBlockInfo().getNonce(),
-            0,
-            0,
+            block1.getBlockInfo().getNonce(), 0,
             block1.getBlockInfo().getTransactionCount(),
             true,
+            0,
             0,0,0,0,0
         );
 

@@ -1,6 +1,10 @@
 package org.brabocoin.brabocoin.dal;
 
-import com.google.protobuf.*;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.Parser;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
@@ -22,6 +26,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -166,14 +171,14 @@ public class BlockDatabase {
         LOGGER.log(Level.FINE, "Updated file info.");
 
         // Write the block info to database
+        long timestamp = Instant.now().getEpochSecond();
         BlockInfo blockInfo = new BlockInfo(block.getPreviousBlockHash(),
                 block.getMerkleRoot(),
                 block.getTargetValue(),
-                block.getNonce(),
-                block.getTimestamp(),
-                block.getBlockHeight(),
+                block.getNonce(), block.getBlockHeight(),
                 block.getTransactions().size(),
                 validated,
+                timestamp,
                 fileNumber,
                 offsetInFile,
                 size,
@@ -223,10 +228,10 @@ public class BlockDatabase {
                 info.getMerkleRoot(),
                 info.getTargetValue(),
                 info.getNonce(),
-                info.getTimestamp(),
                 info.getBlockHeight(),
                 info.getTransactionCount(),
                 info.isValidated(),
+                info.getTimeReceived(),
                 info.getFileNumber(),
                 info.getOffsetInFile(),
                 info.getSizeInFile(),
@@ -290,11 +295,10 @@ public class BlockDatabase {
         BlockInfo newInfo = new BlockInfo(info.getPreviousBlockHash(),
                 info.getMerkleRoot(),
                 info.getTargetValue(),
-                info.getNonce(),
-                info.getTimestamp(),
-                info.getBlockHeight(),
+                info.getNonce(), info.getBlockHeight(),
                 info.getTransactionCount(),
                 validated,
+                info.getTimeReceived(),
                 info.getFileNumber(),
                 info.getOffsetInFile(),
                 info.getSizeInFile(),
@@ -329,9 +333,7 @@ public class BlockDatabase {
         BlockFileInfo newFileInfo = new BlockFileInfo(fileInfo.getNumberOfBlocks() + 1,
                 fileInfo.getSize() + serializedSize,
                 Math.min(fileInfo.getLowestBlockHeight(), block.getBlockHeight()),
-                Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight()),
-                Math.min(fileInfo.getLowestBlockTimestamp(), block.getTimestamp()),
-                Math.max(fileInfo.getHighestBlockTimestamp(), block.getTimestamp())
+                Math.max(fileInfo.getHighestBlockHeight(), block.getBlockHeight())
         );
         LOGGER.fine("Created new file info for updated version.");
 

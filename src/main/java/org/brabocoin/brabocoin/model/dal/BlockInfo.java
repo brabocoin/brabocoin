@@ -43,10 +43,10 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final ByteString nonce;
 
     /**
-     * UNIX timestamp indicating when the block is created.
+     * UNIX timestamp (in seconds) indicating when the block was received, in UTC time zone.
      */
     @ProtoField
-    private final long timestamp;
+    private final long timeReceived;
 
     /**
      * Height of the block in the blockchain.
@@ -115,8 +115,6 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      *     Target value of the proof-of-work of this block.
      * @param nonce
      *     Nonce used for the proof-of-work.
-     * @param timestamp
-     *     UNIX timestamp indicating when the block is created.
      * @param blockHeight
      *     Height of the block in the blockchain.
      * @param transactionCount
@@ -125,6 +123,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param validated
      *     Indicates whether the block has been validated and is considered part of
      *     the verified blockchain.
+     * @param timeReceived
+     *     UNIX timestamp (in seconds) indicating when the block was received, in UTC time zone.
      * @param fileNumber
      *     The file number in which the full block is stored on disk.
      * @param offsetInFile
@@ -136,18 +136,14 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
      */
-    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
-                     @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
-                     int blockHeight, int transactionCount, boolean validated, int fileNumber,
-                     int offsetInFile, int sizeInFile, int offsetInUndoFile,
-                     int sizeInUndoFile) {
+    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull ByteString nonce, int blockHeight, int transactionCount, boolean validated, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
-        this.timestamp = timestamp;
         this.blockHeight = blockHeight;
         this.transactionCount = transactionCount;
+        this.timeReceived = timeReceived;
         this.validated = validated;
         this.fileNumber = fileNumber;
         this.offsetInFile = offsetInFile;
@@ -166,6 +162,10 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
     public boolean isValidated() {
         return validated;
+    }
+
+    public long getTimeReceived() {
+        return timeReceived;
     }
 
     public int getFileNumber() {
@@ -194,10 +194,6 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
     public ByteString getNonce() {
         return nonce;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
     }
 
     public int getOffsetInUndoFile() {
@@ -229,7 +225,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         private ByteString nonce;
 
         @ProtoField
-        private long timestamp;
+        private long timeReceived;
 
         @ProtoField
         private int blockHeight;
@@ -275,8 +271,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setTimestamp(long timestamp) {
-            this.timestamp = timestamp;
+        public Builder setTimeReceived(long timeReceived) {
+            this.timeReceived = timeReceived;
             return this;
         }
 
@@ -326,11 +322,10 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 previousBlockHash.build(),
                 merkleRoot.build(),
                 targetValue.build(),
-                nonce,
-                timestamp,
-                blockHeight,
+                nonce, blockHeight,
                 transactionCount,
                 validated,
+                timeReceived,
                 fileNumber,
                 offsetInFile,
                 sizeInFile, offsetInUndoFile, sizeInUndoFile
