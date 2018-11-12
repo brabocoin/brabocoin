@@ -22,7 +22,6 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -1096,16 +1095,19 @@ class TransactionRuleTests {
 
         blockProcessor.processNewBlock(block);
 
-        Signature signature = signer.signMessage(coinbase.getSignableTransactionData(), privateKey);
-        Transaction spendingTx = new Transaction(
+        Transaction unsignedSpendingTx = new Transaction(
                 Collections.singletonList(
                         new Input(
-                                signature,
+                                null,
                                 coinbase.computeHash(),
                                 0
                         )
                 ),
                 Collections.emptyList()
+        );
+        Signature signature = signer.signMessage(unsignedSpendingTx.getSignableTransactionData(), privateKey);
+        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+                Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
         BraboRuleBook ruleBook = new BraboRuleBook(
@@ -1117,7 +1119,6 @@ class TransactionRuleTests {
         facts.setValue("consensus", consensus);
         facts.setValue("transactionProcessor", transactionProcessor);
         facts.setValue("signer", signer);
-        facts.setValue("blockchain", blockchain);
 
         ruleBook.run(facts);
         assertTrue(ruleBook.passed());
@@ -1167,16 +1168,19 @@ class TransactionRuleTests {
 
         blockProcessor.processNewBlock(block);
 
-        Signature signature = signer.signMessage(coinbase.getSignableTransactionData(), BigInteger.ONE);
-        Transaction spendingTx = new Transaction(
+        Transaction unsignedSpendingTx = new Transaction(
                 Collections.singletonList(
                         new Input(
-                                signature,
+                                null,
                                 coinbase.computeHash(),
                                 0
                         )
                 ),
                 Collections.emptyList()
+        );
+        Signature signature = signer.signMessage(unsignedSpendingTx.getSignableTransactionData(), BigInteger.ONE);
+        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+                Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
         BraboRuleBook ruleBook = new BraboRuleBook(
@@ -1188,7 +1192,79 @@ class TransactionRuleTests {
         facts.setValue("consensus", consensus);
         facts.setValue("transactionProcessor", transactionProcessor);
         facts.setValue("signer", signer);
-        facts.setValue("blockchain", blockchain);
+
+        ruleBook.run(facts);
+        assertFalse(ruleBook.passed());
+    }
+
+    @Test
+    void SignatureTxRuleFailNull() throws DatabaseException {
+        BigInteger privateKey = BigInteger.TEN;
+        PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
+
+        Hash coinbaseOutputAddress = publicKey.computeHash();
+
+        Transaction coinbase = new Transaction(
+                Collections.emptyList(),
+                Collections.singletonList(
+                        new Output(
+                                coinbaseOutputAddress,
+                                20L
+                        )
+                )
+        );
+
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
+        BlockValidator blockValidator = new BlockValidator();
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockProcessor blockProcessor = new BlockProcessor(
+                blockchain,
+                utxoProcessor,
+                transactionProcessor,
+                consensus,
+                blockValidator);
+
+        Block block = new Block(
+                consensus.getGenesisBlock().computeHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomByteString(),
+                0,
+                1,
+                Collections.singletonList(coinbase)
+        );
+
+        blockProcessor.processNewBlock(block);
+
+        Transaction unsignedSpendingTx = new Transaction(
+                Collections.singletonList(
+                        new Input(
+                                null,
+                                coinbase.computeHash(),
+                                0
+                        )
+                ),
+                Collections.emptyList()
+        );
+        Signature signature = null;
+        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+                Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
+        );
+
+        BraboRuleBook ruleBook = new BraboRuleBook(
+                Collections.singletonList(SignatureTxRule.class)
+        );
+
+        NameValueReferableMap facts = new FactMap<>();
+        facts.setValue("transaction", spendingTx);
+        facts.setValue("consensus", consensus);
+        facts.setValue("transactionProcessor", transactionProcessor);
+        facts.setValue("signer", signer);
 
         ruleBook.run(facts);
         assertFalse(ruleBook.passed());
@@ -1292,7 +1368,6 @@ class TransactionRuleTests {
         ruleBook.run(facts);
         assertFalse(ruleBook.passed());
     }
-
 
     @Test
     void SufficientInputTxRuleFailExact() throws DatabaseException {

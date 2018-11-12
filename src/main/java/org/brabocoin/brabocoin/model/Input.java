@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -22,7 +23,7 @@ public class Input implements ProtoModel<Input> {
      * Digital signature that validates this input and all outputs in the transaction.
      */
     @ProtoField
-    private final @NotNull Signature signature;
+    private final @Nullable Signature signature;
 
     /**
      * Transaction in which the (up to now) unspent output is contained.
@@ -46,14 +47,14 @@ public class Input implements ProtoModel<Input> {
      * @param referencedOutputIndex
      *         Index of the referenced output.
      */
-    public Input(@NotNull Signature signature, @NotNull Hash referencedTransaction,
+    public Input(@Nullable Signature signature, @NotNull Hash referencedTransaction,
                  int referencedOutputIndex) {
         this.signature = signature;
         this.referencedTransaction = referencedTransaction;
         this.referencedOutputIndex = referencedOutputIndex;
     }
 
-    public @NotNull Signature getSignature() {
+    public @Nullable Signature getSignature() {
         return signature;
     }
 

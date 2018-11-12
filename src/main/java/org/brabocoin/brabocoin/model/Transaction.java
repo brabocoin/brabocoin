@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -112,6 +113,11 @@ public class Transaction implements ProtoModel<Transaction> {
         }
     }
 
+    /**
+     * Get the ByteString of this transaction without signature.
+     *
+     * @return
+     */
     public ByteString getSignableTransactionData() {
         return ProtoConverter.toProtoBytes(new Transaction(
                 inputs.stream().map(
@@ -123,5 +129,14 @@ public class Transaction implements ProtoModel<Transaction> {
                 ).collect(Collectors.toList()),
                 outputs
         ), BrabocoinProtos.Transaction.class);
+    }
+
+    public Transaction getSignedTransaction(Map<Input, Signature> signatureMap) {
+        return new Transaction(
+                inputs.stream()
+                .map(i -> new Input(signatureMap.get(i), i.getReferencedTransaction(), i.getReferencedOutputIndex()))
+                .collect(Collectors.toList()),
+                outputs
+        );
     }
 }
