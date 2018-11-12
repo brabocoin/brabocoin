@@ -281,4 +281,8 @@ public class TransactionProcessor {
 
         return utxoFromPool.findUnspentOutputInfo(input);
     }
+
+    public boolean isUnspentInChain(Input input) throws DatabaseException {
+        return utxoFromChain.isUnspent(input);
+    }
 }

@@ -1,21 +1,20 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.IndexedChain;
+import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,9 +28,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test {@link TransactionProcessor}.
@@ -66,8 +63,8 @@ class TransactionProcessorTest {
     void processNewTransactionInvalid() throws DatabaseException {
         validator = new TransactionValidator() {
             @Override
-            public boolean checkTransactionValid(@NotNull Transaction transaction) {
-                return false;
+            public RuleBookResult checkTransactionValid(@NotNull Transaction transaction, @NotNull RuleList list, @NotNull Consensus consensus, @NotNull TransactionProcessor transactionProcessor, @NotNull IndexedChain mainChain, @NotNull TransactionPool pool, @NotNull Signer signer) {
+                return new RuleBookResult(false);
             }
         };
 

@@ -4,9 +4,9 @@ import com.deliveredtechnologies.rulebook.annotation.Given;
 import com.deliveredtechnologies.rulebook.annotation.Rule;
 import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.chain.IndexedChain;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Objects;
@@ -18,8 +18,8 @@ import java.util.Objects;
  */
 @Rule(name = "Coinbase maturity rule")
 public class CoinbaseMaturityTxRule extends TransactionRule {
-    @Given("chainUTXODatabase")
-    private ChainUTXODatabase chainUTXODatabase;
+    @Given("transactionProcessor")
+    private TransactionProcessor transactionProcessor;
 
     @Given("mainChain")
     private IndexedChain mainChain;
@@ -30,7 +30,7 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
                 .stream()
                 .map(i -> {
                     try {
-                        return chainUTXODatabase.findUnspentOutputInfo(i);
+                        return transactionProcessor.findUnspentOutputInfo(i);
                     } catch (DatabaseException e) {
                         e.printStackTrace();
                         return null;

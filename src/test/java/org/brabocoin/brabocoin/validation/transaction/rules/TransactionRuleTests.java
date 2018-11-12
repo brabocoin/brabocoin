@@ -141,7 +141,7 @@ class TransactionRuleTests {
 
         NameValueReferableMap facts = new FactMap<>();
         facts.setValue("mainChain", blockchain.getMainChain());
-        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+        facts.setValue("transactionProcessor", transactionProcessor);
         facts.setValue("transaction", spendCoinbase);
         facts.setValue("consensus", consensus);
 
@@ -201,7 +201,7 @@ class TransactionRuleTests {
 
         NameValueReferableMap facts = new FactMap<>();
         facts.setValue("mainChain", blockchain.getMainChain());
-        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+        facts.setValue("transactionProcessor", transactionProcessor);
         facts.setValue("transaction", spendCoinbase);
         facts.setValue("consensus", consensus);
 
