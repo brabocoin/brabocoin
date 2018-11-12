@@ -108,7 +108,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -162,7 +161,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -475,7 +473,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -573,7 +570,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -640,7 +636,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -748,7 +743,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(positiveOutputTransaction)
         );
@@ -1088,7 +1082,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1161,7 +1154,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1234,7 +1226,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1321,7 +1312,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1420,7 +1410,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1519,7 +1508,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1645,7 +1633,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1712,7 +1699,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1850,7 +1836,6 @@ class TransactionRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
-                0,
                 1,
                 Collections.singletonList(coinbase)
         );
