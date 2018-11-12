@@ -27,16 +27,17 @@ public class Consensus {
     );
 
     /**
-     * Find the best block from the given collection of blocks.
+     * Find the best valid block from the given collection of blocks.
      *
      * @param blocks
      *     The blocks to compare.
-     * @return The best block, or {@code null} if the given collection contained no blocks.
+     * @return The best block, or {@code null} if the given collection contained no valid blocks.
      */
-    public @Nullable IndexedBlock bestBlock(@NotNull Collection<IndexedBlock> blocks) {
+    public @Nullable IndexedBlock bestValidBlock(@NotNull Collection<IndexedBlock> blocks) {
         // TODO: change to earliest time received instead of time stamp for tiebreaker
         // TODO: when loading from disk, use different tiebreaker (hashCode or similar)
         return blocks.stream()
+            .filter(i -> i.getBlockInfo().isValid())
             .max(Comparator.<IndexedBlock>comparingInt(b -> b.getBlockInfo()
                 .getBlockHeight()).thenComparing(Comparator.<IndexedBlock>comparingLong(b -> b.getBlockInfo()
                 .getTimestamp()).reversed()))

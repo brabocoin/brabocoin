@@ -139,10 +139,23 @@ public class Blockchain {
      * @return The stored block information.
      * @throws DatabaseException
      *     When the block database is not available.
-     * @see #storeBlock(Block)
+     * @see BlockDatabase#storeBlock(Block)
      */
     public @NotNull BlockInfo storeBlock(@NotNull Block block) throws DatabaseException {
         return database.storeBlock(block);
+    }
+
+    /**
+     * Sets the status of this block as invalid.
+     *
+     * @param blockHash
+     *     The hash of the block.
+     * @throws DatabaseException
+     *     When the block database is not available.
+     * @see BlockDatabase#setBlockInvalid(Hash)
+     */
+    public void setBlockInvalid(@NotNull Hash blockHash) throws DatabaseException {
+        database.setBlockInvalid(blockHash);
     }
 
     /**

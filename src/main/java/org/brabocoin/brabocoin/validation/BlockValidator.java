@@ -22,4 +22,9 @@ public class BlockValidator {
         // TODO: implement
         return ProcessedBlockStatus.VALID;
     }
+
+    public boolean checkBlockValidWhenConnecting(@NotNull Block block) {
+        // TODO: implement
+        return true;
+    }
 }
