@@ -68,13 +68,11 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
         blockHeightLabel.setText(String.valueOf(indexedBlock.getBlockInfo().getBlockHeight()));
 
-        long timestamp = indexedBlock.getBlockInfo().getTimestamp();
+        long timestamp = indexedBlock.getBlockInfo().getTimeReceived();
         Instant instant = Instant.ofEpochSecond(timestamp);
         LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
-        timestampLabel.setText(
-            String.valueOf(timestamp) + " (" + DATE_FORMATTER.format(time) + ")"
-        );
+        timestampLabel.setText(DATE_FORMATTER.format(time));
         nonceLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getNonce()));
         targetValueLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getTargetValue().getValue()));
         merkleRootLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getMerkleRoot().getValue()));

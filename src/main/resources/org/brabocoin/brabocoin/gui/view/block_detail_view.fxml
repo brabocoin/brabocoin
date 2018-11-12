@@ -26,7 +26,7 @@
             <Label text="Block height" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
             <Label fx:id="blockHeightLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-            <Label text="Timestamp" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label text="Time received" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
             <Label fx:id="timestampLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
             <Label text="Nonce" GridPane.rowIndex="2" GridPane.columnIndex="0"/>

@@ -74,7 +74,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         });
 
         timeColumn.setCellValueFactory(features -> {
-            long timestamp = features.getValue().getBlockInfo().getTimestamp();
+            long timestamp = features.getValue().getBlockInfo().getTimeReceived();
             Instant instant = Instant.ofEpochSecond(timestamp);
             LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
             return new ReadOnlyObjectWrapper<>(time);

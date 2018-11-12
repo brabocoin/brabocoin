@@ -27,7 +27,7 @@
                     <TableView fx:id="blockchainTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="heightColumn" sortable="false" text="Height"/>
-                            <TableColumn fx:id="timeColumn" sortable="false" text="Time"/>
+                            <TableColumn fx:id="timeColumn" sortable="false" text="Time received"/>
                             <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
                             <TableColumn fx:id="sizeColumn" sortable="false" text="Size (kB)"/>
                         </columns>
