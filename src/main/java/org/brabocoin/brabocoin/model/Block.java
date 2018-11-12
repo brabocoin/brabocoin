@@ -46,12 +46,6 @@ public class Block implements ProtoModel<Block> {
     private final @NotNull ByteString nonce;
 
     /**
-     * UNIX timestamp indicating when the block is created.
-     */
-    @ProtoField
-    private final long timestamp;
-
-    /**
      * The height of the block in the block chain.
      */
     @ProtoField
@@ -74,21 +68,16 @@ public class Block implements ProtoModel<Block> {
      *         Target value for the proof-of-work.
      * @param nonce
      *         Nonce for the proof-of-work.
-     * @param timestamp
-     *         UNIX timestamp indicating when block is created.
      * @param blockHeight
      *         Height of the block in the blockchain.
      * @param transactions
      *         List of transactions contained in this block.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
-                 @NotNull Hash targetValue, @NotNull ByteString nonce, long timestamp,
-                 int blockHeight, List<Transaction> transactions) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull ByteString nonce, int blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
-        this.timestamp = timestamp;
         this.blockHeight = blockHeight;
         this.transactions = new ArrayList<>(transactions);
     }
@@ -110,7 +99,6 @@ public class Block implements ProtoModel<Block> {
         return previousBlockHash.getValue()
                 .concat(merkleRoot.getValue())
                 .concat(targetValue.getValue())
-                .concat(ByteUtil.toByteString(timestamp))
                 .concat(ByteUtil.toByteString(blockHeight))
                 .concat(nonce);
     }
@@ -129,10 +117,6 @@ public class Block implements ProtoModel<Block> {
 
     public @NotNull ByteString getNonce() {
         return nonce;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
     }
 
     public int getBlockHeight() {
@@ -160,8 +144,6 @@ public class Block implements ProtoModel<Block> {
         @ProtoField
         private ByteString nonce;
         @ProtoField
-        private long timestamp;
-        @ProtoField
         private int blockHeight;
         @ProtoField
         private List<Transaction.Builder> transactions;
@@ -186,11 +168,6 @@ public class Block implements ProtoModel<Block> {
             return this;
         }
 
-        public Builder setTimestamp(long timestamp) {
-            this.timestamp = timestamp;
-            return this;
-        }
-
         public Builder setBlockHeight(int blockHeight) {
             this.blockHeight = blockHeight;
             return this;
@@ -206,9 +183,7 @@ public class Block implements ProtoModel<Block> {
             return new Block(previousBlockHash.build(),
                     merkleRoot.build(),
                     targetValue.build(),
-                    nonce,
-                    timestamp,
-                    blockHeight,
+                    nonce, blockHeight,
                     transactions.stream()
                             .map(Transaction.Builder::build)
                             .collect(Collectors.toList())

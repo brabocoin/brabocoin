@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.model;
 
 import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.*;
 
 import java.util.ArrayList;
@@ -16,8 +17,8 @@ class BlockTest{
 
 
         List<Input> inputList = new ArrayList<Input>() {{
-            add(new Input(new Signature(), dummyHash, 0));
-            add(new Input(new Signature(), dummyHash, 1));
+            add(new Input(Simulation.randomSignature(), dummyHash, 0));
+            add(new Input(Simulation.randomSignature(), dummyHash, 1));
         }};
 
         List<Output> outputList = new ArrayList<Output>() {{
@@ -28,7 +29,7 @@ class BlockTest{
             add(new Transaction(inputList, outputList));
         }};
 
-        Block block = new Block(dummyHash, dummyHash, dummyHash, dummyByteString, 13L, 7, transactionList);
+        Block block = new Block(dummyHash, dummyHash, dummyHash, dummyByteString, 7, transactionList);
         Hash blockHash = block.computeHash();
         assertNotNull(blockHash);
     }

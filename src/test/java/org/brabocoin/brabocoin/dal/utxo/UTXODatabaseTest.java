@@ -6,7 +6,6 @@ import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.Simulation;
@@ -52,7 +51,7 @@ public class UTXODatabaseTest {
         database.setOutputsUnspent(transaction, 0);
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
-            Input input = new Input(new Signature(), hash, i);
+            Input input = new Input(Simulation.randomSignature(), hash, i);
             assertTrue(database.isUnspent(input));
         }
     }
@@ -94,7 +93,7 @@ public class UTXODatabaseTest {
         Hash hash = transaction.computeHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 
-        Input input = new Input(new Signature(), hash, 0);
+        Input input = new Input(Simulation.randomSignature(), hash, 0);
         UnspentOutputInfo info = database.findUnspentOutputInfo(input);
 
         assertNotNull(info);

@@ -16,9 +16,9 @@ message BlockInfo {
     Hash targetValue = 3;
     bytes nonce = 4;
     int32 blockHeight = 5;
-    int64 timestamp = 6;
-    int32 transactionCount = 7;
-    bool validated = 8;
+    int32 transactionCount = 6;
+    bool validated = 7;
+    int64 timeReceived = 8;
     int32 fileNumber = 9;
     int32 offsetInFile = 10;
     int32 sizeInFile = 11;
@@ -31,8 +31,6 @@ message BlockFileInfo {
     int32 size = 2;
     int32 lowestBlockHeight = 3;
     int32 highestBlockHeight = 4;
-    int64 lowestBlockTimestamp = 5;
-    int64 highestBlockTimestamp = 6;
 }
 
 message UnspentOutputInfo {

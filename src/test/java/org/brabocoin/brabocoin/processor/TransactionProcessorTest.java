@@ -10,7 +10,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -210,7 +209,7 @@ class TransactionProcessorTest {
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hash, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         processor.processNewTransaction(transactionB);
@@ -231,7 +230,7 @@ class TransactionProcessorTest {
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hash, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         processor.processNewTransaction(transactionB);
@@ -253,14 +252,14 @@ class TransactionProcessorTest {
 
         // Add orphans such that C -> B -> A
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hash, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashB = transactionB.computeHash();
         processor.processNewTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(new Signature(), hashB, 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashC = transactionC.computeHash();
@@ -285,7 +284,7 @@ class TransactionProcessorTest {
         // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
         Transaction transactionB = new Transaction(
             Arrays.asList(
-                new Input(new Signature(), hash, 0),
+                new Input(Simulation.randomSignature(), hash, 0),
                 Simulation.randomInput()
             ),
             Collections.singletonList(Simulation.randomOutput())
@@ -309,7 +308,7 @@ class TransactionProcessorTest {
         // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
         Transaction transactionB = new Transaction(
             Arrays.asList(
-                new Input(new Signature(), hash, 0),
+                new Input(Simulation.randomSignature(), hash, 0),
                 Simulation.randomInput()
             ),
             Collections.singletonList(Simulation.randomOutput())
@@ -342,7 +341,7 @@ class TransactionProcessorTest {
 
         // Add a dependent transaction that will be promoted
         Transaction transactionA = new Transaction(
-            Collections.singletonList(new Input(new Signature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.computeHash(), 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash hashA = transactionA.computeHash();
@@ -385,7 +384,7 @@ class TransactionProcessorTest {
 
         // Add independent transaction that will now become dependent
         Transaction independent = new Transaction(
-            Collections.singletonList(new Input(new Signature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.computeHash(), 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash independentHash = independent.computeHash();
@@ -394,7 +393,7 @@ class TransactionProcessorTest {
 
         // Add orphan transaction that will now become valid
         Transaction orphan = new Transaction(
-            Collections.singletonList(new Input(new Signature(), iFromBlock.getReferencedTransaction(), iFromBlock.getReferencedOutputIndex())),
+            Collections.singletonList(new Input(Simulation.randomSignature(), iFromBlock.getReferencedTransaction(), iFromBlock.getReferencedOutputIndex())),
             Collections.singletonList(Simulation.randomOutput())
         );
         Hash orphanHash = orphan.computeHash();
