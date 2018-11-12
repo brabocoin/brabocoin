@@ -1,8 +1,5 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import com.deliveredtechnologies.rulebook.annotation.Given;
-import com.deliveredtechnologies.rulebook.annotation.Rule;
-import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -15,12 +12,9 @@ import java.util.Iterator;
  *
  * Double spending of an output in the transaction pool rejects the transaction.
  */
-@Rule(name = "Double spending in transaction pool rule")
 public class PoolDoubleSpendingTxRule extends TransactionRule {
-    @Given("pool")
     private TransactionPool pool;
 
-    @When
     public boolean valid() {
         for (Iterator<Transaction> it = pool.getIterator(); it.hasNext(); ) {
             Transaction poolTransaction = it.next();

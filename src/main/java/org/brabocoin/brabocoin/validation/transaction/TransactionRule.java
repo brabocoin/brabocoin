@@ -1,13 +1,15 @@
 package org.brabocoin.brabocoin.validation.transaction;
 
-import com.deliveredtechnologies.rulebook.annotation.Given;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.Rule;
 
-public class TransactionRule {
-    @Given("transaction")
+public class TransactionRule implements Rule {
     protected Transaction transaction;
-
-    @Given("consensus")
     protected Consensus consensus;
+
+    @Override
+    public boolean valid() {
+        return false;
+    }
 }

@@ -13,6 +13,7 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -64,8 +65,8 @@ class TransactionValidatorTest {
 
         TransactionValidator validator = new TransactionValidator();
 
-        RuleBookResult result = validator.checkTransactionValid(transaction,
-                TransactionValidator.RuleLists.ALL,
+        RuleBookResult result = validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
+                transaction,
                 consensus,
                 transactionProcessor,
                 blockchain.getMainChain(),
@@ -74,5 +75,33 @@ class TransactionValidatorTest {
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailedRule());
+    }
+
+    @Test
+    void ruleBookResultFail() throws DatabaseException {
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+
+        Transaction transaction = new Transaction(
+                Simulation.repeatedBuilder(Simulation::randomInput, 10000),
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
+        );
+
+        TransactionValidator validator = new TransactionValidator();
+
+        RuleBookResult result = validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
+                transaction,
+                consensus,
+                transactionProcessor,
+                blockchain.getMainChain(),
+                null,
+                signer);
+
+        assertFalse(result.isPassed());
+        assertEquals(DuplicatePoolTxRule.class, result.getFailedRule());
     }
 }

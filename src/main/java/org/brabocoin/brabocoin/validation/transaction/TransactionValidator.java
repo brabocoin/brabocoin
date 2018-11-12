@@ -1,20 +1,15 @@
 package org.brabocoin.brabocoin.validation.transaction;
 
-import com.deliveredtechnologies.rulebook.FactMap;
-import com.deliveredtechnologies.rulebook.NameValueReferableMap;
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.validation.BraboRuleBook;
-import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.*;
 import org.brabocoin.brabocoin.validation.transaction.rules.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -77,38 +72,21 @@ public class TransactionValidator {
      *     The transaction.
      * @return Whether the transaction is valid.
      */
-    public RuleBookResult checkTransactionValid(@NotNull Transaction transaction,
-                                                @NotNull RuleList list,
-                                                @NotNull Consensus consensus,
-                                                @NotNull TransactionProcessor transactionProcessor,
-                                                @NotNull IndexedChain mainChain,
-                                                @NotNull TransactionPool pool,
-                                                @NotNull Signer signer) {
-        BraboRuleBook ruleBook = new BraboRuleBook(
-                list.getRules()
-        );
+    public RuleBookResult checkTransactionValid(@NotNull RuleList list,
+                                                @NotNull Transaction transaction,
+                                                Consensus consensus,
+                                                TransactionProcessor transactionProcessor,
+                                                IndexedChain mainChain,
+                                                TransactionPool pool,
+                                                Signer signer) {
+        FactMap facts = new FactMap();
+        facts.put("mainChain", mainChain);
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
+        facts.put("pool", pool);
+        facts.put("signer", signer);
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("mainChain", mainChain);
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", pool);
-        facts.setValue("signer", signer);
-
-        ruleBook.run(facts);
-        return ruleBook.getRuleBookResult();
-    }
-
-    public static class RuleList {
-        private List<Class<?>> rules;
-
-        public RuleList(List<Class<?>> rules) {
-            this.rules = rules;
-        }
-
-        public List<Class<?>> getRules() {
-            return rules;
-        }
+        return new RuleBook(list).run(facts);
     }
 }

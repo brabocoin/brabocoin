@@ -15,6 +15,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -63,8 +64,8 @@ class TransactionProcessorTest {
     void processNewTransactionInvalid() throws DatabaseException {
         validator = new TransactionValidator() {
             @Override
-            public RuleBookResult checkTransactionValid(@NotNull Transaction transaction, @NotNull RuleList list, @NotNull Consensus consensus, @NotNull TransactionProcessor transactionProcessor, @NotNull IndexedChain mainChain, @NotNull TransactionPool pool, @NotNull Signer signer) {
-                return new RuleBookResult(false);
+            public RuleBookResult checkTransactionValid(@NotNull RuleList list, @NotNull Transaction transaction, @NotNull Consensus consensus, @NotNull TransactionProcessor transactionProcessor, @NotNull IndexedChain mainChain, @NotNull TransactionPool pool, @NotNull Signer signer) {
+                return new RuleBookResult(false, null);
             }
         };
 

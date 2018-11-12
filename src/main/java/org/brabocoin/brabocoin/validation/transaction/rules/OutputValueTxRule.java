@@ -1,7 +1,5 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import com.deliveredtechnologies.rulebook.annotation.Rule;
-import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -10,9 +8,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  *
  * Output values must be positive and the sum must be smaller than the max transaction range decided by consensus.
  */
-@Rule(name = "Output value rule")
 public class OutputValueTxRule extends TransactionRule {
-    @When
     public boolean valid() {
         long sum = 0L;
         for (Output output : transaction.getOutputs()) {

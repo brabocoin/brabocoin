@@ -1,7 +1,5 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import com.deliveredtechnologies.rulebook.FactMap;
-import com.deliveredtechnologies.rulebook.NameValueReferableMap;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
@@ -17,8 +15,10 @@ import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.BraboRuleBook;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.FactMap;
+import org.brabocoin.brabocoin.validation.RuleBook;
+import org.brabocoin.brabocoin.validation.RuleList;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.junit.jupiter.api.BeforeAll;
@@ -64,16 +64,16 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CoinbaseCreationTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -83,16 +83,16 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CoinbaseCreationTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -135,18 +135,18 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CoinbaseMaturityTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("mainChain", blockchain.getMainChain());
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("transaction", spendCoinbase);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("mainChain", blockchain.getMainChain());
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("transaction", spendCoinbase);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -195,18 +195,18 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CoinbaseMaturityTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("mainChain", blockchain.getMainChain());
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("transaction", spendCoinbase);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("mainChain", blockchain.getMainChain());
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("transaction", spendCoinbase);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -217,16 +217,16 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicateInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -237,16 +237,16 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicateInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -262,17 +262,17 @@ class TransactionRuleTests {
 
         transactionPool.addIndependentTransaction(transaction);
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicatePoolTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -288,17 +288,17 @@ class TransactionRuleTests {
 
         transactionPool.addDependentTransaction(transaction);
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicatePoolTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -314,17 +314,17 @@ class TransactionRuleTests {
 
         transactionPool.addOrphanTransaction(transaction);
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicatePoolTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -337,17 +337,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicatePoolTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -357,16 +357,16 @@ class TransactionRuleTests {
                 Collections.emptyList()
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputCountTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -376,16 +376,16 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputCountTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -395,16 +395,16 @@ class TransactionRuleTests {
                 Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputCountTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -414,16 +414,16 @@ class TransactionRuleTests {
                 Collections.emptyList()
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputCountTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -433,16 +433,16 @@ class TransactionRuleTests {
                 Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputCountTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -491,17 +491,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -530,17 +530,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -589,17 +589,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -666,17 +666,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -705,17 +705,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -764,17 +764,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -803,17 +803,17 @@ class TransactionRuleTests {
                 Collections.singletonList(Simulation.randomOutput())
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputValueTxRange.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTransaction);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTransaction);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -823,16 +823,16 @@ class TransactionRuleTests {
                 Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxSizeTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -842,16 +842,16 @@ class TransactionRuleTests {
                 Simulation.repeatedBuilder(Simulation::randomOutput, 5)
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxSizeTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -861,16 +861,16 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(Simulation.randomHash(), -1))
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputValueTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -880,16 +880,16 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(Simulation.randomHash(), 0))
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputValueTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -899,16 +899,16 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(Simulation.randomHash(), consensus.getMaxTransactionRange() + 1))
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputValueTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -929,16 +929,16 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputValueTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -953,16 +953,16 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(OutputValueTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", transaction);
-        facts.setValue("consensus", consensus);
+        FactMap facts = new FactMap();
+        facts.put("transaction", transaction);
+        facts.put("consensus", consensus);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -995,17 +995,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(PoolDoubleSpendingTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", doubleSpendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", doubleSpendingTx);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1038,17 +1038,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(PoolDoubleSpendingTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", doubleSpendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("pool", transactionPool);
+        FactMap facts = new FactMap();
+        facts.put("transaction", doubleSpendingTx);
+        facts.put("consensus", consensus);
+        facts.put("pool", transactionPool);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1110,18 +1110,18 @@ class TransactionRuleTests {
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SignatureTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("signer", signer);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("signer", signer);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1183,18 +1183,18 @@ class TransactionRuleTests {
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SignatureTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("signer", signer);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("signer", signer);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1256,18 +1256,18 @@ class TransactionRuleTests {
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SignatureTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
-        facts.setValue("signer", signer);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("signer", signer);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1356,17 +1356,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SufficientInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1455,17 +1455,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SufficientInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1554,17 +1554,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SufficientInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1596,17 +1596,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidInputChainUTXOTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("chainUTXODatabase", chainUtxoDatabase);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1663,17 +1663,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidInputChainUTXOTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("chainUTXODatabase", chainUtxoDatabase);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("chainUTXODatabase", chainUtxoDatabase);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1730,17 +1730,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1787,17 +1787,17 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertTrue(ruleBook.passed());
+        
+        assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
@@ -1876,16 +1876,16 @@ class TransactionRuleTests {
                 )
         );
 
-        BraboRuleBook ruleBook = new BraboRuleBook(
+        RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidInputTxRule.class)
-        );
+        ));
 
-        NameValueReferableMap facts = new FactMap<>();
-        facts.setValue("transaction", spendingTx);
-        facts.setValue("consensus", consensus);
-        facts.setValue("transactionProcessor", transactionProcessor);
+        FactMap facts = new FactMap();
+        facts.put("transaction", spendingTx);
+        facts.put("consensus", consensus);
+        facts.put("transactionProcessor", transactionProcessor);
 
-        ruleBook.run(facts);
-        assertFalse(ruleBook.passed());
+        
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 }

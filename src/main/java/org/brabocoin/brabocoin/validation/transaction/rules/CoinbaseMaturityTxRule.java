@@ -1,8 +1,5 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import com.deliveredtechnologies.rulebook.annotation.Given;
-import com.deliveredtechnologies.rulebook.annotation.Rule;
-import com.deliveredtechnologies.rulebook.annotation.When;
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
@@ -16,15 +13,10 @@ import java.util.Objects;
  *
  * Reject if the spent coinbase it not mature enough.
  */
-@Rule(name = "Coinbase maturity rule")
 public class CoinbaseMaturityTxRule extends TransactionRule {
-    @Given("transactionProcessor")
     private TransactionProcessor transactionProcessor;
-
-    @Given("mainChain")
     private IndexedChain mainChain;
 
-    @When
     public boolean valid() {
         return transaction.getInputs()
                 .stream()
