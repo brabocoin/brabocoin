@@ -1,6 +1,5 @@
 package org.brabocoin.brabocoin.services;
 
-import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -18,7 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -94,7 +96,7 @@ public class NodeTest {
         Block newBlock = new Block(consensus.getGenesisBlock().computeHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
-                ByteString.copyFromUtf8("randomNonce"),
+                Simulation.randomBigInteger(),
                 1,
                 Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
         Hash newBlockHash = newBlock.computeHash();
@@ -159,7 +161,7 @@ public class NodeTest {
         Block newBlock = new Block(consensus.getGenesisBlock().computeHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
-                ByteString.copyFromUtf8("randomNonce"),
+                Simulation.randomBigInteger(),
                 1,
                 Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 20));
         Hash newBlockHash = newBlock.computeHash();

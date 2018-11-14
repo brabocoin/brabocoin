@@ -53,7 +53,7 @@ class UTXOProcessorTest {
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 0,
+            Simulation.randomBigInteger(), 0,
             Collections.singletonList(transaction)
         );
 

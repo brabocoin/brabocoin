@@ -4,12 +4,14 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.model.proto.BigIntegerByteStringConverter;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +44,8 @@ public class Block implements ProtoModel<Block> {
     /**
      * Nonce used for the proof-of-work.
      */
-    @ProtoField
-    private final @NotNull ByteString nonce;
+    @ProtoField(converter = BigIntegerByteStringConverter.class)
+    private final @NotNull BigInteger nonce;
 
     /**
      * The height of the block in the block chain.
@@ -73,7 +75,7 @@ public class Block implements ProtoModel<Block> {
      * @param transactions
      *         List of transactions contained in this block.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull ByteString nonce, int blockHeight, List<Transaction> transactions) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -100,7 +102,7 @@ public class Block implements ProtoModel<Block> {
                 .concat(merkleRoot.getValue())
                 .concat(targetValue.getValue())
                 .concat(ByteUtil.toByteString(blockHeight))
-                .concat(nonce);
+                .concat(ByteString.copyFrom(nonce.toByteArray()));
     }
 
     public @NotNull Hash getPreviousBlockHash() {
@@ -115,7 +117,7 @@ public class Block implements ProtoModel<Block> {
         return targetValue;
     }
 
-    public @NotNull ByteString getNonce() {
+    public @NotNull BigInteger getNonce() {
         return nonce;
     }
 
@@ -141,8 +143,8 @@ public class Block implements ProtoModel<Block> {
         private Hash.Builder merkleRoot;
         @ProtoField
         private Hash.Builder targetValue;
-        @ProtoField
-        private ByteString nonce;
+        @ProtoField(converter = BigIntegerByteStringConverter.class)
+        private BigInteger nonce;
         @ProtoField
         private int blockHeight;
         @ProtoField
@@ -163,7 +165,7 @@ public class Block implements ProtoModel<Block> {
             return this;
         }
 
-        public Builder setNonce(ByteString nonce) {
+        public Builder setNonce(BigInteger nonce) {
             this.nonce = nonce;
             return this;
         }
@@ -183,7 +185,8 @@ public class Block implements ProtoModel<Block> {
             return new Block(previousBlockHash.build(),
                     merkleRoot.build(),
                     targetValue.build(),
-                    nonce, blockHeight,
+                    nonce,
+                    blockHeight,
                     transactions.stream()
                             .map(Transaction.Builder::build)
                             .collect(Collectors.toList())
