@@ -8,11 +8,13 @@ import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
+
 /**
  * Represents a hash value.
  */
 @ProtoClass(BrabocoinProtos.Hash.class)
-public class Hash implements ProtoModel<Hash> {
+public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
 
     /**
      * Value of the hash.
@@ -68,6 +70,20 @@ public class Hash implements ProtoModel<Hash> {
     @Override
     public int hashCode() {
         return value.hashCode();
+    }
+
+    @Override
+    public int compareTo(@NotNull Hash o) {
+        return toBigInteger().compareTo(o.toBigInteger());
+    }
+
+    /**
+     * Convert the value of the hash to a {@link BigInteger}.
+     *
+     * @return The {@link BigInteger} representation of the hash.
+     */
+    public @NotNull BigInteger toBigInteger() {
+        return new BigInteger(value.toByteArray());
     }
 
     @ProtoClass(BrabocoinProtos.Hash.class)
