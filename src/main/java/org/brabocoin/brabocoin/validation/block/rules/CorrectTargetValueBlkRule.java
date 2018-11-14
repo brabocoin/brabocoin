@@ -2,9 +2,9 @@ package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-public class SatisfiesTargetValueBlkRule extends BlockRule {
+public class CorrectTargetValueBlkRule extends BlockRule {
     @Override
     public boolean valid() {
-        return block.getHash().compareTo(block.getTargetValue()) <= 0;
+        return block.getTargetValue().equals(consensus.getTargetValue());
     }
 }
