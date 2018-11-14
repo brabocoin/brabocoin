@@ -154,7 +154,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(transaction)
         );
         Hash hash = block.getHash();
@@ -193,7 +193,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(transactionA)
         );
         Hash hashA = blockA.getHash();
@@ -207,7 +207,7 @@ class BlockProcessorTest {
             hashA,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 2,
+            Simulation.randomBigInteger(), 2,
             Collections.singletonList(transactionB)
         );
         Hash tHashB = transactionB.computeHash();
@@ -232,7 +232,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -244,7 +244,7 @@ class BlockProcessorTest {
             hashA,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 2,
+            Simulation.randomBigInteger(), 2,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -262,7 +262,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(transaction)
         );
         Hash hashC = blockC.getHash();
@@ -302,7 +302,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -314,7 +314,7 @@ class BlockProcessorTest {
             hashA,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 2,
+            Simulation.randomBigInteger(), 2,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -326,7 +326,7 @@ class BlockProcessorTest {
             hashB,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 3,
+            Simulation.randomBigInteger(), 3,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -338,7 +338,7 @@ class BlockProcessorTest {
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 1,
+            Simulation.randomBigInteger(), 1,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -350,7 +350,7 @@ class BlockProcessorTest {
             hashD,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 2,
+            Simulation.randomBigInteger(), 2,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -362,7 +362,7 @@ class BlockProcessorTest {
             hashE,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 3,
+            Simulation.randomBigInteger(), 3,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())
@@ -375,7 +375,7 @@ class BlockProcessorTest {
             hashF,
             Simulation.randomHash(),
             Simulation.randomHash(),
-            Simulation.randomByteString(), 4,
+            Simulation.randomBigInteger(), 4,
             Collections.singletonList(new Transaction(
                 Collections.emptyList(),
                 Collections.singletonList(Simulation.randomOutput())

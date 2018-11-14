@@ -52,7 +52,7 @@ public class Consensus {
             new Hash(ByteString.EMPTY),
             new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
             new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
-            ByteString.copyFromUtf8("genesis"),
+            BigInteger.ZERO,
             0,
             Collections.emptyList()
     );

@@ -1,14 +1,16 @@
 package org.brabocoin.brabocoin.model.dal;
 
-import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.proto.BigIntegerByteStringConverter;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
+
+import java.math.BigInteger;
 
 /**
  * Data class holding block information that is stored in the blocks database.
@@ -39,8 +41,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     /**
      * Nonce used for the proof-of-work.
      */
-    @ProtoField
-    private final ByteString nonce;
+    @ProtoField(converter = BigIntegerByteStringConverter.class)
+    private final BigInteger nonce;
 
     /**
      * UNIX timestamp (in seconds) indicating when the block was received, in UTC time zone.
@@ -136,7 +138,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
      */
-    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull ByteString nonce, int blockHeight, int transactionCount, boolean validated, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
+    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, boolean validated, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -192,7 +194,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return targetValue;
     }
 
-    public ByteString getNonce() {
+    public BigInteger getNonce() {
         return nonce;
     }
 
@@ -221,8 +223,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         @ProtoField
         private Hash.Builder targetValue;
 
-        @ProtoField
-        private ByteString nonce;
+        @ProtoField(converter = BigIntegerByteStringConverter.class)
+        private BigInteger nonce;
 
         @ProtoField
         private long timeReceived;
@@ -266,7 +268,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setNonce(@NotNull ByteString nonce) {
+        public Builder setNonce(@NotNull BigInteger nonce) {
             this.nonce = nonce;
             return this;
         }

@@ -94,7 +94,7 @@ public class Simulation {
                 previousHash,
                 randomHash(),
                 randomHash(),
-                randomByteString(), blockHeight,
+                randomBigInteger(), blockHeight,
                 repeatedBuilder(() -> randomTransaction(transactionInputBound,transactionOutputBound), transactionsBound));
     }
 
@@ -231,5 +231,9 @@ public class Simulation {
                 transactionPool,
                 transactionProcessor,
                 config));
+    }
+
+    public static BigInteger randomBigInteger() {
+        return BigInteger.valueOf(RANDOM.nextInt());
     }
 }

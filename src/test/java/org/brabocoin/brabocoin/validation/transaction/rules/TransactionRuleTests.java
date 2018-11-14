@@ -106,8 +106,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -159,8 +159,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -471,8 +471,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -568,8 +568,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -634,8 +634,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(negativeOutputTransaction)
         );
@@ -741,8 +741,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(positiveOutputTransaction)
         );
@@ -1080,8 +1080,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1152,8 +1152,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1224,8 +1224,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1310,8 +1310,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1408,8 +1408,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1506,8 +1506,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Arrays.asList(coinbaseOne, coinbaseTwo)
         );
@@ -1631,8 +1631,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1697,8 +1697,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
@@ -1834,8 +1834,8 @@ class TransactionRuleTests {
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
-                Simulation.randomHash(),
-                Simulation.randomByteString(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
                 1,
                 Collections.singletonList(coinbase)
         );
