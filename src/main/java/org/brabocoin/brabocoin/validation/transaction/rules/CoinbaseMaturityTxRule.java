@@ -8,6 +8,8 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Objects;
 
+import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
+
 /**
  * Transaction rule
  *
@@ -18,18 +20,16 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
     private IndexedChain mainChain;
 
     public boolean valid() {
-        return transaction.getInputs()
-                .stream()
-                .map(i -> {
-                    try {
-                        return transactionProcessor.findUnspentOutputInfo(i);
-                    } catch (DatabaseException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .filter(UnspentOutputInfo::isCoinbase)
-                .allMatch(u -> u.getBlockHeight() <= mainChain.getHeight() - consensus.getBlockMaturityDepth());
+        try {
+            return transaction.getInputs()
+                    .stream()
+                    .map(rethrowFunction(transactionProcessor::findUnspentOutputInfo))
+                    .filter(Objects::nonNull)
+                    .filter(UnspentOutputInfo::isCoinbase)
+                    .allMatch(u -> u.getBlockHeight() <= mainChain.getHeight() - consensus.getCoinbaseMaturityDepth());
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

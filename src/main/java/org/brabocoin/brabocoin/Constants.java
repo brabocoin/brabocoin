@@ -17,5 +17,5 @@ public final class Constants {
     /**
      * The amount of miniBrabos that equals one Brabocoin.
      */
-    public static final long COIN = (long) 10E6;
+    public static final long COIN = 1_000_000L;
 }

@@ -36,10 +36,8 @@ public class Transaction implements ProtoModel<Transaction> {
     /**
      * Create a new transaction.
      *
-     * @param inputs
-     *         inputs used by the transaction.
-     * @param outputs
-     *         outputs used by the transaction.
+     * @param inputs  inputs used by the transaction.
+     * @param outputs outputs used by the transaction.
      */
     public Transaction(@NotNull List<Input> inputs, @NotNull List<Output> outputs) {
         this.inputs = new ArrayList<>(inputs);
@@ -116,7 +114,7 @@ public class Transaction implements ProtoModel<Transaction> {
     /**
      * Get the ByteString of this transaction without signature.
      *
-     * @return
+     * @return ByteString of this transaction without signature.
      */
     public ByteString getSignableTransactionData() {
         return ProtoConverter.toProtoBytes(new Transaction(
@@ -134,8 +132,8 @@ public class Transaction implements ProtoModel<Transaction> {
     public Transaction getSignedTransaction(Map<Input, Signature> signatureMap) {
         return new Transaction(
                 inputs.stream()
-                .map(i -> new Input(signatureMap.get(i), i.getReferencedTransaction(), i.getReferencedOutputIndex()))
-                .collect(Collectors.toList()),
+                        .map(i -> new Input(signatureMap.get(i), i.getReferencedTransaction(), i.getReferencedOutputIndex()))
+                        .collect(Collectors.toList()),
                 outputs
         );
     }

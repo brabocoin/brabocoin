@@ -16,7 +16,7 @@ public class PoolDoubleSpendingTxRule extends TransactionRule {
     private TransactionPool pool;
 
     public boolean valid() {
-        for (Iterator<Transaction> it = pool.getIterator(); it.hasNext(); ) {
+        for (Iterator<Transaction> it = pool.iterator(); it.hasNext(); ) {
             Transaction poolTransaction = it.next();
 
             /*

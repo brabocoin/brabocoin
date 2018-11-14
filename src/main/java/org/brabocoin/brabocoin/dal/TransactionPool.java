@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * limited and entries have an expiration time.
  * When the limit is met, orphan transactions are discarded randomly.
  */
-public class TransactionPool {
+public class TransactionPool implements Iterable<Transaction> {
 
     private final static Logger LOGGER = Logger.getLogger(TransactionPool.class.getName());
 
@@ -364,11 +364,13 @@ public class TransactionPool {
      *
      * @return Iterator over all transactions.
      */
-    public Iterator<Transaction> getIterator() {
+    @NotNull
+    @Override
+    public Iterator<Transaction> iterator() {
         return Iterators.concat(
-                orphanTransactions.getIterator(),
-                independentTransactions.getIterator(),
-                dependentTransactions.getIterator()
+                orphanTransactions.iterator(),
+                independentTransactions.iterator(),
+                dependentTransactions.iterator()
         );
     }
 }
