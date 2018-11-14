@@ -17,7 +17,7 @@ public class OutputValueTxRule extends TransactionRule {
             }
 
             sum += output.getAmount();
-            if (sum > consensus.getMaxTransactionRange()) {
+            if (sum > consensus.getMaxMoneyValue()) {
                 return false;
             }
         }

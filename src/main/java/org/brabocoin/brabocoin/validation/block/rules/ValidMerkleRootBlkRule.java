@@ -10,7 +10,7 @@ public class ValidMerkleRootBlkRule extends BlockRule {
     @Override
     public boolean valid() {
         return block.getMerkleRoot().equals(new MerkleTree(consensus.getMerkleTreeHashFunction(),
-                block.getTransactions().stream().map(Transaction::computeHash).collect(Collectors.toList())
+                block.getTransactions().stream().map(Transaction::getHash).collect(Collectors.toList())
         ).getRoot());
     }
 }

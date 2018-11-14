@@ -34,6 +34,11 @@ public class Transaction implements ProtoModel<Transaction> {
     private final @NotNull List<Output> outputs;
 
     /**
+     * Cached hash of this transaction.
+     */
+    private Hash hash;
+
+    /**
      * Create a new transaction.
      *
      * @param inputs  inputs used by the transaction.
@@ -63,16 +68,19 @@ public class Transaction implements ProtoModel<Transaction> {
     }
 
     /**
-     * Computes the transaction hash.
+     * Gets the transaction hash using lazy computation if not available.
      * <p>
      * The hash of a block is the hashed output of the full transaction data.
      * The hash is computed by applying the SHA-256 hashing function twice.
      *
      * @return The transaction hash.
      */
-    public @NotNull Hash computeHash() {
-        ByteString data = getRawData();
-        return Hashing.digestSHA256(Hashing.digestSHA256(data));
+    public @NotNull Hash getHash() {
+        if (hash == null) {
+            ByteString data = getRawData();
+            hash = Hashing.digestSHA256(Hashing.digestSHA256(data));
+        }
+        return hash;
     }
 
     private @NotNull ByteString getRawData() {

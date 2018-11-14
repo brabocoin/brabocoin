@@ -32,9 +32,9 @@ public class Consensus {
      */
     private static final int COINBASE_MATURITY_DEPTH = 100;
     /**
-     * Max transaction value range.
+     * Max money value.
      */
-    private static final long MAX_TRANSACTION_RANGE = (long) (3E9);
+    private static final long MAX_MONEY_VALUE = (long) (3E9);
     /**
      * Constant target value.
      */
@@ -104,8 +104,8 @@ public class Consensus {
         return COINBASE_MATURITY_DEPTH;
     }
 
-    public @NotNull long getMaxTransactionRange() {
-        return MAX_TRANSACTION_RANGE;
+    public @NotNull long getMaxMoneyValue() {
+        return MAX_MONEY_VALUE;
     }
 
     public @NotNull Hash getTargetValue() {

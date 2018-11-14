@@ -172,7 +172,7 @@ public class UTXODatabase {
     public synchronized void setOutputsUnspent(@NotNull Transaction transaction,
                                   @NotNull List<Integer> outputIndices, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark outputs of the given transaction as unspent.");
-        Hash transactionHash = transaction.computeHash();
+        Hash transactionHash = transaction.getHash();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Transaction hash: {0}", toHexString(transactionHash.getValue())));
         boolean coinbase = transaction.isCoinbase();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Coinbase: {0}", coinbase));

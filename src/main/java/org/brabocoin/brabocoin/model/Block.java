@@ -67,18 +67,12 @@ public class Block implements ProtoModel<Block> {
     /**
      * Create a new block.
      *
-     * @param previousBlockHash
-     *         Hash of the previous block in the blockchain.
-     * @param merkleRoot
-     *         Hash of the Merkle root.
-     * @param targetValue
-     *         Target value for the proof-of-work.
-     * @param nonce
-     *         Nonce for the proof-of-work.
-     * @param blockHeight
-     *         Height of the block in the blockchain.
-     * @param transactions
-     *         List of transactions contained in this block.
+     * @param previousBlockHash Hash of the previous block in the blockchain.
+     * @param merkleRoot        Hash of the Merkle root.
+     * @param targetValue       Target value for the proof-of-work.
+     * @param nonce             Nonce for the proof-of-work.
+     * @param blockHeight       Height of the block in the blockchain.
+     * @param transactions      List of transactions contained in this block.
      */
     public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
@@ -87,6 +81,15 @@ public class Block implements ProtoModel<Block> {
         this.nonce = nonce;
         this.blockHeight = blockHeight;
         this.transactions = new ArrayList<>(transactions);
+    }
+
+    /**
+     * Gets the coinbase transaction, which is the first transaction by convention.
+     *
+     * @return The coinbase transaction.
+     */
+    public Transaction getCoinbaseTransaction() {
+        return getTransactions().get(0);
     }
 
     /**

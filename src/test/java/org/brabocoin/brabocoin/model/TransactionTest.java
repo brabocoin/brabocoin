@@ -54,7 +54,7 @@ class TransactionTest {
     @Test
     void testComputeHash() {
         Transaction transaction = new Transaction(inputList, outputList);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         assertNotNull(hash);
     }
 }

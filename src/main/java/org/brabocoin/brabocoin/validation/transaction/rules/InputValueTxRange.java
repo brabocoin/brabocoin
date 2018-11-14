@@ -35,7 +35,7 @@ public class InputValueTxRange extends TransactionRule {
             }
 
             sum += unspentOutputInfo.getAmount();
-            if (sum > consensus.getMaxTransactionRange()) {
+            if (sum > consensus.getMaxMoneyValue()) {
                 return false;
             }
         }

@@ -107,7 +107,7 @@ public class UTXOProcessor {
         for (int i = transactions.size() - 1; i >= 0; i--) {
             Transaction transaction = transactions.get(i);
             List<UnspentOutputInfo> inputInfos = undos.get(i).getOutputInfoList();
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
 
             // Set all outputs as spent
             List<Output> outputs = transaction.getOutputs();

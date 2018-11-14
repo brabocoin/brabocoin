@@ -130,7 +130,7 @@ class TransactionRuleTests {
         blockProcessor.processNewBlock(block);
 
         Transaction spendCoinbase = new Transaction(
-                Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.computeHash(), 0)),
+                Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.getHash(), 0)),
                 Collections.singletonList(Simulation.randomOutput())
         );
 
@@ -189,7 +189,7 @@ class TransactionRuleTests {
         }
 
         Transaction spendCoinbase = new Transaction(
-                Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.computeHash(), 0)),
+                Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.getHash(), 0)),
                 Collections.singletonList(Simulation.randomOutput())
         );
 
@@ -482,7 +482,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        negativeOutputTransaction.computeHash(),
+                        negativeOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -521,7 +521,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        negativeOutputTransaction.computeHash(),
+                        negativeOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -579,7 +579,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        negativeOutputTransaction.computeHash(),
+                        negativeOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -605,13 +605,13 @@ class TransactionRuleTests {
                 Arrays.asList(
                         new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L
+                                consensus.getMaxMoneyValue() / 3L
                         ), new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L
+                                consensus.getMaxMoneyValue() / 3L
                         ), new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L + 5
+                                consensus.getMaxMoneyValue() / 3L + 5
                         )
                 )
         );
@@ -645,17 +645,17 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Arrays.asList(new Input(
                                 Simulation.randomSignature(),
-                                negativeOutputTransaction.computeHash(),
+                                negativeOutputTransaction.getHash(),
                                 0
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                negativeOutputTransaction.computeHash(),
+                                negativeOutputTransaction.getHash(),
                                 1
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                negativeOutputTransaction.computeHash(),
+                                negativeOutputTransaction.getHash(),
                                 2
                         )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -694,7 +694,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        zeroOutputTransaction.computeHash(),
+                        zeroOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -752,7 +752,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        positiveOutputTransaction.computeHash(),
+                        positiveOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -791,7 +791,7 @@ class TransactionRuleTests {
         Transaction spendingTransaction = new Transaction(
                 Collections.singletonList(new Input(
                         Simulation.randomSignature(),
-                        positiveOutputTransaction.computeHash(),
+                        positiveOutputTransaction.getHash(),
                         0
                 )),
                 Collections.singletonList(Simulation.randomOutput())
@@ -890,7 +890,7 @@ class TransactionRuleTests {
     void OutputValueTxRuleFailExceedSingle() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.singletonList(new Output(Simulation.randomHash(), consensus.getMaxTransactionRange() + 1))
+                Collections.singletonList(new Output(Simulation.randomHash(), consensus.getMaxMoneyValue() + 1))
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -912,13 +912,13 @@ class TransactionRuleTests {
                 Arrays.asList(
                         new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L
+                                consensus.getMaxMoneyValue() / 3L
                         ), new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L
+                                consensus.getMaxMoneyValue() / 3L
                         ), new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L + 5
+                                consensus.getMaxMoneyValue() / 3L + 5
                         )
                 )
         );
@@ -942,7 +942,7 @@ class TransactionRuleTests {
                 Arrays.asList(
                         new Output(
                                 Simulation.randomHash(),
-                                consensus.getMaxTransactionRange() / 3L
+                                consensus.getMaxMoneyValue() / 3L
                         )
                 )
         );
@@ -1092,7 +1092,7 @@ class TransactionRuleTests {
                 Collections.singletonList(
                         new Input(
                                 null,
-                                coinbase.computeHash(),
+                                coinbase.getHash(),
                                 0
                         )
                 ),
@@ -1164,7 +1164,7 @@ class TransactionRuleTests {
                 Collections.singletonList(
                         new Input(
                                 null,
-                                coinbase.computeHash(),
+                                coinbase.getHash(),
                                 0
                         )
                 ),
@@ -1236,7 +1236,7 @@ class TransactionRuleTests {
                 Collections.singletonList(
                         new Input(
                                 null,
-                                coinbase.computeHash(),
+                                coinbase.getHash(),
                                 0
                         )
                 ),
@@ -1321,17 +1321,17 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 0
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 1
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseTwo.computeHash(),
+                                coinbaseTwo.getHash(),
                                 1
                         )),
                 Arrays.asList(
@@ -1419,17 +1419,17 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 0
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 1
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseTwo.computeHash(),
+                                coinbaseTwo.getHash(),
                                 1
                         )),
                 Arrays.asList(
@@ -1517,17 +1517,17 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 0
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseOne.computeHash(),
+                                coinbaseOne.getHash(),
                                 1
                         ),
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbaseTwo.computeHash(),
+                                coinbaseTwo.getHash(),
                                 1
                         )),
                 Arrays.asList(
@@ -1576,7 +1576,7 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                         Simulation.randomSignature(),
-                        coinbase.computeHash(),
+                        coinbase.getHash(),
                         0
                 )),
                 Collections.singletonList(
@@ -1642,7 +1642,7 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                         Simulation.randomSignature(),
-                        coinbase.computeHash(),
+                        coinbase.getHash(),
                         0
                 )),
                 Collections.singletonList(
@@ -1658,7 +1658,6 @@ class TransactionRuleTests {
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
         facts.put("chainUTXODatabase", chainUtxoDatabase);
-
         
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1708,7 +1707,7 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                         Simulation.randomSignature(),
-                        coinbase.computeHash(),
+                        coinbase.getHash(),
                         0
                 )),
                 Collections.singletonList(
@@ -1765,7 +1764,7 @@ class TransactionRuleTests {
         Transaction spendingTx = new Transaction(
                 Arrays.asList(new Input(
                         Simulation.randomSignature(),
-                        coinbase.computeHash(),
+                        coinbase.getHash(),
                         0
                 )),
                 Collections.singletonList(
@@ -1848,7 +1847,7 @@ class TransactionRuleTests {
                 Arrays.asList(
                         new Input(
                                 Simulation.randomSignature(),
-                                coinbase.computeHash(),
+                                coinbase.getHash(),
                                 0
                         ),
                         new Input(

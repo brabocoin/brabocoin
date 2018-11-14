@@ -148,7 +148,7 @@ class BlockProcessorTest {
             Collections.singletonList(transaction)
         );
         Hash hash = block.getHash();
-        Hash tHash = transaction.computeHash();
+        Hash tHash = transaction.getHash();
 
         // Add to transaction pool manually
         transactionPool.addIndependentTransaction(transaction);
@@ -187,7 +187,7 @@ class BlockProcessorTest {
             Collections.singletonList(transactionA)
         );
         Hash hashA = blockA.getHash();
-        Hash tHashA = transactionA.computeHash();
+        Hash tHashA = transactionA.getHash();
 
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), tHashA, 0)),
@@ -200,7 +200,7 @@ class BlockProcessorTest {
             Simulation.randomBigInteger(), 2,
             Collections.singletonList(transactionB)
         );
-        Hash tHashB = transactionB.computeHash();
+        Hash tHashB = transactionB.getHash();
 
         blockProcessor.processNewBlock(blockA);
 
@@ -246,7 +246,7 @@ class BlockProcessorTest {
             Collections.emptyList(),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash tHash = transaction.computeHash();
+        Hash tHash = transaction.getHash();
 
         Block blockC = new Block(
             consensus.getGenesisBlock().getHash(),
@@ -397,19 +397,19 @@ class BlockProcessorTest {
         assertFalse(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashC)));
 
         // Check UTXO
-        assertFalse(utxoFromChain.isUnspent(blockA.getTransactions().get(0).computeHash(), 0));
-        assertFalse(utxoFromChain.isUnspent(blockB.getTransactions().get(0).computeHash(), 0));
-        assertFalse(utxoFromChain.isUnspent(blockC.getTransactions().get(0).computeHash(), 0));
+        assertFalse(utxoFromChain.isUnspent(blockA.getTransactions().get(0).getHash(), 0));
+        assertFalse(utxoFromChain.isUnspent(blockB.getTransactions().get(0).getHash(), 0));
+        assertFalse(utxoFromChain.isUnspent(blockC.getTransactions().get(0).getHash(), 0));
 
-        assertTrue(utxoFromChain.isUnspent(blockD.getTransactions().get(0).computeHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockE.getTransactions().get(0).computeHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockF.getTransactions().get(0).computeHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockG.getTransactions().get(0).computeHash(), 0));
+        assertTrue(utxoFromChain.isUnspent(blockD.getTransactions().get(0).getHash(), 0));
+        assertTrue(utxoFromChain.isUnspent(blockE.getTransactions().get(0).getHash(), 0));
+        assertTrue(utxoFromChain.isUnspent(blockF.getTransactions().get(0).getHash(), 0));
+        assertTrue(utxoFromChain.isUnspent(blockG.getTransactions().get(0).getHash(), 0));
 
         // Check transaction pool
-        assertTrue(transactionPool.hasValidTransaction(blockA.getTransactions().get(0).computeHash()));
-        assertTrue(transactionPool.hasValidTransaction(blockB.getTransactions().get(0).computeHash()));
-        assertTrue(transactionPool.hasValidTransaction(blockC.getTransactions().get(0).computeHash()));
+        assertTrue(transactionPool.hasValidTransaction(blockA.getTransactions().get(0).getHash()));
+        assertTrue(transactionPool.hasValidTransaction(blockB.getTransactions().get(0).getHash()));
+        assertTrue(transactionPool.hasValidTransaction(blockC.getTransactions().get(0).getHash()));
     }
 
 }

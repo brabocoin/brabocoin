@@ -13,15 +13,13 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.RuleBookResult;
-import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TransactionValidatorTest {
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
@@ -71,6 +69,7 @@ class TransactionValidatorTest {
                 transactionProcessor,
                 blockchain.getMainChain(),
                 transactionPool,
+                chainUtxoDatabase,
                 signer);
 
         assertFalse(result.isPassed());
@@ -93,15 +92,13 @@ class TransactionValidatorTest {
 
         TransactionValidator validator = new TransactionValidator();
 
-        RuleBookResult result = validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
+        assertThrows(IllegalStateException.class, () -> validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
                 transaction,
                 consensus,
                 transactionProcessor,
                 blockchain.getMainChain(),
                 null,
-                signer);
-
-        assertFalse(result.isPassed());
-        assertEquals(DuplicatePoolTxRule.class, result.getFailedRule());
+                chainUtxoDatabase,
+                signer));
     }
 }

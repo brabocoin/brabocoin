@@ -5,10 +5,7 @@ import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
@@ -49,14 +46,10 @@ public class TransactionProcessor {
     /**
      * Create a new transaction processor.
      *
-     * @param transactionValidator
-     *     The transaction validator.
-     * @param transactionPool
-     *     The transaction pool.
-     * @param utxoFromChain
-     *     The UTXO database of the blockchain.
-     * @param utxoFromPool
-     *     The UTXO database of the transaction pool.
+     * @param transactionValidator The transaction validator.
+     * @param transactionPool      The transaction pool.
+     * @param utxoFromChain        The UTXO database of the blockchain.
+     * @param utxoFromPool         The UTXO database of the transaction pool.
      */
     public TransactionProcessor(@NotNull TransactionValidator transactionValidator,
                                 @NotNull TransactionPool transactionPool,
@@ -72,17 +65,15 @@ public class TransactionProcessor {
     /**
      * Add a new transaction to the transaction pool.
      *
-     * @param transaction
-     *     The new transaction.
+     * @param transaction The new transaction.
      * @return The status of the transaction in the transaction pool and any orphans that are
      * added as a result.
-     * @throws DatabaseException
-     *     When either of the UTXO databases is not available.
+     * @throws DatabaseException When either of the UTXO databases is not available.
      */
     public ProcessedTransactionResult processNewTransaction(@NotNull Transaction transaction) throws DatabaseException {
         LOGGER.fine("Processing new transaction.");
         ProcessedTransactionStatus status = processTransaction(transaction);
-        List<Transaction> orphans = addValidOrphans(transaction.computeHash());
+        List<Transaction> orphans = addValidOrphans(transaction.getHash());
 
         transactionPool.limitTransactionPoolSize();
 
@@ -101,11 +92,10 @@ public class TransactionProcessor {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
                 if (checkInputs(t) != ProcessedTransactionStatus.ORPHAN) {
-                    ProcessedTransactionStatus status =  processTransaction(t);
+                    ProcessedTransactionStatus status = processTransaction(t);
                     return status == ProcessedTransactionStatus.DEPENDENT || status == ProcessedTransactionStatus.INDEPENDENT;
                 }
-            }
-            catch (DatabaseException ignored) {
+            } catch (DatabaseException ignored) {
             }
 
             return false;
@@ -123,7 +113,7 @@ public class TransactionProcessor {
     }
 
     private ProcessedTransactionStatus processTransactionWithoutValidation(@NotNull Transaction transaction) throws DatabaseException {
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
 
         // Check if already stored
         if (transactionPool.hasValidTransaction(hash)) {
@@ -192,16 +182,14 @@ public class TransactionProcessor {
      * transaction pool. By this change, dependent transactions might be promoted to independent
      * transactions.
      *
-     * @param block
-     *     The block that is connected to the main chain.
-     * @throws DatabaseException
-     *     When the UTXO database is not available.
+     * @param block The block that is connected to the main chain.
+     * @throws DatabaseException When the UTXO database is not available.
      */
     public void processTopBlockConnected(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing top block connected.");
 
         for (Transaction transaction : block.getTransactions()) {
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
 
             // Remove from pool
             LOGGER.finest(() -> MessageFormat.format("Removing transaction {0} from transaction pool.", toHexString(hash.getValue())));
@@ -219,12 +207,11 @@ public class TransactionProcessor {
         // Otherwise independent transactions might not be recognized at first
         LOGGER.fine("Promoting dependent transactions to dependent when possible.");
         for (Transaction transaction : block.getTransactions()) {
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
             transactionPool.promoteDependentToIndependentFromParent(hash, t -> {
                 try {
                     return checkInputs(t) == ProcessedTransactionStatus.INDEPENDENT;
-                }
-                catch (DatabaseException ignored) {
+                } catch (DatabaseException ignored) {
                 }
 
                 return false;
@@ -243,10 +230,8 @@ public class TransactionProcessor {
      * <p>
      * Note that all transactions in the block are already validated.
      *
-     * @param block
-     *     The block that is disconnected from the main chain.
-     * @throws DatabaseException
-     *     When the UTXO database is not available.
+     * @param block The block that is disconnected from the main chain.
+     * @throws DatabaseException When the UTXO database is not available.
      */
     public void processTopBlockDisconnected(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing top block disconnected.");
@@ -255,14 +240,14 @@ public class TransactionProcessor {
             // Add transactions to pool and update pool UTXO set
             ProcessedTransactionStatus status = processTransactionWithoutValidation(transaction);
             LOGGER.finest(() -> MessageFormat.format(
-                "Added transaction {0} to transaction pool with status {1}.",
-                toHexString(transaction.computeHash().getValue()),
-                status
+                    "Added transaction {0} to transaction pool with status {1}.",
+                    toHexString(transaction.getHash().getValue()),
+                    status
             ));
 
             // Some previously independent transactions may depend the processed transaction
             // making it dependent
-            transactionPool.demoteIndependentToDependent(transaction.computeHash());
+            transactionPool.demoteIndependentToDependent(transaction.getHash());
 
             // Some orphan transactions could be double-spending outputs that are used by the
             // transactions in the disconnected block. These orphan transactions now become valid.
@@ -285,5 +270,22 @@ public class TransactionProcessor {
 
     public boolean isUnspentInChain(Input input) throws DatabaseException {
         return utxoFromChain.isUnspent(input);
+    }
+
+    public long computeFee(Transaction transaction) throws DatabaseException {
+        long outputSum = 0L;
+        for (Output output : transaction.getOutputs()) {
+            outputSum += output.getAmount();
+        }
+
+        long inputSum = 0L;
+        for (Input input : transaction.getInputs()) {
+            UnspentOutputInfo unspentOutputInfo;
+            unspentOutputInfo = findUnspentOutputInfo(input);
+
+            inputSum += unspentOutputInfo.getAmount();
+        }
+
+        return inputSum - outputSum;
     }
 }

@@ -86,27 +86,27 @@ public class TransactionPool implements Iterable<Transaction> {
         this.maxPoolSize = config.maxTransactionPoolSize();
         this.random = random;
 
-        this.independentTransactions = new MultiDependenceIndex<>(Transaction::computeHash,
+        this.independentTransactions = new MultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet())
         );
 
-        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
+        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet()),
-                Transaction::computeHash
+                Transaction::getHash
         );
 
-        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
+        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet()),
-                Transaction::computeHash
+                Transaction::getHash
         );
     }
 

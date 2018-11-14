@@ -14,7 +14,7 @@ public class NonContextualTransactionCheckBlkRule extends BlockRule {
                         t,
                         consensus,
                         // Note: these facts are not used in the non-contextual transaction rules
-                        null, null, null, null
+                        null, null, null, null, null
                 ).isPassed());
     }
 }

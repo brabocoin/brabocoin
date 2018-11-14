@@ -64,7 +64,7 @@ class UTXOProcessorTest {
         assertTrue(transactionUndo.getOutputInfoList().isEmpty());
 
         // Check UTXO is added
-        assertTrue(database.isUnspent(transaction.computeHash(), 0));
+        assertTrue(database.isUnspent(transaction.getHash(), 0));
     }
 
     @Test
@@ -92,7 +92,7 @@ class UTXOProcessorTest {
         List<Transaction> transactions = block.getTransactions();
         for (int i = 0; i < transactions.size(); i++) {
             Transaction transaction = transactions.get(i);
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
             TransactionUndo undo = blockUndo.getTransactionUndos().get(i);
 
             assertEquals(transaction.getInputs().size(), undo.getOutputInfoList().size());
@@ -134,7 +134,7 @@ class UTXOProcessorTest {
 
         // Check if all inputs are unspent / outputs are spent
         for (Transaction transaction : block.getTransactions()) {
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
 
             for (Input input : transaction.getInputs()) {
                 assertTrue(database.isUnspent(input));

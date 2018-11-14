@@ -5,6 +5,6 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class HasCoinbaseBlkRule extends BlockRule {
     @Override
     public boolean valid() {
-        return block.getTransactions().get(0).isCoinbase();
+        return block.getCoinbaseTransaction().isCoinbase();
     }
 }

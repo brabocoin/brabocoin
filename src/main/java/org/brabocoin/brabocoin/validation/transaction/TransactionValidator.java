@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.transaction;
 
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
@@ -78,15 +79,24 @@ public class TransactionValidator {
                                                 Consensus consensus,
                                                 TransactionProcessor transactionProcessor,
                                                 IndexedChain mainChain,
-                                                TransactionPool pool,
+                                                TransactionPool transactionPool,
+                                                ChainUTXODatabase chainUTXODatabase,
                                                 Signer signer) {
         FactMap facts = new FactMap();
-        facts.put("mainChain", mainChain);
-        facts.put("transactionProcessor", transactionProcessor);
         facts.put("transaction", transaction);
-        facts.put("consensus", consensus);
-        facts.put("pool", pool);
-        facts.put("signer", signer);
+        facts.put("consensus", consensus == null
+                ? new UninitializedFact() : consensus);
+
+        facts.put("mainChain", mainChain == null
+                ? new UninitializedFact() : mainChain);
+        facts.put("transactionProcessor", transactionProcessor == null
+                ? new UninitializedFact() : transactionProcessor);
+        facts.put("transactionPool", transactionPool == null
+                ? new UninitializedFact() : transactionPool);
+        facts.put("chainUTXODatabase", chainUTXODatabase == null
+                ? new UninitializedFact() : chainUTXODatabase);
+        facts.put("signer", signer == null
+                ? new UninitializedFact() : signer);
 
         return new RuleBook(list).run(facts);
     }

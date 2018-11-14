@@ -66,7 +66,7 @@ class TransactionProcessorTest {
     void processNewTransactionInvalid() throws DatabaseException {
         validator = new TransactionValidator() {
             @Override
-            public RuleBookResult checkTransactionValid(@NotNull RuleList list, @NotNull Transaction transaction, @NotNull Consensus consensus, @NotNull TransactionProcessor transactionProcessor, @NotNull IndexedChain mainChain, @NotNull TransactionPool pool, @NotNull Signer signer) {
+            public RuleBookResult checkTransactionValid(@NotNull RuleList list, @NotNull Transaction transaction, Consensus consensus, TransactionProcessor transactionProcessor, IndexedChain mainChain, TransactionPool pool, ChainUTXODatabase chainUTXODatabase, Signer signer) {
                 return new RuleBookResult(false, null);
             }
         };
@@ -113,7 +113,7 @@ class TransactionProcessorTest {
     @Test
     void processNewTransactionOrphan() throws DatabaseException {
         Transaction orphan = Simulation.randomTransaction(5, 5);
-        Hash hash = orphan.computeHash();
+        Hash hash = orphan.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(orphan);
         assertEquals(ProcessedTransactionStatus.ORPHAN, result.getStatus());
@@ -128,7 +128,7 @@ class TransactionProcessorTest {
     void processNewTransactionIndependent() throws DatabaseException {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transaction = createIndependentTransaction();
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.INDEPENDENT, result.getStatus());
@@ -156,7 +156,7 @@ class TransactionProcessorTest {
     @Test
     void processNewTransactionDependent() throws DatabaseException {
         Transaction transaction = createDependentTransaction();
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
         assertEquals(ProcessedTransactionStatus.DEPENDENT, result.getStatus());
@@ -205,7 +205,7 @@ class TransactionProcessorTest {
     void processNewTransactionIndependentAddOrphan() throws DatabaseException {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transactionA = createIndependentTransaction();
-        Hash hash = transactionA.computeHash();
+        Hash hash = transactionA.getHash();
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
@@ -217,7 +217,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
         assertEquals(1, result.getValidatedOrphans().size());
 
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hashB, i));
         }
@@ -226,7 +226,7 @@ class TransactionProcessorTest {
     @Test
     void processNewTransactionDependentAddOrphan() throws DatabaseException {
         Transaction transactionA = createDependentTransaction();
-        Hash hash = transactionA.computeHash();
+        Hash hash = transactionA.getHash();
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
@@ -238,7 +238,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
         assertEquals(1, result.getValidatedOrphans().size());
 
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
             assertTrue(utxoFromPool.isUnspent(hashB, i));
         }
@@ -248,21 +248,21 @@ class TransactionProcessorTest {
     void processNewTransactionAddChainedOrphans() throws DatabaseException {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transactionA = createIndependentTransaction();
-        Hash hash = transactionA.computeHash();
+        Hash hash = transactionA.getHash();
 
         // Add orphans such that C -> B -> A
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         processor.processNewTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
         ProcessedTransactionResult resultC = processor.processNewTransaction(transactionC);
 
         assertEquals(ProcessedTransactionStatus.ORPHAN, resultC.getStatus());
@@ -279,7 +279,7 @@ class TransactionProcessorTest {
     void processNewTransactionIndependentAddOrphanInvalid() throws DatabaseException {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transactionA = createIndependentTransaction();
-        Hash hash = transactionA.computeHash();
+        Hash hash = transactionA.getHash();
 
         // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
         Transaction transactionB = new Transaction(
@@ -294,7 +294,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
         assertTrue(result.getValidatedOrphans().isEmpty());
 
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
             assertFalse(utxoFromPool.isUnspent(hashB, i));
         }
@@ -303,7 +303,7 @@ class TransactionProcessorTest {
     @Test
     void processNewTransactionDependentAddOrphanInvalid() throws DatabaseException {
         Transaction transactionA = createDependentTransaction();
-        Hash hash = transactionA.computeHash();
+        Hash hash = transactionA.getHash();
 
         // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
         Transaction transactionB = new Transaction(
@@ -318,7 +318,7 @@ class TransactionProcessorTest {
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
         assertTrue(result.getValidatedOrphans().isEmpty());
 
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         for (int i = 0; i < transactionB.getOutputs().size(); i++) {
             assertFalse(utxoFromPool.isUnspent(hashB, i));
         }
@@ -341,17 +341,17 @@ class TransactionProcessorTest {
 
         // Add a dependent transaction that will be promoted
         Transaction transactionA = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.getHash(), 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
         pool.addDependentTransaction(transactionA);
         utxoFromPool.setOutputsUnspent(transactionA, Constants.TRANSACTION_POOL_HEIGHT);
 
         processor.processTopBlockConnected(block);
 
         for (Transaction transaction : block.getTransactions()) {
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
             assertFalse(pool.hasValidTransaction(hash));
 
             List<Output> outputs = transaction.getOutputs();
@@ -384,10 +384,10 @@ class TransactionProcessorTest {
 
         // Add independent transaction that will now become dependent
         Transaction independent = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.computeHash(), 0)),
+            Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.getHash(), 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash independentHash = independent.computeHash();
+        Hash independentHash = independent.getHash();
         pool.addIndependentTransaction(independent);
         utxoFromPool.setOutputsUnspent(independent, Constants.TRANSACTION_POOL_HEIGHT);
 
@@ -396,13 +396,13 @@ class TransactionProcessorTest {
             Collections.singletonList(new Input(Simulation.randomSignature(), iFromBlock.getReferencedTransaction(), iFromBlock.getReferencedOutputIndex())),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash orphanHash = orphan.computeHash();
+        Hash orphanHash = orphan.getHash();
         pool.addOrphanTransaction(orphan);
 
         processor.processTopBlockDisconnected(block);
 
         for (Transaction transaction : block.getTransactions()) {
-            Hash hash = transaction.computeHash();
+            Hash hash = transaction.getHash();
             assertTrue(pool.hasValidTransaction(hash));
         }
 

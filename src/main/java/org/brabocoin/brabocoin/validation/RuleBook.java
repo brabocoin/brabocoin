@@ -39,19 +39,29 @@ public class RuleBook {
     }
 
     private Rule getInstantiatedRule(Class<? extends Rule> ruleClass, FactMap facts) {
+        if (facts.values().stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Facts contained null instance.");
+        }
+
         try {
             Rule rule = ruleClass.newInstance();
             List<Field> fields = getAllFields(new ArrayList<>(), ruleClass);
             // Set all fields accessible
             fields.forEach(f -> f.setAccessible(true));
 
-            for (Map.Entry<String, Object> objectEntry : facts.entrySet()) {
-                Field foundField = fields.stream()
-                        .filter(f -> f.getName().equals(objectEntry.getKey()))
+            for (Field field : fields) {
+                Object fieldValue = facts.entrySet().stream()
+                        .filter(f -> f.getKey().equals(field.getName()))
                         .findFirst()
+                        .map(Map.Entry::getValue)
                         .orElse(null);
-                if (foundField != null) {
-                    foundField.set(rule, objectEntry.getValue());
+                if (fieldValue != null) {
+                    if (fieldValue instanceof UninitializedFact) {
+                        throw new IllegalStateException("Fact found that is uninitialized.");
+                    }
+                    field.set(rule, fieldValue);
+                } else {
+                    throw new IllegalStateException(String.format("Could not find field {0} in fact map.", field.getName()));
                 }
             }
 

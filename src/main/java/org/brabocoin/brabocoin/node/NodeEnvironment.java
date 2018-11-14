@@ -299,7 +299,7 @@ public class NodeEnvironment {
                 case DEPENDENT:
                 case INDEPENDENT:
                     if (propagate) {
-                        final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class);
+                        final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
                         messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                     }
@@ -315,7 +315,7 @@ public class NodeEnvironment {
             if (propagate) {
                 // Propagate any remaining transactions that became valid.
                 for (Transaction t : result.getValidatedOrphans()) {
-                    final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.computeHash(), BrabocoinProtos.Hash.class);
+                    final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.getHash(), BrabocoinProtos.Hash.class);
                     messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                 }
             }
@@ -415,7 +415,7 @@ public class NodeEnvironment {
      */
     public synchronized void announceTransactionRequest(Transaction transaction) {
         LOGGER.info("Announcing transaction to peers.");
-        Hash transactionHash = transaction.computeHash();
+        Hash transactionHash = transaction.getHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transactionHash, BrabocoinProtos.Hash.class);
 

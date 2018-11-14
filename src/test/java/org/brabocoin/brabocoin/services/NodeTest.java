@@ -240,7 +240,7 @@ public class NodeTest {
         Consensus consensus = new Consensus();
 
         Transaction newTransaction = Simulation.randomTransaction(0, 5);
-        Hash newTransactionHash = newTransaction.computeHash();
+        Hash newTransactionHash = newTransaction.getHash();
 
         Node nodeB = generateNodeWithTransactions(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -299,7 +299,7 @@ public class NodeTest {
         Consensus consensus = new Consensus();
 
         Transaction newTransaction = Simulation.randomTransaction(0, 5);
-        Hash newTransactionHash = newTransaction.computeHash();
+        Hash newTransactionHash = newTransaction.getHash();
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -373,7 +373,7 @@ public class NodeTest {
         Consensus consensus = new Consensus();
 
         Transaction newTransaction = Simulation.randomTransaction(0, 5);
-        Hash newTransactionHash = newTransaction.computeHash();
+        Hash newTransactionHash = newTransaction.getHash();
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
