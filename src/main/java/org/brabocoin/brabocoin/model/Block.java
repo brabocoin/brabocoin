@@ -58,6 +58,11 @@ public class Block implements ProtoModel<Block> {
     private final List<Transaction> transactions;
 
     /**
+     * The cached hash of this block.
+     */
+    private Hash hash;
+
+    /**
      * Create a new block.
      *
      * @param previousBlockHash
@@ -83,16 +88,19 @@ public class Block implements ProtoModel<Block> {
     }
 
     /**
-     * Computes the block hash.
+     * Gets the block hash using lazy computation if not available.
      * <p>
      * The hash of a block is the hashed output of the block header data only.
      * The hash is computed by applying the SHA-256 hashing function twice.
      *
      * @return The block hash.
      */
-    public @NotNull Hash computeHash() {
-        ByteString header = getRawHeader();
-        return Hashing.digestSHA256(Hashing.digestSHA256(header));
+    public @NotNull Hash getHash() {
+        if (hash == null) {
+            ByteString header = getRawHeader();
+            hash = Hashing.digestSHA256(Hashing.digestSHA256(header));
+        }
+        return hash;
     }
 
     private @NotNull ByteString getRawHeader() {

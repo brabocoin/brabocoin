@@ -141,7 +141,7 @@ public class BlockDatabase {
      */
     public synchronized @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
         LOGGER.fine("Storing block.");
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
         ByteString key = getBlockKey(hash);
         LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
 

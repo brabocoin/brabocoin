@@ -104,7 +104,7 @@ class TransactionRuleTests {
         );
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -157,7 +157,7 @@ class TransactionRuleTests {
         );
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -167,7 +167,7 @@ class TransactionRuleTests {
         List<Block> blockList = new ArrayList<Block>() {{
             add(block);
         }};
-        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.computeHash(), 2, 0, 5));
+        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5));
 
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
@@ -469,7 +469,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -566,7 +566,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -632,7 +632,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -739,7 +739,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1078,7 +1078,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1150,7 +1150,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1222,7 +1222,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1308,7 +1308,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1406,7 +1406,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1504,7 +1504,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1629,7 +1629,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1695,7 +1695,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),
@@ -1832,7 +1832,7 @@ class TransactionRuleTests {
                 blockValidator);
 
         Block block = new Block(
-                consensus.getGenesisBlock().computeHash(),
+                consensus.getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomByteString(),

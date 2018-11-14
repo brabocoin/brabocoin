@@ -107,12 +107,12 @@ class UTXOProcessorTest {
             }
         }
 
-        assertEquals(block.computeHash(), database.getLastProcessedBlockHash());
+        assertEquals(block.getHash(), database.getLastProcessedBlockHash());
     }
 
     @Test
     void processBlockDisconnected() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1, consensus.getGenesisBlock().computeHash(), 1).get(0);
+        Block block = Simulation.randomBlockChainGenerator(1, consensus.getGenesisBlock().getHash(), 1).get(0);
         Hash address = Simulation.randomHash();
 
         // Set all inputs of new block manually unspent
@@ -145,6 +145,6 @@ class UTXOProcessorTest {
             }
         }
 
-        assertEquals(consensus.getGenesisBlock().computeHash(), database.getLastProcessedBlockHash());
+        assertEquals(consensus.getGenesisBlock().getHash(), database.getLastProcessedBlockHash());
     }
 }

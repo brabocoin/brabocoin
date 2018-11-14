@@ -104,7 +104,7 @@ public class BlockProcessor {
         }
 
         // Check if we already have the block
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
         if (blockchain.isBlockStored(hash)) {
             LOGGER.info("New block was already stored.");
             return ProcessedBlockStatus.ALREADY_STORED;

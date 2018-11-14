@@ -74,7 +74,7 @@ class BlockchainTest {
 
     @Test
     void genesisBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         assertTrue(blockchain.isBlockStored(hash));
 
         IndexedBlock topBlock = blockchain.getMainChain().getTopBlock();
@@ -84,27 +84,27 @@ class BlockchainTest {
 
     @Test
     void getBlockByIndexedBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         Block fromChain = blockchain.getBlock(block);
 
         assertNotNull(fromChain);
-        assertEquals(hash, fromChain.computeHash());
+        assertEquals(hash, fromChain.getHash());
     }
 
     @Test
     void getBlockByHash() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         Block fromChain = blockchain.getBlock(hash);
 
         assertNotNull(fromChain);
-        assertEquals(hash, fromChain.computeHash());
+        assertEquals(hash, fromChain.getHash());
     }
 
     @Test
     void isBlockStored() throws DatabaseException {
-        assertTrue(blockchain.isBlockStored(consensus.getGenesisBlock().computeHash()));
-        assertFalse(blockchain.isBlockStored(TEST_BLOCK.computeHash()));
+        assertTrue(blockchain.isBlockStored(consensus.getGenesisBlock().getHash()));
+        assertFalse(blockchain.isBlockStored(TEST_BLOCK.getHash()));
     }
 
     @Test
@@ -115,7 +115,7 @@ class BlockchainTest {
 
     @Test
     void getIndexedBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         assertNotNull(block);
         assertEquals(hash, block.getHash());
@@ -123,7 +123,7 @@ class BlockchainTest {
 
     @Test
     void getIndexedBlockNotPresent() throws DatabaseException {
-        Hash hash = new Hash(TEST_BLOCK.computeHash().getValue().substring(1));
+        Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         assertNull(block);
     }
@@ -143,7 +143,7 @@ class BlockchainTest {
 
     @Test
     void findBlockUndoNonExistent() throws DatabaseException {
-        Hash hash = new Hash(TEST_BLOCK.computeHash().getValue().substring(1));
+        Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         assertNull(blockchain.findBlockUndo(hash));
     }
 

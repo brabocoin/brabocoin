@@ -123,7 +123,7 @@ class BlockProcessorTest {
         ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
 
         assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.computeHash());
+        IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getHash());
         assertTrue(blockchain.isOrphan(indexedBlock));
     }
 
@@ -134,12 +134,12 @@ class BlockProcessorTest {
         Block child = blocks.get(1);
 
         blockchain.storeBlock(parent, false);
-        IndexedBlock indexedParent = blockchain.getIndexedBlock(parent.computeHash());
+        IndexedBlock indexedParent = blockchain.getIndexedBlock(parent.getHash());
         blockchain.addOrphan(indexedParent);
 
         ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
         assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        IndexedBlock indexedChild = blockchain.getIndexedBlock(child.computeHash());
+        IndexedBlock indexedChild = blockchain.getIndexedBlock(child.getHash());
         assertTrue(blockchain.isOrphan(indexedChild));
     }
 
@@ -151,13 +151,13 @@ class BlockProcessorTest {
             Collections.singletonList(output)
         );
         Block block = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
             Collections.singletonList(transaction)
         );
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
         Hash tHash = transaction.computeHash();
 
         // Add to transaction pool manually
@@ -190,13 +190,13 @@ class BlockProcessorTest {
             Collections.singletonList(output)
         );
         Block blockA = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
             Collections.singletonList(transactionA)
         );
-        Hash hashA = blockA.computeHash();
+        Hash hashA = blockA.getHash();
         Hash tHashA = transactionA.computeHash();
 
         Transaction transactionB = new Transaction(
@@ -229,7 +229,7 @@ class BlockProcessorTest {
         // Main chain: genesis - A - B
         // Fork:              \_ C
         Block blockA = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
@@ -238,7 +238,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashA = blockA.computeHash();
+        Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
             hashA,
@@ -250,7 +250,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashB = blockB.computeHash();
+        Hash hashB = blockB.getHash();
 
         Transaction transaction = new Transaction(
             Collections.emptyList(),
@@ -259,13 +259,13 @@ class BlockProcessorTest {
         Hash tHash = transaction.computeHash();
 
         Block blockC = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
             Collections.singletonList(transaction)
         );
-        Hash hashC = blockC.computeHash();
+        Hash hashC = blockC.getHash();
 
         // Add to transaction pool manually
         transactionPool.addIndependentTransaction(transaction);
@@ -299,7 +299,7 @@ class BlockProcessorTest {
         // Fork:              \_ D - E - F - G
 
         Block blockA = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
@@ -308,7 +308,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashA = blockA.computeHash();
+        Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
             hashA,
@@ -320,7 +320,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashB = blockB.computeHash();
+        Hash hashB = blockB.getHash();
 
         Block blockC = new Block(
             hashB,
@@ -332,10 +332,10 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashC = blockC.computeHash();
+        Hash hashC = blockC.getHash();
 
         Block blockD = new Block(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomByteString(), 1,
@@ -344,7 +344,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashD = blockD.computeHash();
+        Hash hashD = blockD.getHash();
 
         Block blockE = new Block(
             hashD,
@@ -356,7 +356,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashE = blockE.computeHash();
+        Hash hashE = blockE.getHash();
 
         Block blockF = new Block(
             hashE,
@@ -368,7 +368,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashF = blockF.computeHash();
+        Hash hashF = blockF.getHash();
 
 
         Block blockG = new Block(
@@ -381,7 +381,7 @@ class BlockProcessorTest {
                 Collections.singletonList(Simulation.randomOutput())
             ))
         );
-        Hash hashG = blockG.computeHash();
+        Hash hashG = blockG.getHash();
 
         blockProcessor.processNewBlock(blockA);
         blockProcessor.processNewBlock(blockB);

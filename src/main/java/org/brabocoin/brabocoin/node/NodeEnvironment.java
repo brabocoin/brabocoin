@@ -228,7 +228,7 @@ public class NodeEnvironment {
                     // Fall-through intended
                 case ADDED_TO_BLOCKCHAIN:
                     if (propagate) {
-                        final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
+                        final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
                         messageQueue.add(() -> propagateMessageBlocking(s -> s.announceBlock(protoBlockHash)));
                     }
@@ -385,7 +385,7 @@ public class NodeEnvironment {
      */
     public synchronized void announceBlockRequest(Block block) {
         LOGGER.info("Announcing block to peers.");
-        Hash blockHash = block.computeHash();
+        Hash blockHash = block.getHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(blockHash, BrabocoinProtos.Hash.class);
 

@@ -5,6 +5,6 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class SatisfiesTargetValueBlkRule extends BlockRule {
     @Override
     public boolean valid() {
-
+        block.getHash()
     }
 }

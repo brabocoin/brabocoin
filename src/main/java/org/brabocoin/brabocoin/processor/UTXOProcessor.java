@@ -78,7 +78,7 @@ public class UTXOProcessor {
         }
 
         // Move block pointer
-        database.setLastProcessedBlockHash(block.computeHash());
+        database.setLastProcessedBlockHash(block.getHash());
 
         return new BlockUndo(undos);
     }

@@ -70,7 +70,7 @@ class BlockDatabaseTest {
     @Test
     void storeAndFindBlock() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
         Block retrievedBlock = database.findBlock(hash);
@@ -86,7 +86,7 @@ class BlockDatabaseTest {
         }
 
         for (Block block : blocks) {
-            Hash hash = block.computeHash();
+            Hash hash = block.getHash();
             Block retrievedBlock = database.findBlock(hash);
             assertBlock(hash, retrievedBlock);
         }
@@ -95,7 +95,7 @@ class BlockDatabaseTest {
     @Test
     void storeBlockTwice() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
         BlockInfo info1 = database.findBlockInfo(hash);
@@ -114,7 +114,7 @@ class BlockDatabaseTest {
     @Test
     void storeBlockTwiceUpdateValidated() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
         BlockInfo info1 = database.findBlockInfo(hash);
@@ -133,7 +133,7 @@ class BlockDatabaseTest {
     @Test
     void setValidationStatus() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
 
@@ -155,7 +155,7 @@ class BlockDatabaseTest {
 
     private void assertBlock(Hash expectedHash, Block actualBlock) {
         assertNotNull(actualBlock);
-        assertEquals(expectedHash, actualBlock.computeHash());
+        assertEquals(expectedHash, actualBlock.getHash());
     }
 
     @Test
@@ -163,7 +163,7 @@ class BlockDatabaseTest {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
         database.storeBlock(block, false);
 
-        Hash hash = new Hash(block.computeHash().getValue().substring(1));
+        Hash hash = new Hash(block.getHash().getValue().substring(1));
         Block nonExistent = database.findBlock(hash);
 
         assertNull(nonExistent);
@@ -172,7 +172,7 @@ class BlockDatabaseTest {
     @Test
     void storeAndFindBlockInfo() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, true);
 
@@ -191,7 +191,7 @@ class BlockDatabaseTest {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
         database.storeBlock(block, false);
 
-        Hash hash = new Hash(block.computeHash().getValue().substring(1));
+        Hash hash = new Hash(block.getHash().getValue().substring(1));
         BlockInfo nonExistent = database.findBlockInfo(hash);
 
         assertNull(nonExistent);
@@ -245,7 +245,7 @@ class BlockDatabaseTest {
         database = new BlockDatabase(storage, smallConfig);
 
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
 
@@ -261,7 +261,7 @@ class BlockDatabaseTest {
     @Test
     void storeAndFindBlockUndo() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         BlockInfo info = database.storeBlock(block, false);
         assertNotNull(info);
@@ -285,7 +285,7 @@ class BlockDatabaseTest {
     @Test
     void storeBlockUndoTwice() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         BlockInfo oldInfo = database.storeBlock(block, false);
 
@@ -302,7 +302,7 @@ class BlockDatabaseTest {
     @Test
     void hasExistingBlock() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
 
         database.storeBlock(block, false);
 

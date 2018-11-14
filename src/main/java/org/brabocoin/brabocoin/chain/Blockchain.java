@@ -63,7 +63,7 @@ public class Blockchain {
     private @NotNull IndexedBlock storeGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
         database.storeBlock(genesisBlock, true);
-        IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.computeHash());
+        IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.getHash());
         if (indexedGenesis == null) {
             LOGGER.severe("Genesis block could not be stored.");
             throw new DatabaseException("Genesis block could not be stored.");

@@ -42,7 +42,7 @@ public class Simulation {
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
             Block block = randomBlock(previousHash, i, inputs, outputs, 30);
-            previousHash = block.computeHash();
+            previousHash = block.getHash();
             list.add(block);
         }
 
@@ -79,7 +79,7 @@ public class Simulation {
                 -1
             );
 
-            previousHash = block.computeHash();
+            previousHash = block.getHash();
             IndexedBlock indexedBlock = new IndexedBlock(previousHash, info);
             list.add(indexedBlock);
         }

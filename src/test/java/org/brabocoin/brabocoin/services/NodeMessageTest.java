@@ -160,20 +160,20 @@ class NodeMessageTest {
         });
 
         for (Block block : blocks) {
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
         }
         requestObserver.onCompleted();
 
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertTrue(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
@@ -240,13 +240,13 @@ class NodeMessageTest {
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(0, receivedBlocks.size());
         for (Block block : blocks) {
-            assertFalse(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertFalse(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
@@ -310,7 +310,7 @@ class NodeMessageTest {
                 requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
             }
 
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
 
             for (int i = 0; i < random.nextInt(10); i++) {
                 // send random hash
@@ -322,13 +322,13 @@ class NodeMessageTest {
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertTrue(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
