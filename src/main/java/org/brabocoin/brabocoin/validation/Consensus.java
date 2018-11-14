@@ -91,12 +91,12 @@ public class Consensus {
         return MAX_NONCE_SIZE;
     }
 
-    public @NotNull ByteString getMaxNonce() {
+    public @NotNull BigInteger getMaxNonce() {
         byte[] maxByteArray = new byte[getMaxNonceSize()];
         for (int i = 0; i < getMaxNonceSize(); i++) {
             maxByteArray[i] = Byte.MAX_VALUE;
         }
-        return ByteString.copyFrom(maxByteArray);
+        return new BigInteger(maxByteArray);
     }
 
     public @NotNull int getCoinbaseMaturityDepth() {

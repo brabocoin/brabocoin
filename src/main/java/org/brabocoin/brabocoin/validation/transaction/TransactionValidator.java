@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 public class TransactionValidator {
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
-    static class RuleLists {
+    public static class RuleLists {
         public static final RuleList ALL = new RuleList(
                 Arrays.asList(
                         DuplicatePoolTxRule.class,
@@ -38,6 +38,7 @@ public class TransactionValidator {
 
         public static final RuleList AFTER_ORPHAN = new RuleList(
                 Arrays.asList(
+                        ValidInputTxRule.class,
                         CoinbaseMaturityTxRule.class,
                         OutputValueTxRule.class,
                         InputValueTxRange.class,
