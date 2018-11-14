@@ -209,7 +209,7 @@ public class Blockchain {
     public synchronized void addOrphan(@NotNull Block block) {
         LOGGER.fine("Adding block as orphan.");
         orphanMap.put(block.getPreviousBlockHash(), block);
-        orphanIndex.put(block.computeHash(), block);
+        orphanIndex.put(block.getHash(), block);
     }
 
     /**
@@ -254,7 +254,7 @@ public class Blockchain {
         Set<Block> removed = orphanMap.removeAll(parentHash);
 
         for (Block removedBlock : removed) {
-            orphanIndex.remove(removedBlock.computeHash());
+            orphanIndex.remove(removedBlock.getHash());
         }
 
         return removed;

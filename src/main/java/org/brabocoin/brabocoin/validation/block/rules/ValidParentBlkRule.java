@@ -1,6 +1,8 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class ValidParentBlkRule extends BlockRule {
@@ -8,11 +10,15 @@ public class ValidParentBlkRule extends BlockRule {
 
     @Override
     public boolean valid() {
-//        try {
-            return false;//blockchain.getIndexedBlock(block.getPreviousBlockHash()).getBlockInfo();
-//        } catch (DatabaseException e) {
-//            e.printStackTrace();
-//            return false;
-//        }
+        try {
+            IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getPreviousBlockHash());
+            if (indexedBlock == null) {
+                return false;
+            }
+            return indexedBlock.getBlockInfo().isValid();
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

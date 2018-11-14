@@ -138,7 +138,7 @@ class BlockchainTest {
     void addOrphan() {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
         blockchain.addOrphan(block);
-        assertTrue(blockchain.isOrphan(block.computeHash()));
+        assertTrue(blockchain.isOrphan(block.getHash()));
     }
 
     @Test
@@ -176,7 +176,7 @@ class BlockchainTest {
         Set<Block> orphans = blockchain.removeOrphansOfParent(orphan.getPreviousBlockHash());
 
         assertEquals(1, orphans.size());
-        assertEquals(orphan.computeHash(), orphans.stream().findFirst().get().computeHash());
+        assertEquals(orphan.getHash(), orphans.stream().findFirst().get().getHash());
     }
 
     @Test
@@ -188,7 +188,6 @@ class BlockchainTest {
                 block1.getMerkleRoot(),
                 block1.getTargetValue(),
                 block1.getNonce(),
-                0,
                 0,
                 block1.getTransactions()
         );
