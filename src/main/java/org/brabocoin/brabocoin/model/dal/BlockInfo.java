@@ -63,11 +63,14 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final int transactionCount;
 
     /**
-     * Indicates whether the block has been validated and is considered part of the verified
-     * blockchain.
+     * Indicates whether the block is considered valid.
+     *
+     * Note: this does not guarantee that the block is indeed fully valid, as multiple checks must
+     * be performed that are context-dependent. When this field is {@code false}, the block is
+     * definitely invalid and cannot become valid at a later time.
      */
     @ProtoField
-    private final boolean validated;
+    private final boolean valid;
 
     /**
      * The file number in which the full block is stored on disk, as well as the number of the
@@ -122,9 +125,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param transactionCount
      *     The number of transactions in the block, including the coinbase
      *     transaction.
-     * @param validated
-     *     Indicates whether the block has been validated and is considered part of
-     *     the verified blockchain.
+     * @param valid
+     *     Indicates whether the block is considered valid.
      * @param timeReceived
      *     UNIX timestamp (in seconds) indicating when the block was received, in UTC time zone.
      * @param fileNumber
@@ -138,7 +140,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
      */
-    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, boolean validated, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
+    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, boolean valid, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -146,7 +148,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.blockHeight = blockHeight;
         this.transactionCount = transactionCount;
         this.timeReceived = timeReceived;
-        this.validated = validated;
+        this.valid = valid;
         this.fileNumber = fileNumber;
         this.offsetInFile = offsetInFile;
         this.sizeInFile = sizeInFile;
@@ -162,8 +164,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return transactionCount;
     }
 
-    public boolean isValidated() {
-        return validated;
+    public boolean isValid() {
+        return valid;
     }
 
     public long getTimeReceived() {
@@ -236,7 +238,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         private int transactionCount;
 
         @ProtoField
-        private boolean validated;
+        private boolean valid;
 
         @ProtoField
         private int fileNumber;
@@ -288,8 +290,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
-        public Builder setValidated(boolean validated) {
-            this.validated = validated;
+        public Builder setValid(boolean valid) {
+            this.valid = valid;
             return this;
         }
 
@@ -326,7 +328,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 targetValue.build(),
                 nonce, blockHeight,
                 transactionCount,
-                validated,
+                valid,
                 timeReceived,
                 fileNumber,
                 offsetInFile,

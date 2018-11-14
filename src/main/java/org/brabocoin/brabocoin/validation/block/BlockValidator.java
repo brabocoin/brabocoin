@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.logging.Logger;
@@ -12,7 +13,17 @@ public class BlockValidator {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 
-    public boolean checkBlockValid(@NotNull Block block) {
+    public ProcessedBlockStatus checkBlockValid(@NotNull Block block) {
+        // TODO: implement
+        return ProcessedBlockStatus.VALID;
+    }
+
+    public ProcessedBlockStatus checkOrphanBlockValid(@NotNull Block block) {
+        // TODO: implement
+        return ProcessedBlockStatus.VALID;
+    }
+
+    public boolean checkBlockValidWhenConnecting(@NotNull Block block) {
         // TODO: implement
         return true;
     }

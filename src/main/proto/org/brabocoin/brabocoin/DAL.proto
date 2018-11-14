@@ -17,7 +17,7 @@ message BlockInfo {
     bytes nonce = 4;
     int32 blockHeight = 5;
     int32 transactionCount = 6;
-    bool validated = 7;
+    bool valid = 7;
     int64 timeReceived = 8;
     int32 fileNumber = 9;
     int32 offsetInFile = 10;
