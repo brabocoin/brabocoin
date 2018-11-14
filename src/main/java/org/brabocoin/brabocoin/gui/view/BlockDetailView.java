@@ -6,10 +6,15 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.time.Instant;
@@ -26,16 +31,18 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss");
 
+    private final @NotNull Blockchain blockchain;
+
     @FXML private Label titleLabel;
     @FXML private Label hashLabel;
 
     @FXML private Label blockHeightLabel;
-    @FXML private Label timestampLabel;
     @FXML private Label nonceLabel;
     @FXML private Label targetValueLabel;
     @FXML private Label merkleRootLabel;
     @FXML private Label previousBlockHashLabel;
 
+    @FXML private Label timestampLabel;
     @FXML private Label numTransactionsLabel;
     @FXML private Label outputTotalLabel;
     @FXML private Label feesLabel;
@@ -44,15 +51,17 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     private final ObjectProperty<IndexedBlock> block = new SimpleObjectProperty<>();
 
-    public BlockDetailView() {
-        this(null);
+    public BlockDetailView(@NotNull Blockchain blockchain) {
+        this(blockchain, null);
     }
 
-    public BlockDetailView(IndexedBlock block) {
+    public BlockDetailView(@NotNull Blockchain blockchain, IndexedBlock block) {
         super();
+        this.blockchain = blockchain;
+
         BraboControlInitializer.initialize(this);
 
-        this.block.addListener((obs, old, val) -> loadBlock());
+        this.block.addListener((obs, old, val) -> { if (val != null) loadBlock(val); });
         setBlock(block);
     }
 
@@ -60,8 +69,18 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     public void initialize(URL location, ResourceBundle resources) {
     }
 
-    private void loadBlock() {
-        IndexedBlock indexedBlock = getBlock();
+    private void loadBlock(@NotNull IndexedBlock indexedBlock) {
+        Block block;
+        try {
+            block = blockchain.getBlock(indexedBlock.getHash());
+        }
+        catch (DatabaseException e) {
+            return;
+        }
+
+        if (block == null) {
+            return;
+        }
 
         titleLabel.setText("Block #" + indexedBlock.getBlockInfo().getBlockHeight());
         hashLabel.setText(ByteUtil.toHexString(indexedBlock.getHash().getValue()));
@@ -81,8 +100,22 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         numTransactionsLabel.setText(String.valueOf(indexedBlock.getBlockInfo().getTransactionCount()));
 
         int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
-        double sizeKiloBytes = sizeBytes / 1024.0;
+        double sizeKiloBytes = sizeBytes / 1000.0;
         sizeLabel.setText(String.format("%.3f kB", sizeKiloBytes));
+
+        long totalOutput = block.getTransactions().stream()
+            .flatMap(t -> t.getOutputs().stream())
+            .mapToLong(Output::getAmount)
+            .sum();
+        outputTotalLabel.setText(String.valueOf(totalOutput) + " BRC");
+
+        // TODO: block reward and transaction fees
+
+        loadBlockTransactions(block);
+    }
+
+    private void loadBlockTransactions(@NotNull Block block) {
+
     }
 
     public IndexedBlock getBlock() {

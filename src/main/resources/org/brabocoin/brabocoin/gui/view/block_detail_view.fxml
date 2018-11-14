@@ -26,38 +26,38 @@
             <Label text="Block height" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
             <Label fx:id="blockHeightLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-            <Label text="Time received" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <Label fx:id="timestampLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Nonce" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label fx:id="nonceLabel" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-            <Label text="Nonce" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <Label fx:id="nonceLabel" styleClass="hash" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <Label fx:id="targetValueLabel" styleClass="hash" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-            <Label text="Target value" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <Label fx:id="targetValueLabel" styleClass="hash" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            <Label text="Merkle root" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <Label fx:id="merkleRootLabel" styleClass="hash" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-            <Label text="Merkle root" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <Label fx:id="merkleRootLabel" styleClass="hash" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-
-            <Label text="Previous block hash" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-            <Label fx:id="previousBlockHashLabel" styleClass="hash" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            <Label text="Previous block hash" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <Label fx:id="previousBlockHashLabel" styleClass="hash" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
         </GridPane>
     </TitledPane>
     <TitledPane collapsible="false" text="Block details">
         <GridPane vgap="$vgap" hgap="$hgap">
-            <Label text="Number of transactions" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <Label fx:id="numTransactionsLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="Time received" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Label fx:id="timestampLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-            <Label text="Output total" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <Label fx:id="outputTotalLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Number of transactions" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label fx:id="numTransactionsLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-            <Label text="Transaction fees" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <Label fx:id="feesLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Output total" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <Label fx:id="outputTotalLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-            <Label text="Block reward" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <Label fx:id="rewardLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            <Label text="Transaction fees" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <Label fx:id="feesLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-            <Label text="Size" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <Label fx:id="sizeLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+            <Label text="Block reward" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <Label fx:id="rewardLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+            <Label text="Size" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <Label fx:id="sizeLabel" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
         </GridPane>
     </TitledPane>
     <TitledPane collapsible="false" text="Transactions">

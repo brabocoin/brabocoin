@@ -33,6 +33,7 @@ import java.util.ResourceBundle;
 public class CurrentStateView extends TabPane implements BraboControl, Initializable {
 
     @FXML private MasterDetailPane masterDetailPane;
+    private BlockDetailView blockDetailView;
 
     @FXML private TableView<IndexedBlock> blockchainTable;
     @FXML private TableColumn<IndexedBlock, Integer> heightColumn;
@@ -89,18 +90,21 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
         sizeColumn.setCellValueFactory(features -> {
             int sizeBytes = features.getValue().getBlockInfo().getSizeInFile();
-            double sizeKiloBytes = sizeBytes / 1024.0;
+            double sizeKiloBytes = sizeBytes / 1000.0;
             return new ReadOnlyObjectWrapper<>(sizeKiloBytes);
         });
         sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
 
         blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
-            masterDetailPane.setDetailNode(new BlockDetailView(indexedBlock));
+            blockDetailView.setBlock(indexedBlock);
             masterDetailPane.setShowDetailNode(true);
         });
     }
 
     private void loadMainChain() {
+        blockDetailView = new BlockDetailView(blockchain);
+        masterDetailPane.setDetailNode(blockDetailView);
+
         IndexedChain chain = blockchain.getMainChain();
         for (int i = chain.getHeight(); i >= 0; i--) {
             observableBlocks.add(chain.getBlockAtHeight(i));

@@ -5,10 +5,13 @@ import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,7 +26,15 @@ public class Consensus {
         new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
         ByteString.copyFromUtf8("genesis"),
         0,
-        Collections.emptyList()
+        Arrays.asList(
+            new Transaction(
+                Collections.emptyList(),
+                Arrays.asList(
+                    new Output(new Hash(ByteString.copyFromUtf8("address1")), 10),
+                    new Output(new Hash(ByteString.copyFromUtf8("address2")), 10)
+                )
+            )
+        )
     );
 
     /**
