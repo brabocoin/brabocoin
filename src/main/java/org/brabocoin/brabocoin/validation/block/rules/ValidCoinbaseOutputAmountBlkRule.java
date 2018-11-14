@@ -16,7 +16,7 @@ public class ValidCoinbaseOutputAmountBlkRule extends BlockRule {
                     .map(rethrowFunction(transactionProcessor::computeFee))
                     .mapToLong(l -> l)
                     .sum();
-            
+
             return block.getCoinbaseTransaction()
                     .getOutputs().get(0).getAmount() <= consensus.getCoinbaseOutputAmount() + feeSum;
         } catch (DatabaseException e) {

@@ -267,7 +267,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -293,7 +293,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -319,7 +319,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -342,7 +342,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -996,7 +996,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", doubleSpendingTx);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -1039,7 +1039,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", doubleSpendingTx);
         facts.put("consensus", consensus);
-        facts.put("pool", transactionPool);
+        facts.put("transactionPool", transactionPool);
 
         
         assertTrue(ruleBook.run(facts).isPassed());

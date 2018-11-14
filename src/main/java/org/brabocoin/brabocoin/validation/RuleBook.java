@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.validation;
 
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,7 +62,7 @@ public class RuleBook {
                     }
                     field.set(rule, fieldValue);
                 } else {
-                    throw new IllegalStateException(String.format("Could not find field {0} in fact map.", field.getName()));
+                    throw new IllegalStateException(MessageFormat.format("Could not find field {0} in fact map.", field.getName()));
                 }
             }
 

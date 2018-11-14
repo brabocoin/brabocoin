@@ -13,10 +13,10 @@ import java.util.Iterator;
  * Double spending of an output in the transaction pool rejects the transaction.
  */
 public class PoolDoubleSpendingTxRule extends TransactionRule {
-    private TransactionPool pool;
+    private TransactionPool transactionPool;
 
     public boolean valid() {
-        for (Iterator<Transaction> it = pool.iterator(); it.hasNext(); ) {
+        for (Iterator<Transaction> it = transactionPool.iterator(); it.hasNext(); ) {
             Transaction poolTransaction = it.next();
 
             /*
