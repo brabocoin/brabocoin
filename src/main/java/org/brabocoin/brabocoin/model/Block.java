@@ -98,11 +98,11 @@ public class Block implements ProtoModel<Block> {
     }
 
     private @NotNull ByteString getRawHeader() {
-        return previousBlockHash.getValue()
-                .concat(merkleRoot.getValue())
-                .concat(targetValue.getValue())
-                .concat(ByteUtil.toByteString(blockHeight))
-                .concat(ByteString.copyFrom(nonce.toByteArray()));
+        return getPreviousBlockHash().getValue()
+                .concat(getMerkleRoot().getValue())
+                .concat(getTargetValue().getValue())
+                .concat(ByteUtil.toByteString(getBlockHeight()))
+                .concat(ByteString.copyFrom(getNonce().toByteArray()));
     }
 
     public @NotNull Hash getPreviousBlockHash() {

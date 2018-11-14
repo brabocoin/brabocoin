@@ -3,12 +3,11 @@ package org.brabocoin.brabocoin.model;
 import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.bouncycastle.util.Arrays;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
-
-import java.math.BigInteger;
 
 /**
  * Represents a hash value.
@@ -74,16 +73,25 @@ public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
 
     @Override
     public int compareTo(@NotNull Hash o) {
-        return toBigInteger().compareTo(o.toBigInteger());
-    }
+        int lengthDifference = value.size() - o.value.size();
 
-    /**
-     * Convert the value of the hash to a {@link BigInteger}.
-     *
-     * @return The {@link BigInteger} representation of the hash.
-     */
-    public @NotNull BigInteger toBigInteger() {
-        return new BigInteger(value.toByteArray());
+        byte[] thisArray;
+        byte[] otherArray;
+
+        if (lengthDifference > 0) {
+            thisArray = value.toByteArray();
+            otherArray = ByteString.copyFrom(new byte[lengthDifference]).concat(o.value).toByteArray();
+        }
+        else if (lengthDifference < 0) {
+            thisArray = ByteString.copyFrom(new byte[-lengthDifference]).concat(value).toByteArray();
+            otherArray = o.value.toByteArray();
+        }
+        else {
+            thisArray = value.toByteArray();
+            otherArray = o.value.toByteArray();
+        }
+
+        return Arrays.compareUnsigned(thisArray, otherArray);
     }
 
     @ProtoClass(BrabocoinProtos.Hash.class)

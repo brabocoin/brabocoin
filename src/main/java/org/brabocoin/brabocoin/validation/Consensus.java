@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +25,8 @@ public class Consensus {
         0,
         Collections.emptyList()
     );
+
+    private final BigInteger maxNonce = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
     /**
      * Find the best block from the given collection of blocks.
@@ -50,6 +53,10 @@ public class Consensus {
 
     public @NotNull Block getGenesisBlock() {
         return genesisBlock;
+    }
+
+    public @NotNull BigInteger getMaxNonce() {
+        return maxNonce;
     }
 
 }
