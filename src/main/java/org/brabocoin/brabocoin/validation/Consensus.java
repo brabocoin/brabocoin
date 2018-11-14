@@ -33,6 +33,14 @@ public class Consensus {
      * Max transaction value range.
      */
     private static final long MAX_TRANSACTION_RANGE = (long) (3E9);
+    /**
+     * Constant target value.
+     */
+    private static final Hash TARGET_VALUE = new Hash(
+            ByteString.copyFrom(
+                    BigInteger.valueOf(257).multiply(BigInteger.TEN.pow(67)).toByteArray()
+            )
+    );
 
     private final @NotNull Block genesisBlock = new Block(
         new Hash(ByteString.EMPTY),
@@ -77,5 +85,7 @@ public class Consensus {
     public @NotNull int getCoinbaseMaturityDepth() { return COINBASE_MATURITY_DEPTH; }
 
     public @NotNull long getMaxTransactionRange() { return MAX_TRANSACTION_RANGE; }
+
+    public @NotNull Hash getTargetValue() { return TARGET_VALUE; }
 
 }
