@@ -8,7 +8,6 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +35,7 @@ public class Consensus {
     public @Nullable IndexedBlock bestBlock(@NotNull Collection<IndexedBlock> blocks) {
         return blocks.stream()
             .max(Comparator.<IndexedBlock>comparingInt(b -> b.getBlockInfo()
-                .getBlockHeight()).thenComparing(Comparator.<IndexedBlock, BigInteger>comparing(b -> new BigInteger(b.getHash().getValue().toByteArray())).reversed()))
+                .getBlockHeight()).thenComparing(Comparator.comparing(IndexedBlock::getHash).reversed()))
             .orElse(null);
     }
 
