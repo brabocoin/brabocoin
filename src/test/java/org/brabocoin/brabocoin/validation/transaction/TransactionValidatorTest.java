@@ -73,7 +73,7 @@ class TransactionValidatorTest {
                 signer);
 
         assertFalse(result.isPassed());
-        assertEquals(MaxSizeTxRule.class, result.getFailMarker());
+        assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
     }
 
     @Test
