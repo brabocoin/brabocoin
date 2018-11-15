@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.validation;
 
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
+
 public abstract class ValidationResult extends RuleBookResult {
     private ValidationStatus status;
 

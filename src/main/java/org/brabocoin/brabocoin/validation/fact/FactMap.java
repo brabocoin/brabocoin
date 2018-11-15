@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.validation;
+package org.brabocoin.brabocoin.validation.fact;
 
 import java.util.HashMap;
 

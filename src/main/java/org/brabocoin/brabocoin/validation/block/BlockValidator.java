@@ -8,6 +8,9 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.*;
 import org.brabocoin.brabocoin.validation.block.rules.*;
+import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,8 +78,9 @@ public class BlockValidator {
         facts.put("transactionProcessor", transactionProcessor);
         facts.put("mainChain", mainChain);
         facts.put("blockchain", blockchain);
-
+        facts.put("chainUTXODatabase", chainUTXODatabase);
         facts.put("signer", signer);
+
         return new BlockValidationResult(new RuleBook(list).run(facts));
     }
 }

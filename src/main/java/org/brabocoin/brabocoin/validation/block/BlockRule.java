@@ -2,7 +2,7 @@ package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.Rule;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 
 public class BlockRule implements Rule {
     protected Block block;

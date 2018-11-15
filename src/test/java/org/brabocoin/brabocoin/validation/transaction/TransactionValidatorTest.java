@@ -12,7 +12,7 @@ import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ class TransactionValidatorTest {
                 signer);
 
         assertFalse(result.isPassed());
-        assertEquals(MaxSizeTxRule.class, result.getFailedRule());
+        assertEquals(MaxSizeTxRule.class, result.getFailMarker());
     }
 
     @Test

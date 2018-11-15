@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.validation.block;
 
-import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.ValidationResult;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
@@ -8,7 +8,7 @@ import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
 public class BlockValidationResult extends ValidationResult {
     public BlockValidationResult(RuleBookResult result) {
         this.passed = result.isPassed();
-        this.failedRule = result.getFailedRule();
+        this.failedRule = result.getFailMarker();
     }
 
     @Override
@@ -17,9 +17,9 @@ public class BlockValidationResult extends ValidationResult {
             return ValidationStatus.VALID;
         }
 
-        assert getFailedRule() != null;
+        assert getFailMarker() != null;
 
-        if (getFailedRule() == KnownParentBlkRule.class) {
+        if (getFailMarker().getFailedRule() == KnownParentBlkRule.class) {
             return ValidationStatus.ORPHAN;
         }
 

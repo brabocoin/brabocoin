@@ -1,4 +1,8 @@
-package org.brabocoin.brabocoin.validation;
+package org.brabocoin.brabocoin.validation.rule;
+
+import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
+import org.brabocoin.brabocoin.validation.fact.UninitializedFact;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -18,13 +22,21 @@ public class RuleBook {
 
     public RuleBookResult run(FactMap facts) {
         for (Rule rule : getInstantiatedRules(facts)) {
+            boolean passedRule = true;
+
             try {
                 if (!rule.valid()) {
-                    return new RuleBookResult(rule.getClass());
+                    passedRule = false;
                 }
             } catch (NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Fact missing in class, {0}", rule.getClass().getName());
-                return new RuleBookResult(rule.getClass());
+                passedRule = false;
+            }
+
+            if (!passedRule) {
+                RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass());
+                marker.setChild(getChild(rule));
+                return new RuleBookResult(marker);
             }
         }
 
@@ -51,6 +63,11 @@ public class RuleBook {
             fields.forEach(f -> f.setAccessible(true));
 
             for (Field field : fields) {
+                boolean hasChildRuleFailMarkerFlag = !Objects.isNull(field.getAnnotation(CompositeRuleFailMarker.class));
+                if (hasChildRuleFailMarkerFlag) {
+                    continue;
+                }
+
                 Object fieldValue = facts.entrySet().stream()
                         .filter(f -> f.getKey().equals(field.getName()))
                         .findFirst()
@@ -62,7 +79,7 @@ public class RuleBook {
                     }
                     field.set(rule, fieldValue);
                 } else {
-                    throw new IllegalStateException(MessageFormat.format("Could not find field {0} in fact map.", field.getName()));
+                    throw new IllegalStateException(MessageFormat.format("Could not find field {0} in fact map for rule {1}.", field.getName(), rule.getClass().getName()));
                 }
             }
 
@@ -82,5 +99,36 @@ public class RuleBook {
         }
 
         return fields;
+    }
+
+    /**
+     * Gets the child rulebook fail marker if present, {@code null} otherwise.
+     *
+     * @return Child RuleBookFailMarker or null if not present.
+     */
+    private RuleBookFailMarker getChild(Rule rule) {
+        List<Field> fields = getAllFields(new ArrayList<>(), rule.getClass());
+
+        RuleBookFailMarker failMarker = null;
+
+        for (Field field : fields) {
+            boolean hasChildFailMarker = !Objects.isNull(field.getAnnotation(CompositeRuleFailMarker.class));
+            if (!hasChildFailMarker) {
+                continue;
+            }
+
+            try {
+                field.setAccessible(true);
+                Object marker = field.get(rule);
+                if (marker instanceof RuleBookFailMarker) {
+                    failMarker = (RuleBookFailMarker) marker;
+                    break;
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return failMarker;
     }
 }

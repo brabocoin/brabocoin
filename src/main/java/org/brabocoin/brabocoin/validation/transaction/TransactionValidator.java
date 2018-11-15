@@ -7,6 +7,9 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.*;
+import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.rules.*;
 import org.jetbrains.annotations.NotNull;
 
