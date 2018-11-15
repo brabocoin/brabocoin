@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.mining;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -73,9 +72,6 @@ public class MiningBlock extends Block {
             return null;
         }
 
-        System.out.println(nonce.toString(10));
-        System.out.println(ByteUtil.toHexString(computeHash().getValue(), 32));
-        System.out.println(ByteUtil.toHexString(getTargetValue().getValue(), 32));
         LOGGER.info("New block is mined.");
         return toBlock();
     }

@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.function.Function;
 
 /**
  * Consensus rules.
@@ -26,7 +28,7 @@ public class Consensus {
         Collections.emptyList()
     );
 
-    private final BigInteger maxNonce = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+    private final BigInteger maxNonce = new BigInteger("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
     /**
      * Find the best block from the given collection of blocks.
@@ -59,4 +61,27 @@ public class Consensus {
         return maxNonce;
     }
 
+    public @NotNull Function<Hash, Hash> getMerkleHashingFunction() {
+        return hash -> Hashing.digestSHA256(Hashing.digestSHA256(hash));
+    }
+
+    public int getMaxNonceSize() {
+        return 16;
+    }
+
+    public Hash getTargetValue() {
+        return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+    }
+
+    public int getMaxBlockSize() {
+        return 1_000_000;
+    }
+
+    public int getMaxBlockHeaderSize() {
+        return 132;
+    }
+
+    public int getMaxCoinbaseTransactionSize() {
+        return 36;
+    }
 }

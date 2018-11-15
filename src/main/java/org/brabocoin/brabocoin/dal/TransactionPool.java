@@ -10,7 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -355,5 +360,14 @@ public class TransactionPool {
         result.addAll(independentTransactions.keySet());
 
         return result;
+    }
+
+    /**
+     * Get an iterator for all independent transactions.
+     *
+     * @return An iterator over all independent transactions.
+     */
+    public @NotNull Iterator<Transaction> independentTransactionsIterator() {
+        return independentTransactions.iterator();
     }
 }
