@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class Consensus {
      */
     private static final Function<Hash, Hash> DOUBLE_SHA = (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
 
-    private final @NotNull Block genesisBlock = new Block(
+    private final @NotNull Block GENESIS_BLOCK = new Block(
             new Hash(ByteString.EMPTY),
             new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
             new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
@@ -72,16 +73,16 @@ public class Consensus {
     }
 
     /**
-     * Determine amount of Brabocoin in an coinbase output.
+     * Determine amount of Brabocoin in a coinbase output.
      *
      * @return Amount in miniBrabo's
      */
-    public long getCoinbaseOutputAmount() {
+    public long getBlockReward() {
         return Constants.COIN * 10;
     }
 
     public @NotNull Block getGenesisBlock() {
-        return genesisBlock;
+        return GENESIS_BLOCK;
     }
 
     public @NotNull long getMaxBlockSize() {
@@ -93,11 +94,7 @@ public class Consensus {
     }
 
     public @NotNull BigInteger getMaxNonce() {
-        byte[] maxByteArray = new byte[getMaxNonceSize()];
-        for (int i = 0; i < getMaxNonceSize(); i++) {
-            maxByteArray[i] = Byte.MAX_VALUE;
-        }
-        return new BigInteger(maxByteArray);
+        return BigIntegerUtil.getMaxBigInteger(getMaxNonceSize());
     }
 
     public @NotNull int getCoinbaseMaturityDepth() {

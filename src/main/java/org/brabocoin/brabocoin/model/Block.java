@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -88,8 +89,11 @@ public class Block implements ProtoModel<Block> {
      *
      * @return The coinbase transaction.
      */
-    public Transaction getCoinbaseTransaction() {
-        return getTransactions().get(0);
+    public @Nullable Transaction getCoinbaseTransaction() {
+        if (getTransactions().size() > 0) {
+            return getTransactions().get(0);
+        }
+        return null;
     }
 
     /**
