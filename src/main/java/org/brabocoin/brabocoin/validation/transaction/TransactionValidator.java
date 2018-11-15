@@ -74,7 +74,7 @@ public class TransactionValidator {
      *     The transaction.
      * @return Whether the transaction is valid.
      */
-    public RuleBookResult checkTransactionValid(@NotNull RuleList list,
+    public TransactionValidationResult checkTransactionValid(@NotNull RuleList list,
                                                 @NotNull Transaction transaction,
                                                 Consensus consensus,
                                                 TransactionProcessor transactionProcessor,
@@ -84,20 +84,13 @@ public class TransactionValidator {
                                                 Signer signer) {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
-        facts.put("consensus", consensus == null
-                ? new UninitializedFact() : consensus);
+        facts.put("consensus", consensus);
+        facts.put("mainChain", mainChain);
+        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("transactionPool", transactionPool);
+        facts.put("chainUTXODatabase", chainUTXODatabase);
+        facts.put("signer", signer);
 
-        facts.put("mainChain", mainChain == null
-                ? new UninitializedFact() : mainChain);
-        facts.put("transactionProcessor", transactionProcessor == null
-                ? new UninitializedFact() : transactionProcessor);
-        facts.put("transactionPool", transactionPool == null
-                ? new UninitializedFact() : transactionPool);
-        facts.put("chainUTXODatabase", chainUTXODatabase == null
-                ? new UninitializedFact() : chainUTXODatabase);
-        facts.put("signer", signer == null
-                ? new UninitializedFact() : signer);
-
-        return new RuleBook(list).run(facts);
+        return new TransactionValidationResult(new RuleBook(list).run(facts));
     }
 }

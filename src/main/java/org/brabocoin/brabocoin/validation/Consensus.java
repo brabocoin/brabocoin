@@ -22,7 +22,7 @@ public class Consensus {
     /**
      * The max block size, excluding the nonce.
      */
-    private static final long MAX_BLOCK_SIZE = 1000000; // In bytes
+    private static final long MAX_BLOCK_SIZE = 1_000_000L; // In bytes
     /**
      * The max nonce size.
      */

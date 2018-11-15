@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedChain;
+import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
@@ -17,6 +19,9 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.validation.RuleBookResult;
+import org.brabocoin.brabocoin.validation.RuleList;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -95,8 +100,8 @@ class BlockProcessorTest {
     void invalidBlock() throws DatabaseException {
         blockValidator = new BlockValidator() {
             @Override
-            public ProcessedBlockStatus checkBlockValid(@NotNull Block block) {
-                return ProcessedBlockStatus.INVALID;
+            public BlockValidationResult checkBlockValid(@NotNull RuleList list, @NotNull Block block, Consensus consensus, TransactionValidator transactionValidator, TransactionProcessor transactionProcessor, IndexedChain mainChain, Blockchain blockchain, ChainUTXODatabase chainUTXODatabase, Signer signer) {
+                return new BlockValidationResult(new RuleBookResult());
             }
         };
 

@@ -7,8 +7,9 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,14 +99,18 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        ProcessedBlockStatus status = blockValidator.checkBlockValid(block);
+        ValidationStatus status = ValidationStatus.VALID;
+//        ValidationStatus status = blockValidator.checkBlockValid(
+//                BlockValidator.RuleLists.INCOMING_BLOCK,
+//                block,
+                /* TODO: HELP! ); */
 
-        if (status == ProcessedBlockStatus.INVALID) {
+        if (status == ValidationStatus.INVALID) {
             LOGGER.info("New block is invalid.");
             return ProcessedBlockStatus.INVALID;
         }
 
-        if (status == ProcessedBlockStatus.ORPHAN) {
+        if (status == ValidationStatus.ORPHAN) {
             LOGGER.info("New block is added as orphan.");
             blockchain.addOrphan(block);
             return ProcessedBlockStatus.ORPHAN;
@@ -161,14 +166,18 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ProcessedBlockStatus status = blockValidator.checkOrphanBlockValid(descendant);
+                ValidationStatus status = ValidationStatus.VALID;
+//                ProcessedBlockStatus status = blockValidator.checkBlockValid(
+//                        BlockValidator.RuleLists.AFTER_ORPHAN,
+//                        descendant);
+                /* TODO: HELP! */
 
                 // Re-add to orphans if not status is orphan again (should not happen)
-                if (status == ProcessedBlockStatus.ORPHAN) {
+                if (status == ValidationStatus.ORPHAN) {
                     blockchain.addOrphan(descendant);
                 }
 
-                if (status == ProcessedBlockStatus.VALID) {
+                if (status == ValidationStatus.VALID) {
                     // The orphan is now valid, store on disk
                     IndexedBlock indexedDescendant = storeBlock(descendant);
 
@@ -379,9 +388,12 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-        if (!blockValidator.checkBlockValidWhenConnecting(block)) {
-            return false;
-        }
+//        if (!blockValidator.checkBlockValid(
+//                BlockValidator.RuleLists.CONNECT_TO_CHAIN,
+//                block)) {
+//            return false;
+//        }
+        /* TODO: Help! */
 
         BlockUndo undo = utxoProcessor.processBlockConnected(block);
 

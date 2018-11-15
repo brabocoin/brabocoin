@@ -20,15 +20,15 @@ public class RuleBook {
         for (Rule rule : getInstantiatedRules(facts)) {
             try {
                 if (!rule.valid()) {
-                    return new RuleBookResult(false, rule.getClass());
+                    return new RuleBookResult(rule.getClass());
                 }
             } catch (NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Fact missing in class, {0}", rule.getClass().getName());
-                return new RuleBookResult(false, rule.getClass());
+                return new RuleBookResult(rule.getClass());
             }
         }
 
-        return new RuleBookResult(true);
+        return new RuleBookResult();
     }
 
     private List<Rule> getInstantiatedRules(FactMap facts) {

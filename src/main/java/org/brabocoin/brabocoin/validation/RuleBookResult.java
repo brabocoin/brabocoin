@@ -1,16 +1,24 @@
 package org.brabocoin.brabocoin.validation;
 
 public class RuleBookResult {
-    private boolean passed;
-    private Class failedRule;
+    protected boolean passed;
+    protected Class failedRule;
 
-    public RuleBookResult(boolean passed, Class failedRule) {
-        this.passed = passed;
+    /**
+     * Creates a rule book result that is not passed, given the failed rule class.
+     *
+     * @param failedRule The rule class for which the rule book failed
+     */
+    public RuleBookResult(Class failedRule) {
+        this.passed = false;
         this.failedRule = failedRule;
     }
 
-    public RuleBookResult(boolean passed) {
-        this.passed = passed;
+    /**
+     * Creates a passed rule book result.
+     */
+    public RuleBookResult() {
+        this.passed = true;
     }
 
     public boolean isPassed() {
