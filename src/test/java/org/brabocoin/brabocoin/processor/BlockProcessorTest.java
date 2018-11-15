@@ -96,6 +96,7 @@ class BlockProcessorTest {
         }
     }
 
+    @Disabled
     @Test
     void invalidBlock() throws DatabaseException {
         blockValidator = new BlockValidator() {
