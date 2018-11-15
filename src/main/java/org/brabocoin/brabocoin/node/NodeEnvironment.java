@@ -355,7 +355,10 @@ public class NodeEnvironment {
 
                         return "";
                     });
-                    onReceiveBlock(ProtoConverter.toDomain(value, Block.Builder.class), peers, propagate);
+                    Block receivedBlock = ProtoConverter.toDomain(value, Block.Builder.class);
+                    if (receivedBlock != null && hashes.contains(receivedBlock.getHash())) {
+                        onReceiveBlock(receivedBlock, peers, propagate);
+                    }
                 }
 
                 @Override
@@ -554,7 +557,11 @@ public class NodeEnvironment {
 
                         return "";
                     });
-                    onReceiveTransaction(ProtoConverter.toDomain(value, Transaction.Builder.class), propagate);
+                    Transaction transaction = ProtoConverter.toDomain(value, Transaction.Builder.class);
+
+                    if (transaction != null && hashes.contains(transaction.getHash())) {
+                        onReceiveTransaction(transaction, propagate);
+                    }
                 }
 
                 @Override
