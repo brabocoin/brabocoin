@@ -983,7 +983,7 @@ class BlockRuleTests {
         facts.put("block", block);
         facts.put("consensus", consensus);
 
-        assertTrue(ruleBook.run(facts).isPassed());
+        assertFalse(ruleBook.run(facts).isPassed());
     }
 
     @Test
