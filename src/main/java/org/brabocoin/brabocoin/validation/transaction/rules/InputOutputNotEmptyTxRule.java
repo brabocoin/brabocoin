@@ -9,15 +9,12 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  */
 public class InputOutputNotEmptyTxRule extends TransactionRule {
     public boolean isValid() {
-        if (transaction.getOutputs().isEmpty()) {
-            return false;
-        }
-
-        // If coinbase, inputs can be empty
         if (transaction.isCoinbase()) {
-            return !transaction.getInputs().isEmpty();
+            // If coinbase, inputs can be empty, only check outputs
+            return transaction.getOutputs().size() > 0;
+        } else {
+            // else, inputs can not be empty
+            return transaction.getInputs().size() > 0 && transaction.getOutputs().size() > 0;
         }
-
-        return true;
     }
 }
