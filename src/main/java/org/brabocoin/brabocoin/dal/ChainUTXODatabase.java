@@ -44,7 +44,7 @@ public class ChainUTXODatabase extends UTXODatabase {
 
         if (!storage.has(key)) {
             LOGGER.fine("Storage block marker key not found.");
-            setLastProcessedBlockHash(genesisBlock.computeHash());
+            setLastProcessedBlockHash(genesisBlock.getHash());
             LOGGER.fine("Storage block marker key created from consensus genesis block hash.");
         }
     }

@@ -43,40 +43,40 @@ class TransactionPoolTest {
     @Test
     void addFindIndependentTransaction() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         Transaction fromPool = pool.findValidatedTransaction(hash);
         assertNotNull(fromPool);
-        assertEquals(hash, fromPool.computeHash());
+        assertEquals(hash, fromPool.getHash());
     }
 
     @Test
     void addFindDependentTransaction() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addDependentTransaction(transaction);
 
         Transaction fromPool = pool.findValidatedTransaction(hash);
         assertNotNull(fromPool);
-        assertEquals(hash, fromPool.computeHash());
+        assertEquals(hash, fromPool.getHash());
     }
 
     @Test
     void addFindOrphan() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addOrphanTransaction(transaction);
 
         Transaction fromPool = pool.findOrphan(hash);
         assertNotNull(fromPool);
-        assertEquals(hash, fromPool.computeHash());
+        assertEquals(hash, fromPool.getHash());
     }
 
     @Test
     void orphanIsNotValidated() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addOrphanTransaction(transaction);
 
         assertNull(pool.findValidatedTransaction(hash));
@@ -85,7 +85,7 @@ class TransactionPoolTest {
     @Test
     void independentIsNotOrphan() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         assertNull(pool.findOrphan(hash));
@@ -94,7 +94,7 @@ class TransactionPoolTest {
     @Test
     void dependentIsNotOrphan() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addDependentTransaction(transaction);
 
         assertNull(pool.findOrphan(hash));
@@ -103,7 +103,7 @@ class TransactionPoolTest {
     @Test
     void removeValidatedTransactionIndependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         pool.removeValidatedTransaction(hash);
@@ -114,7 +114,7 @@ class TransactionPoolTest {
     @Test
     void removeValidatedTransactionDependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addDependentTransaction(transaction);
 
         pool.removeValidatedTransaction(hash);
@@ -125,7 +125,7 @@ class TransactionPoolTest {
     @Test
     void isDependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addDependentTransaction(transaction);
 
         assertTrue(pool.isDependent(hash));
@@ -134,7 +134,7 @@ class TransactionPoolTest {
     @Test
     void isIndependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         assertTrue(pool.isIndependent(hash));
@@ -143,26 +143,26 @@ class TransactionPoolTest {
     @Test
     void removeValidOrphansFromParent() {
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
         pool.addOrphanTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         pool.addOrphanTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
         pool.addOrphanTransaction(transactionC);
 
         Hash parent = transactionA.getInputs().get(0).getReferencedTransaction();
 
-        List<Transaction> removed = pool.removeValidOrphansFromParent(parent, t -> !t.computeHash().equals(hashC));
+        List<Transaction> removed = pool.removeValidOrphansFromParent(parent, t -> !t.getHash().equals(hashC));
 
         assertEquals(2, removed.size());
 
@@ -174,26 +174,26 @@ class TransactionPoolTest {
     @Test
     void promoteDependentToIndependentFromParent() {
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
         pool.addDependentTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
         pool.addDependentTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
         pool.addDependentTransaction(transactionC);
 
         Hash parent = transactionA.getInputs().get(0).getReferencedTransaction();
 
-        pool.promoteDependentToIndependentFromParent(parent, t -> !t.computeHash().equals(hashC));
+        pool.promoteDependentToIndependentFromParent(parent, t -> !t.getHash().equals(hashC));
 
         assertTrue(pool.isIndependent(hashA));
         assertTrue(pool.isIndependent(hashB));
@@ -207,7 +207,7 @@ class TransactionPoolTest {
     @Test
     void demoteIndependentToDependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         Hash dependency = transaction.getInputs().get(0).getReferencedTransaction();
@@ -221,7 +221,7 @@ class TransactionPoolTest {
     @Test
     void hasValidTransactionIndependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         assertTrue(pool.hasValidTransaction(hash));
@@ -230,7 +230,7 @@ class TransactionPoolTest {
     @Test
     void hasValidTransactionDependent() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addIndependentTransaction(transaction);
 
         assertTrue(pool.hasValidTransaction(hash));
@@ -244,7 +244,7 @@ class TransactionPoolTest {
     @Test
     void hasOrphan() {
         Transaction transaction = Simulation.randomTransaction(5, 5);
-        Hash hash = transaction.computeHash();
+        Hash hash = transaction.getHash();
         pool.addOrphanTransaction(transaction);
 
         assertTrue(pool.isOrphan(hash));
@@ -274,16 +274,16 @@ class TransactionPoolTest {
         pool = new TransactionPool(newConfig, mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
 
         Transaction transactionB = Simulation.randomTransaction(5, 5);
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
 
         pool.addIndependentTransaction(transactionA);
         pool.addDependentTransaction(transactionB);
@@ -316,16 +316,16 @@ class TransactionPoolTest {
         pool = new TransactionPool(newConfig, mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
 
         Transaction transactionB = Simulation.randomTransaction(5, 5);
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
             Collections.singletonList(Simulation.randomOutput())
         );
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
 
         pool.addIndependentTransaction(transactionA);
         pool.addDependentTransaction(transactionB);
@@ -358,13 +358,13 @@ class TransactionPoolTest {
         pool = new TransactionPool(newConfig, mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
 
         Transaction transactionB = Simulation.randomTransaction(5, 5);
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
 
         Transaction transactionC = Simulation.randomTransaction(5, 5);
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
 
         pool.addIndependentTransaction(transactionA);
         pool.addIndependentTransaction(transactionB);
@@ -397,13 +397,13 @@ class TransactionPoolTest {
         pool = new TransactionPool(newConfig, mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
-        Hash hashA = transactionA.computeHash();
+        Hash hashA = transactionA.getHash();
 
         Transaction transactionB = Simulation.randomTransaction(5, 5);
-        Hash hashB = transactionB.computeHash();
+        Hash hashB = transactionB.getHash();
 
         Transaction transactionC = Simulation.randomTransaction(5, 5);
-        Hash hashC = transactionC.computeHash();
+        Hash hashC = transactionC.getHash();
 
         pool.addOrphanTransaction(transactionA);
         pool.addOrphanTransaction(transactionB);

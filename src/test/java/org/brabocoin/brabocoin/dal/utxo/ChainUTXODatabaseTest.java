@@ -30,7 +30,7 @@ class ChainUTXODatabaseTest {
 
     @Test
     void genesisProcessedBlockHash() throws DatabaseException {
-        assertEquals(consensus.getGenesisBlock().computeHash(), database.getLastProcessedBlockHash());
+        assertEquals(consensus.getGenesisBlock().getHash(), database.getLastProcessedBlockHash());
     }
 
     @Test

@@ -30,7 +30,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 /**
  * Provides the functionality of storing the unspent transaction outputs (UTXO) set.
  */
-public class UTXODatabase {
+public class UTXODatabase implements ReadonlyUTXOSet {
 
     private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");
@@ -46,27 +46,13 @@ public class UTXODatabase {
         this.storage = storage;
     }
 
-    /**
-     * Checks whether the output referenced by the given transaction input is unspent.
-     *
-     * @param input     The input to check.
-     * @return Whether the input is unspent.
-     * @throws DatabaseException     When the output data could not be read.
-     */
+    @Override
     public synchronized boolean isUnspent(@NotNull Input input) throws DatabaseException {
         LOGGER.fine("Checking whether input is unspent.");
         return this.isUnspent(input.getReferencedTransaction(), input.getReferencedOutputIndex());
     }
 
-    /**
-     * Checks whether the indicated transaction output is unspent.
-     *
-     * @param transactionHash     The hash of the transaction of the output to check.
-     * @param outputIndex
-          The index of the output in the transaction.
-     * @return Whether the output is unspent.
-     * @throws DatabaseException     When the output data could not be read.
-     */
+    @Override
     public synchronized boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.fine("Checking whether a transaction hash with given output index is unspent.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
@@ -86,13 +72,7 @@ public class UTXODatabase {
         return outputKey;
     }
 
-    /**
-     * Find the unspent output information for the output referenced by the given input.
-     *
-     * @param input     The input to get the unspent information from.
-     * @return The unspent output information, or {@code null} when the output is already spent.
-     * @throws DatabaseException     When the output data could not be read.
-     */
+    @Override
     public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Input input) throws DatabaseException {
         LOGGER.fine("Getting unspent output info for the output referenced by the given input.");
         return this.findUnspentOutputInfo(input.getReferencedTransaction(),
@@ -100,17 +80,8 @@ public class UTXODatabase {
         );
     }
 
-    /**
-     * Find the unspent output information for the indicated output.
-     *
-     * @param transactionHash     The hash of the transaction of the output
-     * @param outputIndex
-          The index of the output in the transaction.
-     * @return The unspent output information, or {@code null} when the output is already spent.
-     * @throws DatabaseException     When the output data could not be read.
-     */
-    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
-                                                             int outputIndex) throws DatabaseException {
+    @Override
+    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.fine("Getting unspent output info for a given transaction hash and output index.");
         ByteString key = getOutputKey(transactionHash, outputIndex);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", key));
@@ -142,14 +113,14 @@ public class UTXODatabase {
     }
 
     /**
-     * Mark all outputs of the given transaction as unspent.
-     *
-     * @param transaction     The transaction that provides the outputs.
-     * @param blockHeight
-          The height of the block in which the transaction is validated.
-     * @throws DatabaseException
-          When the data could not be stored.
-     */
+         * Mark all outputs of the given transaction as unspent.
+         *
+         * @param transaction     The transaction that provides the outputs.
+         * @param blockHeight
+              The height of the block in which the transaction is validated.
+         * @throws DatabaseException
+              When the data could not be stored.
+         */
     public synchronized void setOutputsUnspent(@NotNull Transaction transaction, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark all outputs of the given transaction as unspent.");
         List<Integer> allOutputs = IntStream.range(0, transaction.getOutputs().size())
@@ -159,20 +130,19 @@ public class UTXODatabase {
     }
 
     /**
-     * Mark outputs of the given transaction as unspent.
-     *
-     * @param transaction     The transaction that provides the outputs.
-     * @param outputIndices
-          The indices of the outputs to mark as unspent.
-     * @param blockHeight
-          The height of the block in which the transaction is validated.
-     * @throws DatabaseException
-          When the data could not be stored.
-     */
-    public synchronized void setOutputsUnspent(@NotNull Transaction transaction,
-                                  @NotNull List<Integer> outputIndices, int blockHeight) throws DatabaseException {
+         * Mark outputs of the given transaction as unspent.
+         *
+         * @param transaction     The transaction that provides the outputs.
+         * @param outputIndices
+              The indices of the outputs to mark as unspent.
+         * @param blockHeight
+              The height of the block in which the transaction is validated.
+         * @throws DatabaseException
+              When the data could not be stored.
+         */
+    public synchronized void setOutputsUnspent(@NotNull Transaction transaction, @NotNull List<Integer> outputIndices, int blockHeight) throws DatabaseException {
         LOGGER.fine("Mark outputs of the given transaction as unspent.");
-        Hash transactionHash = transaction.computeHash();
+        Hash transactionHash = transaction.getHash();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Transaction hash: {0}", toHexString(transactionHash.getValue())));
         boolean coinbase = transaction.isCoinbase();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Coinbase: {0}", coinbase));
@@ -196,19 +166,18 @@ public class UTXODatabase {
     }
 
     /**
-     * Add an unspent output information record to the database.
-     *
-     * @param transactionHash
-     *     The hash of the transaction of the referenced output.
-     * @param outputIndex
-     *     The index of the referenced output.
-     * @param info
-     *     The unspent information.
-     * @throws DatabaseException
-     *     When the data could not be stored.
-     */
-    public synchronized void addUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex,
-                                     @NotNull UnspentOutputInfo info) throws DatabaseException {
+         * Add an unspent output information record to the database.
+         *
+         * @param transactionHash
+         *     The hash of the transaction of the referenced output.
+         * @param outputIndex
+         *     The index of the referenced output.
+         * @param info
+         *     The unspent information.
+         * @throws DatabaseException
+         *     When the data could not be stored.
+         */
+    public synchronized void addUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex, @NotNull UnspentOutputInfo info) throws DatabaseException {
         ByteString key = getOutputKey(transactionHash, outputIndex);
         ByteString value = getRawProtoValue(info, BrabocoinStorageProtos.UnspentOutputInfo.class);
 
@@ -229,14 +198,14 @@ public class UTXODatabase {
     }
 
     /**
-     * Mark an output of a given transaction as spent.
-     *
-     * @param transactionHash     The transaction that provides the output.
-     * @param outputIndex
-          The index of the outputs to mark as spent.
-     * @throws DatabaseException
-          When the data could not be stored.
-     */
+         * Mark an output of a given transaction as spent.
+         *
+         * @param transactionHash     The transaction that provides the output.
+         * @param outputIndex
+              The index of the outputs to mark as spent.
+         * @throws DatabaseException
+              When the data could not be stored.
+         */
     public synchronized void setOutputSpent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
         LOGGER.log(Level.FINE, "Marking output as spent");
         ByteString key = getOutputKey(transactionHash, outputIndex);

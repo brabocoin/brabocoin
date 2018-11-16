@@ -7,8 +7,9 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
-import org.brabocoin.brabocoin.validation.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,31 +99,25 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        if (!checkBlockValid(block)) {
+        ValidationStatus status = ValidationStatus.VALID;
+//        ValidationStatus status = blockValidator.checkBlockValid(
+//                BlockValidator.RuleLists.INCOMING_BLOCK,
+//                block,
+                /* TODO: HELP! ); */
+
+        if (status == ValidationStatus.INVALID) {
             LOGGER.info("New block is invalid.");
             return ProcessedBlockStatus.INVALID;
         }
 
-        // Check if we already have the block
-        Hash hash = block.computeHash();
-        if (blockchain.isBlockStored(hash)) {
-            LOGGER.info("New block was already stored.");
-            return ProcessedBlockStatus.ALREADY_STORED;
+        if (status == ValidationStatus.ORPHAN) {
+            LOGGER.info("New block is added as orphan.");
+            blockchain.addOrphan(block);
+            return ProcessedBlockStatus.ORPHAN;
         }
 
         // Store the block on disk
-        BlockInfo info = blockchain.storeBlock(block, true);
-        IndexedBlock indexedBlock = new IndexedBlock(hash, info);
-
-        // Find the parent block
-        IndexedBlock parent = blockchain.getIndexedBlock(block.getPreviousBlockHash());
-
-        // If parent is unknown or orphan, this block is an orphan as well
-        if (parent == null || blockchain.isOrphan(parent)) {
-            blockchain.addOrphan(indexedBlock);
-            LOGGER.info("New block is added as orphan.");
-            return ProcessedBlockStatus.ORPHAN;
-        }
+        IndexedBlock indexedBlock = storeBlock(block);
 
         // Check if any orphan blocks are descendants and can be added as well
         // Return the leaf blocks of the new family, which are new top candidates
@@ -132,19 +127,13 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
-        return ProcessedBlockStatus.ADDED_TO_BLOCKCHAIN;
+        return ProcessedBlockStatus.VALID;
     }
 
-    /**
-     * Checks whether a block is valid.
-     *
-     * @param block
-     *     The block to check.
-     * @return Whether the block is valid.
-     * @see BlockValidator
-     */
-    private boolean checkBlockValid(@NotNull Block block) {
-        return blockValidator.checkBlockValid(block);
+    private @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {
+        BlockInfo info = blockchain.storeBlock(block);
+        Hash hash = block.getHash();
+        return new IndexedBlock(hash, info);
     }
 
     /**
@@ -160,31 +149,49 @@ public class BlockProcessor {
      * @return The set of new top candidates from the orphan pool (that are now removed as
      * orphans and are added to the blockchain).
      */
-    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) {
+    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) throws DatabaseException {
         LOGGER.fine("Processing orphans for top candidates.");
 
         Set<IndexedBlock> topCandidates = new HashSet<>();
+        topCandidates.add(newParent);
 
         Deque<IndexedBlock> queue = new ArrayDeque<>();
         queue.add(newParent);
 
         while (!queue.isEmpty()) {
-            IndexedBlock orphan = queue.remove();
+            IndexedBlock parent = queue.remove();
 
             // Find any orphan descendants and mark them as part of the chain
-            Set<IndexedBlock> descendants = blockchain.removeOrphansOfParent(orphan.getHash());
+            Set<Block> descendants = blockchain.removeOrphansOfParent(parent.getHash());
 
-            if (descendants.isEmpty()) {
-                // When this orphan has no more known descendants, make top candidate
-                // TODO: maybe check if it actually supersedes the current top?
-                topCandidates.add(orphan);
-                LOGGER.finest(() -> MessageFormat.format(
-                    "Added orphan {0} as top candidate.",
-                    toHexString(orphan.getHash().getValue())
-                ));
-            } else {
-                // Add the removed blocks to the queue to find further descendant orphans
-                queue.addAll(descendants);
+            // For every descendant, check if it is valid now
+            for (Block descendant : descendants) {
+                ValidationStatus status = ValidationStatus.VALID;
+//                ProcessedBlockStatus status = blockValidator.checkBlockValid(
+//                        BlockValidator.RuleLists.AFTER_ORPHAN,
+//                        descendant);
+                /* TODO: HELP! */
+
+                // Re-add to orphans if not status is orphan again (should not happen)
+                if (status == ValidationStatus.ORPHAN) {
+                    blockchain.addOrphan(descendant);
+                }
+
+                if (status == ValidationStatus.VALID) {
+                    // The orphan is now valid, store on disk
+                    IndexedBlock indexedDescendant = storeBlock(descendant);
+
+                    // Add to top candidates
+                    topCandidates.add(indexedDescendant);
+
+                    // Look deeper for more descendants
+                    queue.add(indexedDescendant);
+
+                    LOGGER.finest(() -> MessageFormat.format(
+                        "Added orphan {0} as top candidate.",
+                        toHexString(indexedDescendant.getHash().getValue())
+                    ));
+                }
             }
         }
 
@@ -210,46 +217,66 @@ public class BlockProcessor {
         Set<IndexedBlock> allCandidates = new HashSet<>(topCandidates);
         allCandidates.add(currentTop);
 
-        // Select the best top candidate
-        IndexedBlock bestCandidate = consensus.bestBlock(allCandidates);
+        // Attempt reorganization while there are still candidates
+        reorganization: while (true) {
+            // Select the best top candidate
+            IndexedBlock bestCandidate = consensus.bestValidBlock(allCandidates);
 
-        // If top does not change, do nothing
-        if (bestCandidate == null || bestCandidate.equals(currentTop)) {
-            LOGGER.fine("Main chain is not updated.");
+            if (bestCandidate == null) {
+                // No valid candidates are found, which means the current top is no valid candidate as well
+                // TODO: error handling?
+                LOGGER.severe("Current main chain is invalid.");
+                return;
+            }
+
+            // If top does not change, do nothing
+            if (currentTop.equals(bestCandidate)) {
+                LOGGER.info("Main chain is not updated, current top is the best block.");
+                return;
+            }
+
+            // Find the fork that needs to become active
+            Deque<IndexedBlock> fork = findValidFork(bestCandidate);
+            if (fork == null) {
+                // No valid fork is found, remove the best candidate
+                LOGGER.info("Fork is invalid, removing the selected candidate and attempt re-selecting new candidate.");
+                allCandidates.remove(bestCandidate);
+                continue;
+            }
+
+
+            // Get block at up to which the main chain needs to be reverted
+            IndexedBlock revertTargetBlock = fork.pop();
+            LOGGER.finest(() -> MessageFormat.format(
+                "Target block to revert main chain to {0}.",
+                toHexString(revertTargetBlock.getHash().getValue())
+            ));
+
+            // Revert chain state to target block by disconnecting top blocks
+            while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
+                disconnectTop();
+            }
+
+            // Connect the blocks in the new fork
+            while (!fork.isEmpty()) {
+                IndexedBlock newBlock = fork.pop();
+                if (!connectTopBlock(newBlock)) {
+                    // Block connection failed, block is invalid
+                    blockchain.setBlockInvalid(newBlock.getHash());
+
+                    // Remove this candidate from the candidate set
+                    allCandidates.remove(bestCandidate);
+                    continue reorganization;
+                }
+            }
+
+            LOGGER.info("Main chain is updated with new top block.");
+            LOGGER.finest(MessageFormat.format(
+                "New top block {0}.",
+                toHexString(blockchain.getMainChain().getTopBlock().getHash().getValue())
+            ));
             return;
         }
-
-        // Main chain needs to be updated: find the fork that needs to become active
-        Deque<IndexedBlock> fork = findFork(bestCandidate);
-        if (fork == null) {
-            // TODO: need rollback when find fork fails?
-            LOGGER.severe("Main chain needs to be updated, but no fork is found.");
-            return;
-        }
-
-        // Get block at up to which the main chain needs to be reverted
-        IndexedBlock revertTargetBlock = fork.pop();
-        LOGGER.finest(() -> MessageFormat.format(
-            "Target block to revert main chain to {0}.",
-            toHexString(revertTargetBlock.getHash().getValue())
-        ));
-
-        // Revert chain state to target block by disconnecting top blocks
-        while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
-            disconnectTop();
-        }
-
-        // Connect the blocks in the new fork
-        while (!fork.isEmpty()) {
-            IndexedBlock newBlock = fork.pop();
-            connectTopBlock(newBlock);
-        }
-
-        LOGGER.info("Main chain is updated with new top block.");
-        LOGGER.finest(MessageFormat.format(
-            "New top block {0}.",
-            toHexString(blockchain.getMainChain().getTopBlock().getHash().getValue())
-        ));
     }
 
     /**
@@ -260,15 +287,18 @@ public class BlockProcessor {
      * main chain are recorded in-order and returned.
      * <p>
      * Note that these blocks are not indexed in memory and are first retrieved from the database.
+     * <p>
+     * When a block on the fork path is invalid, {@code null} is returned as no valid fork path
+     * exists.
      *
      * @param block
      *     The block to find the fork to the main chain for.
      * @return All the blocks present on the fork, in-order, up to and including the first block
-     * on the main chain, or {@code null} when no path back to the main chain could be found.
+     * on the main chain, or {@code null} when no valid path back to the main chain could be found.
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    private @Nullable Deque<IndexedBlock> findFork(@NotNull IndexedBlock block) throws DatabaseException {
+    private @Nullable Deque<IndexedBlock> findValidFork(@NotNull IndexedBlock block) throws DatabaseException {
         LOGGER.fine("Find a fork.");
 
         Deque<IndexedBlock> fork = new ArrayDeque<>();
@@ -276,13 +306,19 @@ public class BlockProcessor {
 
         // Backtrack to the main chain, loading previous blocks from the database
         while (parent != null && !blockchain.getMainChain().contains(parent)) {
+            // If parent is known to be invalid, discard this fork
+            if (!parent.getBlockInfo().isValid()) {
+                LOGGER.fine("Parent on fork is invalid, no valid fork found.");
+                return null;
+            }
+
             fork.push(parent);
             parent = blockchain.getIndexedBlock(parent.getBlockInfo().getPreviousBlockHash());
         }
 
         // If no fork is found, return null
         if (parent == null) {
-            LOGGER.fine("No fork is found.");
+            LOGGER.fine("No fork is found because parent is missing.");
             return null;
         }
 
@@ -337,10 +373,12 @@ public class BlockProcessor {
      *
      * @param top
      *     The block to be added as the new top.
+     * @return {@code true} when the block is valid and added to the main chain, or {@code false}
+     * when the block is invalid and thus not added to the main chain.
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
+    private boolean connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
         LOGGER.finest(() -> MessageFormat.format(
             "Connecting block {0}",
             toHexString(top.getHash().getValue())
@@ -349,6 +387,13 @@ public class BlockProcessor {
         // Read block from disk
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
+
+//        if (!blockValidator.checkBlockValid(
+//                BlockValidator.RuleLists.CONNECT_TO_CHAIN,
+//                block)) {
+//            return false;
+//        }
+        /* TODO: Help! */
 
         BlockUndo undo = utxoProcessor.processBlockConnected(block);
 
@@ -360,6 +405,8 @@ public class BlockProcessor {
 
         // Set the new top in the main chain
         blockchain.pushTopBlock(top);
+
+        return true;
     }
 
 }

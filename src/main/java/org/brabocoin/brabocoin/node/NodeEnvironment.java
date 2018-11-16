@@ -226,17 +226,16 @@ public class NodeEnvironment {
                             propagate
                     ));
                     // Fall-through intended
-                case ADDED_TO_BLOCKCHAIN:
+                case VALID:
                     if (propagate) {
-                        final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class);
+                        final BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
                         messageQueue.add(() -> propagateMessageBlocking(s -> s.announceBlock(protoBlockHash)));
                     }
                     break;
 
                 case INVALID:
-                case ALREADY_STORED:
-                    LOGGER.log(Level.FINE, "Block invalid or already stored.");
+                    LOGGER.log(Level.FINE, "Block invalid.");
                     break;
             }
         } catch (DatabaseException e) {
@@ -300,7 +299,7 @@ public class NodeEnvironment {
                 case DEPENDENT:
                 case INDEPENDENT:
                     if (propagate) {
-                        final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.computeHash(), BrabocoinProtos.Hash.class);
+                        final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
                         messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                     }
@@ -316,7 +315,7 @@ public class NodeEnvironment {
             if (propagate) {
                 // Propagate any remaining transactions that became valid.
                 for (Transaction t : result.getValidatedOrphans()) {
-                    final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.computeHash(), BrabocoinProtos.Hash.class);
+                    final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(t.getHash(), BrabocoinProtos.Hash.class);
                     messageQueue.add(() -> propagateMessageBlocking(s -> s.announceTransaction(protoTransactionHash)));
                 }
             }
@@ -356,7 +355,16 @@ public class NodeEnvironment {
 
                         return "";
                     });
-                    onReceiveBlock(ProtoConverter.toDomain(value, Block.Builder.class), peers, propagate);
+                    Block receivedBlock = ProtoConverter.toDomain(value, Block.Builder.class);
+                    if (receivedBlock == null) {
+                        LOGGER.log(Level.SEVERE, "Protobuf parsing of received block failed.");
+                        return;
+                    }
+                    if (hashes.contains(receivedBlock.getHash())) {
+                        onReceiveBlock(receivedBlock, peers, propagate);
+                    } else {
+                        LOGGER.log(Level.WARNING, "Peer sent block that was not requested");
+                    }
                 }
 
                 @Override
@@ -385,7 +393,7 @@ public class NodeEnvironment {
      */
     public synchronized void announceBlockRequest(Block block) {
         LOGGER.info("Announcing block to peers.");
-        Hash blockHash = block.computeHash();
+        Hash blockHash = block.getHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
         BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(blockHash, BrabocoinProtos.Hash.class);
 
@@ -416,7 +424,7 @@ public class NodeEnvironment {
      */
     public synchronized void announceTransactionRequest(Transaction transaction) {
         LOGGER.info("Announcing transaction to peers.");
-        Hash transactionHash = transaction.computeHash();
+        Hash transactionHash = transaction.getHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(transactionHash.getValue()));
         BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transactionHash, BrabocoinProtos.Hash.class);
 
@@ -555,7 +563,16 @@ public class NodeEnvironment {
 
                         return "";
                     });
-                    onReceiveTransaction(ProtoConverter.toDomain(value, Transaction.Builder.class), propagate);
+                    Transaction transaction = ProtoConverter.toDomain(value, Transaction.Builder.class);
+                    if (transaction == null) {
+                        LOGGER.log(Level.SEVERE, "Protobuf parsing of received transaction failed.");
+                        return;
+                    }
+                    if (hashes.contains(transaction.getHash())) {
+                        onReceiveTransaction(transaction, propagate);
+                    } else {
+                        LOGGER.log(Level.WARNING, "Peer sent transaction that was not requested");
+                    }
                 }
 
                 @Override

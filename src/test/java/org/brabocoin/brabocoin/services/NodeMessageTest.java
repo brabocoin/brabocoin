@@ -22,9 +22,9 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.brabocoin.brabocoin.validation.BlockValidator;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.TransactionValidator;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -122,7 +122,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -160,20 +160,20 @@ class NodeMessageTest {
         });
 
         for (Block block : blocks) {
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
         }
         requestObserver.onCompleted();
 
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertTrue(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
@@ -194,7 +194,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -240,13 +240,13 @@ class NodeMessageTest {
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(0, receivedBlocks.size());
         for (Block block : blocks) {
-            assertFalse(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertFalse(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
@@ -267,7 +267,7 @@ class NodeMessageTest {
         BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b, true);
+            database.storeBlock(b);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -310,7 +310,7 @@ class NodeMessageTest {
                 requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
             }
 
-            requestObserver.onNext(ProtoConverter.toProto(block.computeHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
 
             for (int i = 0; i < random.nextInt(10); i++) {
                 // send random hash
@@ -322,13 +322,13 @@ class NodeMessageTest {
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::computeHash)
+                .map(Block::getHash)
                 .map(Hash::getValue)
                 .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
-            assertTrue(receivedBlockHashes.contains(block.computeHash().getValue()));
+            assertTrue(receivedBlockHashes.contains(block.getHash().getValue()));
         }
 
         nodeA.stopAndBlock();
@@ -348,11 +348,15 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null, null
+        ),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null, null
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -424,10 +428,14 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null,null
+        );
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null
+        ),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -499,10 +507,12 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -560,10 +570,11 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -626,10 +637,11 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,

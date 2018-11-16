@@ -9,6 +9,8 @@ import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
+
 /**
  * Represents a hash value.
  */

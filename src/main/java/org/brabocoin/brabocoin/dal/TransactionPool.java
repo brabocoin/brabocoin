@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.common.collect.Iterators;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
  * limited and entries have an expiration time.
  * When the limit is met, orphan transactions are discarded randomly.
  */
-public class TransactionPool {
+public class TransactionPool implements Iterable<Transaction> {
 
     private final static Logger LOGGER = Logger.getLogger(TransactionPool.class.getName());
 
@@ -90,27 +91,27 @@ public class TransactionPool {
         this.maxPoolSize = config.maxTransactionPoolSize();
         this.random = random;
 
-        this.independentTransactions = new MultiDependenceIndex<>(Transaction::computeHash,
+        this.independentTransactions = new MultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet())
         );
 
-        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
+        this.dependentTransactions = new RecursiveMultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet()),
-                Transaction::computeHash
+                Transaction::getHash
         );
 
-        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(Transaction::computeHash,
+        this.orphanTransactions = new RecursiveMultiDependenceIndex<>(Transaction::getHash,
                 transaction -> transaction.getInputs()
                         .stream()
                         .map(Input::getReferencedTransaction)
                         .collect(Collectors.toSet()),
-                Transaction::computeHash
+                Transaction::getHash
         );
     }
 
@@ -246,8 +247,8 @@ public class TransactionPool {
      * @return The list of removed orphans.
      */
     public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(@NotNull Hash parentHash,
-                                                                   @NotNull Function<Transaction,
-                                                                           Boolean> orphanValidator) {
+                                                                                @NotNull Function<Transaction,
+                                                                                        Boolean> orphanValidator) {
         return orphanTransactions.removeMatchingDependants(parentHash, orphanValidator);
     }
 
@@ -261,7 +262,7 @@ public class TransactionPool {
      * @param matcher    Function indicating whether the dependent transaction can be removed.
      */
     public synchronized void promoteDependentToIndependentFromParent(@NotNull Hash parentHash,
-                                                        @NotNull Function<Transaction, Boolean> matcher) {
+                                                                     @NotNull Function<Transaction, Boolean> matcher) {
         List<Transaction> transactions = dependentTransactions.removeMatchingDependants(parentHash,
                 t -> {
                     if (matcher.apply(t)) {
@@ -316,7 +317,7 @@ public class TransactionPool {
      */
     public synchronized boolean contains(@NotNull Hash hash) {
         LOGGER.fine("Checking if valid transaction is known or orphan.");
-        return hasValidTransaction(hash) || isOrphan(hash);
+        return isOrphan(hash) || hasValidTransaction(hash);
     }
 
     /**
@@ -369,5 +370,20 @@ public class TransactionPool {
      */
     public @NotNull Iterator<Transaction> independentTransactionsIterator() {
         return independentTransactions.iterator();
+    }
+
+    /**
+     * Get the iterator over all transactions in the transaction pool.
+     * This includes independent and dependent transactions.
+     *
+     * @return Iterator over all transactions.
+     */
+    @NotNull
+    @Override
+    public Iterator<Transaction> iterator() {
+        return Iterators.concat(
+                independentTransactions.iterator(),
+                dependentTransactions.iterator()
+        );
     }
 }

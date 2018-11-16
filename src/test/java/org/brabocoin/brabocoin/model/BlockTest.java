@@ -30,7 +30,7 @@ class BlockTest{
         }};
 
         Block block = new Block(dummyHash, dummyHash, dummyHash, Simulation.randomBigInteger(), 7, transactionList);
-        Hash blockHash = block.computeHash();
+        Hash blockHash = block.getHash();
         assertNotNull(blockHash);
     }
 }
