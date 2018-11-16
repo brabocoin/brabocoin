@@ -11,7 +11,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class DuplicatePoolTxRule extends TransactionRule {
     private TransactionPool transactionPool;
 
-    public boolean valid() {
+    public boolean isValid() {
         return !transactionPool.contains(transaction.getHash());
     }
 }

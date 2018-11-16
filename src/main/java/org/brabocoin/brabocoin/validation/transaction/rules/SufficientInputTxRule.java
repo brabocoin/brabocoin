@@ -12,7 +12,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class SufficientInputTxRule extends TransactionRule {
     private TransactionProcessor transactionProcessor;
 
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return transactionProcessor.computeFee(transaction) > 0;
         } catch (DatabaseException e) {

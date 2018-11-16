@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class RuleBook {
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
 
-    private RuleList ruleList;
+    private final RuleList ruleList;
 
     public RuleBook(RuleList ruleList) {
         this.ruleList = ruleList;
@@ -25,7 +25,7 @@ public class RuleBook {
             boolean passedRule = true;
 
             try {
-                if (!rule.valid()) {
+                if (!rule.isValid()) {
                     passedRule = false;
                 }
             } catch (NullPointerException e) {
@@ -34,13 +34,12 @@ public class RuleBook {
             }
 
             if (!passedRule) {
-                RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass());
-                marker.setChild(getChild(rule));
-                return new RuleBookResult(marker);
+                RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass(), getChild(rule));
+                return RuleBookResult.failed(marker);
             }
         }
 
-        return new RuleBookResult();
+        return RuleBookResult.passed();
     }
 
     private List<Rule> getInstantiatedRules(FactMap facts) {
@@ -59,11 +58,10 @@ public class RuleBook {
         try {
             Rule rule = ruleClass.newInstance();
             List<Field> fields = getAllFields(new ArrayList<>(), ruleClass);
-            // Set all fields accessible
-            fields.forEach(f -> f.setAccessible(true));
 
             for (Field field : fields) {
-                boolean hasChildRuleFailMarkerFlag = !Objects.isNull(field.getAnnotation(CompositeRuleFailMarker.class));
+                field.setAccessible(true);
+                boolean hasChildRuleFailMarkerFlag = field.getAnnotation(CompositeRuleFailMarker.class) != null;
                 if (hasChildRuleFailMarkerFlag) {
                     continue;
                 }

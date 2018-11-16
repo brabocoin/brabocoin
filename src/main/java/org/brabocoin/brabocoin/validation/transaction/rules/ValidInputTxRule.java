@@ -13,7 +13,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class ValidInputTxRule extends TransactionRule {
     private TransactionProcessor transactionProcessor;
 
-    public boolean valid() {
+    public boolean isValid() {
         try {
             if (transactionProcessor.checkInputs(transaction) == ProcessedTransactionStatus.ORPHAN) {
                 return false;

@@ -14,15 +14,9 @@ public class NonContextualTransactionCheckBlkRule extends BlockRule {
     private RuleBookFailMarker childFailMarker;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         for (Transaction t : block.getTransactions()) {
-            TransactionValidationResult result = transactionValidator.checkTransactionValid(
-                    TransactionValidator.RuleLists.BLOCK_NONCONTEXTUAL,
-                    t,
-                    consensus,
-                    // Note: these facts are not used in the non-contextual transaction rules
-                    null, null, null, null, null
-            );
+            TransactionValidationResult result = transactionValidator.checkTransactionBlockNonContextual(t);
 
             if (!result.isPassed()) {
                 childFailMarker = result.getFailMarker();

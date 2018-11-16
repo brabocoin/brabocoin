@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class HasCoinbaseBlkRule extends BlockRule {
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         Transaction coinbase = block.getCoinbaseTransaction();
         if (coinbase == null) {
             return false;

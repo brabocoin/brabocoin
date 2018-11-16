@@ -19,7 +19,7 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
     private TransactionProcessor transactionProcessor;
     private IndexedChain mainChain;
 
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return transaction.getInputs()
                     .stream()

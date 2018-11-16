@@ -9,7 +9,7 @@ public class TransactionRule implements Rule {
     protected Consensus consensus;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         return false;
     }
 }

@@ -7,7 +7,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class ValidBlockHeightBlkRule extends BlockRule {
     private Blockchain blockchain;
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return blockchain.getIndexedBlock(block.getPreviousBlockHash()).getBlockInfo().getBlockHeight() + 1 ==
                     block.getBlockHeight();

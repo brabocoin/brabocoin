@@ -9,7 +9,7 @@ public class ValidParentBlkRule extends BlockRule {
     private Blockchain blockchain;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getPreviousBlockHash());
             if (indexedBlock == null) {

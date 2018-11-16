@@ -18,7 +18,7 @@ public class SignatureTxRule extends TransactionRule {
 
     private Signer signer;
 
-    public boolean valid() {
+    public boolean isValid() {
         if (transaction.getInputs().stream().map(Input::getSignature).anyMatch(Objects::isNull)) {
             return false;
         }

@@ -53,7 +53,10 @@ class TransactionValidatorTest {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                consensus,
+                /* shit... */
+        ),
                 transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
 
         Transaction transaction = new Transaction(
@@ -61,16 +64,15 @@ class TransactionValidatorTest {
                 Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
         );
 
-        TransactionValidator validator = new TransactionValidator();
-
-        RuleBookResult result = validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
-                transaction,
-                consensus,
+        TransactionValidator validator = new TransactionValidator(consensus,
                 transactionProcessor,
                 blockchain.getMainChain(),
                 transactionPool,
                 chainUtxoDatabase,
-                signer);
+                signer
+        );
+
+        RuleBookResult result = validator.checkTransactionValid(transaction);
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
@@ -90,15 +92,13 @@ class TransactionValidatorTest {
                 Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
         );
 
-        TransactionValidator validator = new TransactionValidator();
-
-        assertThrows(IllegalStateException.class, () -> validator.checkTransactionValid(TransactionValidator.RuleLists.ALL,
-                transaction,
-                consensus,
+        TransactionValidator validator = new TransactionValidator(consensus,
                 transactionProcessor,
                 blockchain.getMainChain(),
                 null,
                 chainUtxoDatabase,
-                signer));
+                signer);
+
+        assertThrows(IllegalStateException.class, () -> validator.checkTransactionValid(transaction));
     }
 }

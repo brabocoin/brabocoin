@@ -4,5 +4,5 @@ public interface Rule {
     /**
      * Returns whether this rule is valid.
      */
-    boolean valid();
+    boolean isValid();
 }

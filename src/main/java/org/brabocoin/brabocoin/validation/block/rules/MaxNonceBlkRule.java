@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class MaxNonceBlkRule extends BlockRule {
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         return block.getNonce().compareTo(consensus.getMaxNonce()) <= 0;
     }
 }

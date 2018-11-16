@@ -1,11 +1,21 @@
 package org.brabocoin.brabocoin.validation.rule;
 
-public class RuleBookFailMarker {
-    private Class failedRule;
-    private RuleBookFailMarker child;
+import org.jetbrains.annotations.Nullable;
 
-    public RuleBookFailMarker(Class failedRule) {
+public class RuleBookFailMarker {
+    private final Class<? extends Rule> failedRule;
+
+    @Nullable
+    private final RuleBookFailMarker child;
+
+    public RuleBookFailMarker(Class<? extends Rule> failedRule) {
         this.failedRule = failedRule;
+        this.child = null;
+    }
+
+    public RuleBookFailMarker(Class<? extends Rule> failedRule, @Nullable RuleBookFailMarker child) {
+        this.failedRule = failedRule;
+        this.child = child;
     }
 
     public boolean hasChild(){
@@ -16,11 +26,7 @@ public class RuleBookFailMarker {
         return child;
     }
 
-    public Class getFailedRule() {
+    public Class<? extends Rule> getFailedRule() {
         return failedRule;
-    }
-
-    public void setChild(RuleBookFailMarker child) {
-        this.child = child;
     }
 }

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class ValidMerkleRootBlkRule extends BlockRule {
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         return block.getMerkleRoot().equals(new MerkleTree(consensus.getMerkleTreeHashFunction(),
                 block.getTransactions().stream().map(Transaction::getHash).collect(Collectors.toList())
         ).getRoot());

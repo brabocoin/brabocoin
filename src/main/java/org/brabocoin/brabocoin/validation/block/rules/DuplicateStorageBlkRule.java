@@ -8,7 +8,7 @@ public class DuplicateStorageBlkRule extends BlockRule {
     private Blockchain blockchain;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return !blockchain.isBlockStored(block.getHash());
         } catch (DatabaseException e) {

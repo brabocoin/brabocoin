@@ -12,7 +12,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class ValidInputChainUTXOTxRule extends TransactionRule {
     private ChainUTXODatabase chainUTXODatabase;
 
-    public boolean valid() {
+    public boolean isValid() {
         return transaction.getInputs()
                 .stream()
                 .allMatch(i -> {

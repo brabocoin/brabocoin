@@ -8,7 +8,7 @@ public class KnownParentBlkRule extends BlockRule {
     private Blockchain blockchain;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return blockchain.isBlockStored(block.getPreviousBlockHash());
         } catch (DatabaseException e) {

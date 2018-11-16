@@ -8,7 +8,7 @@ public class DuplicateCoinbaseBlkRule extends BlockRule {
     private ChainUTXODatabase chainUTXODatabase;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             return !chainUTXODatabase.isUnspent(block.getCoinbaseTransaction().getHash(), 0);
         } catch (DatabaseException e) {

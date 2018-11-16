@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class MaxSizeBlkRule extends BlockRule {
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         return ProtoConverter.toProto(block, BrabocoinProtos.Block.class).getSerializedSize() <= consensus.getMaxBlockSize();
     }
 }

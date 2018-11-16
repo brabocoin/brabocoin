@@ -8,7 +8,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * Reject if the transaction is a coinbase transaction.
  */
 public class CoinbaseCreationTxRule extends TransactionRule {
-    public boolean valid() {
+    public boolean isValid() {
         return !transaction.isCoinbase();
     }
 }

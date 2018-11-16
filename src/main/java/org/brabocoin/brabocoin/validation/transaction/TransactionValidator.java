@@ -22,69 +22,78 @@ import java.util.logging.Logger;
 public class TransactionValidator {
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
-    public static class RuleLists {
-        public static final RuleList ALL = new RuleList(
-                Arrays.asList(
-                        DuplicatePoolTxRule.class,
-                        MaxSizeTxRule.class,
-                        CoinbaseCreationTxRule.class,
-                        OutputCountTxRule.class,
-                        DuplicateInputTxRule.class,
-                        PoolDoubleSpendingTxRule.class,
-                        ValidInputTxRule.class,
-                        CoinbaseMaturityTxRule.class,
-                        OutputValueTxRule.class,
-                        InputValueTxRange.class,
-                        SufficientInputTxRule.class,
-                        SignatureTxRule.class
-                )
-        );
+    private static final RuleList ALL = new RuleList(
+            DuplicatePoolTxRule.class,
+            MaxSizeTxRule.class,
+            CoinbaseCreationTxRule.class,
+            OutputCountTxRule.class,
+            DuplicateInputTxRule.class,
+            PoolDoubleSpendingTxRule.class,
+            ValidInputTxRule.class,
+            CoinbaseMaturityTxRule.class,
+            OutputValueTxRule.class,
+            InputValueTxRange.class,
+            SufficientInputTxRule.class,
+            SignatureTxRule.class
+    );
 
-        public static final RuleList AFTER_ORPHAN = new RuleList(
-                Arrays.asList(
-                        ValidInputTxRule.class,
-                        CoinbaseMaturityTxRule.class,
-                        OutputValueTxRule.class,
-                        InputValueTxRange.class,
-                        SufficientInputTxRule.class,
-                        SignatureTxRule.class
-                )
-        );
+    private static final RuleList AFTER_ORPHAN = new RuleList(
+            ValidInputTxRule.class,
+            CoinbaseMaturityTxRule.class,
+            OutputValueTxRule.class,
+            InputValueTxRange.class,
+            SufficientInputTxRule.class,
+            SignatureTxRule.class
+    );
 
-        public static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
-                Arrays.asList(
-                        OutputCountTxRule.class,
-                        MaxSizeTxRule.class,
-                        OutputValueTxRule.class
-                )
-        );
+    private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
+            OutputCountTxRule.class,
+            MaxSizeTxRule.class,
+            OutputValueTxRule.class
+    );
 
-        public static final RuleList BLOCK_CONTEXTUAL = new RuleList(
-                Arrays.asList(
-                        ValidInputChainUTXOTxRule.class,
-                        CoinbaseMaturityTxRule.class,
-                        InputValueTxRange.class,
-                        SufficientInputTxRule.class,
-                        SignatureTxRule.class
-                )
-        );
-    }
+    private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
+            Arrays.asList(
+                    ValidInputChainUTXOTxRule.class,
+                    CoinbaseMaturityTxRule.class,
+                    InputValueTxRange.class,
+                    SufficientInputTxRule.class,
+                    SignatureTxRule.class
+            )
+    );
+    private Consensus consensus;
+    private TransactionProcessor transactionProcessor;
+    private IndexedChain mainChain;
+    private TransactionPool transactionPool;
+    private ChainUTXODatabase chainUTXODatabase;
+    private Signer signer;
 
     /**
-     * Checks whether a transaction is valid.
+     * Construct transaction validator.
      *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
+     * @param consensus            Consensus object
+     * @param transactionProcessor Transaction processor
+     * @param mainChain            The indexed main chain
+     * @param transactionPool      Transaction pool
+     * @param chainUTXODatabase    UTXO database for the main chian
+     * @param signer               Signer object
      */
-    public TransactionValidationResult checkTransactionValid(@NotNull RuleList list,
-                                                @NotNull Transaction transaction,
-                                                Consensus consensus,
-                                                TransactionProcessor transactionProcessor,
-                                                IndexedChain mainChain,
-                                                TransactionPool transactionPool,
-                                                ChainUTXODatabase chainUTXODatabase,
-                                                Signer signer) {
+    public TransactionValidator(
+            Consensus consensus,
+            TransactionProcessor transactionProcessor,
+            IndexedChain mainChain,
+            TransactionPool transactionPool,
+            ChainUTXODatabase chainUTXODatabase,
+            Signer signer) {
+        this.consensus = consensus;
+        this.transactionProcessor = transactionProcessor;
+        this.mainChain = mainChain;
+        this.transactionPool = transactionPool;
+        this.chainUTXODatabase = chainUTXODatabase;
+        this.signer = signer;
+    }
+
+    private FactMap createFactMap(@NotNull Transaction transaction) {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
@@ -94,6 +103,46 @@ public class TransactionValidator {
         facts.put("chainUTXODatabase", chainUTXODatabase);
         facts.put("signer", signer);
 
-        return new TransactionValidationResult(new RuleBook(list).run(facts));
+        return facts;
+    }
+
+    /**
+     * Checks whether a transaction is valid using all known transaction rules.
+     *
+     * @param transaction The transaction.
+     * @return Whether the transaction is valid.
+     */
+    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(transaction)));
+    }
+
+    /**
+     * Checks whether a transaction is valid after the transaction is no longer orphan.
+     *
+     * @param transaction The transaction.
+     * @return Whether the transaction is valid.
+     */
+    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction)));
+    }
+
+    /**
+     * Perform a non-contextual check whether a transaction is valid in a block.
+     *
+     * @param transaction The transaction.
+     * @return Whether the transaction is valid.
+     */
+    public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(transaction)));
+    }
+
+    /**
+     * Perform a contextual check whether a transaction is valid in a block.
+     *
+     * @param transaction The transaction.
+     * @return Whether the transaction is valid.
+     */
+    public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(transaction)));
     }
 }

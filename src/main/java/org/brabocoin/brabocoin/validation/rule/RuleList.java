@@ -1,15 +1,22 @@
 package org.brabocoin.brabocoin.validation.rule;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class RuleList {
-    private List<Class<? extends Rule>> rules;
+    private final List<Class<? extends Rule>> rules;
 
     public RuleList(List<Class<? extends Rule>> rules) {
-        this.rules = rules;
+        this.rules = new ArrayList<>(rules);
+    }
+
+    public RuleList(Class<? extends Rule>... rules) {
+        this.rules = Arrays.asList(rules);
     }
 
     public List<Class<? extends Rule>> getRules() {
-        return rules;
+        return Collections.unmodifiableList(rules);
     }
 }

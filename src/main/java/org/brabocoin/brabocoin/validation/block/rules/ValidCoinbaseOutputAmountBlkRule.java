@@ -10,7 +10,7 @@ import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
 public class ValidCoinbaseOutputAmountBlkRule extends BlockRule {
     private TransactionProcessor transactionProcessor;
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         try {
             long feeSum = block.getTransactions()
                     .stream()

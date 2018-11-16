@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.validation;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
@@ -49,10 +48,25 @@ public class Consensus {
      */
     private static final Function<Hash, Hash> DOUBLE_SHA = (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
 
+    /**
+     * The max nonce value, lazy loaded
+     */
+    private static BigInteger MAX_NONCE;
+
+    /**
+     * The block reward value, lazy loaded
+     */
+    private static long BLOCK_REWARD = -1;
+
+    /**
+     * The amount of miniBrabos that equals one Brabocoin.
+     */
+    public static final long COIN = 1_000_000L;
+
     private final @NotNull Block GENESIS_BLOCK = new Block(
             new Hash(ByteString.EMPTY),
             new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
-            new Hash(ByteString.copyFromUtf8("easy")), // TODO: Determine target value
+            TARGET_VALUE, // TODO: Determine target value
             BigInteger.ZERO,
             0,
             Collections.emptyList()
@@ -78,7 +92,10 @@ public class Consensus {
      * @return Amount in miniBrabo's
      */
     public long getBlockReward() {
-        return Constants.COIN * 10;
+        if (BLOCK_REWARD < 0) {
+            BLOCK_REWARD = COIN * 10;
+        }
+        return BLOCK_REWARD;
     }
 
     public @NotNull Block getGenesisBlock() {
@@ -94,7 +111,10 @@ public class Consensus {
     }
 
     public @NotNull BigInteger getMaxNonce() {
-        return BigIntegerUtil.getMaxBigInteger(getMaxNonceSize());
+        if (MAX_NONCE == null) {
+            MAX_NONCE = BigIntegerUtil.getMaxBigInteger(getMaxNonceSize());
+        }
+        return MAX_NONCE;
     }
 
     public @NotNull int getCoinbaseMaturityDepth() {

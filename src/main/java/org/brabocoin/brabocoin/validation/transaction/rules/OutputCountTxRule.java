@@ -8,7 +8,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * Inputs can only be empty on a coinbase transaction, empty output is never allowed.
  */
 public class OutputCountTxRule extends TransactionRule {
-    public boolean valid() {
+    public boolean isValid() {
         if (transaction.isCoinbase()) {
             // If coinbase, inputs can be empty, only check outputs
             return transaction.getOutputs().size() > 0;

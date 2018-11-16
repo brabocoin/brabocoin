@@ -15,7 +15,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class InputValueTxRange extends TransactionRule {
     private TransactionProcessor transactionProcessor;
 
-    public boolean valid() {
+    public boolean isValid() {
         long sum = 0L;
         for (Input input : transaction.getInputs()) {
             UnspentOutputInfo unspentOutputInfo;

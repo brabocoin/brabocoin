@@ -356,8 +356,14 @@ public class NodeEnvironment {
                         return "";
                     });
                     Block receivedBlock = ProtoConverter.toDomain(value, Block.Builder.class);
-                    if (receivedBlock != null && hashes.contains(receivedBlock.getHash())) {
+                    if (receivedBlock == null) {
+                        LOGGER.log(Level.SEVERE, "Protobuf parsing of received block failed.");
+                        return;
+                    }
+                    if (hashes.contains(receivedBlock.getHash())) {
                         onReceiveBlock(receivedBlock, peers, propagate);
+                    } else {
+                        LOGGER.log(Level.WARNING, "Peer sent block that was not requested");
                     }
                 }
 
@@ -558,9 +564,14 @@ public class NodeEnvironment {
                         return "";
                     });
                     Transaction transaction = ProtoConverter.toDomain(value, Transaction.Builder.class);
-
-                    if (transaction != null && hashes.contains(transaction.getHash())) {
+                    if (transaction == null) {
+                        LOGGER.log(Level.SEVERE, "Protobuf parsing of received transaction failed.");
+                        return;
+                    }
+                    if (hashes.contains(transaction.getHash())) {
                         onReceiveTransaction(transaction, propagate);
+                    } else {
+                        LOGGER.log(Level.WARNING, "Peer sent transaction that was not requested");
                     }
                 }
 

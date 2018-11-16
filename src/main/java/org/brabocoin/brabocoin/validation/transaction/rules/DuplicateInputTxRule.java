@@ -12,7 +12,7 @@ import java.util.List;
  * Transactions can not contain duplicate inputs.
  */
 public class DuplicateInputTxRule extends TransactionRule {
-    public boolean valid() {
+    public boolean isValid() {
         // Check for no duplicates
         List<Input> inputs = transaction.getInputs();
         return inputs.size() == new HashSet<>(inputs).size();

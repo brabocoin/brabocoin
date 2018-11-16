@@ -5,8 +5,6 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
-import java.util.Iterator;
-
 /**
  * Transaction rule
  *
@@ -15,10 +13,8 @@ import java.util.Iterator;
 public class PoolDoubleSpendingTxRule extends TransactionRule {
     private TransactionPool transactionPool;
 
-    public boolean valid() {
-        for (Iterator<Transaction> it = transactionPool.iterator(); it.hasNext(); ) {
-            Transaction poolTransaction = it.next();
-
+    public boolean isValid() {
+        for (Transaction poolTransaction : transactionPool) {
             /*
              * If the output reference of any input in any transaction in the pool
              * matches any output reference in any input for the given transaction,

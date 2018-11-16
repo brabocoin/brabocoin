@@ -9,7 +9,7 @@ public class LegalTransactionFeesBlkRule extends BlockRule {
     private TransactionProcessor transactionProcessor;
 
     @Override
-    public boolean valid() {
+    public boolean isValid() {
         long sum = 0;
         for (Transaction transaction : block.getTransactions()) {
             if (transaction.isCoinbase()) {
