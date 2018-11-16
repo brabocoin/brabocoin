@@ -360,7 +360,7 @@ public class TransactionPool implements Iterable<Transaction> {
 
     /**
      * Get the iterator over all transactions in the transaction pool.
-     * This includes independent, dependent and orphan transactions.
+     * This includes independent and dependent transactions.
      *
      * @return Iterator over all transactions.
      */
@@ -368,7 +368,6 @@ public class TransactionPool implements Iterable<Transaction> {
     @Override
     public Iterator<Transaction> iterator() {
         return Iterators.concat(
-                orphanTransactions.iterator(),
                 independentTransactions.iterator(),
                 dependentTransactions.iterator()
         );

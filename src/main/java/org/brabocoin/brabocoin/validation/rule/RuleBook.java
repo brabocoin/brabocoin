@@ -29,7 +29,7 @@ public class RuleBook {
                     passedRule = false;
                 }
             } catch (NullPointerException e) {
-                LOGGER.log(Level.SEVERE, "Fact missing in class, {0}", rule.getClass().getName());
+                LOGGER.log(Level.SEVERE, "Rule failed: {0}", e.getMessage());
                 passedRule = false;
             }
 

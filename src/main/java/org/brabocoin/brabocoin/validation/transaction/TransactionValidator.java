@@ -50,6 +50,7 @@ public class TransactionValidator {
     );
 
     private static final RuleList AFTER_ORPHAN = new RuleList(
+            PoolDoubleSpendingTxRule.class,
             ValidInputUTXOTxRule.class,
             CoinbaseMaturityTxRule.class,
             OutputValueTxRule.class,
