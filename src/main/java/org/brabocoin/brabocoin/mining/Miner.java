@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.mining;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Block;
@@ -44,7 +43,7 @@ public class Miner {
      */
     private @Nullable MiningBlock block;
 
-    private boolean isStopped;
+    private volatile boolean isStopped;
 
     /**
      * Create a new miner that is able to mine a new block.
@@ -141,6 +140,8 @@ public class Miner {
     private @NotNull List<Transaction> collectTransactions() {
         // TODO: move to consensus?
         int availableBlockSize = consensus.getMaxBlockSize() - consensus.getMaxBlockHeaderSize();
+
+        // Compute the size in bytes really reserved for transactions (see protobuf serialization docs)
         int maxTransactionsSize =
             (int)Math.floor(availableBlockSize - Math.log(availableBlockSize) / Math
             .log(2)) - consensus.getMaxCoinbaseTransactionSize();
@@ -179,14 +180,5 @@ public class Miner {
         }
 
         return transactions;
-    }
-
-    public static void main(String[] args) {
-        Transaction transaction = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(new Output(Hashing.digestRIPEMD160(ByteString.copyFromUtf8("boterpotten")), Long.MAX_VALUE))
-        );
-
-        System.out.println(ProtoConverter.toProtoBytes(transaction, BrabocoinProtos.Transaction.class).size());
     }
 }
