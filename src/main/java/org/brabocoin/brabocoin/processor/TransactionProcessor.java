@@ -10,7 +10,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -267,18 +266,5 @@ public class TransactionProcessor {
         }
 
         transactionPool.limitTransactionPoolSize();
-    }
-
-    public UnspentOutputInfo findUnspentOutputInfo(Input input) throws DatabaseException {
-        UnspentOutputInfo chainUnspentOutputInfo = utxoFromChain.findUnspentOutputInfo(input);
-        if (chainUnspentOutputInfo != null) {
-            return chainUnspentOutputInfo;
-        }
-
-        return utxoFromPool.findUnspentOutputInfo(input);
-    }
-
-    public boolean isUnspentInChain(Input input) throws DatabaseException {
-        return utxoFromChain.isUnspent(input);
     }
 }
