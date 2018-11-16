@@ -49,21 +49,26 @@ public class Consensus {
     private static final Function<Hash, Hash> DOUBLE_SHA = (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
 
     /**
-     * The max nonce value, lazy loaded
+     * The max nonce value.
      */
-    private static BigInteger MAX_NONCE;
-
-    /**
-     * The block reward value, lazy loaded
-     */
-    private static long BLOCK_REWARD = -1;
+    private static final BigInteger MAX_NONCE = BigIntegerUtil.getMaxBigInteger(MAX_NONCE_SIZE);
 
     /**
      * The amount of miniBrabos that equals one Brabocoin.
      */
-    public static final long COIN = 1_000_000L;
+    private static final long COIN = 1_000_000L;
 
-    private final @NotNull Block GENESIS_BLOCK = new Block(
+    /**
+     * The block reward value.
+     */
+    private static final long BLOCK_REWARD = COIN * 10;
+
+    /**
+     * Minimum transaction fee in miniBrabos.
+     */
+    private static final long MINIMUM_TRANSACTION_FEE = 1;
+
+    private static final @NotNull Block GENESIS_BLOCK = new Block(
             new Hash(ByteString.EMPTY),
             new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
             TARGET_VALUE, // TODO: Determine target value
@@ -86,15 +91,16 @@ public class Consensus {
                 .orElse(null);
     }
 
+    public long getCoin() {
+        return COIN;
+    }
+
     /**
      * Determine amount of Brabocoin in a coinbase output.
      *
      * @return Amount in miniBrabo's
      */
     public long getBlockReward() {
-        if (BLOCK_REWARD < 0) {
-            BLOCK_REWARD = COIN * 10;
-        }
         return BLOCK_REWARD;
     }
 
@@ -102,26 +108,23 @@ public class Consensus {
         return GENESIS_BLOCK;
     }
 
-    public @NotNull long getMaxBlockSize() {
+    public long getMaxBlockSize() {
         return MAX_BLOCK_SIZE;
     }
 
-    public @NotNull int getMaxNonceSize() {
+    public int getMaxNonceSize() {
         return MAX_NONCE_SIZE;
     }
 
     public @NotNull BigInteger getMaxNonce() {
-        if (MAX_NONCE == null) {
-            MAX_NONCE = BigIntegerUtil.getMaxBigInteger(getMaxNonceSize());
-        }
         return MAX_NONCE;
     }
 
-    public @NotNull int getCoinbaseMaturityDepth() {
+    public int getCoinbaseMaturityDepth() {
         return COINBASE_MATURITY_DEPTH;
     }
 
-    public @NotNull long getMaxMoneyValue() {
+    public long getMaxMoneyValue() {
         return MAX_MONEY_VALUE;
     }
 
@@ -132,5 +135,14 @@ public class Consensus {
     public @NotNull Function<Hash, Hash> getMerkleTreeHashFunction()
     {
         return DOUBLE_SHA;
+    }
+
+    /**
+     * Minimum transaction fee in miniBrabos.
+     *
+     * @return Minimum transaction fee.
+     */
+    public long getMinimumTransactionFee() {
+        return MINIMUM_TRANSACTION_FEE;
     }
 }

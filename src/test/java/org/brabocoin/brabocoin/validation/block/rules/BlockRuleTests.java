@@ -126,7 +126,7 @@ class BlockRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(DuplicateCoinbaseBlkRule.class)
+                Collections.singletonList(UniqueUnspentCoinbaseBlkRule.class)
         ));
 
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
@@ -158,7 +158,7 @@ class BlockRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(DuplicateCoinbaseBlkRule.class)
+                Collections.singletonList(UniqueUnspentCoinbaseBlkRule.class)
         ));
 
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);

@@ -16,7 +16,14 @@ public class OutputValueTxRule extends TransactionRule {
                 return false;
             }
 
-            sum += output.getAmount();
+            try {
+                sum = Math.addExact(sum, output.getAmount());
+            }
+            catch (ArithmeticException e) {
+                // Sum overflows long type
+                return false;
+            }
+
             if (sum > consensus.getMaxMoneyValue()) {
                 return false;
             }

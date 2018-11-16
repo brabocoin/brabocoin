@@ -370,7 +370,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(OutputCountTxRule.class)
+                Collections.singletonList(InputOutputNotEmptyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -389,7 +389,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(OutputCountTxRule.class)
+                Collections.singletonList(InputOutputNotEmptyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -408,7 +408,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(OutputCountTxRule.class)
+                Collections.singletonList(InputOutputNotEmptyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -427,7 +427,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(OutputCountTxRule.class)
+                Collections.singletonList(InputOutputNotEmptyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -446,7 +446,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(OutputCountTxRule.class)
+                Collections.singletonList(InputOutputNotEmptyTxRule.class)
         ));
 
         FactMap facts = new FactMap();

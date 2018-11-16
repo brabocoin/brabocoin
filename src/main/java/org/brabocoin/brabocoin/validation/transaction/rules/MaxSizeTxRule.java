@@ -12,6 +12,8 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class MaxSizeTxRule extends TransactionRule {
     public boolean isValid() {
         int size = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class).getSerializedSize();
+
+        // TODO: change this when mining exists
         return size < consensus.getMaxBlockSize() + consensus.getMaxNonceSize();
     }
 }

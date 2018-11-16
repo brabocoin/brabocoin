@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-public class DuplicateCoinbaseBlkRule extends BlockRule {
+public class UniqueUnspentCoinbaseBlkRule extends BlockRule {
     private ReadonlyUTXOSet utxoSet;
 
     @Override

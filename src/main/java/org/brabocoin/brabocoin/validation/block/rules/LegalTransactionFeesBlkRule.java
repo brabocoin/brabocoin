@@ -29,7 +29,14 @@ public class LegalTransactionFeesBlkRule extends BlockRule {
                 return false;
             }
 
-            sum += fee;
+            try {
+                sum = Math.addExact(sum, fee);
+            }
+            catch (ArithmeticException e) {
+                // Sum overflows long type
+                return false;
+            }
+
             if (sum > consensus.getMaxMoneyValue()) {
                 return false;
             }

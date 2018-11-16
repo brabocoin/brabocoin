@@ -10,6 +10,6 @@ public class ContextualTransactionCheckBlkRule extends BlockRule {
     public boolean isValid() {
         return block.getTransactions().stream()
                 .skip(1)
-                .allMatch(t -> transactionValidator.checkTransactionBlockNonContextual(t).isPassed());
+                .allMatch(t -> transactionValidator.checkTransactionBlockContextual(t).isPassed());
     }
 }

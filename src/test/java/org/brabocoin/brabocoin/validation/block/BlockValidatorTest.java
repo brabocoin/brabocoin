@@ -23,7 +23,7 @@ import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.rules.NonContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.brabocoin.brabocoin.validation.transaction.rules.OutputCountTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -215,7 +215,7 @@ class BlockValidatorTest {
         assertEquals(ValidationStatus.INVALID, result.getStatus());
         assertEquals(NonContextualTransactionCheckBlkRule.class, result.getFailMarker().getFailedRule());
         assertTrue(result.getFailMarker().hasChild());
-        assertEquals(OutputCountTxRule.class, result.getFailMarker().getChild().getFailedRule());
+        assertEquals(InputOutputNotEmptyTxRule.class, result.getFailMarker().getChild().getFailedRule());
     }
 
     @Test

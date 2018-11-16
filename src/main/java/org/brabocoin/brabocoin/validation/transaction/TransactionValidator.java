@@ -2,16 +2,30 @@ package org.brabocoin.brabocoin.validation.transaction;
 
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
-import org.brabocoin.brabocoin.validation.transaction.rules.*;
+import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseCreationTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseMaturityTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.DuplicateInputTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputValueTxRange;
+import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.SufficientInputTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -24,7 +38,7 @@ public class TransactionValidator {
             DuplicatePoolTxRule.class,
             MaxSizeTxRule.class,
             CoinbaseCreationTxRule.class,
-            OutputCountTxRule.class,
+            InputOutputNotEmptyTxRule.class,
             DuplicateInputTxRule.class,
             PoolDoubleSpendingTxRule.class,
             ValidInputUTXOTxRule.class,
@@ -45,19 +59,16 @@ public class TransactionValidator {
     );
 
     private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
-            OutputCountTxRule.class,
-            MaxSizeTxRule.class,
+            InputOutputNotEmptyTxRule.class,
             OutputValueTxRule.class
     );
 
     private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
-            Arrays.asList(
-                    ValidInputUTXOTxRule.class,
-                    CoinbaseMaturityTxRule.class,
-                    InputValueTxRange.class,
-                    SufficientInputTxRule.class,
-                    SignatureTxRule.class
-            )
+            ValidInputUTXOTxRule.class,
+            CoinbaseMaturityTxRule.class,
+            InputValueTxRange.class,
+            SufficientInputTxRule.class,
+            SignatureTxRule.class
     );
     private Consensus consensus;
     private IndexedChain mainChain;

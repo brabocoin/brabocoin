@@ -44,7 +44,7 @@ public class BlockValidator {
     );
 
     private static final RuleList CONNECT_TO_CHAIN = new RuleList(
-            DuplicateCoinbaseBlkRule.class,
+            UniqueUnspentCoinbaseBlkRule.class,
             ContextualTransactionCheckBlkRule.class,
             LegalTransactionFeesBlkRule.class,
             ValidCoinbaseOutputAmountBlkRule.class

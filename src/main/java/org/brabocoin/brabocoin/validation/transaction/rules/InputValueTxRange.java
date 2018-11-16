@@ -34,7 +34,14 @@ public class InputValueTxRange extends TransactionRule {
                 return false;
             }
 
-            sum += unspentOutputInfo.getAmount();
+            try {
+                sum = Math.addExact(sum, unspentOutputInfo.getAmount());
+            }
+            catch (ArithmeticException e) {
+                // Sum overflows long type
+                return false;
+            }
+
             if (sum > consensus.getMaxMoneyValue()) {
                 return false;
             }

@@ -15,7 +15,7 @@ public class SufficientInputTxRule extends TransactionRule {
 
     public boolean isValid() {
         try {
-            return TransactionRuleUtil.computeFee(transaction, utxoSet) > 0;
+            return TransactionRuleUtil.computeFee(transaction, utxoSet) >= consensus.getMinimumTransactionFee();
         } catch (DatabaseException e) {
             e.printStackTrace();
             return false;
