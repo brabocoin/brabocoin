@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.validation.ValidationResult;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
-import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 
 public class TransactionValidationResult extends ValidationResult {
     /**
@@ -59,7 +59,7 @@ public class TransactionValidationResult extends ValidationResult {
 
         assert getFailMarker() != null;
 
-        if (getFailMarker().getFailedRule() == ValidInputTxRule.class) {
+        if (getFailMarker().getFailedRule() == ValidInputUTXOTxRule.class) {
             return ValidationStatus.ORPHAN;
         }
 

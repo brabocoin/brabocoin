@@ -2,13 +2,13 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -48,6 +48,11 @@ public class TransactionProcessor {
     private final @NotNull UTXODatabase utxoFromPool;
 
     /**
+     * The composite UTXO set.
+     */
+    private final @NotNull CompositeReadonlyUTXOSet compositeUTXOSet;
+
+    /**
      * Create a new transaction processor.
      *
      * @param transactionValidator The transaction validator.
@@ -64,6 +69,7 @@ public class TransactionProcessor {
         this.transactionPool = transactionPool;
         this.utxoFromChain = utxoFromChain;
         this.utxoFromPool = utxoFromPool;
+        this.compositeUTXOSet = new CompositeReadonlyUTXOSet(utxoFromChain, utxoFromPool);
     }
 
     /**
@@ -274,22 +280,5 @@ public class TransactionProcessor {
 
     public boolean isUnspentInChain(Input input) throws DatabaseException {
         return utxoFromChain.isUnspent(input);
-    }
-
-    public long computeFee(Transaction transaction) throws DatabaseException {
-        long outputSum = 0L;
-        for (Output output : transaction.getOutputs()) {
-            outputSum += output.getAmount();
-        }
-
-        long inputSum = 0L;
-        for (Input input : transaction.getInputs()) {
-            UnspentOutputInfo unspentOutputInfo;
-            unspentOutputInfo = findUnspentOutputInfo(input);
-
-            inputSum += unspentOutputInfo.getAmount();
-        }
-
-        return inputSum - outputSum;
     }
 }

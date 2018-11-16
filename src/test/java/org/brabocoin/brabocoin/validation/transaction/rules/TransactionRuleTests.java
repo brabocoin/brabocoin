@@ -116,10 +116,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -140,7 +147,7 @@ class TransactionRuleTests {
 
         FactMap facts = new FactMap();
         facts.put("mainChain", blockchain.getMainChain());
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         facts.put("transaction", spendCoinbase);
         facts.put("consensus", consensus);
 
@@ -173,10 +180,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -199,7 +213,7 @@ class TransactionRuleTests {
 
         FactMap facts = new FactMap();
         facts.put("mainChain", blockchain.getMainChain());
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         facts.put("transaction", spendCoinbase);
         facts.put("consensus", consensus);
 
@@ -457,10 +471,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -495,7 +516,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -511,10 +532,21 @@ class TransactionRuleTests {
                 ))
         );
 
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         transactionProcessor.processNewTransaction(negativeOutputTransaction);
 
@@ -534,7 +566,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -554,10 +586,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -592,7 +631,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -620,10 +659,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -668,7 +714,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -684,10 +730,21 @@ class TransactionRuleTests {
                 ))
         );
 
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         transactionProcessor.processNewTransaction(zeroOutputTransaction);
 
@@ -707,7 +764,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -727,10 +784,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -765,7 +829,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -781,11 +845,21 @@ class TransactionRuleTests {
                 ))
         );
 
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         transactionProcessor.processNewTransaction(positiveOutputTransaction);
 
         Transaction spendingTransaction = new Transaction(
@@ -804,7 +878,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTransaction);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -1066,10 +1140,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1110,7 +1191,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         facts.put("signer", signer);
 
         
@@ -1138,10 +1219,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1182,7 +1270,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         facts.put("signer", signer);
 
         
@@ -1210,10 +1298,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1254,7 +1349,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         facts.put("signer", signer);
 
         
@@ -1296,10 +1391,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1353,7 +1455,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -1394,10 +1496,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1451,7 +1560,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -1492,10 +1601,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1549,7 +1665,7 @@ class TransactionRuleTests {
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -1585,13 +1701,13 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(ValidInputChainUTXOTxRule.class)
+                Collections.singletonList(ValidInputUTXOTxRule.class)
         ));
 
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("chainUTXODatabase", chainUtxoDatabase);
+        facts.put("utxoSet", chainUtxoDatabase);
 
         
         assertFalse(ruleBook.run(facts).isPassed());
@@ -1617,10 +1733,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1651,13 +1774,13 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(ValidInputChainUTXOTxRule.class)
+                Collections.singletonList(ValidInputUTXOTxRule.class)
         ));
 
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("chainUTXODatabase", chainUtxoDatabase);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
         
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1682,10 +1805,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1716,13 +1846,13 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(ValidInputTxRule.class)
+                Collections.singletonList(ValidInputUTXOTxRule.class)
         ));
 
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -1748,10 +1878,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1773,13 +1910,13 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(ValidInputTxRule.class)
+                Collections.singletonList(ValidInputUTXOTxRule.class)
         ));
 
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertTrue(ruleBook.run(facts).isPassed());
@@ -1819,10 +1956,17 @@ class TransactionRuleTests {
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -1861,13 +2005,13 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(ValidInputTxRule.class)
+                Collections.singletonList(ValidInputUTXOTxRule.class)
         ));
 
         FactMap facts = new FactMap();
         facts.put("transaction", spendingTx);
         facts.put("consensus", consensus);
-        facts.put("transactionProcessor", transactionProcessor);
+        facts.put("utxoSet", new CompositeReadonlyUTXOSet(poolUtxo, chainUtxoDatabase));
 
         
         assertFalse(ruleBook.run(facts).isPassed());

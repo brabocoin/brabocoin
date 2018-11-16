@@ -2,46 +2,28 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.chain.IndexedChain;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.TransactionPool;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
-import org.brabocoin.brabocoin.validation.rule.RuleList;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test {@link BlockProcessor}.
@@ -62,6 +44,8 @@ class BlockProcessorTest {
     private TransactionPool transactionPool;
     private ChainUTXODatabase utxoFromChain;
     private UTXODatabase utxoFromPool;
+    private CompositeReadonlyUTXOSet compositeUtxo;
+    private Signer signer;
 
     @BeforeAll
     static void loadConfig() {
@@ -74,20 +58,6 @@ class BlockProcessorTest {
         };
     }
 
-    @BeforeEach
-    void setUp() throws DatabaseException {
-        blockValidator = new BlockValidator();
-        transactionValidator = new TransactionValidator();
-        consensus = new Consensus();
-        utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
-        utxoFromPool = new UTXODatabase(new HashMapDB());
-        utxoProcessor = new UTXOProcessor(utxoFromChain);
-        transactionPool = new TransactionPool(config, new Random());
-        transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
-        blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
-    }
-
     @AfterEach
     void tearDown() {
         // Remove block files
@@ -96,13 +66,45 @@ class BlockProcessorTest {
         }
     }
 
+    @BeforeEach
+    void setUp() throws DatabaseException {
+        consensus = new Consensus();
+        utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
+        utxoFromPool = new UTXODatabase(new HashMapDB());
+        utxoProcessor = new UTXOProcessor(utxoFromChain);
+        transactionPool = new TransactionPool(config, new Random());
+        blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
+        compositeUtxo = new CompositeReadonlyUTXOSet(utxoFromChain, utxoFromPool);
+        signer = new Signer(EllipticCurve.secp256k1());
+        transactionValidator = new TransactionValidator(
+                null, null, null, null, null,null
+        );
+        transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
+        blockValidator = new BlockValidator(
+                null, null, null, null, null,null
+        );
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+    }
+
     @Disabled
     @Test
     void invalidBlock() throws DatabaseException {
-        blockValidator = new BlockValidator() {
+        blockValidator = new BlockValidator(
+                null, null, null, null, null,null
+        ) {
             @Override
-            public BlockValidationResult checkBlockValid(@NotNull RuleList list, @NotNull Block block, Consensus consensus, TransactionValidator transactionValidator, TransactionProcessor transactionProcessor, IndexedChain mainChain, Blockchain blockchain, ChainUTXODatabase chainUTXODatabase, Signer signer) {
-                return new BlockValidationResult(new RuleBookResult());
+            public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
             }
         };
 

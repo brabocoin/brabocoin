@@ -47,7 +47,6 @@ public class RuleBook {
                 .map(r -> getInstantiatedRule(r, facts))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
     }
 
     private Rule getInstantiatedRule(Class<? extends Rule> ruleClass, FactMap facts) {

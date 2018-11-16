@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
+import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
@@ -73,10 +74,18 @@ class BlockValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        TransactionValidator transactionValidator = new TransactionValidator();
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         List<Transaction> transactionList = Collections.singletonList(
                 new Transaction(Collections.emptyList(),
@@ -97,18 +106,8 @@ class BlockValidatorTest {
                 transactionList
         );
 
-        BlockValidator validator = new BlockValidator();
-
-        BlockValidationResult result = validator.checkBlockValid(
-                BlockValidator.RuleLists.INCOMING_BLOCK,
-                block,
-                consensus,
-                transactionValidator,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                blockchain,
-                chainUtxoDatabase,
-                signer
+        BlockValidationResult result = blockValidator.checkIncomingBlockValid(
+                block
         );
 
         assertEquals(ValidationStatus.ORPHAN, result.getStatus());
@@ -125,10 +124,18 @@ class BlockValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        TransactionValidator transactionValidator = new TransactionValidator();
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         List<Transaction> transactionList = Collections.singletonList(
                 new Transaction(Collections.emptyList(),
@@ -149,18 +156,8 @@ class BlockValidatorTest {
                 transactionList
         );
 
-        BlockValidator validator = new BlockValidator();
-
-        BlockValidationResult result = validator.checkBlockValid(
-                BlockValidator.RuleLists.INCOMING_BLOCK,
-                block,
-                consensus,
-                transactionValidator,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                blockchain,
-                chainUtxoDatabase,
-                signer
+        BlockValidationResult result = blockValidator.checkIncomingBlockValid(
+                block
         );
 
         assertEquals(ValidationStatus.INVALID, result.getStatus());
@@ -178,10 +175,18 @@ class BlockValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        TransactionValidator transactionValidator = new TransactionValidator();
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         List<Transaction> transactionList = Arrays.asList(
                 new Transaction(Collections.emptyList(),
@@ -203,18 +208,8 @@ class BlockValidatorTest {
                 transactionList
         );
 
-        BlockValidator validator = new BlockValidator();
-
-        BlockValidationResult result = validator.checkBlockValid(
-                BlockValidator.RuleLists.INCOMING_BLOCK,
-                block,
-                consensus,
-                transactionValidator,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                blockchain,
-                chainUtxoDatabase,
-                signer
+        BlockValidationResult result = blockValidator.checkIncomingBlockValid(
+                block
         );
 
         assertEquals(ValidationStatus.INVALID, result.getStatus());
@@ -234,10 +229,18 @@ class BlockValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        TransactionValidator transactionValidator = new TransactionValidator();
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         List<Transaction> transactionList = Collections.singletonList(
                 new Transaction(Collections.emptyList(),
@@ -258,32 +261,14 @@ class BlockValidatorTest {
                 transactionList
         );
 
-        BlockValidator validator = new BlockValidator();
-
-        BlockValidationResult result = validator.checkBlockValid(
-                BlockValidator.RuleLists.INCOMING_BLOCK,
-                block,
-                consensus,
-                transactionValidator,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                blockchain,
-                chainUtxoDatabase,
-                signer
+        BlockValidationResult result = blockValidator.checkIncomingBlockValid(
+                block
         );
 
         assertEquals(ValidationStatus.VALID, result.getStatus());
 
-        result = validator.checkBlockValid(
-                BlockValidator.RuleLists.CONNECT_TO_CHAIN,
-                block,
-                consensus,
-                transactionValidator,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                blockchain,
-                chainUtxoDatabase,
-                signer
+        result = blockValidator.checkConnectBlockValid(
+                block
         );
 
         assertEquals(ValidationStatus.VALID, result.getStatus());

@@ -1,8 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.chain.IndexedChain;
-import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
@@ -14,8 +12,6 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
-import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
@@ -54,23 +50,53 @@ class TransactionProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        validator = new TransactionValidator();
         pool = new TransactionPool(config, new Random());
         consensus = new Consensus();
         utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
         utxoFromPool = new UTXODatabase(new HashMapDB());
+        validator = new TransactionValidator(
+                null,
+                null,
+                null,
+                utxoFromChain,
+                utxoFromPool,
+                null
+        );
         processor = new TransactionProcessor(validator, pool, utxoFromChain, utxoFromPool);
     }
 
     @Test
     @Disabled
     void processNewTransactionInvalid() throws DatabaseException {
-        validator = new TransactionValidator() {
+        validator = new TransactionValidator(
+                consensus,
+                null,
+                null,
+                utxoFromChain,
+                utxoFromPool,
+                null
+        ) {
             @Override
-            public TransactionValidationResult checkTransactionValid(@NotNull RuleList list, @NotNull Transaction transaction, Consensus consensus, TransactionProcessor transactionProcessor, IndexedChain mainChain, TransactionPool transactionPool, ChainUTXODatabase chainUTXODatabase, Signer signer) {
-                return new TransactionValidationResult(new RuleBookResult());
+            public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
+                return TransactionValidationResult.passed();
+            }
+
+            @Override
+            public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
+                return TransactionValidationResult.passed();
+            }
+
+            @Override
+            public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+                return TransactionValidationResult.passed();
+            }
+
+            @Override
+            public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                return TransactionValidationResult.passed();
             }
         };
+
 
         processor = new TransactionProcessor(validator, pool, utxoFromChain, utxoFromPool);
         Transaction transaction = Simulation.randomTransaction(5, 5);

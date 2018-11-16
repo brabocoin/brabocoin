@@ -9,9 +9,11 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
+import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
@@ -52,27 +54,25 @@ class TransactionValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                consensus,
-                /* shit... */
-        ),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
+        );
+        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
+                transactionPool, chainUtxoDatabase, poolUtxo);
+        BlockValidator blockValidator = new BlockValidator(
+                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
+        );
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
                 Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
         );
 
-        TransactionValidator validator = new TransactionValidator(consensus,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                transactionPool,
-                chainUtxoDatabase,
-                signer
-        );
-
-        RuleBookResult result = validator.checkTransactionValid(transaction);
+        RuleBookResult result = transactionValidator.checkTransactionValid(transaction);
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
@@ -83,22 +83,19 @@ class TransactionValidatorTest {
         BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
+        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
         TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
-                transactionPool, chainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
+        Signer signer = new Signer(EllipticCurve.secp256k1());
+        TransactionValidator transactionValidator = new TransactionValidator(
+                consensus, blockchain.getMainChain(), transactionPool, null, poolUtxo, signer
+        );
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
                 Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
         );
 
-        TransactionValidator validator = new TransactionValidator(consensus,
-                transactionProcessor,
-                blockchain.getMainChain(),
-                null,
-                chainUtxoDatabase,
-                signer);
-
-        assertThrows(IllegalStateException.class, () -> validator.checkTransactionValid(transaction));
+        assertThrows(IllegalStateException.class, () -> transactionValidator.checkTransactionValid(transaction));
     }
 }

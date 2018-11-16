@@ -1,9 +1,9 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
  * All signatures of the input must be valid.
  */
 public class SignatureTxRule extends TransactionRule {
-    private TransactionProcessor transactionProcessor;
+    private ReadonlyUTXOSet utxoSet;
 
     private Signer signer;
 
@@ -28,7 +28,7 @@ public class SignatureTxRule extends TransactionRule {
                     try {
                         return signer.verifySignature(
                                 Objects.requireNonNull(i.getSignature()),
-                                transactionProcessor.findUnspentOutputInfo(i).getAddress(),
+                                Objects.requireNonNull(utxoSet.findUnspentOutputInfo(i)).getAddress(),
                                 transaction.getSignableTransactionData());
                     } catch (DatabaseException e) {
                         e.printStackTrace();

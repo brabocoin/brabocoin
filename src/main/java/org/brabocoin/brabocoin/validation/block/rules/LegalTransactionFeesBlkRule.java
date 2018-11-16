@@ -1,12 +1,13 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
+import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
 
 public class LegalTransactionFeesBlkRule extends BlockRule {
-    private TransactionProcessor transactionProcessor;
+    private ReadonlyUTXOSet utxoSet;
 
     @Override
     public boolean isValid() {
@@ -18,7 +19,7 @@ public class LegalTransactionFeesBlkRule extends BlockRule {
 
             long fee;
             try {
-                fee = transactionProcessor.computeFee(transaction);
+                fee = TransactionRuleUtil.computeFee(transaction, utxoSet);
             } catch (DatabaseException e) {
                 e.printStackTrace();
                 return false;

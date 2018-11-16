@@ -348,11 +348,15 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null, null
+        ),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null, null
+        );
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
                 utxoProcessor,
@@ -424,10 +428,14 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null,null
+        );
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null
+        ),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -499,10 +507,12 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(
+                null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -560,10 +570,11 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,
@@ -626,10 +637,11 @@ class NodeMessageTest {
         Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
         ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator();
+        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
         TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(),
+        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
+                null, null, null, null, null,null),
                 transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
         BlockProcessor blockProcessor = new BlockProcessor(
                 blockchain,

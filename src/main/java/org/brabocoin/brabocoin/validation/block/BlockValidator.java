@@ -1,9 +1,8 @@
 package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -53,26 +52,23 @@ public class BlockValidator {
     private Consensus consensus;
     private TransactionValidator transactionValidator;
     private TransactionProcessor transactionProcessor;
-    private IndexedChain mainChain;
     private Blockchain blockchain;
-    private ChainUTXODatabase chainUTXODatabase;
+    private ReadonlyUTXOSet utxoSet;
     private Signer signer;
 
     public BlockValidator(
             Consensus consensus,
             TransactionValidator transactionValidator,
             TransactionProcessor transactionProcessor,
-            IndexedChain mainChain,
             Blockchain blockchain,
-            ChainUTXODatabase chainUTXODatabase,
+            ReadonlyUTXOSet utxoSet,
             Signer signer) {
 
         this.consensus = consensus;
         this.transactionValidator = transactionValidator;
         this.transactionProcessor = transactionProcessor;
-        this.mainChain = mainChain;
         this.blockchain = blockchain;
-        this.chainUTXODatabase = chainUTXODatabase;
+        this.utxoSet = utxoSet;
         this.signer = signer;
     }
 
@@ -83,9 +79,8 @@ public class BlockValidator {
 
         facts.put("transactionValidator", transactionValidator);
         facts.put("transactionProcessor", transactionProcessor);
-        facts.put("mainChain", mainChain);
         facts.put("blockchain", blockchain);
-        facts.put("chainUTXODatabase", chainUTXODatabase);
+        facts.put("utxoSet", utxoSet);
         facts.put("signer", signer);
 
         return facts;
@@ -99,7 +94,7 @@ public class BlockValidator {
         return BlockValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(block)));
     }
 
-    public BlockValidationResult checkConnectedOrphanBlockValid(@NotNull Block block) {
+    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
         return BlockValidationResult.from(new RuleBook(CONNECT_TO_CHAIN).run(createFactMap(block)));
     }
 }

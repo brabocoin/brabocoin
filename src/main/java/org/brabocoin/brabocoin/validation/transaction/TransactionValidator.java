@@ -2,11 +2,9 @@ package org.brabocoin.brabocoin.validation.transaction;
 
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
-import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.validation.*;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
@@ -29,7 +27,7 @@ public class TransactionValidator {
             OutputCountTxRule.class,
             DuplicateInputTxRule.class,
             PoolDoubleSpendingTxRule.class,
-            ValidInputTxRule.class,
+            ValidInputUTXOTxRule.class,
             CoinbaseMaturityTxRule.class,
             OutputValueTxRule.class,
             InputValueTxRange.class,
@@ -38,7 +36,7 @@ public class TransactionValidator {
     );
 
     private static final RuleList AFTER_ORPHAN = new RuleList(
-            ValidInputTxRule.class,
+            ValidInputUTXOTxRule.class,
             CoinbaseMaturityTxRule.class,
             OutputValueTxRule.class,
             InputValueTxRange.class,
@@ -54,7 +52,7 @@ public class TransactionValidator {
 
     private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
             Arrays.asList(
-                    ValidInputChainUTXOTxRule.class,
+                    ValidInputUTXOTxRule.class,
                     CoinbaseMaturityTxRule.class,
                     InputValueTxRange.class,
                     SufficientInputTxRule.class,
@@ -62,45 +60,47 @@ public class TransactionValidator {
             )
     );
     private Consensus consensus;
-    private TransactionProcessor transactionProcessor;
     private IndexedChain mainChain;
     private TransactionPool transactionPool;
-    private ChainUTXODatabase chainUTXODatabase;
+    private ReadonlyUTXOSet chainUTXODatabase;
+    private UTXODatabase poolUTXO;
+    private ReadonlyUTXOSet compositeUTXO;
     private Signer signer;
 
     /**
      * Construct transaction validator.
      *
-     * @param consensus            Consensus object
-     * @param transactionProcessor Transaction processor
-     * @param mainChain            The indexed main chain
-     * @param transactionPool      Transaction pool
-     * @param chainUTXODatabase    UTXO database for the main chian
-     * @param signer               Signer object
+     * @param consensus       Consensus object
+     * @param mainChain       The indexed main chain
+     * @param transactionPool Transaction pool
+     * @param chainUTXO       UTXO database for the main chain
+     * @param poolUTXO        Pool UTXO
+     * @param signer          Signer object
      */
     public TransactionValidator(
             Consensus consensus,
-            TransactionProcessor transactionProcessor,
             IndexedChain mainChain,
             TransactionPool transactionPool,
-            ChainUTXODatabase chainUTXODatabase,
+            ChainUTXODatabase chainUTXO,
+            UTXODatabase poolUTXO,
             Signer signer) {
         this.consensus = consensus;
-        this.transactionProcessor = transactionProcessor;
         this.mainChain = mainChain;
         this.transactionPool = transactionPool;
-        this.chainUTXODatabase = chainUTXODatabase;
+        this.chainUTXODatabase = chainUTXO;
+        this.poolUTXO = poolUTXO;
         this.signer = signer;
+
+        this.compositeUTXO = (chainUTXO != null && poolUTXO != null) ? new CompositeReadonlyUTXOSet(chainUTXO, poolUTXO) : null;
     }
 
-    private FactMap createFactMap(@NotNull Transaction transaction) {
+    private FactMap createFactMap(@NotNull Transaction transaction, ReadonlyUTXOSet utxoSet) {
         FactMap facts = new FactMap();
         facts.put("transaction", transaction);
         facts.put("consensus", consensus);
         facts.put("mainChain", mainChain);
-        facts.put("transactionProcessor", transactionProcessor);
         facts.put("transactionPool", transactionPool);
-        facts.put("chainUTXODatabase", chainUTXODatabase);
+        facts.put("utxoSet", utxoSet);
         facts.put("signer", signer);
 
         return facts;
@@ -113,7 +113,7 @@ public class TransactionValidator {
      * @return Whether the transaction is valid.
      */
     public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(transaction)));
+        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(transaction, compositeUTXO)));
     }
 
     /**
@@ -123,7 +123,7 @@ public class TransactionValidator {
      * @return Whether the transaction is valid.
      */
     public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction)));
+        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction, compositeUTXO)));
     }
 
     /**
@@ -133,7 +133,7 @@ public class TransactionValidator {
      * @return Whether the transaction is valid.
      */
     public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(transaction)));
+        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(transaction, chainUTXODatabase)));
     }
 
     /**
@@ -143,6 +143,6 @@ public class TransactionValidator {
      * @return Whether the transaction is valid.
      */
     public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(transaction)));
+        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(transaction, chainUTXODatabase)));
     }
 }
