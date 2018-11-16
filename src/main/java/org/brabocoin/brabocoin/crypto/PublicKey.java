@@ -73,7 +73,7 @@ public class PublicKey {
      *
      * @return The hash of the public key.
      */
-    public @NotNull Hash computeHash() {
+    public @NotNull Hash getHash() {
         return Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
     }
 

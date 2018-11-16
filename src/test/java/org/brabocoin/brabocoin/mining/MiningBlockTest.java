@@ -54,7 +54,7 @@ class MiningBlockTest {
         Block minedBlock = block.mine(new Consensus());
 
         assertNotNull(minedBlock);
-        assertTrue(minedBlock.computeHash().compareTo(minedBlock.getTargetValue()) <= 0);
+        assertTrue(minedBlock.getHash().compareTo(minedBlock.getTargetValue()) <= 0);
     }
 
     @Test

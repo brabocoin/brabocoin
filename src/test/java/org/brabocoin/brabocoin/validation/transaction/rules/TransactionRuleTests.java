@@ -1124,7 +1124,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        Hash coinbaseOutputAddress = publicKey.computeHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
                 Collections.emptyList(),
@@ -1203,7 +1203,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        Hash coinbaseOutputAddress = publicKey.computeHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
                 Collections.emptyList(),
@@ -1282,7 +1282,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        Hash coinbaseOutputAddress = publicKey.computeHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
                 Collections.emptyList(),

@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,14 +44,19 @@ class MinerTest {
         BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
         transactionPool = new TransactionPool(defaultConfig, random);
-        consensus = new Consensus();
+        consensus = new Consensus() {
+            @Override
+            public @NotNull Hash getTargetValue() {
+                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+            }
+        };
         miner = new Miner(transactionPool, consensus, random);
     }
 
     @Test
     void mineNewEmptyBlock() {
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),
@@ -75,7 +81,7 @@ class MinerTest {
         assertEquals(1, block.getTransactions().size());
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
-        assertTrue(block.computeHash().compareTo(block.getTargetValue()) <= 0);
+        assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
         assertEquals(consensus.getTargetValue(), block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
@@ -86,13 +92,13 @@ class MinerTest {
         // Check coinbase
         assertTrue(block.getTransactions().get(0).isCoinbase());
         assertEquals(address, block.getTransactions().get(0).getOutputs().get(0).getAddress());
-        assertEquals(consensus.getCoinbaseOutputAmount(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
+        assertEquals(consensus.getBlockReward(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
     }
 
     @Test
     void mineNewBlockSingleTransaction() {
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),
@@ -121,7 +127,7 @@ class MinerTest {
         assertEquals(2, block.getTransactions().size());
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
-        assertTrue(block.computeHash().compareTo(block.getTargetValue()) <= 0);
+        assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
         assertEquals(consensus.getTargetValue(), block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
@@ -132,16 +138,16 @@ class MinerTest {
         // Check coinbase
         assertTrue(block.getTransactions().get(0).isCoinbase());
         assertEquals(address, block.getTransactions().get(0).getOutputs().get(0).getAddress());
-        assertEquals(consensus.getCoinbaseOutputAmount(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
+        assertEquals(consensus.getBlockReward(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
 
         // Check transaction
-        assertEquals(transaction.computeHash(), block.getTransactions().get(1).computeHash());
+        assertEquals(transaction.getHash(), block.getTransactions().get(1).getHash());
     }
 
     @Test
     void mineNewBlockTransactionTooLarge() {
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),
@@ -170,7 +176,7 @@ class MinerTest {
         assertEquals(1, block.getTransactions().size());
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
-        assertTrue(block.computeHash().compareTo(block.getTargetValue()) <= 0);
+        assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
         assertEquals(consensus.getTargetValue(), block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
@@ -181,13 +187,13 @@ class MinerTest {
         // Check coinbase
         assertTrue(block.getTransactions().get(0).isCoinbase());
         assertEquals(address, block.getTransactions().get(0).getOutputs().get(0).getAddress());
-        assertEquals(consensus.getCoinbaseOutputAmount(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
+        assertEquals(consensus.getBlockReward(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
     }
 
     @Test
     void mineNewBlockMaxTransactionsReached() {
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),
@@ -220,7 +226,7 @@ class MinerTest {
         assertTrue(block.getTransactions().size() > 2);
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
-        assertTrue(block.computeHash().compareTo(block.getTargetValue()) <= 0);
+        assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
         assertEquals(consensus.getTargetValue(), block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
@@ -231,7 +237,7 @@ class MinerTest {
         // Check coinbase
         assertTrue(block.getTransactions().get(0).isCoinbase());
         assertEquals(address, block.getTransactions().get(0).getOutputs().get(0).getAddress());
-        assertEquals(consensus.getCoinbaseOutputAmount(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
+        assertEquals(consensus.getBlockReward(), block.getTransactions().get(0).getOutputs().get(0).getAmount());
     }
 
     @Test
@@ -246,7 +252,7 @@ class MinerTest {
         miner = new Miner(transactionPool, consensus, new Random());
 
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),
@@ -304,7 +310,7 @@ class MinerTest {
         miner = new Miner(transactionPool, consensus, new Random());
 
         IndexedBlock genesis = new IndexedBlock(
-            consensus.getGenesisBlock().computeHash(),
+            consensus.getGenesisBlock().getHash(),
             new BlockInfo(
                 consensus.getGenesisBlock().getPreviousBlockHash(),
                 consensus.getGenesisBlock().getMerkleRoot(),

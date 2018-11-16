@@ -63,7 +63,7 @@ public class Block implements ProtoModel<Block> {
     /**
      * The cached hash of this block.
      */
-    private Hash hash;
+    protected Hash hash;
 
     /**
      * Create a new block.
@@ -112,7 +112,8 @@ public class Block implements ProtoModel<Block> {
         return hash;
     }
 
-    private @NotNull ByteString getRawHeader() {
+    @NotNull
+    protected ByteString getRawHeader() {
         return getPreviousBlockHash().getValue()
                 .concat(getMerkleRoot().getValue())
                 .concat(getTargetValue().getValue())

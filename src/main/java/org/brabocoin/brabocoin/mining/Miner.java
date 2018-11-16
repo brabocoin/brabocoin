@@ -81,10 +81,10 @@ public class Miner {
         transactions.add(0, coinbase);
 
         List<Hash> hashes = transactions.stream()
-            .map(Transaction::computeHash)
+            .map(Transaction::getHash)
             .collect(Collectors.toList());
 
-        Hash merkleRoot = new MerkleTree(consensus.getMerkleHashingFunction(), hashes).getRoot();
+        Hash merkleRoot = new MerkleTree(consensus.getMerkleTreeHashFunction(), hashes).getRoot();
 
         BigInteger randomStartingNonce = new BigInteger(consensus.getMaxNonceSize() * 8, random);
 
@@ -109,7 +109,7 @@ public class Miner {
 
     private @NotNull Transaction createCoinbase(Hash coinbaseAddress, List<Transaction> transactions) {
         // TODO: do this better
-        long amount = consensus.getCoinbaseOutputAmount();
+        long amount = consensus.getBlockReward();
 
         return new Transaction(
             Collections.emptyList(),
@@ -139,7 +139,7 @@ public class Miner {
      */
     private @NotNull List<Transaction> collectTransactions() {
         // TODO: move to consensus?
-        int availableBlockSize = consensus.getMaxBlockSize() - consensus.getMaxBlockHeaderSize();
+        long availableBlockSize = consensus.getMaxBlockSize() - consensus.getMaxBlockHeaderSize();
 
         // Compute the size in bytes really reserved for transactions (see protobuf serialization docs)
         int maxTransactionsSize =

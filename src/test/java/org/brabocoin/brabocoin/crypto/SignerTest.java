@@ -58,7 +58,7 @@ class SignerTest {
         );
         assertThrows(
             IllegalArgumentException.class,
-            () -> signer.verifySignature(signature, signature.getPublicKey().computeHash(), ZERO)
+            () -> signer.verifySignature(signature, signature.getPublicKey().getHash(), ZERO)
         );
     }
 
@@ -67,7 +67,7 @@ class SignerTest {
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
         Signature signature = new Signature(BigInteger.ZERO, BigInteger.ZERO, publicKey);
-        boolean valid = signer.verifySignature(signature, signature.getPublicKey().computeHash(), ZERO);
+        boolean valid = signer.verifySignature(signature, signature.getPublicKey().getHash(), ZERO);
 
         assertFalse(valid);
     }
@@ -77,7 +77,7 @@ class SignerTest {
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
         Signature signature = new Signature(BigInteger.ZERO, BigInteger.TEN, publicKey);
-        boolean valid = signer.verifySignature(signature, signature.getPublicKey().computeHash(), ZERO);
+        boolean valid = signer.verifySignature(signature, signature.getPublicKey().getHash(), ZERO);
 
         assertFalse(valid);
     }
@@ -87,7 +87,7 @@ class SignerTest {
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(BigInteger.TEN);
 
         Signature signature = new Signature(CURVE.getDomain().getN(), BigInteger.TEN, publicKey);
-        boolean valid = signer.verifySignature(signature, signature.getPublicKey().computeHash(), ZERO);
+        boolean valid = signer.verifySignature(signature, signature.getPublicKey().getHash(), ZERO);
 
         assertFalse(valid);
     }
@@ -99,7 +99,7 @@ class SignerTest {
 
         Signature signature = signer.signMessage(message, privateKey);
 
-        assertTrue(signer.verifySignature(signature, signature.getPublicKey().computeHash(), message));
+        assertTrue(signer.verifySignature(signature, signature.getPublicKey().getHash(), message));
     }
 
     @Test
@@ -120,7 +120,7 @@ class SignerTest {
 
         Signature signature = signer.signMessage(message, privateKey);
 
-        assertFalse(signer.verifySignature(signature, signature.getPublicKey().computeHash(), corruptedMessage));
+        assertFalse(signer.verifySignature(signature, signature.getPublicKey().getHash(), corruptedMessage));
     }
 
     @Test
@@ -136,7 +136,7 @@ class SignerTest {
             signature.getPublicKey()
         );
 
-        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().computeHash(), message));
+        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().getHash(), message));
     }
 
     @Test
@@ -152,7 +152,7 @@ class SignerTest {
             signature.getPublicKey()
         );
 
-        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().computeHash(), message));
+        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().getHash(), message));
     }
 
     @Test
@@ -170,6 +170,6 @@ class SignerTest {
             corruptedPublicKey
         );
 
-        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().computeHash(), message));
+        assertFalse(signer.verifySignature(corruptedSignature, signature.getPublicKey().getHash(), message));
     }
 }

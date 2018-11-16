@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.mining;
 
+import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -78,7 +80,13 @@ public class MiningBlock extends Block {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isBlockHashValid() {
-        return computeHash().compareTo(getTargetValue()) <= 0;
+        return getHash().compareTo(getTargetValue()) <= 0;
+    }
+
+    @Override
+    public @NotNull Hash getHash() {
+        ByteString header = getRawHeader();
+        return Hashing.digestSHA256(Hashing.digestSHA256(header));
     }
 
     @Contract(" -> new")
