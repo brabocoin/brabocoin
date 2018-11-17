@@ -132,23 +132,23 @@ public class BlockDatabase {
      * <p>
      * Note that the undo file information is not available when
      * {@link BlockDatabase#storeBlockUndo(IndexedBlock, BlockUndo)} has not yet been called on
-     * the block. In that case, the offset and size field for the undo file are set to {@code 0}.
+     * the block. In that case, the offset and size field for the undo file are set to {@code -1}.
      *
      * @param block     The block to store.
-     * @param validated Whether the block is validated.
      * @return The block information of the added block.
      * @throws DatabaseException When the block could not be stored.
      */
-    public synchronized @NotNull BlockInfo storeBlock(@NotNull Block block, boolean validated) throws DatabaseException {
+    public synchronized @NotNull BlockInfo storeBlock(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Storing block.");
-        Hash hash = block.computeHash();
+        Hash hash = block.getHash();
         ByteString key = getBlockKey(hash);
         LOGGER.log(Level.FINEST, "key: {0}", toHexString(key));
 
         // Check if block is already stored
         if (storage.has(key)) {
             LOGGER.fine("Block is already stored.");
-            return setBlockValidationStatus(hash, validated);
+            //noinspection ConstantConditions
+            return findBlockInfo(hash);
         }
 
         // Get serialized block
@@ -177,7 +177,7 @@ public class BlockDatabase {
                 block.getTargetValue(),
                 block.getNonce(), block.getBlockHeight(),
                 block.getTransactions().size(),
-                validated,
+                true,
                 timestamp,
                 fileNumber,
                 offsetInFile,
@@ -230,7 +230,7 @@ public class BlockDatabase {
                 info.getNonce(),
                 info.getBlockHeight(),
                 info.getTransactionCount(),
-                info.isValidated(),
+                info.isValid(),
                 info.getTimeReceived(),
                 info.getFileNumber(),
                 info.getOffsetInFile(),
@@ -272,17 +272,15 @@ public class BlockDatabase {
     }
 
     /**
-     * Sets the validation status of the block with the given hash.
+     * Sets the block as invalid.
      *
      * @param blockHash The hash of the block.
-     * @param validated The validation status.
      * @return The updated block information.
      * @throws DatabaseException When the block is not stored in the database, or when the new status could not be
      *                           written to the database.
      */
-    public synchronized @NotNull BlockInfo setBlockValidationStatus(@NotNull Hash blockHash,
-                                                                    boolean validated) throws DatabaseException {
-        LOGGER.fine("Set block validation status.");
+    public synchronized @NotNull BlockInfo setBlockInvalid(@NotNull Hash blockHash) throws DatabaseException {
+        LOGGER.fine("Set block invalid.");
 
         ByteString key = getBlockKey(blockHash);
         BlockInfo info = findBlockInfo(blockHash);
@@ -297,7 +295,7 @@ public class BlockDatabase {
                 info.getTargetValue(),
                 info.getNonce(), info.getBlockHeight(),
                 info.getTransactionCount(),
-                validated,
+                false,
                 info.getTimeReceived(),
                 info.getFileNumber(),
                 info.getOffsetInFile(),

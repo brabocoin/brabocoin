@@ -60,9 +60,30 @@ public final class ByteUtil {
      * @return The hexadecimal representation of the bytes in a string.
      */
     public static String toHexString(ByteString byteString) {
+        return toHexString(byteString, byteString.size());
+    }
+
+    /**
+     * Convert a ByteString to a hexadecimal string representation of the bytes.
+     *
+     * @param byteString
+     *     The value to convert.
+     * @param size
+     *     The size (in bytes) the string is printed. If the size of the {@code byteString} is
+     *     smaller than the given size, the string is zero-padded.
+     * @return The hexadecimal representation of the bytes in a string.
+     */
+    public static String toHexString(ByteString byteString, int size) {
         if (byteString == null) {
             return "null";
         }
+
+        int lengthDifference = size - byteString.size();
+
+        if (lengthDifference > 0) {
+            byteString = ByteString.copyFrom(new byte[lengthDifference]).concat(byteString);
+        }
+
         return DatatypeConverter.printHexBinary(byteString.toByteArray());
     }
 }

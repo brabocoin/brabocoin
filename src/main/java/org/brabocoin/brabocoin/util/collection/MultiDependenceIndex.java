@@ -2,8 +2,15 @@ package org.brabocoin.brabocoin.util.collection;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -17,7 +24,7 @@ import java.util.function.Function;
  * @param <V> The value.
  * @param <D> The dependency.
  */
-public class MultiDependenceIndex<K, V, D> {
+public class MultiDependenceIndex<K, V, D> implements Iterable<V> {
 
     /**
      * Primary key index.
@@ -174,5 +181,15 @@ public class MultiDependenceIndex<K, V, D> {
      */
     public Set<K> keySet() {
         return primaryIndex.keySet();
+    }
+
+    /**
+     * Return an iterator over the values.
+     *
+     * @return Iterator of values.
+     */
+    @Override
+    public @NotNull Iterator<V> iterator() {
+        return primaryIndex.values().iterator();
     }
 }

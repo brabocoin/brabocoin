@@ -74,7 +74,7 @@ class BlockchainTest {
 
     @Test
     void genesisBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         assertTrue(blockchain.isBlockStored(hash));
 
         IndexedBlock topBlock = blockchain.getMainChain().getTopBlock();
@@ -84,38 +84,38 @@ class BlockchainTest {
 
     @Test
     void getBlockByIndexedBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         Block fromChain = blockchain.getBlock(block);
 
         assertNotNull(fromChain);
-        assertEquals(hash, fromChain.computeHash());
+        assertEquals(hash, fromChain.getHash());
     }
 
     @Test
     void getBlockByHash() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         Block fromChain = blockchain.getBlock(hash);
 
         assertNotNull(fromChain);
-        assertEquals(hash, fromChain.computeHash());
+        assertEquals(hash, fromChain.getHash());
     }
 
     @Test
     void isBlockStored() throws DatabaseException {
-        assertTrue(blockchain.isBlockStored(consensus.getGenesisBlock().computeHash()));
-        assertFalse(blockchain.isBlockStored(TEST_BLOCK.computeHash()));
+        assertTrue(blockchain.isBlockStored(consensus.getGenesisBlock().getHash()));
+        assertFalse(blockchain.isBlockStored(TEST_BLOCK.getHash()));
     }
 
     @Test
     void storeBlock() throws DatabaseException {
-        BlockInfo info = blockchain.storeBlock(TEST_BLOCK, true);
+        BlockInfo info = blockchain.storeBlock(TEST_BLOCK);
         assertNotNull(info);
     }
 
     @Test
     void getIndexedBlock() throws DatabaseException {
-        Hash hash = consensus.getGenesisBlock().computeHash();
+        Hash hash = consensus.getGenesisBlock().getHash();
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         assertNotNull(block);
         assertEquals(hash, block.getHash());
@@ -123,7 +123,7 @@ class BlockchainTest {
 
     @Test
     void getIndexedBlockNotPresent() throws DatabaseException {
-        Hash hash = new Hash(TEST_BLOCK.computeHash().getValue().substring(1));
+        Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         IndexedBlock block = blockchain.getIndexedBlock(hash);
         assertNull(block);
     }
@@ -131,19 +131,19 @@ class BlockchainTest {
     @Test
     void isOrphanNonExistent() {
         IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        assertFalse(blockchain.isOrphan(block));
+        assertFalse(blockchain.isOrphan(block.getHash()));
     }
 
     @Test
     void addOrphan() {
-        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
         blockchain.addOrphan(block);
-        assertTrue(blockchain.isOrphan(block));
+        assertTrue(blockchain.isOrphan(block.getHash()));
     }
 
     @Test
     void findBlockUndoNonExistent() throws DatabaseException {
-        Hash hash = new Hash(TEST_BLOCK.computeHash().getValue().substring(1));
+        Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         assertNull(blockchain.findBlockUndo(hash));
     }
 
@@ -157,8 +157,8 @@ class BlockchainTest {
 
     @Test
     void removeOrphansOfParentEmpty() {
-        List<IndexedBlock> blocks = Simulation.randomIndexedBlockChainGenerator(2);
-        Hash parent = blocks.get(0).getBlockInfo().getPreviousBlockHash();
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Hash parent = blocks.get(0).getPreviousBlockHash();
         assertTrue(blockchain.removeOrphansOfParent(parent).isEmpty());
 
         blockchain.addOrphan(blocks.get(1));
@@ -167,13 +167,13 @@ class BlockchainTest {
 
     @Test
     void removeSingleOrphanOfParent() {
-        List<IndexedBlock> blocks = Simulation.randomIndexedBlockChainGenerator(2);
-        IndexedBlock orphan =  blocks.get(0);
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Block orphan =  blocks.get(0);
 
         blockchain.addOrphan(orphan);
         blockchain.addOrphan(blocks.get(1));
 
-        Set<IndexedBlock> orphans = blockchain.removeOrphansOfParent(orphan.getBlockInfo().getPreviousBlockHash());
+        Set<Block> orphans = blockchain.removeOrphansOfParent(orphan.getPreviousBlockHash());
 
         assertEquals(1, orphans.size());
         assertEquals(orphan.getHash(), orphans.stream().findFirst().get().getHash());
@@ -181,25 +181,21 @@ class BlockchainTest {
 
     @Test
     void removeMultipleOrphansOfParent() {
-        IndexedBlock block1 = Simulation.randomIndexedBlockChainGenerator(1).get(0);
-        Hash parent = block1.getBlockInfo().getPreviousBlockHash();
-        BlockInfo newBlockInfo = new BlockInfo(
-            parent,
-            block1.getBlockInfo().getMerkleRoot(),
-            block1.getBlockInfo().getTargetValue(),
-            block1.getBlockInfo().getNonce(), 0,
-            block1.getBlockInfo().getTransactionCount(),
-            true,
-            0,
-            0,0,0,0,0
+        Block block1 = Simulation.randomBlockChainGenerator(1).get(0);
+        Hash parent = block1.getPreviousBlockHash();
+        Block block2 = new Block(
+                parent,
+                block1.getMerkleRoot(),
+                block1.getTargetValue(),
+                block1.getNonce(),
+                0,
+                block1.getTransactions()
         );
-
-        IndexedBlock block2 = new IndexedBlock(Simulation.randomHash(), newBlockInfo);
 
         blockchain.addOrphan(block1);
         blockchain.addOrphan(block2);
 
-        Set<IndexedBlock> orphans = blockchain.removeOrphansOfParent(parent);
+        Set<Block> orphans = blockchain.removeOrphansOfParent(parent);
         assertEquals(2, orphans.size());
     }
 

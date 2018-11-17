@@ -4,12 +4,15 @@ import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.model.proto.BigIntegerByteStringConverter;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +45,8 @@ public class Block implements ProtoModel<Block> {
     /**
      * Nonce used for the proof-of-work.
      */
-    @ProtoField
-    private final @NotNull ByteString nonce;
+    @ProtoField(converter = BigIntegerByteStringConverter.class)
+    private final @NotNull BigInteger nonce;
 
     /**
      * The height of the block in the block chain.
@@ -58,22 +61,21 @@ public class Block implements ProtoModel<Block> {
     private final List<Transaction> transactions;
 
     /**
+     * The cached hash of this block.
+     */
+    protected Hash hash;
+
+    /**
      * Create a new block.
      *
-     * @param previousBlockHash
-     *         Hash of the previous block in the blockchain.
-     * @param merkleRoot
-     *         Hash of the Merkle root.
-     * @param targetValue
-     *         Target value for the proof-of-work.
-     * @param nonce
-     *         Nonce for the proof-of-work.
-     * @param blockHeight
-     *         Height of the block in the blockchain.
-     * @param transactions
-     *         List of transactions contained in this block.
+     * @param previousBlockHash Hash of the previous block in the blockchain.
+     * @param merkleRoot        Hash of the Merkle root.
+     * @param targetValue       Target value for the proof-of-work.
+     * @param nonce             Nonce for the proof-of-work.
+     * @param blockHeight       Height of the block in the blockchain.
+     * @param transactions      List of transactions contained in this block.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull ByteString nonce, int blockHeight, List<Transaction> transactions) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -83,24 +85,40 @@ public class Block implements ProtoModel<Block> {
     }
 
     /**
-     * Computes the block hash.
+     * Gets the coinbase transaction, which is the first transaction by convention.
+     *
+     * @return The coinbase transaction.
+     */
+    public @Nullable Transaction getCoinbaseTransaction() {
+        if (getTransactions().size() > 0) {
+            return getTransactions().get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the block hash using lazy computation if not available.
      * <p>
      * The hash of a block is the hashed output of the block header data only.
      * The hash is computed by applying the SHA-256 hashing function twice.
      *
      * @return The block hash.
      */
-    public @NotNull Hash computeHash() {
-        ByteString header = getRawHeader();
-        return Hashing.digestSHA256(Hashing.digestSHA256(header));
+    public @NotNull Hash getHash() {
+        if (hash == null) {
+            ByteString header = getRawHeader();
+            hash = Hashing.digestSHA256(Hashing.digestSHA256(header));
+        }
+        return hash;
     }
 
-    private @NotNull ByteString getRawHeader() {
-        return previousBlockHash.getValue()
-                .concat(merkleRoot.getValue())
-                .concat(targetValue.getValue())
-                .concat(ByteUtil.toByteString(blockHeight))
-                .concat(nonce);
+    @NotNull
+    protected ByteString getRawHeader() {
+        return getPreviousBlockHash().getValue()
+                .concat(getMerkleRoot().getValue())
+                .concat(getTargetValue().getValue())
+                .concat(ByteUtil.toByteString(getBlockHeight()))
+                .concat(ByteString.copyFrom(getNonce().toByteArray()));
     }
 
     public @NotNull Hash getPreviousBlockHash() {
@@ -115,7 +133,7 @@ public class Block implements ProtoModel<Block> {
         return targetValue;
     }
 
-    public @NotNull ByteString getNonce() {
+    public @NotNull BigInteger getNonce() {
         return nonce;
     }
 
@@ -141,8 +159,8 @@ public class Block implements ProtoModel<Block> {
         private Hash.Builder merkleRoot;
         @ProtoField
         private Hash.Builder targetValue;
-        @ProtoField
-        private ByteString nonce;
+        @ProtoField(converter = BigIntegerByteStringConverter.class)
+        private BigInteger nonce;
         @ProtoField
         private int blockHeight;
         @ProtoField
@@ -163,7 +181,7 @@ public class Block implements ProtoModel<Block> {
             return this;
         }
 
-        public Builder setNonce(ByteString nonce) {
+        public Builder setNonce(BigInteger nonce) {
             this.nonce = nonce;
             return this;
         }
@@ -183,7 +201,8 @@ public class Block implements ProtoModel<Block> {
             return new Block(previousBlockHash.build(),
                     merkleRoot.build(),
                     targetValue.build(),
-                    nonce, blockHeight,
+                    nonce,
+                    blockHeight,
                     transactions.stream()
                             .map(Transaction.Builder::build)
                             .collect(Collectors.toList())

@@ -29,8 +29,8 @@ class BlockTest{
             add(new Transaction(inputList, outputList));
         }};
 
-        Block block = new Block(dummyHash, dummyHash, dummyHash, dummyByteString, 7, transactionList);
-        Hash blockHash = block.computeHash();
+        Block block = new Block(dummyHash, dummyHash, dummyHash, Simulation.randomBigInteger(), 7, transactionList);
+        Hash blockHash = block.getHash();
         assertNotNull(blockHash);
     }
 }

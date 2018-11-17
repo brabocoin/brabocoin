@@ -112,7 +112,7 @@ public class Signer {
         LOGGER.fine("Verifying a signature.");
 
         LOGGER.fine("Checking if public key hash corresponds to public key in signature.");
-        if (!signature.getPublicKey().computeHash().equals(publicKeyHash)) {
+        if (!signature.getPublicKey().getHash().equals(publicKeyHash)) {
             LOGGER.fine("Public key hash does not match signature public key: signature invalid.");
             return false;
         }

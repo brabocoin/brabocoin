@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,12 +34,15 @@ public class Transaction implements ProtoModel<Transaction> {
     private final @NotNull List<Output> outputs;
 
     /**
+     * Cached hash of this transaction.
+     */
+    private Hash hash;
+
+    /**
      * Create a new transaction.
      *
-     * @param inputs
-     *         inputs used by the transaction.
-     * @param outputs
-     *         outputs used by the transaction.
+     * @param inputs  inputs used by the transaction.
+     * @param outputs outputs used by the transaction.
      */
     public Transaction(@NotNull List<Input> inputs, @NotNull List<Output> outputs) {
         this.inputs = new ArrayList<>(inputs);
@@ -64,16 +68,19 @@ public class Transaction implements ProtoModel<Transaction> {
     }
 
     /**
-     * Computes the transaction hash.
+     * Gets the transaction hash using lazy computation if not available.
      * <p>
      * The hash of a block is the hashed output of the full transaction data.
      * The hash is computed by applying the SHA-256 hashing function twice.
      *
      * @return The transaction hash.
      */
-    public @NotNull Hash computeHash() {
-        ByteString data = getRawData();
-        return Hashing.digestSHA256(Hashing.digestSHA256(data));
+    public @NotNull Hash getHash() {
+        if (hash == null) {
+            ByteString data = getRawData();
+            hash = Hashing.digestSHA256(Hashing.digestSHA256(data));
+        }
+        return hash;
     }
 
     private @NotNull ByteString getRawData() {
@@ -110,5 +117,32 @@ public class Transaction implements ProtoModel<Transaction> {
                     outputs.stream().map(Output.Builder::build).collect(Collectors.toList())
             );
         }
+    }
+
+    /**
+     * Get the ByteString of this transaction without signature.
+     *
+     * @return ByteString of this transaction without signature.
+     */
+    public ByteString getSignableTransactionData() {
+        return ProtoConverter.toProtoBytes(new Transaction(
+                inputs.stream().map(
+                        i -> new Input(
+                                null,
+                                i.getReferencedTransaction(),
+                                i.getReferencedOutputIndex()
+                        )
+                ).collect(Collectors.toList()),
+                outputs
+        ), BrabocoinProtos.Transaction.class);
+    }
+
+    public Transaction getSignedTransaction(Map<Input, Signature> signatureMap) {
+        return new Transaction(
+                inputs.stream()
+                        .map(i -> new Input(signatureMap.get(i), i.getReferencedTransaction(), i.getReferencedOutputIndex()))
+                        .collect(Collectors.toList()),
+                outputs
+        );
     }
 }
