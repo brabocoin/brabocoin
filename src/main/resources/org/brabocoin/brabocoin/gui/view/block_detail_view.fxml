@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.Double?>
+<?import javafx.scene.control.TextField?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -17,47 +18,41 @@
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <Label fx:id="titleLabel" styleClass="side-pane-title" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
 
-        <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <Label fx:id="hashLabel" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 
     <TitledPane collapsible="false" text="Block header">
         <GridPane vgap="$vgap" hgap="$hgap">
-            <Label text="Block height" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <Label fx:id="blockHeightLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="Block height" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="blockHeightField" editable="false" styleClass="label-like" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Nonce" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <Label fx:id="nonceLabel" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Nonce" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="nonceField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <Label fx:id="targetValueLabel" styleClass="hash" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="targetValueField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Merkle root" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <Label fx:id="merkleRootLabel" styleClass="hash" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            <Label text="Merkle root" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="merkleRootField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Previous block hash" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <Label fx:id="previousBlockHashLabel" styleClass="hash" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+            <Label text="Previous block hash" GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="previousBlockHashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="4" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
         </GridPane>
     </TitledPane>
     <TitledPane collapsible="false" text="Block details">
         <GridPane vgap="$vgap" hgap="$hgap">
-            <Label text="Time received" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <Label fx:id="timestampLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="Time received" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="timestampField" editable="false" styleClass="label-like" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Number of transactions" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <Label fx:id="numTransactionsLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Number of transactions" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="numTransactionsField" editable="false" styleClass="label-like" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Output total" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <Label fx:id="outputTotalLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Output total" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="outputTotalField" editable="false" styleClass="label-like" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Transaction fees" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <Label fx:id="feesLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-
-            <Label text="Block reward" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <Label fx:id="rewardLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-
-            <Label text="Size" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-            <Label fx:id="sizeLabel" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            <Label text="Size" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="sizeField" editable="false" styleClass="label-like" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
         </GridPane>
     </TitledPane>
     <TitledPane collapsible="false" text="Transactions">

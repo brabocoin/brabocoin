@@ -53,3 +53,13 @@
     -fx-text-fill: derive(-fx-mid-text-color, 30%);
     -fx-font-size: 2em;
 }
+
+.text-input.label-like {
+    -fx-text-fill: -fx-text-background-color;
+    -fx-highlight-text-fill: white;
+
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}

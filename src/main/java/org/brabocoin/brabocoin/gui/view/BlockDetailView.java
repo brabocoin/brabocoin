@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -34,20 +35,18 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private final @NotNull Blockchain blockchain;
 
     @FXML private Label titleLabel;
-    @FXML private Label hashLabel;
+    @FXML private TextField hashField;
 
-    @FXML private Label blockHeightLabel;
-    @FXML private Label nonceLabel;
-    @FXML private Label targetValueLabel;
-    @FXML private Label merkleRootLabel;
-    @FXML private Label previousBlockHashLabel;
+    @FXML private TextField blockHeightField;
+    @FXML private TextField nonceField;
+    @FXML private TextField targetValueField;
+    @FXML private TextField merkleRootField;
+    @FXML private TextField previousBlockHashField;
 
-    @FXML private Label timestampLabel;
-    @FXML private Label numTransactionsLabel;
-    @FXML private Label outputTotalLabel;
-    @FXML private Label feesLabel;
-    @FXML private Label rewardLabel;
-    @FXML private Label sizeLabel;
+    @FXML private TextField timestampField;
+    @FXML private TextField numTransactionsField;
+    @FXML private TextField outputTotalField;
+    @FXML private TextField sizeField;
 
     private final ObjectProperty<IndexedBlock> block = new SimpleObjectProperty<>();
 
@@ -83,31 +82,31 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         }
 
         titleLabel.setText("Block #" + indexedBlock.getBlockInfo().getBlockHeight());
-        hashLabel.setText(ByteUtil.toHexString(indexedBlock.getHash().getValue()));
+        hashField.setText(ByteUtil.toHexString(indexedBlock.getHash().getValue(), 32));
 
-        blockHeightLabel.setText(String.valueOf(indexedBlock.getBlockInfo().getBlockHeight()));
+        blockHeightField.setText(String.valueOf(indexedBlock.getBlockInfo().getBlockHeight()));
 
         long timestamp = indexedBlock.getBlockInfo().getTimeReceived();
         Instant instant = Instant.ofEpochSecond(timestamp);
         LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
-        timestampLabel.setText(DATE_FORMATTER.format(time));
-        nonceLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getNonce()));
-        targetValueLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getTargetValue().getValue()));
-        merkleRootLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getMerkleRoot().getValue()));
-        previousBlockHashLabel.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getPreviousBlockHash().getValue()));
+        timestampField.setText(DATE_FORMATTER.format(time));
+        nonceField.setText(indexedBlock.getBlockInfo().getNonce().toString(16));
+        targetValueField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getTargetValue().getValue(), 32));
+        merkleRootField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getMerkleRoot().getValue(), 32));
+        previousBlockHashField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getPreviousBlockHash().getValue(), 32));
 
-        numTransactionsLabel.setText(String.valueOf(indexedBlock.getBlockInfo().getTransactionCount()));
+        numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo().getTransactionCount()));
 
         int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
         double sizeKiloBytes = sizeBytes / 1000.0;
-        sizeLabel.setText(String.format("%.3f kB", sizeKiloBytes));
+        sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
 
         long totalOutput = block.getTransactions().stream()
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
             .sum();
-        outputTotalLabel.setText(String.valueOf(totalOutput) + " BRC");
+        outputTotalField.setText(String.valueOf(totalOutput) + " BRC");
 
         // TODO: block reward and transaction fees
 
