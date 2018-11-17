@@ -60,4 +60,14 @@ public class MockBraboConfig implements BraboConfig {
     public int maxOrphanTransactions() {
         return delegator.maxOrphanTransactions();
     }
+
+    @Override
+    public int listenPort() {
+        return delegator.listenPort();
+    }
+
+    @Override
+    public int servicePort() {
+        return delegator.servicePort();
+    }
 }
