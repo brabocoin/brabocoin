@@ -4,8 +4,10 @@ plugins {
     id 'com.google.protobuf' version '0.8.6'
 }
 
-group 'org.brabocoin'
-version '0.1-SNAPSHOT'
+allprojects {
+    group 'org.brabocoin'
+    version '0.1-SNAPSHOT'
+}
 
 sourceCompatibility = 1.8
 
@@ -13,7 +15,6 @@ repositories {
     mavenCentral()
     jcenter()
     maven { url 'https://jitpack.io' }
-    maven { url 'http://maven.bestsolution.at/efxclipse-releases/' }
 }
 
 dependencies {
@@ -28,8 +29,6 @@ dependencies {
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
     compile('org.jetbrains:annotations:16.0.2')
-    compile('org.controlsfx:controlsfx:8.40.14')
-    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
 
     implementation('com.github.BAData:protobuf-converter:1.1.5')
 
@@ -37,6 +36,22 @@ dependencies {
     testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
     testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url 'https://jitpack.io' }
+        maven { url 'http://maven.bestsolution.at/efxclipse-releases/' }
+    }
+
+    dependencies {
+        compile project(':')
+    }
 }
 
 protobuf {
@@ -77,7 +92,7 @@ jar {
     manifest {
         attributes(
             'Implementation-Version': version,
-            'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
         )
     }
 }
