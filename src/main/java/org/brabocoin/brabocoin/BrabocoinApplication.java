@@ -40,16 +40,6 @@ public class BrabocoinApplication {
     private static final Logger LOGGER = Logger.getLogger(BrabocoinApplication.class.getName());
 
     /**
-     * Default listen port. TODO: Move to config?
-     */
-    private static final int DEFAULT_LISTEN_PORT = 56120;
-
-    /**
-     * Default service port. TODO: Move to config?
-     */
-    private static final int DEFAULT_SERVICE_PORT = 56129;
-
-    /**
      * Default configuration file.
      */
     private static final BraboConfig DEFAULT_CONFIG = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
@@ -141,9 +131,9 @@ public class BrabocoinApplication {
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
 
         return new Node(
-            DEFAULT_LISTEN_PORT,
+            config.listenPort(),
             new NodeEnvironment(
-                DEFAULT_SERVICE_PORT,
+                config.servicePort(),
                 blockchain,
                 blockProcessor,
                 peerProcessor,
