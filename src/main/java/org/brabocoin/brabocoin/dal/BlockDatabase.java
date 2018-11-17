@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -83,6 +84,13 @@ public class BlockDatabase {
         if (!directory.isDirectory()) {
             LOGGER.severe("Block storage directory is not a directory.");
             throw new DatabaseException("Block storage directory is not a directory.");
+        }
+
+        try {
+            storage.open();
+        }
+        catch (IOException e) {
+            throw new DatabaseException("Database could not be opened.", e);
         }
 
         ByteString key = getCurrentFileKey();

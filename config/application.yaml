@@ -1,9 +1,9 @@
 brabo:
   loopInterval: 500                   # The interval in the main node loop, in milliseconds
-  targetPeerCount: 25                 # Target of number of peers at which we stop discovering new peers
+  targetPeerCount: 1                  # Target of number of peers at which we stop discovering new peers
   bootstrapDeadline: 2000             # In milliseconds per bootstrapping peer
   bootstrapPeers:                     # List of peers known at startup
-  - localhost:1234
+  - brabocoin.org:56129               #  - Dictator node
   databaseDirectory: db               # Database subfolder
   blockStoreDirectory: data/blocks    # Subfolder to store block data
   utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data

@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Level;
@@ -42,8 +43,15 @@ public class UTXODatabase implements ReadonlyUTXOSet {
      * @param storage
      *     The key-value store to use for the database.
      */
-    public UTXODatabase(@NotNull KeyValueStore storage) {
+    public UTXODatabase(@NotNull KeyValueStore storage) throws DatabaseException {
         this.storage = storage;
+
+        try {
+            storage.open();
+        }
+        catch (IOException e) {
+            throw new DatabaseException("Database could not be opened.", e);
+        }
     }
 
     @Override

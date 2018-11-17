@@ -17,6 +17,7 @@ import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -40,7 +41,7 @@ public class Node {
      * Service parameters
      */
     private final Server server;
-    NodeEnvironment environment;
+    @NotNull private NodeEnvironment environment;
 
     /**
      * Captures the request attributes. Useful for testing ServerCalls.
@@ -301,5 +302,9 @@ public class Node {
 
             responseObserver.onCompleted();
         }
+    }
+
+    public @NotNull NodeEnvironment getEnvironment() {
+        return environment;
     }
 }

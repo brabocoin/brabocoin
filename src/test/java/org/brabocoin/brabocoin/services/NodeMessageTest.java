@@ -96,7 +96,7 @@ class NodeMessageTest {
         responder.start();
         greeter.start();
 
-        assertEquals(3, greeter.environment.getPeers().size());
+        assertEquals(3, greeter.getEnvironment().getPeers().size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -139,7 +139,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
         StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
@@ -211,7 +211,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
         StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
@@ -284,7 +284,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
         StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
@@ -391,7 +391,7 @@ class NodeMessageTest {
 
         Hash announceHash = Simulation.randomHash();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         nodeBpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
             @Override
             public void onNext(Empty value) {
@@ -471,7 +471,7 @@ class NodeMessageTest {
 
         Hash announceHash = Simulation.randomHash();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         nodeBpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
             @Override
             public void onNext(Empty value) {
@@ -546,7 +546,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
         BlockHeight blockHeight = ProtoConverter.toDomain(nodeBpeer.getBlockingStub().discoverTopBlockHeight(Empty.newBuilder().build()), BlockHeight.Builder.class);
 
@@ -608,7 +608,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
         ChainCompatibility chainCompatibility = ProtoConverter.toDomain(
                 nodeBpeer.getBlockingStub().checkChainCompatible(
@@ -675,7 +675,7 @@ class NodeMessageTest {
         nodeA.start();
         nodeB.start();
 
-        Peer nodeBpeer = nodeB.environment.getPeers().iterator().next();
+        Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
         Iterator<BrabocoinProtos.Hash> hashIterator = nodeBpeer.getBlockingStub().seekBlockchain(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
 

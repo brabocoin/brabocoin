@@ -119,13 +119,13 @@ public class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        nodeB.environment.announceBlockRequest(nodeB.environment.getBlock(newBlockHash));
+        nodeB.getEnvironment().announceBlockRequest(nodeB.getEnvironment().getBlock(newBlockHash));
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() >= 1);
 
-        assertNotNull(nodeA.environment.getBlock(newBlockHash));
-        assertEquals(1, nodeA.environment.getTopBlockHeight());
+        assertNotNull(nodeA.getEnvironment().getBlock(newBlockHash));
+        assertEquals(1, nodeA.getEnvironment().getTopBlockHeight());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -203,13 +203,13 @@ public class NodeTest {
         nodeB.start();
         nodeC.start();
 
-        nodeC.environment.announceBlockRequest(nodeC.environment.getBlock(newBlockHash));
+        nodeC.getEnvironment().announceBlockRequest(nodeC.getEnvironment().getBlock(newBlockHash));
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() >= 1);
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() >= 1);
 
-        assertNotNull(nodeA.environment.getBlock(newBlockHash));
-        assertEquals(1, nodeA.environment.getTopBlockHeight());
+        assertNotNull(nodeA.getEnvironment().getBlock(newBlockHash));
+        assertEquals(1, nodeA.getEnvironment().getTopBlockHeight());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -258,13 +258,13 @@ public class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        nodeB.environment.announceTransactionRequest(nodeB.environment.getTransaction(newTransactionHash));
+        nodeB.getEnvironment().announceTransactionRequest(nodeB.getEnvironment().getTransaction(newTransactionHash));
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+                .until(() -> nodeA.getEnvironment().getTransactionHashSet().contains(newTransactionHash));
 
-        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
-        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+        assertNotNull(nodeA.getEnvironment().getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.getEnvironment().getTransactionHashSet().size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -335,13 +335,13 @@ public class NodeTest {
         nodeB.start();
         nodeC.start();
 
-        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
+        nodeC.getEnvironment().announceTransactionRequest(nodeC.getEnvironment().getTransaction(newTransactionHash));
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+                .until(() -> nodeA.getEnvironment().getTransactionHashSet().contains(newTransactionHash));
 
-        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
-        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+        assertNotNull(nodeA.getEnvironment().getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.getEnvironment().getTransactionHashSet().size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -404,13 +404,13 @@ public class NodeTest {
         nodeB.start();
         nodeC.start();
 
-        nodeC.environment.announceTransactionRequest(nodeC.environment.getTransaction(newTransactionHash));
+        nodeC.getEnvironment().announceTransactionRequest(nodeC.getEnvironment().getTransaction(newTransactionHash));
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTransactionHashSet().contains(newTransactionHash));
+                .until(() -> nodeA.getEnvironment().getTransactionHashSet().contains(newTransactionHash));
 
-        assertNotNull(nodeA.environment.getTransaction(newTransactionHash));
-        assertEquals(1, nodeA.environment.getTransactionHashSet().size());
+        assertNotNull(nodeA.getEnvironment().getTransaction(newTransactionHash));
+        assertEquals(1, nodeA.getEnvironment().getTransactionHashSet().size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -479,16 +479,16 @@ public class NodeTest {
         nodeC.start();
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight() &&
-                        nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight()
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeC.getEnvironment().getTopBlockHeight() &&
+                        nodeA.getEnvironment().getTopBlockHeight() == nodeB.getEnvironment().getTopBlockHeight()
                 );
 
-        assertEquals(nodeA.environment.getTopBlockHeight(), chainA.size());
-        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
-        assertEquals(nodeA.environment.getTopBlockHeight(), nodeC.environment.getTopBlockHeight());
+        assertEquals(nodeA.getEnvironment().getTopBlockHeight(), chainA.size());
+        assertEquals(nodeA.getEnvironment().getTopBlockHeight(), nodeB.getEnvironment().getTopBlockHeight());
+        assertEquals(nodeA.getEnvironment().getTopBlockHeight(), nodeC.getEnvironment().getTopBlockHeight());
 
         assertEquals(chainA.get(chainA.size() - 1).getHash(),
-                nodeC.environment.getBlocksAbove(chainA.get(chainA.size() - 2).getHash()).get(0));
+                nodeC.getEnvironment().getBlocksAbove(chainA.get(chainA.size() - 2).getHash()).get(0));
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -548,7 +548,7 @@ public class NodeTest {
         nodeA.start();
         nodeB.start();
 
-        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+        assertEquals(nodeA.getEnvironment().getTopBlockHeight(), nodeB.getEnvironment().getTopBlockHeight());
 
         // Mine two block on top of fork of A
         Block forkBlock1 = Simulation.randomBlock(
@@ -567,14 +567,14 @@ public class NodeTest {
 
         assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
 
-        nodeA.environment.announceBlockRequest(forkBlock2);
+        nodeA.getEnvironment().announceBlockRequest(forkBlock2);
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeB.getEnvironment().getTopBlockHeight());
 
         assertEquals(
-                nodeA.environment.getBlocksAbove(forkBlock1.getHash()).get(0),
-                nodeB.environment.getBlocksAbove(forkBlock1.getHash()).get(0));
+                nodeA.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0),
+                nodeB.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0));
 
         // Mine two block on top of new fork of A, what used to be the main chain
         Block fork2Block1 = Simulation.randomBlock(
@@ -593,14 +593,14 @@ public class NodeTest {
 
         assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
 
-        nodeA.environment.announceBlockRequest(fork2Block2);
+        nodeA.getEnvironment().announceBlockRequest(fork2Block2);
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() == nodeB.environment.getTopBlockHeight());
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeB.getEnvironment().getTopBlockHeight());
 
         assertEquals(
-                nodeA.environment.getBlocksAbove(fork2Block1.getHash()).get(0),
-                nodeB.environment.getBlocksAbove(fork2Block1.getHash()).get(0));
+                nodeA.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0),
+                nodeB.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0));
 
 
         nodeA.stopAndBlock();
@@ -684,7 +684,7 @@ public class NodeTest {
         nodeB.start();
         nodeC.start();
 
-        assertEquals(nodeA.environment.getTopBlockHeight(), nodeB.environment.getTopBlockHeight());
+        assertEquals(nodeA.getEnvironment().getTopBlockHeight(), nodeB.getEnvironment().getTopBlockHeight());
 
         // Mine two block on top of fork of A
         Block forkBlock1 = Simulation.randomBlock(
@@ -703,14 +703,14 @@ public class NodeTest {
 
         assert forkBlock2.getBlockHeight() == mainChainTopBlock.getBlockHeight() + 1;
 
-        nodeA.environment.announceBlockRequest(forkBlock2);
+        nodeA.getEnvironment().announceBlockRequest(forkBlock2);
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeC.getEnvironment().getTopBlockHeight());
 
         assertEquals(
-                nodeA.environment.getBlocksAbove(forkBlock1.getHash()).get(0),
-                nodeC.environment.getBlocksAbove(forkBlock1.getHash()).get(0));
+                nodeA.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0),
+                nodeC.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0));
 
         // Mine two block on top of new fork of A, what used to be the main chain
         Block fork2Block1 = Simulation.randomBlock(
@@ -729,14 +729,14 @@ public class NodeTest {
 
         assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
 
-        nodeA.environment.announceBlockRequest(fork2Block2);
+        nodeA.getEnvironment().announceBlockRequest(fork2Block2);
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeA.environment.getTopBlockHeight() == nodeC.environment.getTopBlockHeight());
+                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeC.getEnvironment().getTopBlockHeight());
 
         assertEquals(
-                nodeA.environment.getBlocksAbove(fork2Block1.getHash()).get(0),
-                nodeC.environment.getBlocksAbove(fork2Block1.getHash()).get(0));
+                nodeA.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0),
+                nodeC.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0));
 
 
         nodeA.stopAndBlock();
@@ -775,7 +775,7 @@ public class NodeTest {
         nodeB.start();
 
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> nodeB.environment.getTransactionHashSet().size() == transactions.size());
+                .until(() -> nodeB.getEnvironment().getTransactionHashSet().size() == transactions.size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
