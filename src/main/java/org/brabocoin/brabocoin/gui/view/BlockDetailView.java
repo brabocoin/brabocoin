@@ -12,6 +12,8 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.Chip;
+import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -25,7 +27,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 /**
- * @author Sten Wessel
+ * Block detail view.
+ *
+ * Side pane that shows all block contents.
  */
 public class BlockDetailView extends VBox implements BraboControl, Initializable {
 
@@ -35,6 +39,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private final @NotNull Blockchain blockchain;
 
     @FXML private Label titleLabel;
+    @FXML private Chip forkChip;
     @FXML private TextField hashField;
 
     @FXML private TextField blockHeightField;
@@ -84,6 +89,19 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         titleLabel.setText("Block #" + indexedBlock.getBlockInfo().getBlockHeight());
         hashField.setText(ByteUtil.toHexString(indexedBlock.getHash().getValue(), 32));
 
+        if (blockchain.getMainChain().contains(indexedBlock)) {
+            forkChip.setText("Main chain");
+            forkChip.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+            forkChip.getStyleClass().removeAll("red", "green");
+            forkChip.getStyleClass().add("green");
+        }
+        else {
+            forkChip.setText("Fork");
+            forkChip.setGraphic(new BraboGlyph(BraboGlyph.Icon.CODE_BRANCH));
+            forkChip.getStyleClass().removeAll("red", "green");
+            forkChip.getStyleClass().add("red");
+        }
+
         blockHeightField.setText(String.valueOf(indexedBlock.getBlockInfo().getBlockHeight()));
 
         long timestamp = indexedBlock.getBlockInfo().getTimeReceived();
@@ -107,8 +125,6 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
             .mapToLong(Output::getAmount)
             .sum();
         outputTotalField.setText(String.valueOf(totalOutput) + " BRC");
-
-        // TODO: block reward and transaction fees
 
         loadBlockTransactions(block);
     }

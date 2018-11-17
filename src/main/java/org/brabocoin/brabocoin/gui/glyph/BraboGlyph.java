@@ -90,6 +90,8 @@ public class BraboGlyph extends Glyph {
         ARROW_UP(Font.FONT_AWESOME, '\uf062'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
         BROADCAST_TOWER(Font.FONT_AWESOME, '\uf519'),
+        CHECK(Font.FONT_AWESOME, '\uf00c'),
+        CODE_BRANCH(Font.FONT_AWESOME, '\uf126'),
         DATABASE(Font.FONT_AWESOME, '\uf1c0'),
         LEVEL_DOWN_ALT(Font.FONT_AWESOME, '\uf3be'),
         MICROCHIP(Font.FONT_AWESOME, '\uf2db'),

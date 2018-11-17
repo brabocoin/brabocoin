@@ -6,6 +6,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.Double?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import org.brabocoin.brabocoin.gui.control.Chip?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -16,7 +19,10 @@
     </fx:define>
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
-        <Label fx:id="titleLabel" styleClass="side-pane-title" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+        <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+            <Label fx:id="titleLabel" styleClass="side-pane-title"/>
+            <Chip fx:id="forkChip"/>
+        </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
         <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>

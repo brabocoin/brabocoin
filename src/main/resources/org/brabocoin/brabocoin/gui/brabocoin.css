@@ -63,3 +63,22 @@
     -fx-background-radius: 0;
     -fx-padding: 0;
 }
+
+.chip {
+    -fx-padding: .25em .5em;
+    -fx-background-radius: .25em;
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+}
+
+.chip * {
+    -fx-text-fill: white;
+}
+
+.chip.green {
+    -fx-background-color: derive(CHART_COLOR_5, -25%);
+}
+
+.chip.red {
+    -fx-background-color: derive(-fx-accent, 25%);
+}

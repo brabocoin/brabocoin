@@ -9,13 +9,18 @@ import org.brabocoin.brabocoin.util.ByteUtil;
  */
 public class HashTableCell <T> extends TableCell<T, Hash> {
 
+    public HashTableCell() {
+        super();
+        getStyleClass().add("hash");
+    }
+
     @Override
     protected void updateItem(Hash item, boolean empty) {
         if (empty) {
             setText(null);
         }
         else {
-            setText(ByteUtil.toHexString(item.getValue()));
+            setText(ByteUtil.toHexString(item.getValue(), 32));
         }
     }
 
