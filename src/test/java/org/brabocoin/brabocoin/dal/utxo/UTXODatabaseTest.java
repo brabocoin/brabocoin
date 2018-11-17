@@ -28,7 +28,7 @@ public class UTXODatabaseTest {
     protected KeyValueStore storage;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws DatabaseException {
         storage = new HashMapDB();
         database = new UTXODatabase(storage);
     }
