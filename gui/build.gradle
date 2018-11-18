@@ -12,8 +12,8 @@ dependencies {
 jar {
     manifest {
         attributes(
-                'Implementation-Version': version,
-                'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+            'Implementation-Version': version,
+            'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
         )
     }
 }
@@ -29,4 +29,3 @@ task fatJar(type: Jar) {
     }
     with jar
 }
-

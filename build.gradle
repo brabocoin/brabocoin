@@ -1,15 +1,16 @@
 plugins {
-    id 'java'
-    id 'idea'
     id 'com.google.protobuf' version '0.8.6'
 }
 
 allprojects {
     group 'org.brabocoin'
     version '0.1-SNAPSHOT'
-}
 
-sourceCompatibility = 1.8
+    apply plugin: 'java'
+    apply plugin: 'idea'
+
+    sourceCompatibility = 1.8
+}
 
 repositories {
     mavenCentral()
@@ -39,9 +40,6 @@ dependencies {
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-
     repositories {
         mavenCentral()
         jcenter()
@@ -97,6 +95,7 @@ jar {
     }
 }
 
+// NOTE: Run this task as :fatJar (with leading colon), otherwise it does not work (for some reason)
 task fatJar(type: Jar) {
     manifest.from jar.manifest
     from {
