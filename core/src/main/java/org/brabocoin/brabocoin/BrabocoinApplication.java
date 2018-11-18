@@ -135,6 +135,7 @@ public class BrabocoinApplication {
             new NodeEnvironment(
                 config.servicePort(),
                 blockchain,
+                chainUTXODatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -150,13 +151,28 @@ public class BrabocoinApplication {
     }
 
     /**
-     * Start the network node and the application in full.
+     * Starts the application.
+     * <p>
+     * The following steps are executed, in order, to start the application:
+     * <ol>
+     * <li>Load the main chain in memory, setting the top block to the last processed block
+     * stored in the chain UTXO set.</li>
+     * <li>Start the network node.</li>
+     * </ol>
      *
-     * @throws IOException When the network node could not be started.
+     * @throws IOException
+     *     When the network node could not be started.
+     * @throws DatabaseException
+     *     When a database backend is not available.
+     * @throws IllegalStateException
+     *     When the stored data is not consistent and likely corrupted.
+     * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
      * @see Node#start()
      */
-    public void start() throws IOException {
+    public void start() throws IOException, DatabaseException, IllegalStateException {
+        node.getEnvironment().syncMainChainWithUTXOSet();
         node.start();
+
         addShutdownHook();
     }
 

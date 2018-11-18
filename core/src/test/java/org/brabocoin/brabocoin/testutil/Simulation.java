@@ -170,6 +170,7 @@ public class Simulation {
 
         return new Node(port, new NodeEnvironment(port,
                 blockchain,
+                chainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -211,6 +212,7 @@ public class Simulation {
 
         return new AbstractMap.SimpleEntry<>(new Node(port, new NodeEnvironment(port,
                 blockchain,
+                chainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -248,6 +250,7 @@ public class Simulation {
 
         return new Node(port, new NodeEnvironment(port,
                 blockchain,
+                chainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,

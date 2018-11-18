@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -77,6 +78,53 @@ public class BlockProcessor {
         this.transactionProcessor = transactionProcessor;
         this.consensus = consensus;
         this.blockValidator = blockValidator;
+    }
+
+    /**
+     * Synchronize the main chain to be consistent with the chain UTXO set.
+     * <p>
+     * Used when initializing the blockchain from disk. The main chain needs to be loaded in
+     * memory according to the last processed block in the UTXO set.
+     *
+     * @param utxoSet
+     *     The chain UTXO set to sync the blockchain with.
+     * @throws DatabaseException
+     *     When either of the databases is not available.
+     * @throws IllegalStateException
+     *     When the blockchain could not be synced with the UTXO set. Most likely either one of
+     *     the databases is corrupt, in which case the node has to rebuild all indices.
+     */
+    public void syncMainChainWithUTXOSet(@NotNull ChainUTXODatabase utxoSet) throws DatabaseException, IllegalStateException {
+        LOGGER.info("Syncing main chain with UTXO set.");
+
+        // Get the top block from the UTXO set
+        IndexedBlock block = blockchain.getIndexedBlock(utxoSet.getLastProcessedBlockHash());
+
+        if (block == null) {
+            LOGGER.severe("Main chain could not be synced: requested top block is not stored.");
+            throw new IllegalStateException("Main chain could not be synced: requested top block is not stored.");
+        }
+
+        Deque<IndexedBlock> fork = findValidFork(block);
+
+        if (fork == null) {
+            LOGGER.severe("Main chain could not be synced: no fork from the top block to the main chain is found.");
+            throw new IllegalStateException("Main chain could not be synced: no fork from the top block to the main chain is found.");
+        }
+
+        IndexedBlock onChain = fork.pop();
+
+        if (!blockchain.getMainChain().getTopBlock().getHash().equals(onChain.getHash())) {
+            LOGGER.severe("Main chain could not be synced: requested top block forks before current top block. UTXO set is corrupted.");
+            throw new IllegalStateException("Main chain could not be synced: requested top block forks before current top block. UTXO set is corrupted.");
+        }
+
+        // Connect all the blocks
+        while (!fork.isEmpty()) {
+            blockchain.pushTopBlock(fork.pop());
+        }
+
+        LOGGER.info(() -> MessageFormat.format("Synced main chain to height={0}.", blockchain.getMainChain().getHeight()));
     }
 
     /**

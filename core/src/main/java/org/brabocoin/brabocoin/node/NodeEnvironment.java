@@ -6,6 +6,7 @@ import com.google.protobuf.util.JsonFormat;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
@@ -13,7 +14,11 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.processor.*;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
+import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
+import org.brabocoin.brabocoin.processor.ProcessedTransactionResult;
+import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -22,7 +27,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -46,6 +62,7 @@ public class NodeEnvironment {
      */
     private int servicePort;
     private Blockchain blockchain;
+    private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
     private Queue<Runnable> messageQueue;
 
@@ -61,6 +78,7 @@ public class NodeEnvironment {
      *
      * @param servicePort          The port on which the service is running.
      * @param blockchain           The blockchain used in this node.
+     * @param chainUTXODatabase    The chain UTXO database.
      * @param blockProcessor       The processor used to process blocks.
      * @param peerProcessor        The processor used to manipulate the peer set.
      * @param transactionPool      The transaction pool.
@@ -69,6 +87,7 @@ public class NodeEnvironment {
      */
     public NodeEnvironment(int servicePort,
                            Blockchain blockchain,
+                           ChainUTXODatabase chainUTXODatabase,
                            BlockProcessor blockProcessor,
                            PeerProcessor peerProcessor,
                            TransactionPool transactionPool,
@@ -76,6 +95,7 @@ public class NodeEnvironment {
                            BraboConfig config) {
         this.servicePort = servicePort;
         this.blockchain = blockchain;
+        this.chainUTXODatabase = chainUTXODatabase;
         this.blockProcessor = blockProcessor;
         this.peerProcessor = peerProcessor;
         this.transactionPool = transactionPool;
@@ -760,5 +780,18 @@ public class NodeEnvironment {
      */
     private synchronized List<NodeGrpc.NodeBlockingStub> getPeerStubs() {
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
+    }
+
+    /**
+     * Sync the main chain with the UTXO set.
+     *
+     * @throws DatabaseException
+     *     When a database backend is not available.
+     * @throws IllegalStateException
+     *     When the stored data is inconsistent and therefore most likely corrupted.
+     * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
+     */
+    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
+        blockProcessor.syncMainChainWithUTXOSet(chainUTXODatabase);
     }
 }

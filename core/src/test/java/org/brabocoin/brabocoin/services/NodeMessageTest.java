@@ -366,6 +366,7 @@ class NodeMessageTest {
 
         Node nodeA = new Node(8090, new NodeEnvironment(8090,
                 blockchain,
+                ChainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -446,6 +447,7 @@ class NodeMessageTest {
 
         Node nodeA = new Node(8090, new NodeEnvironment(8090,
                 blockchain,
+                ChainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -523,6 +525,7 @@ class NodeMessageTest {
 
         Node nodeA = new Node(8090, new NodeEnvironment(8090,
                 blockchain,
+                ChainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -585,6 +588,7 @@ class NodeMessageTest {
 
         Node nodeA = new Node(8090, new NodeEnvironment(8090,
                 blockchain,
+                ChainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
@@ -652,6 +656,7 @@ class NodeMessageTest {
 
         Node nodeA = new Node(8090, new NodeEnvironment(8090,
                 blockchain,
+                ChainUtxoDatabase,
                 blockProcessor,
                 peerProcessor,
                 transactionPool,
