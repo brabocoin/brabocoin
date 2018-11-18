@@ -1,3 +1,4 @@
 rootProject.name = 'brabocoin'
 
+include 'core'
 include 'gui'

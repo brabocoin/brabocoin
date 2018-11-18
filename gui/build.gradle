@@ -7,25 +7,14 @@ repositories {
 dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
     compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
+    
+    compile project(':core')
 }
 
 jar {
     manifest {
         attributes(
-            'Implementation-Version': version,
             'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
         )
     }
-}
-
-task fatJar(type: Jar) {
-    manifest.from jar.manifest
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    } {
-        exclude "META-INF/*.SF"
-        exclude "META-INF/*.DSA"
-        exclude "META-INF/*.RSA"
-    }
-    with jar
 }

@@ -1,45 +1,14 @@
-plugins {
-    id 'com.google.protobuf' version '0.8.6'
-}
-
 allprojects {
     group 'org.brabocoin'
     version '0.1-SNAPSHOT'
+}
 
+subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
 
     sourceCompatibility = 1.8
-}
 
-repositories {
-    mavenCentral()
-    jcenter()
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    compile('org.bouncycastle:bcprov-jdk15on:1.60')
-    compile('com.google.protobuf:protobuf-java:3.6.1')
-    compile('io.grpc:grpc-netty-shaded:1.15.0')
-    compile('io.grpc:grpc-protobuf:1.15.0')
-    compile('io.grpc:grpc-stub:1.15.0')
-    compile('io.grpc:grpc-services:1.15.0')
-    compile('io.grpc:grpc-testing:1.15.0')
-    compile('com.google.api.grpc:googleapis-common-protos:0.0.3')
-    compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
-    compile('org.cfg4j:cfg4j-core:4.4.0')
-    compile('org.jetbrains:annotations:16.0.2')
-
-    implementation('com.github.BAData:protobuf-converter:1.1.5')
-
-    testCompile('org.awaitility:awaitility:3.1.2')
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
-    testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
-}
-
-subprojects {
     repositories {
         mavenCentral()
         jcenter()
@@ -48,62 +17,34 @@ subprojects {
     }
 
     dependencies {
-        compile project(':')
+        compile('org.jetbrains:annotations:16.0.2')
+        testCompile('org.awaitility:awaitility:3.1.2')
+        testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
+        testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
+        testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
     }
-}
 
-protobuf {
-    protoc {
-        artifact = 'com.google.protobuf:protoc:3.6.1'
+    test {
+        useJUnitPlatform()
     }
-    plugins {
-        grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.15.0'
+
+    jar {
+        manifest {
+            attributes(
+                    'Implementation-Version': version,
+            )
         }
     }
-    generateProtoTasks {
-        all()*.plugins {
-            grpc {}
+
+    task fatJar(type: Jar) {
+        manifest.from jar.manifest
+        from {
+            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        } {
+            exclude "META-INF/*.SF"
+            exclude "META-INF/*.DSA"
+            exclude "META-INF/*.RSA"
         }
+        with jar
     }
-    generatedFilesBaseDir = "$projectDir/build/generated/protogen"
-}
-
-idea {
-    module {
-        generatedSourceDirs += file('build/generated/protogen/main/grpc')
-        generatedSourceDirs += file('build/generated/protogen/main/java')
-        generatedSourceDirs += file('build/generated/protogen/test/grpc')
-        generatedSourceDirs += file('build/generated/protogen/test/java')
-    }
-}
-
-clean {
-    delete protobuf.generatedFilesBaseDir
-}
-
-test {
-    useJUnitPlatform()
-}
-
-jar {
-    manifest {
-        attributes(
-            'Implementation-Version': version,
-            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
-        )
-    }
-}
-
-// NOTE: Run this task as :fatJar (with leading colon), otherwise it does not work (for some reason)
-task fatJar(type: Jar) {
-    manifest.from jar.manifest
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    } {
-        exclude "META-INF/*.SF"
-        exclude "META-INF/*.DSA"
-        exclude "META-INF/*.RSA"
-    }
-    with jar
 }
