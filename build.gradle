@@ -3,7 +3,17 @@ allprojects {
     version '0.1-SNAPSHOT'
 }
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
+    }
+}
+
 subprojects {
+    apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'java'
     apply plugin: 'idea'
 
@@ -31,20 +41,17 @@ subprojects {
     jar {
         manifest {
             attributes(
-                    'Implementation-Version': version,
+                'Implementation-Version': version,
             )
         }
     }
 
-    task fatJar(type: Jar) {
-        manifest.from jar.manifest
-        from {
-            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-        } {
-            exclude "META-INF/*.SF"
-            exclude "META-INF/*.DSA"
-            exclude "META-INF/*.RSA"
-        }
-        with jar
+    shadowJar {
+        baseName = rootProject.name
+        minimize()
+    }
+
+    artifacts {
+        archives shadowJar
     }
 }

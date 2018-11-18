@@ -58,7 +58,11 @@ clean {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
+            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
         )
     }
+}
+
+shadowJar {
+    classifier = 'headless'
 }
