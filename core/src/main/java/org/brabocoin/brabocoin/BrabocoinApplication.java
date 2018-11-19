@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin;
 
+import com.google.common.collect.Sets;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -12,7 +13,6 @@ import org.brabocoin.brabocoin.services.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,8 +53,8 @@ public class BrabocoinApplication {
      *     When one of the databases could not be initialized.
      */
     public BrabocoinApplication(@NotNull BraboConfig config) throws DatabaseException {
-        storages = new HashSet<>();
         state = new DeploymentState(config);
+        storages = Sets.newHashSet(state.getBlockStorage(), state.getUtxoStorage());
     }
 
     public static void main(String[] args) throws DatabaseException, IOException {
