@@ -4,7 +4,6 @@ import com.google.common.collect.Iterators;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.util.collection.MultiDependenceIndex;
 import org.brabocoin.brabocoin.util.collection.RecursiveMultiDependenceIndex;
 import org.jetbrains.annotations.NotNull;
@@ -81,14 +80,18 @@ public class TransactionPool implements Iterable<Transaction> {
     /**
      * Creates an empty transaction pool.
      *
-     * @param config The configuration.
-     * @param random The random instance.
+     * @param maxPoolSize
+     *     Maximum number of transactions in the pool.
+     * @param maxOrphanPoolSize
+     *     Maximum number of transactions in the orphan pool.
+     * @param random
+     *     The random instance.
      */
-    public TransactionPool(@NotNull BraboConfig config, @NotNull Random random) {
+    public TransactionPool(int maxPoolSize, int maxOrphanPoolSize, @NotNull Random random) {
         LOGGER.info("Initializing transaction pool.");
 
-        this.maxOrphanPoolSize = config.maxOrphanTransactions();
-        this.maxPoolSize = config.maxTransactionPoolSize();
+        this.maxOrphanPoolSize = maxOrphanPoolSize;
+        this.maxPoolSize = maxPoolSize;
         this.random = random;
 
         this.independentTransactions = new MultiDependenceIndex<>(Transaction::getHash,

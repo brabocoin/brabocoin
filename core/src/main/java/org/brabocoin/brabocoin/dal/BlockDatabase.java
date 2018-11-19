@@ -14,7 +14,6 @@ import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -57,13 +56,14 @@ public class BlockDatabase {
      * block files.
      *
      * @param storage The key-value store to use for the database.
-     * @param config  The config used for this block database.
+     * @param blockStoreDirectory  The directory in which the block files are stored.
+     * @param maxFileSize The maximum file size of the storage files.
      * @throws DatabaseException When the database could not be initialized.
      */
-    public BlockDatabase(@NotNull KeyValueStore storage, BraboConfig config) throws DatabaseException {
+    public BlockDatabase(@NotNull KeyValueStore storage, @NotNull File blockStoreDirectory, int maxFileSize) throws DatabaseException {
         this.storage = storage;
-        this.directory = new File(config.blockStoreDirectory());
-        this.maxFileSize = config.maxBlockFileSize();
+        this.directory = blockStoreDirectory;
+        this.maxFileSize = maxFileSize;
 
         initialize();
     }

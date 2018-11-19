@@ -72,13 +72,13 @@ public class DeploymentState implements State {
         blockStorage = new LevelDB(new File(config.blockStoreDirectory(), config.databaseDirectory()));
         utxoStorage = new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));
 
-        blockDatabase = new BlockDatabase(blockStorage, config);
+        blockDatabase = new BlockDatabase(blockStorage, new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         chainUTXODatabase = new ChainUTXODatabase(utxoStorage, consensus);
         poolUTXODatabase = new UTXODatabase(new HashMapDB());
 
         blockchain = new Blockchain(blockDatabase, consensus);
 
-        transactionPool = new TransactionPool(config, unsecureRandom);
+        transactionPool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(), unsecureRandom);
 
         transactionValidator = new TransactionValidator(this);
         transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, chainUTXODatabase, poolUTXODatabase);
