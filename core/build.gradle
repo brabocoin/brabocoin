@@ -1,0 +1,68 @@
+plugins {
+    id 'com.google.protobuf' version '0.8.6'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    compile('org.bouncycastle:bcprov-jdk15on:1.60')
+    compile('com.google.protobuf:protobuf-java:3.6.1')
+    compile('io.grpc:grpc-netty-shaded:1.15.0')
+    compile('io.grpc:grpc-protobuf:1.15.0')
+    compile('io.grpc:grpc-stub:1.15.0')
+    compile('io.grpc:grpc-services:1.15.0')
+    compile('io.grpc:grpc-testing:1.15.0')
+    compile('com.google.api.grpc:googleapis-common-protos:0.0.3')
+    compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
+    compile('org.cfg4j:cfg4j-core:4.4.0')
+
+    implementation('com.github.BAData:protobuf-converter:1.1.5')
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
+
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.15.0'
+        }
+    }
+
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+    generatedFilesBaseDir = "$projectDir/build/generated/protogen"
+}
+
+idea {
+    module {
+        generatedSourceDirs += file('build/generated/protogen/main/grpc')
+        generatedSourceDirs += file('build/generated/protogen/main/java')
+        generatedSourceDirs += file('build/generated/protogen/test/grpc')
+        generatedSourceDirs += file('build/generated/protogen/test/java')
+    }
+}
+
+clean {
+    delete protobuf.generatedFilesBaseDir
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
+        )
+    }
+}
+
+shadowJar {
+    classifier = 'headless'
+}
