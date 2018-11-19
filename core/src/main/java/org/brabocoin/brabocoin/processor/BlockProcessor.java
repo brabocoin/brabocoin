@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -86,19 +85,17 @@ public class BlockProcessor {
      * Used when initializing the blockchain from disk. The main chain needs to be loaded in
      * memory according to the last processed block in the UTXO set.
      *
-     * @param utxoSet
-     *     The chain UTXO set to sync the blockchain with.
      * @throws DatabaseException
      *     When either of the databases is not available.
      * @throws IllegalStateException
      *     When the blockchain could not be synced with the UTXO set. Most likely either one of
      *     the databases is corrupt, in which case the node has to rebuild all indices.
      */
-    public void syncMainChainWithUTXOSet(@NotNull ChainUTXODatabase utxoSet) throws DatabaseException, IllegalStateException {
+    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
         LOGGER.info("Syncing main chain with UTXO set.");
 
         // Get the top block from the UTXO set
-        IndexedBlock block = blockchain.getIndexedBlock(utxoSet.getLastProcessedBlockHash());
+        IndexedBlock block = blockchain.getIndexedBlock(utxoProcessor.getLastProcessedBlockHash());
 
         if (block == null) {
             LOGGER.severe("Main chain could not be synced: requested top block is not stored.");

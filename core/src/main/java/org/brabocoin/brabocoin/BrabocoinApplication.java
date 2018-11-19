@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin;
 
 import com.google.common.collect.Sets;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -78,11 +77,11 @@ public class BrabocoinApplication {
      *     When a database backend is not available.
      * @throws IllegalStateException
      *     When the stored data is not consistent and likely corrupted.
-     * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
+     * @see BlockProcessor#syncMainChainWithUTXOSet()
      * @see Node#start()
      */
     public void start() throws IOException, DatabaseException, IllegalStateException {
-        state.getEnvironment().syncMainChainWithUTXOSet();
+        state.getBlockProcessor().syncMainChainWithUTXOSet();
         state.getNode().start();
 
         addShutdownHook();

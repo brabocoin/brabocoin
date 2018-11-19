@@ -132,4 +132,7 @@ public class UTXOProcessor {
         database.setLastProcessedBlockHash(block.getPreviousBlockHash());
     }
 
+    public @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
+        return database.getLastProcessedBlockHash();
+    }
 }

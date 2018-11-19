@@ -772,15 +772,4 @@ public class NodeEnvironment {
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 
-    /**
-     * Sync the main chain with the UTXO set.
-     *
-     * @throws DatabaseException     When a database backend is not available.
-     * @throws IllegalStateException When the stored data is inconsistent and therefore most likely corrupted.
-     * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
-     */
-    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
-        blockProcessor.syncMainChainWithUTXOSet(chainUTXODatabase);
-    }
-
 }
