@@ -168,7 +168,7 @@ public class Simulation {
                 consensus,
                 blockValidator);
 
-        return new Node(port, new NodeEnvironment(port,
+        return new Node(new NodeEnvironment(port,
                 blockchain,
                 chainUtxoDatabase,
                 blockProcessor,
@@ -210,7 +210,7 @@ public class Simulation {
             blockProcessor.processNewBlock(b);
         }
 
-        return new AbstractMap.SimpleEntry<>(new Node(port, new NodeEnvironment(port,
+        return new AbstractMap.SimpleEntry<>(new Node(new NodeEnvironment(port,
                 blockchain,
                 chainUtxoDatabase,
                 blockProcessor,
@@ -248,7 +248,7 @@ public class Simulation {
             transactionProcessor.processNewTransaction(t);
         }
 
-        return new Node(port, new NodeEnvironment(port,
+        return new Node(new NodeEnvironment(port,
                 blockchain,
                 chainUtxoDatabase,
                 blockProcessor,

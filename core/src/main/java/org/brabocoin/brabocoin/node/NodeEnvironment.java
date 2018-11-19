@@ -60,15 +60,16 @@ public class NodeEnvironment {
     /*
      * Data holders
      */
+
     private int servicePort;
     private Blockchain blockchain;
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
     private Queue<Runnable> messageQueue;
-
     /*
      * Processors
      */
+
     private BlockProcessor blockProcessor;
     private PeerProcessor peerProcessor;
     private TransactionProcessor transactionProcessor;
@@ -176,6 +177,7 @@ public class NodeEnvironment {
         }
     }
 
+
     //================================================================================
     // Peer management
     //================================================================================
@@ -195,7 +197,7 @@ public class NodeEnvironment {
             LOGGER.log(Level.WARNING, "Could not add client peer: {0}", e.getMessage());
             return;
         }
-        
+
         peerProcessor.addPeer(clientPeer);
     }
 
@@ -221,6 +223,7 @@ public class NodeEnvironment {
 
         LOGGER.info("Message propagated to all peers.");
     }
+
 
     //================================================================================
     // Callbacks
@@ -693,7 +696,7 @@ public class NodeEnvironment {
 
             List<Hash> blocksAbove = new ArrayList<>();
 
-            while(indexedBlock != null) {
+            while (indexedBlock != null) {
                 indexedBlock = blockchain.getMainChain().getNextBlock(indexedBlock);
                 if (indexedBlock != null) {
                     blocksAbove.add(indexedBlock.getHash());
@@ -785,13 +788,20 @@ public class NodeEnvironment {
     /**
      * Sync the main chain with the UTXO set.
      *
-     * @throws DatabaseException
-     *     When a database backend is not available.
-     * @throws IllegalStateException
-     *     When the stored data is inconsistent and therefore most likely corrupted.
+     * @throws DatabaseException     When a database backend is not available.
+     * @throws IllegalStateException When the stored data is inconsistent and therefore most likely corrupted.
      * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
      */
     public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
         blockProcessor.syncMainChainWithUTXOSet(chainUTXODatabase);
+    }
+
+    /**
+     * Get the node service port.
+     *
+     * @return Node service port
+     */
+    public int getServicePort() {
+        return servicePort;
     }
 }

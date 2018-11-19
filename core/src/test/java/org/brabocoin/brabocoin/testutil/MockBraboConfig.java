@@ -62,11 +62,6 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int listenPort() {
-        return delegator.listenPort();
-    }
-
-    @Override
     public int servicePort() {
         return delegator.servicePort();
     }

@@ -131,7 +131,6 @@ public class BrabocoinApplication {
         PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
 
         return new Node(
-            config.listenPort(),
             new NodeEnvironment(
                 config.servicePort(),
                 blockchain,

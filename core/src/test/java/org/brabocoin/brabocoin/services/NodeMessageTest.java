@@ -364,7 +364,7 @@ class NodeMessageTest {
                 consensus,
                 blockValidator);
 
-        Node nodeA = new Node(8090, new NodeEnvironment(8090,
+        Node nodeA = new Node(new NodeEnvironment(8090,
                 blockchain,
                 ChainUtxoDatabase,
                 blockProcessor,
@@ -445,7 +445,7 @@ class NodeMessageTest {
                 consensus,
                 blockValidator);
 
-        Node nodeA = new Node(8090, new NodeEnvironment(8090,
+        Node nodeA = new Node(new NodeEnvironment(8090,
                 blockchain,
                 ChainUtxoDatabase,
                 blockProcessor,
@@ -523,7 +523,7 @@ class NodeMessageTest {
                 consensus,
                 blockValidator);
 
-        Node nodeA = new Node(8090, new NodeEnvironment(8090,
+        Node nodeA = new Node(new NodeEnvironment(8090,
                 blockchain,
                 ChainUtxoDatabase,
                 blockProcessor,
@@ -586,7 +586,7 @@ class NodeMessageTest {
                 consensus,
                 blockValidator);
 
-        Node nodeA = new Node(8090, new NodeEnvironment(8090,
+        Node nodeA = new Node(new NodeEnvironment(8090,
                 blockchain,
                 ChainUtxoDatabase,
                 blockProcessor,
@@ -654,7 +654,7 @@ class NodeMessageTest {
                 consensus,
                 blockValidator);
 
-        Node nodeA = new Node(8090, new NodeEnvironment(8090,
+        Node nodeA = new Node(new NodeEnvironment(8090,
                 blockchain,
                 ChainUtxoDatabase,
                 blockProcessor,

@@ -61,8 +61,8 @@ public class Node {
         };
     }
 
-    public Node(final int listenPort, NodeEnvironment environment) {
-        this.server = ServerBuilder.forPort(listenPort)
+    public Node(NodeEnvironment environment) {
+        this.server = ServerBuilder.forPort(environment.getServicePort())
                 .addService(ServerInterceptors.intercept(
                         new NodeService(),
                         recordServerCallInterceptor(serverCallCapture)))

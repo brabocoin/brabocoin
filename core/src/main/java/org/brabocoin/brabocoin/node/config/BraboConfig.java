@@ -44,12 +44,5 @@ public interface BraboConfig {
      *
      * @return The port number.
      */
-    int listenPort();
-
-    /**
-     * Port on which the application sends messages on the network.
-     *
-     * @return The port number.
-     */
     int servicePort();
 }
