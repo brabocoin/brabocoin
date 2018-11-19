@@ -1,8 +1,6 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
-import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -38,38 +36,24 @@ public class TransactionProcessor {
     private final @NotNull TransactionPool transactionPool;
 
     /**
-     * The UTXO database of the blockchain.
-     */
-    private final @NotNull ChainUTXODatabase utxoFromChain;
-
-    /**
      * The UTXO database of the transaction pool.
      */
     private final @NotNull UTXODatabase utxoFromPool;
-
-    /**
-     * The composite UTXO set.
-     */
-    private final @NotNull CompositeReadonlyUTXOSet compositeUTXOSet;
 
     /**
      * Create a new transaction processor.
      *
      * @param transactionValidator The transaction validator.
      * @param transactionPool      The transaction pool.
-     * @param utxoFromChain        The UTXO database of the blockchain.
      * @param utxoFromPool         The UTXO database of the transaction pool.
      */
     public TransactionProcessor(@NotNull TransactionValidator transactionValidator,
                                 @NotNull TransactionPool transactionPool,
-                                @NotNull ChainUTXODatabase utxoFromChain,
                                 @NotNull UTXODatabase utxoFromPool) {
         LOGGER.fine("Initializing new transaction processor.");
         this.transactionValidator = transactionValidator;
         this.transactionPool = transactionPool;
-        this.utxoFromChain = utxoFromChain;
         this.utxoFromPool = utxoFromPool;
-        this.compositeUTXOSet = new CompositeReadonlyUTXOSet(utxoFromChain, utxoFromPool);
     }
 
     /**
@@ -82,7 +66,7 @@ public class TransactionProcessor {
      */
     public ProcessedTransactionResult processNewTransaction(@NotNull Transaction transaction) throws DatabaseException {
         LOGGER.fine("Processing new transaction.");
-        ProcessedTransactionStatus status = processTransaction(transaction);
+        ValidationStatus status = processTransaction(transaction);
         List<Transaction> orphans = addValidOrphans(transaction.getHash());
 
         transactionPool.limitTransactionPoolSize();
@@ -102,8 +86,7 @@ public class TransactionProcessor {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
                 if (transactionValidator.checkTransactionOrphan(t).getStatus() != ValidationStatus.ORPHAN) {
-                    ProcessedTransactionStatus status = processTransaction(t);
-                    return status == ProcessedTransactionStatus.DEPENDENT || status == ProcessedTransactionStatus.INDEPENDENT;
+                    return processDeorphanatedTransaction(t) == ValidationStatus.VALID;
                 }
             } catch (DatabaseException ignored) {
             }
@@ -112,77 +95,51 @@ public class TransactionProcessor {
         });
     }
 
-    private ProcessedTransactionStatus processTransaction(@NotNull Transaction transaction) throws DatabaseException {
-        if (!transactionValidator.checkTransactionValid(transaction).isPassed()) {
-            LOGGER.info("New transaction is invalid.");
-            return ProcessedTransactionStatus.INVALID;
-        }
+    private ValidationStatus processTransaction(@NotNull Transaction transaction) throws DatabaseException {
+        ValidationStatus status = transactionValidator.checkTransactionValid(transaction).getStatus();
 
-        return processTransactionWithoutValidation(transaction);
+        processTransactionWithoutValidation(transaction, status);
+
+        return status;
     }
 
-    private ProcessedTransactionStatus processTransactionWithoutValidation(@NotNull Transaction transaction) throws DatabaseException {
-        Hash hash = transaction.getHash();
+    private ValidationStatus processDeorphanatedTransaction(@NotNull Transaction transaction) throws DatabaseException {
+        ValidationStatus status = transactionValidator.checkTransactionPostOrphan(transaction).getStatus();
 
-        // Check if already stored
-        if (transactionPool.hasValidTransaction(hash)) {
-            LOGGER.info("New transaction is already present in transaction pool.");
-            return ProcessedTransactionStatus.ALREADY_STORED;
+        processTransactionWithoutValidation(transaction, status);
+
+        return status;
+    }
+
+    private void processTransactionWithoutValidation(@NotNull Transaction transaction, ValidationStatus status) throws DatabaseException {
+
+        if (status == ValidationStatus.INVALID) {
+            LOGGER.info("New transaction is invalid.");
+            return;
         }
 
-        // Check the inputs
-        // TODO: remove when validation is added to the processor
-        ProcessedTransactionStatus status = checkInputs(transaction);
-
         // If orphan, add to orphan set and do nothing
-        if (status == ProcessedTransactionStatus.ORPHAN) {
+        if (status == ValidationStatus.ORPHAN) {
             // Check if already stored as orphan
-            if (transactionPool.isOrphan(hash)) {
-                LOGGER.info("New transaction is already present as orphan.");
-                return ProcessedTransactionStatus.ALREADY_STORED;
+            if (!transactionPool.isOrphan(transaction.getHash())) {
+                transactionPool.addOrphanTransaction(transaction);
+                LOGGER.info("New transaction is added as orphan.");
             }
-
-            transactionPool.addOrphanTransaction(transaction);
-            LOGGER.info("New transaction is added as orphan.");
-            return ProcessedTransactionStatus.ORPHAN;
+            return;
         }
 
         // Validated transaction: update pool UTXO set
         LOGGER.fine("New transaction can be added to transaction pool. Set outputs unspent in transaction pool UTXO.");
         utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        if (status == ProcessedTransactionStatus.DEPENDENT) {
-            LOGGER.info("New transaction is added as dependent.");
-            transactionPool.addDependentTransaction(transaction);
-        } else {
+        if (transactionValidator.checkTransactionIndependent(transaction).isPassed()) {
             LOGGER.info("New transaction is added as independent.");
             transactionPool.addIndependentTransaction(transaction);
         }
-
-        return status;
-    }
-
-    public ProcessedTransactionStatus checkInputs(@NotNull Transaction transaction) throws DatabaseException {
-        LOGGER.finest("Checking inputs of transaction.");
-        boolean isDependent = false;
-        for (Input input : transaction.getInputs()) {
-            if (utxoFromPool.isUnspent(input)) {
-                // Input references UTXO from pool, transaction is at least dependent
-                isDependent = true;
-            } else if (!utxoFromChain.isUnspent(input)) {
-                // Input is in neither UTXO, transaction is orphan
-                LOGGER.finest("Transaction is orphan.");
-                return ProcessedTransactionStatus.ORPHAN;
-            }
+        else {
+            LOGGER.info("New transaction is added as dependent.");
+            transactionPool.addDependentTransaction(transaction);
         }
-
-        if (isDependent) {
-            LOGGER.finest("Transaction is dependent.");
-            return ProcessedTransactionStatus.DEPENDENT;
-        }
-
-        LOGGER.finest("Transaction is independent.");
-        return ProcessedTransactionStatus.INDEPENDENT;
     }
 
     /**
@@ -241,11 +198,10 @@ public class TransactionProcessor {
 
         for (Transaction transaction : block.getTransactions()) {
             // Add transactions to pool and update pool UTXO set
-            ProcessedTransactionStatus status = processTransactionWithoutValidation(transaction);
+            processTransactionWithoutValidation(transaction, ValidationStatus.VALID);
             LOGGER.finest(() -> MessageFormat.format(
-                    "Added transaction {0} to transaction pool with status {1}.",
-                    toHexString(transaction.getHash().getValue()),
-                    status
+                    "Added transaction {0} to transaction pool.",
+                    toHexString(transaction.getHash().getValue())
             ));
 
             // Some previously independent transactions may depend the processed transaction

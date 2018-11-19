@@ -12,6 +12,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +104,7 @@ class TransactionProcessorTest {
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
 
-        assertEquals(ProcessedTransactionStatus.INVALID, result.getStatus());
+        assertEquals(ValidationStatus.INVALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
@@ -113,7 +114,7 @@ class TransactionProcessorTest {
         pool.addIndependentTransaction(transaction);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
-        assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
+        assertEquals(ValidationStatus.INVALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
@@ -123,7 +124,7 @@ class TransactionProcessorTest {
         pool.addDependentTransaction(transaction);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
-        assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
+        assertEquals(ValidationStatus.INVALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
@@ -133,7 +134,7 @@ class TransactionProcessorTest {
         pool.addOrphanTransaction(transaction);
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
-        assertEquals(ProcessedTransactionStatus.ALREADY_STORED, result.getStatus());
+        assertEquals(ValidationStatus.INVALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
@@ -143,7 +144,7 @@ class TransactionProcessorTest {
         Hash hash = orphan.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(orphan);
-        assertEquals(ProcessedTransactionStatus.ORPHAN, result.getStatus());
+        assertEquals(ValidationStatus.ORPHAN, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < orphan.getOutputs().size(); i++) {
@@ -158,7 +159,7 @@ class TransactionProcessorTest {
         Hash hash = transaction.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
-        assertEquals(ProcessedTransactionStatus.INDEPENDENT, result.getStatus());
+        assertEquals(ValidationStatus.VALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
@@ -186,7 +187,7 @@ class TransactionProcessorTest {
         Hash hash = transaction.getHash();
 
         ProcessedTransactionResult result = processor.processNewTransaction(transaction);
-        assertEquals(ProcessedTransactionStatus.DEPENDENT, result.getStatus());
+        assertEquals(ValidationStatus.VALID, result.getStatus());
         assertTrue(result.getValidatedOrphans().isEmpty());
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
@@ -292,7 +293,7 @@ class TransactionProcessorTest {
         Hash hashC = transactionC.getHash();
         ProcessedTransactionResult resultC = processor.processNewTransaction(transactionC);
 
-        assertEquals(ProcessedTransactionStatus.ORPHAN, resultC.getStatus());
+        assertEquals(ValidationStatus.ORPHAN, resultC.getStatus());
 
         ProcessedTransactionResult result = processor.processNewTransaction(transactionA);
         assertEquals(2, result.getValidatedOrphans().size());
