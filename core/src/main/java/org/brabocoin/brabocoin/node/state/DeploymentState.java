@@ -81,12 +81,13 @@ public class DeploymentState implements State {
 
         transactionPool = new TransactionPool(config, unsecureRandom);
 
-        transactionValidator = new TransactionValidator(consensus, blockchain.getMainChain(), transactionPool, chainUTXODatabase, poolUTXODatabase, signer);
+        transactionValidator = new TransactionValidator(this);
         transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, chainUTXODatabase, poolUTXODatabase);
 
         utxoProcessor = new UTXOProcessor(chainUTXODatabase);
 
-        blockValidator = new BlockValidator(consensus, transactionValidator, transactionProcessor, blockchain, chainUTXODatabase, signer);
+
+        blockValidator = new BlockValidator(this);
         blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
 
         peerProcessor = new PeerProcessor(new HashSet<>(), config);

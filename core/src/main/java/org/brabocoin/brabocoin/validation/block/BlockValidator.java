@@ -4,9 +4,26 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.block.rules.*;
+import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.CorrectTargetValueBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.HasCoinbaseBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.HasSingleCoinbaseBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.LegalTransactionFeesBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.MaxNonceBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.MaxSizeBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.NonContextualTransactionCheckBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.NonEmptyTransactionListBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.SatisfiesTargetValueBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseOutputAmountBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidMerkleRootBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
@@ -16,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.logging.Logger;
 
 /**
- * @author Sten Wessel
+ * Validates blocks.
  */
 public class BlockValidator {
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
@@ -56,20 +73,13 @@ public class BlockValidator {
     private ReadonlyUTXOSet utxoSet;
     private Signer signer;
 
-    public BlockValidator(
-            Consensus consensus,
-            TransactionValidator transactionValidator,
-            TransactionProcessor transactionProcessor,
-            Blockchain blockchain,
-            ReadonlyUTXOSet utxoSet,
-            Signer signer) {
-
-        this.consensus = consensus;
-        this.transactionValidator = transactionValidator;
-        this.transactionProcessor = transactionProcessor;
-        this.blockchain = blockchain;
-        this.utxoSet = utxoSet;
-        this.signer = signer;
+    public BlockValidator(@NotNull State state) {
+        this.consensus = state.getConsensus();
+        this.transactionValidator = state.getTransactionValidator();
+        this.transactionProcessor = state.getTransactionProcessor();
+        this.blockchain = state.getBlockchain();
+        this.utxoSet = state.getChainUTXODatabase();
+        this.signer = state.getSigner();
     }
 
     private FactMap createFactMap(@NotNull Block block) {

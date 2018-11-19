@@ -63,9 +63,6 @@ class TransactionValidatorTest {
         );
         TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
                 transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
