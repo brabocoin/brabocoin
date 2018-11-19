@@ -112,11 +112,10 @@ public class TransactionProcessor {
     }
 
     private ProcessedTransactionStatus processTransaction(@NotNull Transaction transaction) throws DatabaseException {
-        // TODO: Validate
-//        if (!transactionValidator.checkTransactionValid(transaction)) {
-//            LOGGER.info("New transaction is invalid.");
-//            return ProcessedTransactionStatus.INVALID;
-//        }
+        if (!transactionValidator.checkTransactionValid(transaction).isPassed()) {
+            LOGGER.info("New transaction is invalid.");
+            return ProcessedTransactionStatus.INVALID;
+        }
 
         return processTransactionWithoutValidation(transaction);
     }

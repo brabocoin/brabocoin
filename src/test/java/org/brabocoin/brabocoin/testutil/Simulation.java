@@ -4,10 +4,12 @@ import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
@@ -25,6 +27,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public class Simulation {
     private static Random RANDOM = new Random();
@@ -89,14 +92,36 @@ public class Simulation {
     }
 
     public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
-        long creationTime = new Date().getTime();
-
         return new Block(
                 previousHash,
                 randomHash(),
                 randomHash(),
                 randomBigInteger(), blockHeight,
                 repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound));
+    }
+
+    public static Block randomOrphanBlock(Consensus consensus, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+        List<Transaction> transactions =
+                Collections.singletonList(
+                        new Transaction(
+                                Collections.emptyList(),
+                                Collections.singletonList(
+                                        new Output(randomHash(), consensus.getBlockReward())
+                                )
+                        )
+                );
+
+        return new MiningBlock(
+                randomHash(),
+                new MerkleTree(
+                        consensus.getMerkleTreeHashFunction(),
+                        transactions.stream().map(Transaction::getHash).collect(Collectors.toList())
+                ).getRoot(),
+                consensus.getTargetValue(),
+                new BigInteger(consensus.getMaxNonceSize() * 8, RANDOM),
+                blockHeight,
+                transactions
+        ).mine(consensus);
     }
 
     public static Transaction randomTransaction(int inputBound, int outputBound) {

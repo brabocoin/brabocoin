@@ -40,7 +40,7 @@ public class Consensus {
      */
     private static final Hash TARGET_VALUE = new Hash(
             ByteString.copyFrom(
-                    BigInteger.valueOf(257).multiply(BigInteger.TEN.pow(67)).toByteArray()
+                    BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
             )
     );
     /**
@@ -80,8 +80,6 @@ public class Consensus {
             0,
             Collections.emptyList()
     );
-
-    private final BigInteger maxNonce = new BigInteger("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
     /**
      * Find the best valid block from the given collection of blocks.

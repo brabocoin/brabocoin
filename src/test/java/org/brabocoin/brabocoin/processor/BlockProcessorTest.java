@@ -1,8 +1,10 @@
 package org.brabocoin.brabocoin.processor;
 
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -68,7 +70,12 @@ class BlockProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        consensus = new Consensus();
+        consensus = new Consensus() {
+            @Override
+            public @NotNull Hash getTargetValue() {
+                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+            }
+        };
         utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
         utxoFromPool = new UTXODatabase(new HashMapDB());
         utxoProcessor = new UTXOProcessor(utxoFromChain);
@@ -77,20 +84,56 @@ class BlockProcessorTest {
         compositeUtxo = new CompositeReadonlyUTXOSet(utxoFromChain, utxoFromPool);
         signer = new Signer(EllipticCurve.secp256k1());
         transactionValidator = new TransactionValidator(
-                null, null, null, null, null,null
+                consensus, blockchain.getMainChain(), transactionPool, utxoFromChain, utxoFromPool, signer
         );
         transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
         blockValidator = new BlockValidator(
-                null, null, null, null, null,null
+                consensus, transactionValidator, transactionProcessor, blockchain, utxoFromChain, signer
         );
         blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
     }
 
-    @Disabled
     @Test
     void invalidBlock() throws DatabaseException {
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        assertEquals(ProcessedBlockStatus.INVALID, status);
+    }
+
+    @Test
+    void addAsOrphanParentUnknown() throws DatabaseException {
+        Block block = Simulation.randomOrphanBlock(
+                consensus,
+                1,
+                10,
+                10,
+                20
+        );
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+
+        assertEquals(ProcessedBlockStatus.ORPHAN, status);
+        assertTrue(blockchain.isOrphan(block.getHash()));
+    }
+
+    @Test
+    void addAsOrphanParentOrphan() throws DatabaseException {
+        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
+        Block parent = blocks.get(0);
+        Block child = blocks.get(1);
+
+        blockchain.storeBlock(parent);
+        blockchain.addOrphan(parent);
+
+        ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
+        assertEquals(ProcessedBlockStatus.ORPHAN, status);
+        assertTrue(blockchain.isOrphan(child.getHash()));
+    }
+
+    @Test
+    void addCoinbaseToGenesis() throws DatabaseException {
         blockValidator = new BlockValidator(
-                null, null, null, null, null,null
+                null, null, null, null, null, null
         ) {
             @Override
             public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
@@ -110,50 +153,17 @@ class BlockProcessorTest {
 
         blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
 
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
-
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
-        assertEquals(ProcessedBlockStatus.INVALID, status);
-    }
-
-    @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
-    void addAsOrphanParentUnknown() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
-
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        assertTrue(blockchain.isOrphan(block.getHash()));
-    }
-
-    @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
-    void addAsOrphanParentOrphan() throws DatabaseException {
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        Block parent = blocks.get(0);
-        Block child = blocks.get(1);
-
-        blockchain.storeBlock(parent);
-        blockchain.addOrphan(parent);
-
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        assertTrue(blockchain.isOrphan(child.getHash()));
-    }
-
-    @Test
-    void addCoinbaseToGenesis() throws DatabaseException {
         Output output = Simulation.randomOutput();
         Transaction transaction = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(output)
+                Collections.emptyList(),
+                Collections.singletonList(output)
         );
         Block block = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction)
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transaction)
         );
         Hash hash = block.getHash();
         Hash tHash = transaction.getHash();
@@ -182,31 +192,52 @@ class BlockProcessorTest {
 
     @Test
     void connectNonCoinbase() throws DatabaseException {
+        blockValidator = new BlockValidator(
+                null, null, null, null, null, null
+        ) {
+            @Override
+            public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+        };
+
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+
         Output output = Simulation.randomOutput();
         Transaction transactionA = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(output)
+                Collections.emptyList(),
+                Collections.singletonList(output)
         );
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transactionA)
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transactionA)
         );
         Hash hashA = blockA.getHash();
         Hash tHashA = transactionA.getHash();
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), tHashA, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(new Input(Simulation.randomSignature(), tHashA, 0)),
+                Collections.singletonList(Simulation.randomOutput())
         );
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(transactionB)
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(transactionB)
         );
         Hash tHashB = transactionB.getHash();
 
@@ -224,44 +255,65 @@ class BlockProcessorTest {
 
     @Test
     void addAsFork() throws DatabaseException {
+        blockValidator = new BlockValidator(
+                null, null, null, null, null, null
+        ) {
+            @Override
+            public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+
+            @Override
+            public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                return BlockValidationResult.passed();
+            }
+        };
+
+        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+
         // Main chain: genesis - A - B
         // Fork:              \_ C
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashB = blockB.getHash();
 
         Transaction transaction = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(Simulation.randomOutput())
+                Collections.emptyList(),
+                Collections.singletonList(Simulation.randomOutput())
         );
         Hash tHash = transaction.getHash();
 
         Block blockC = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction)
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transaction)
         );
         Hash hashC = blockC.getHash();
 
@@ -292,93 +344,92 @@ class BlockProcessorTest {
     }
 
     @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
     void addAsForkWithOrphansSwitch() throws DatabaseException {
         // Main chain: genesis - A - B - C
         // Fork:              \_ D - E - F - G
 
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashB = blockB.getHash();
 
         Block blockC = new Block(
-            hashB,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 3,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashB,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 3,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashC = blockC.getHash();
 
         Block blockD = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                consensus.getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashD = blockD.getHash();
 
         Block blockE = new Block(
-            hashD,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashD,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashE = blockE.getHash();
 
         Block blockF = new Block(
-            hashE,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 3,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashE,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 3,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashF = blockF.getHash();
 
 
         Block blockG = new Block(
-            hashF,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 4,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
+                hashF,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 4,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput())
+                ))
         );
         Hash hashG = blockG.getHash();
 

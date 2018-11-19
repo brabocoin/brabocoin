@@ -99,11 +99,7 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        ValidationStatus status = ValidationStatus.VALID;
-//        ValidationStatus status = blockValidator.checkBlockValid(
-//                BlockValidator.RuleLists.INCOMING_BLOCK,
-//                block,
-                /* TODO: HELP! ); */
+        ValidationStatus status = blockValidator.checkIncomingBlockValid(block).getStatus();
 
         if (status == ValidationStatus.INVALID) {
             LOGGER.info("New block is invalid.");
@@ -166,11 +162,7 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = ValidationStatus.VALID;
-//                ProcessedBlockStatus status = blockValidator.checkBlockValid(
-//                        BlockValidator.RuleLists.AFTER_ORPHAN,
-//                        descendant);
-                /* TODO: HELP! */
+                ValidationStatus status = blockValidator.checkPostOrphanBlockValid(descendant).getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
                 if (status == ValidationStatus.ORPHAN) {
@@ -388,12 +380,9 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-//        if (!blockValidator.checkBlockValid(
-//                BlockValidator.RuleLists.CONNECT_TO_CHAIN,
-//                block)) {
-//            return false;
-//        }
-        /* TODO: Help! */
+        if (!blockValidator.checkConnectBlockValid(block).isPassed()) {
+            return false;
+        }
 
         BlockUndo undo = utxoProcessor.processBlockConnected(block);
 
