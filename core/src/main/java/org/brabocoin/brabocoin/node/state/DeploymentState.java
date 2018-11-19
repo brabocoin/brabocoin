@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
@@ -68,7 +67,7 @@ public class DeploymentState implements State {
         this.config = config;
         consensus = new Consensus();
 
-        signer = new Signer(EllipticCurve.secp256k1());
+        signer = new Signer(consensus.getCurve());
 
         blockStorage = new LevelDB(new File(config.blockStoreDirectory(), config.databaseDirectory()));
         utxoStorage = new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));

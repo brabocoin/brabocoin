@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -71,6 +72,11 @@ public class Consensus {
     private static final int MAX_BLOCK_HEADER_SIZE = 132;
 
     private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
+
+    /**
+     * Elliptic curve.
+     */
+    private static final EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     private static final @NotNull Block GENESIS_BLOCK = new Block(
             new Hash(ByteString.EMPTY),
@@ -156,5 +162,9 @@ public class Consensus {
      */
     public long getMinimumTransactionFee() {
         return MINIMUM_TRANSACTION_FEE;
+    }
+
+    public @NotNull EllipticCurve getCurve() {
+        return CURVE;
     }
 }
