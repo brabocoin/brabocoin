@@ -899,7 +899,7 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 1,
-                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1000, 1000), 4)
+                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 20000), 4)
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
