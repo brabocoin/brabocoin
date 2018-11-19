@@ -140,7 +140,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public ProcessedBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
+    public ValidationStatus processNewBlock(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
@@ -148,13 +148,13 @@ public class BlockProcessor {
 
         if (status == ValidationStatus.INVALID) {
             LOGGER.info("New block is invalid.");
-            return ProcessedBlockStatus.INVALID;
+            return ValidationStatus.INVALID;
         }
 
         if (status == ValidationStatus.ORPHAN) {
             LOGGER.info("New block is added as orphan.");
             blockchain.addOrphan(block);
-            return ProcessedBlockStatus.ORPHAN;
+            return ValidationStatus.ORPHAN;
         }
 
         // Store the block on disk
@@ -168,7 +168,7 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
-        return ProcessedBlockStatus.VALID;
+        return ValidationStatus.VALID;
     }
 
     private @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {

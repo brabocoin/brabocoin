@@ -17,13 +17,13 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
-import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
 import org.brabocoin.brabocoin.processor.ProcessedTransactionResult;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
@@ -226,7 +226,7 @@ public class NodeEnvironment {
     private synchronized void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         try {
             LOGGER.info("Received new block from peer.");
-            ProcessedBlockStatus processedBlockStatus = blockProcessor.processNewBlock(block);
+            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus));
             switch (processedBlockStatus) {
                 case ORPHAN:
@@ -306,8 +306,7 @@ public class NodeEnvironment {
             ProcessedTransactionResult result = transactionProcessor.processNewTransaction(transaction);
 
             switch (result.getStatus()) {
-                case DEPENDENT:
-                case INDEPENDENT:
+                case VALID:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
@@ -316,9 +315,8 @@ public class NodeEnvironment {
                     break;
 
                 case ORPHAN:
-                case ALREADY_STORED:
                 case INVALID:
-                    LOGGER.log(Level.FINE, "Transaction invalid, already stored or orphan.");
+                    LOGGER.log(Level.FINE, "Transaction invalid or orphan.");
                     break;
             }
 

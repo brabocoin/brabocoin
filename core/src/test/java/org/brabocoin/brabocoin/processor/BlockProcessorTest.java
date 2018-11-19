@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -97,8 +98,8 @@ class BlockProcessorTest {
     void invalidBlock() throws DatabaseException {
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
-        assertEquals(ProcessedBlockStatus.INVALID, status);
+        ValidationStatus status = blockProcessor.processNewBlock(block);
+        assertEquals(ValidationStatus.INVALID, status);
     }
 
     @Test
@@ -110,9 +111,9 @@ class BlockProcessorTest {
                 10,
                 20
         );
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        ValidationStatus status = blockProcessor.processNewBlock(block);
 
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
+        assertEquals(ValidationStatus.ORPHAN, status);
         assertTrue(blockchain.isOrphan(block.getHash()));
     }
 
@@ -125,8 +126,8 @@ class BlockProcessorTest {
         blockchain.storeBlock(parent);
         blockchain.addOrphan(parent);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
+        ValidationStatus status = blockProcessor.processNewBlock(child);
+        assertEquals(ValidationStatus.ORPHAN, status);
         assertTrue(blockchain.isOrphan(child.getHash()));
     }
 
@@ -172,10 +173,10 @@ class BlockProcessorTest {
         transactionPool.addIndependentTransaction(transaction);
         utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        ValidationStatus status = blockProcessor.processNewBlock(block);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
+        assertEquals(ValidationStatus.VALID, status);
         assertEquals(hash, blockchain.getMainChain().getTopBlock().getHash());
         assertEquals(1, blockchain.getMainChain().getHeight());
 
@@ -243,10 +244,10 @@ class BlockProcessorTest {
 
         blockProcessor.processNewBlock(blockA);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockB);
+        ValidationStatus status = blockProcessor.processNewBlock(blockB);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
+        assertEquals(ValidationStatus.VALID, status);
 
         // Check UTXO
         assertTrue(utxoFromChain.isUnspent(tHashB, 0));
@@ -324,10 +325,10 @@ class BlockProcessorTest {
         blockProcessor.processNewBlock(blockA);
         blockProcessor.processNewBlock(blockB);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockC);
+        ValidationStatus status = blockProcessor.processNewBlock(blockC);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
+        assertEquals(ValidationStatus.VALID, status);
         assertEquals(hashB, blockchain.getMainChain().getTopBlock().getHash());
         assertEquals(2, blockchain.getMainChain().getHeight());
         assertTrue(blockchain.isBlockStored(hashC));
@@ -440,10 +441,10 @@ class BlockProcessorTest {
         blockProcessor.processNewBlock(blockF);
         blockProcessor.processNewBlock(blockG);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockE);
+        ValidationStatus status = blockProcessor.processNewBlock(blockE);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
+        assertEquals(ValidationStatus.VALID, status);
         assertEquals(hashG, blockchain.getMainChain().getTopBlock().getHash());
         assertEquals(4, blockchain.getMainChain().getHeight());
 
