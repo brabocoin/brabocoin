@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
@@ -50,7 +51,6 @@ import java.util.stream.Collectors;
  */
 public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
-    private BraboConfig config;
 
     /*
      * Main loop timer
@@ -62,6 +62,7 @@ public class NodeEnvironment {
      */
 
     private int servicePort;
+    private int loopInterval;
     private Blockchain blockchain;
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
@@ -77,31 +78,17 @@ public class NodeEnvironment {
     /**
      * Construct a new node environment.
      *
-     * @param servicePort          The port on which the service is running.
-     * @param blockchain           The blockchain used in this node.
-     * @param chainUTXODatabase    The chain UTXO database.
-     * @param blockProcessor       The processor used to process blocks.
-     * @param peerProcessor        The processor used to manipulate the peer set.
-     * @param transactionPool      The transaction pool.
-     * @param transactionProcessor The transaction processor.
-     * @param config               The config used for this node.
+     * @param state The state for the node.
      */
-    public NodeEnvironment(int servicePort,
-                           Blockchain blockchain,
-                           ChainUTXODatabase chainUTXODatabase,
-                           BlockProcessor blockProcessor,
-                           PeerProcessor peerProcessor,
-                           TransactionPool transactionPool,
-                           TransactionProcessor transactionProcessor,
-                           BraboConfig config) {
-        this.servicePort = servicePort;
-        this.blockchain = blockchain;
-        this.chainUTXODatabase = chainUTXODatabase;
-        this.blockProcessor = blockProcessor;
-        this.peerProcessor = peerProcessor;
-        this.transactionPool = transactionPool;
-        this.transactionProcessor = transactionProcessor;
-        this.config = config;
+    public NodeEnvironment(@NotNull State state) {
+        this.servicePort = state.getConfig().servicePort();
+        this.loopInterval = state.getConfig().loopInterval();
+        this.blockchain = state.getBlockchain();
+        this.chainUTXODatabase = state.getChainUTXODatabase();
+        this.blockProcessor = state.getBlockProcessor();
+        this.peerProcessor = state.getPeerProcessor();
+        this.transactionPool = state.getTransactionPool();
+        this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
     }
 
@@ -126,7 +113,7 @@ public class NodeEnvironment {
             public void run() {
                 main();
             }
-        }, 0, config.loopInterval());
+        }, 0, loopInterval);
 
         updateBlockchain();
         seekTransactionPoolRequest();
@@ -796,12 +783,4 @@ public class NodeEnvironment {
         blockProcessor.syncMainChainWithUTXOSet(chainUTXODatabase);
     }
 
-    /**
-     * Get the node service port.
-     *
-     * @return Node service port
-     */
-    public int getServicePort() {
-        return servicePort;
-    }
 }
