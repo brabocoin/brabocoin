@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +101,7 @@ public class TransactionProcessor {
     private @NotNull List<Transaction> removeValidOrphans(@NotNull Hash hash) {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
-                if (checkInputs(t) != ProcessedTransactionStatus.ORPHAN) {
+                if (transactionValidator.checkTransactionOrphan(t).getStatus() != ValidationStatus.ORPHAN) {
                     ProcessedTransactionStatus status = processTransaction(t);
                     return status == ProcessedTransactionStatus.DEPENDENT || status == ProcessedTransactionStatus.INDEPENDENT;
                 }
@@ -130,6 +131,7 @@ public class TransactionProcessor {
         }
 
         // Check the inputs
+        // TODO: remove when validation is added to the processor
         ProcessedTransactionStatus status = checkInputs(transaction);
 
         // If orphan, add to orphan set and do nothing
@@ -216,14 +218,7 @@ public class TransactionProcessor {
         LOGGER.fine("Promoting dependent transactions to dependent when possible.");
         for (Transaction transaction : block.getTransactions()) {
             Hash hash = transaction.getHash();
-            transactionPool.promoteDependentToIndependentFromParent(hash, t -> {
-                try {
-                    return checkInputs(t) == ProcessedTransactionStatus.INDEPENDENT;
-                } catch (DatabaseException ignored) {
-                }
-
-                return false;
-            });
+            transactionPool.promoteDependentToIndependentFromParent(hash, t -> transactionValidator.checkTransactionIndependent(t).isPassed());
         }
 
         transactionPool.limitTransactionPoolSize();

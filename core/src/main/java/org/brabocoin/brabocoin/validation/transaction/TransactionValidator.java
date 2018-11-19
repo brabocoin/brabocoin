@@ -16,9 +16,9 @@ import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseCreationTxRu
 import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseMaturityTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicateInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.InputValueTxRange;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
-import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
@@ -71,6 +71,11 @@ public class TransactionValidator {
             SufficientInputTxRule.class,
             SignatureTxRule.class
     );
+
+    private static final RuleList ORPHAN = new RuleList(
+        ValidInputUTXOTxRule.class
+    );
+
     private Consensus consensus;
     private IndexedChain mainChain;
     private TransactionPool transactionPool;
@@ -124,6 +129,28 @@ public class TransactionValidator {
      */
     public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
         return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+    }
+
+    /**
+     * Check whether a transaction is orphan.
+     *
+     * @param transaction
+     *     The transaction to check.
+     * @return Whether the transaction is orphan.
+     */
+    public TransactionValidationResult checkTransactionOrphan(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+    }
+
+    /**
+     * Check whether a transaction is independent.
+     *
+     * @param transaction
+     *     The transaction to check.
+     * @return Whether the transaction is independent.
+     */
+    public TransactionValidationResult checkTransactionIndependent(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, chainUTXODatabase)));
     }
 
     /**
