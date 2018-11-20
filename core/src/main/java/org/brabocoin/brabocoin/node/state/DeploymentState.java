@@ -32,164 +32,255 @@ import java.util.Random;
  */
 public class DeploymentState implements State {
 
-    private final @NotNull BraboConfig config;
-    private final @NotNull Consensus consensus;
-
-    private final @NotNull Signer signer;
-
-    private final @NotNull KeyValueStore blockStorage;
-    private final @NotNull KeyValueStore utxoStorage;
-
-    private final @NotNull BlockDatabase blockDatabase;
-    private final @NotNull ChainUTXODatabase chainUTXODatabase;
-    private final @NotNull UTXODatabase poolUTXODatabase;
-
-    private final @NotNull Blockchain blockchain;
-
-    private final @NotNull TransactionPool transactionPool;
-
-    private final @NotNull BlockProcessor blockProcessor;
-    private final @NotNull UTXOProcessor utxoProcessor;
-    private final @NotNull TransactionProcessor transactionProcessor;
-    private final @NotNull PeerProcessor peerProcessor;
-
-    private final @NotNull TransactionValidator transactionValidator;
-    private final @NotNull BlockValidator blockValidator;
-
-    private final @NotNull Miner miner;
-
-    private final @NotNull NodeEnvironment environment;
-    private final @NotNull Node node;
+    protected final @NotNull BraboConfig config;
+    protected final @NotNull Random unsecureRandom;
+    protected final @NotNull Consensus consensus;
+    protected final @NotNull Signer signer;
+    protected final @NotNull KeyValueStore blockStorage;
+    protected final @NotNull KeyValueStore utxoStorage;
+    protected final @NotNull BlockDatabase blockDatabase;
+    protected final @NotNull ChainUTXODatabase chainUTXODatabase;
+    protected final @NotNull UTXODatabase poolUTXODatabase;
+    protected final @NotNull Blockchain blockchain;
+    protected final @NotNull TransactionPool transactionPool;
+    protected final @NotNull BlockProcessor blockProcessor;
+    protected final @NotNull UTXOProcessor utxoProcessor;
+    protected final @NotNull TransactionProcessor transactionProcessor;
+    protected final @NotNull PeerProcessor peerProcessor;
+    protected final @NotNull TransactionValidator transactionValidator;
+    protected final @NotNull BlockValidator blockValidator;
+    protected final @NotNull Miner miner;
+    protected final @NotNull NodeEnvironment environment;
+    protected final @NotNull Node node;
 
     public DeploymentState(@NotNull BraboConfig config) throws DatabaseException {
-        Random unsecureRandom = new Random();
-
         this.config = config;
-        consensus = new Consensus();
 
-        signer = new Signer(consensus.getCurve());
+        unsecureRandom = createUnsecureRandom();
 
-        blockStorage = new LevelDB(new File(config.blockStoreDirectory(), config.databaseDirectory()));
-        utxoStorage = new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));
+        consensus = createConsensus();
 
-        blockDatabase = new BlockDatabase(blockStorage, new File(config.blockStoreDirectory()), config.maxBlockFileSize());
-        chainUTXODatabase = new ChainUTXODatabase(utxoStorage, consensus);
-        poolUTXODatabase = new UTXODatabase(new HashMapDB());
+        signer = createSigner();
 
-        blockchain = new Blockchain(blockDatabase, consensus);
+        blockStorage = createBlockStorage();
+        utxoStorage = createUtxoStorage();
 
-        transactionPool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(), unsecureRandom);
+        blockDatabase = createBlockDatabase();
+        chainUTXODatabase = createChainUTXODatabase();
+        poolUTXODatabase = createPoolUTXODatabase();
 
-        transactionValidator = new TransactionValidator(this);
-        transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, chainUTXODatabase, poolUTXODatabase);
+        blockchain = createBlockchain();
 
-        utxoProcessor = new UTXOProcessor(chainUTXODatabase);
+        transactionPool = createTransactionPool();
 
+        transactionValidator = createTransactionValidator();
+        transactionProcessor = createTransactionProcessor();
 
-        blockValidator = new BlockValidator(this);
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+        utxoProcessor = createUtxoProcessor();
 
-        peerProcessor = new PeerProcessor(new HashSet<>(), config);
+        blockValidator = createBlockValidator();
+        blockProcessor = createBlockProcessor();
 
-        miner = new Miner(transactionPool, consensus, unsecureRandom);
+        peerProcessor = createPeerProcessor();
 
-        environment = new NodeEnvironment(this);
+        miner = createMiner();
 
-        node = new Node(environment, config.servicePort());
+        environment = createEnvironment();
+
+        node = createNode();
     }
 
+    protected Random createUnsecureRandom() {
+        return new Random();
+    }
+
+    protected Consensus createConsensus() {
+        return new Consensus();
+    }
+
+    protected Signer createSigner() {
+        return new Signer(consensus.getCurve());
+    }
+
+    protected KeyValueStore createBlockStorage() {
+        return new LevelDB(new File(config.blockStoreDirectory(), config.databaseDirectory()));
+    }
+
+    protected KeyValueStore createUtxoStorage() {
+        return new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));
+    }
+
+    protected BlockDatabase createBlockDatabase() throws DatabaseException {
+        return new BlockDatabase(blockStorage, new File(config.blockStoreDirectory()), config.maxBlockFileSize());
+    }
+
+    protected ChainUTXODatabase createChainUTXODatabase() throws DatabaseException {
+        return new ChainUTXODatabase(utxoStorage, consensus);
+    }
+
+    protected UTXODatabase createPoolUTXODatabase() throws DatabaseException {
+        return new UTXODatabase(new HashMapDB());
+    }
+
+    protected Blockchain createBlockchain() throws DatabaseException {
+        return new Blockchain(blockDatabase, consensus);
+    }
+
+    protected TransactionPool createTransactionPool() {
+        return new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(), unsecureRandom);
+    }
+
+    protected BlockProcessor createBlockProcessor() {
+        return new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+    }
+
+    protected UTXOProcessor createUtxoProcessor() {
+        return new UTXOProcessor(chainUTXODatabase);
+    }
+
+    protected TransactionProcessor createTransactionProcessor() {
+        return new TransactionProcessor(transactionValidator, transactionPool, poolUTXODatabase);
+    }
+
+    protected PeerProcessor createPeerProcessor() {
+        return new PeerProcessor(new HashSet<>(), config);
+    }
+
+    protected TransactionValidator createTransactionValidator() {
+        return new TransactionValidator(this);
+    }
+
+    protected BlockValidator createBlockValidator() {
+        return new BlockValidator(this);
+    }
+
+    protected Miner createMiner() {
+        return new Miner(transactionPool, consensus, unsecureRandom);
+    }
+
+    protected NodeEnvironment createEnvironment() {
+        return new NodeEnvironment(this);
+    }
+
+    protected Node createNode() {
+        return new Node(environment, config.servicePort());
+    }
+
+    @NotNull
     @Override
-    public @NotNull BraboConfig getConfig() {
+    public BraboConfig getConfig() {
         return config;
     }
 
+    public Random getUnsecureRandom() {
+        return unsecureRandom;
+    }
+
+    @NotNull
     @Override
-    public @NotNull Consensus getConsensus() {
+    public Consensus getConsensus() {
         return consensus;
     }
 
+    @NotNull
     @Override
-    public @NotNull Signer getSigner() {
+    public Signer getSigner() {
         return signer;
     }
 
+    @NotNull
     @Override
-    public @NotNull KeyValueStore getBlockStorage() {
+    public KeyValueStore getBlockStorage() {
         return blockStorage;
     }
 
+    @NotNull
     @Override
-    public @NotNull KeyValueStore getUtxoStorage() {
+    public KeyValueStore getUtxoStorage() {
         return utxoStorage;
     }
 
+    @NotNull
     @Override
-    public @NotNull BlockDatabase getBlockDatabase() {
+    public BlockDatabase getBlockDatabase() {
         return blockDatabase;
     }
 
+    @NotNull
     @Override
-    public @NotNull ChainUTXODatabase getChainUTXODatabase() {
+    public ChainUTXODatabase getChainUTXODatabase() {
         return chainUTXODatabase;
     }
 
+    @NotNull
     @Override
-    public @NotNull UTXODatabase getPoolUTXODatabase() {
+    public UTXODatabase getPoolUTXODatabase() {
         return poolUTXODatabase;
     }
 
+    @NotNull
     @Override
-    public @NotNull Blockchain getBlockchain() {
+    public Blockchain getBlockchain() {
         return blockchain;
     }
 
+    @NotNull
     @Override
-    public @NotNull TransactionPool getTransactionPool() {
+    public TransactionPool getTransactionPool() {
         return transactionPool;
     }
 
+    @NotNull
     @Override
-    public @NotNull BlockProcessor getBlockProcessor() {
+    public BlockProcessor getBlockProcessor() {
         return blockProcessor;
     }
 
+    @NotNull
     @Override
-    public @NotNull UTXOProcessor getUtxoProcessor() {
+    public UTXOProcessor getUtxoProcessor() {
         return utxoProcessor;
     }
 
+    @NotNull
     @Override
-    public @NotNull TransactionProcessor getTransactionProcessor() {
+    public TransactionProcessor getTransactionProcessor() {
         return transactionProcessor;
     }
 
+    @NotNull
     @Override
-    public @NotNull PeerProcessor getPeerProcessor() {
+    public PeerProcessor getPeerProcessor() {
         return peerProcessor;
     }
 
+    @NotNull
     @Override
-    public @NotNull TransactionValidator getTransactionValidator() {
+    public TransactionValidator getTransactionValidator() {
         return transactionValidator;
     }
 
+    @NotNull
     @Override
-    public @NotNull BlockValidator getBlockValidator() {
+    public BlockValidator getBlockValidator() {
         return blockValidator;
     }
 
+    @NotNull
     @Override
-    public @NotNull Miner getMiner() {
+    public Miner getMiner() {
         return miner;
     }
 
+    @NotNull
     @Override
-    public @NotNull NodeEnvironment getEnvironment() {
+    public NodeEnvironment getEnvironment() {
         return environment;
     }
 
+    @NotNull
     @Override
-    public @NotNull Node getNode() {
+    public Node getNode() {
         return node;
     }
 }
