@@ -77,7 +77,7 @@ class BlockValidatorTest {
                 return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
             }
         };
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig, );
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
         UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);

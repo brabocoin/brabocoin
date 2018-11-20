@@ -37,7 +37,7 @@ class TransactionPoolTest {
 
     @BeforeEach
     void setUp() {
-        pool = new TransactionPool(config, new Random());
+        pool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(),new Random());
     }
 
     @Test
@@ -271,7 +271,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -313,7 +313,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -355,7 +355,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -394,7 +394,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();

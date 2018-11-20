@@ -59,8 +59,8 @@ class BlockchainTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        database = new BlockDatabase(new HashMapDB(), config);
         consensus = new Consensus();
+        database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         blockchain = new Blockchain(database, consensus);
     }
 
