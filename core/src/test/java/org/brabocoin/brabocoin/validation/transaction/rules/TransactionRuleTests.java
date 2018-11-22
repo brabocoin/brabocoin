@@ -63,7 +63,7 @@ class TransactionRuleTests {
     void CoinbaseCreationTxRuleFail() {
         Transaction transaction = new Transaction(
                 Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -82,7 +82,7 @@ class TransactionRuleTests {
     void CoinbaseCreationTxRuleSuccess() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -102,7 +102,7 @@ class TransactionRuleTests {
         Output output = Simulation.randomOutput();
         Transaction coinbase = new Transaction(
                 Collections.emptyList(),
-                Collections.singletonList(output)
+                Collections.singletonList(output), signatures
         );
 
         Block block = new Block(
@@ -118,7 +118,7 @@ class TransactionRuleTests {
 
         Transaction spendCoinbase = new Transaction(
                 Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.getHash(), 0)),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -140,7 +140,7 @@ class TransactionRuleTests {
         Output output = Simulation.randomOutput();
         Transaction coinbase = new Transaction(
                 Collections.emptyList(),
-                Collections.singletonList(output)
+                Collections.singletonList(output), signatures
         );
 
         Block block = new Block(
@@ -163,7 +163,7 @@ class TransactionRuleTests {
 
         Transaction spendCoinbase = new Transaction(
                 Collections.singletonList(new Input(Simulation.randomSignature(), coinbase.getHash(), 0)),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -185,7 +185,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Arrays.asList(input, input),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -205,7 +205,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 100),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -228,7 +228,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Arrays.asList(input, input),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         transactionPool.addIndependentTransaction(transaction);
@@ -254,7 +254,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Arrays.asList(input, input),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         transactionPool.addDependentTransaction(transaction);
@@ -280,7 +280,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Arrays.asList(input, input),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         transactionPool.addOrphanTransaction(transaction);
@@ -305,7 +305,7 @@ class TransactionRuleTests {
         Input input = Simulation.randomInput();
         Transaction transaction = new Transaction(
                 Arrays.asList(input, input),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -325,7 +325,7 @@ class TransactionRuleTests {
     void OutputCountTxRuleCoinbaseFail() {
         Transaction transaction = new Transaction(
                 Collections.emptyList(),
-                Collections.emptyList()
+                Collections.emptyList(), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -344,7 +344,7 @@ class TransactionRuleTests {
     void OutputCountTxRuleCoinbaseSuccess() {
         Transaction transaction = new Transaction(
                 Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -363,7 +363,7 @@ class TransactionRuleTests {
     void OutputCountTxRuleNormalFailInputs() {
         Transaction transaction = new Transaction(
                 Collections.emptyList(),
-                Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput())
+                Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -382,7 +382,7 @@ class TransactionRuleTests {
     void OutputCountTxRuleNormalFailOutputs() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.emptyList()
+                Collections.emptyList(), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -401,7 +401,7 @@ class TransactionRuleTests {
     void OutputCountTxRuleNormalSuccess() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput())
+                Arrays.asList(Simulation.randomOutput(), Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -423,7 +423,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         -1
-                ))
+                )), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -444,7 +444,7 @@ class TransactionRuleTests {
                         negativeOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -467,7 +467,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         -1
-                ))
+                )), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -479,7 +479,7 @@ class TransactionRuleTests {
                         negativeOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -502,7 +502,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         Long.MAX_VALUE - 1
-                ))
+                )), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -523,7 +523,7 @@ class TransactionRuleTests {
                         negativeOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -554,7 +554,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 consensus.getMaxMoneyValue() / 3L + 5
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -585,7 +585,7 @@ class TransactionRuleTests {
                                 negativeOutputTransaction.getHash(),
                                 2
                         )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -608,7 +608,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         0
-                ))
+                )), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -620,7 +620,7 @@ class TransactionRuleTests {
                         zeroOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -643,7 +643,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         1
-                ))
+                )), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -664,7 +664,7 @@ class TransactionRuleTests {
                         positiveOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -687,7 +687,7 @@ class TransactionRuleTests {
                 Collections.singletonList(new Output(
                         Simulation.randomHash(),
                         1
-                ))
+                )), signatures
         );
 
         State state = new TestState(defaultConfig);
@@ -700,7 +700,7 @@ class TransactionRuleTests {
                         positiveOutputTransaction.getHash(),
                         0
                 )),
-                Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(Simulation.randomOutput()), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -720,7 +720,7 @@ class TransactionRuleTests {
     void MaxSizeTxRuleFail() {
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -739,7 +739,7 @@ class TransactionRuleTests {
     void MaxSizeTxRuleSuccess() {
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 5),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 5)
+                Simulation.repeatedBuilder(Simulation::randomOutput, 5), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -758,7 +758,7 @@ class TransactionRuleTests {
     void OutputValueTxRuleFailNegative() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.singletonList(new Output(Simulation.randomHash(), -1))
+                Collections.singletonList(new Output(Simulation.randomHash(), -1)), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -777,7 +777,7 @@ class TransactionRuleTests {
     void OutputValueTxRuleFailZero() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.singletonList(new Output(Simulation.randomHash(), 0))
+                Collections.singletonList(new Output(Simulation.randomHash(), 0)), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -796,7 +796,8 @@ class TransactionRuleTests {
     void OutputValueTxRuleFailExceedSingle() {
         Transaction transaction = new Transaction(
                 Collections.singletonList(Simulation.randomInput()),
-                Collections.singletonList(new Output(Simulation.randomHash(), consensus.getMaxMoneyValue() + 1))
+                Collections.singletonList(new Output(Simulation.randomHash(), consensus.getMaxMoneyValue() + 1)),
+            signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -826,7 +827,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 consensus.getMaxMoneyValue() / 3L + 5
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -850,7 +851,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 consensus.getMaxMoneyValue() / 3L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -879,7 +880,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 20L
                         )
-                )
+                ), signatures
         );
 
         TransactionPool transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(), defaultConfig.maxOrphanTransactions(), new Random());;
@@ -892,7 +893,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 20L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -922,7 +923,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 20L
                         )
-                )
+                ), signatures
         );
 
         TransactionPool transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(), defaultConfig.maxOrphanTransactions(), new Random());
@@ -935,7 +936,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 20L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -965,7 +966,7 @@ class TransactionRuleTests {
                                 coinbaseOutputAddress,
                                 20L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -988,10 +989,10 @@ class TransactionRuleTests {
                                 0
                         )
                 ),
-                Collections.emptyList()
+                Collections.emptyList(), signatures
         );
         Signature signature = signer.signMessage(unsignedSpendingTx.getSignableTransactionData(), privateKey);
-        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+        Transaction spendingTx = unsignedSpendingTx.sign(
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
@@ -1023,7 +1024,7 @@ class TransactionRuleTests {
                                 coinbaseOutputAddress,
                                 20L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1046,10 +1047,10 @@ class TransactionRuleTests {
                                 0
                         )
                 ),
-                Collections.emptyList()
+                Collections.emptyList(), signatures
         );
         Signature signature = signer.signMessage(unsignedSpendingTx.getSignableTransactionData(), BigInteger.ONE);
-        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+        Transaction spendingTx = unsignedSpendingTx.sign(
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
@@ -1081,7 +1082,7 @@ class TransactionRuleTests {
                                 coinbaseOutputAddress,
                                 20L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1104,10 +1105,10 @@ class TransactionRuleTests {
                                 0
                         )
                 ),
-                Collections.emptyList()
+                Collections.emptyList(), signatures
         );
         Signature signature = null;
-        Transaction spendingTx = unsignedSpendingTx.getSignedTransaction(
+        Transaction spendingTx = unsignedSpendingTx.sign(
                 Collections.singletonMap(unsignedSpendingTx.getInputs().get(0), signature)
         );
 
@@ -1138,7 +1139,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
 
 
@@ -1153,7 +1154,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 10L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1193,7 +1194,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 6L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1222,7 +1223,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
 
 
@@ -1237,7 +1238,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 10L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1277,7 +1278,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 5L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1306,7 +1307,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
 
 
@@ -1321,7 +1322,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 10L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1361,7 +1362,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 4L
                         )
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1390,7 +1391,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
 
         ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
@@ -1403,7 +1404,7 @@ class TransactionRuleTests {
                 )),
                 Collections.singletonList(
                         Simulation.randomOutput()
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1432,7 +1433,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1455,7 +1456,7 @@ class TransactionRuleTests {
                 )),
                 Collections.singletonList(
                         Simulation.randomOutput()
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1483,7 +1484,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1506,7 +1507,7 @@ class TransactionRuleTests {
                 )),
                 Collections.singletonList(
                         Simulation.randomOutput()
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1535,7 +1536,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1549,7 +1550,7 @@ class TransactionRuleTests {
                 )),
                 Collections.singletonList(
                         Simulation.randomOutput()
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
@@ -1578,7 +1579,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
 
         Transaction coinbaseTwo = new Transaction(
@@ -1592,7 +1593,7 @@ class TransactionRuleTests {
                                 Simulation.randomHash(),
                                 15L
                         )
-                )
+                ), signatures
         );
         State state = new TestState(defaultConfig);
 
@@ -1623,7 +1624,7 @@ class TransactionRuleTests {
                         )),
                 Collections.singletonList(
                         Simulation.randomOutput()
-                )
+                ), signatures
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(

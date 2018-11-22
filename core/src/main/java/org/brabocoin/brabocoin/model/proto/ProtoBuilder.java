@@ -10,5 +10,5 @@ public interface ProtoBuilder <P extends ProtoModel> {
      *
      * @return The domain class instance of the builder object.
      */
-    P build();
+    <D extends P> D build();
 }

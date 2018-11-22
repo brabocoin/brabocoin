@@ -17,24 +17,25 @@ message Signature {
     bytes publicKey = 3;
 }
 
-message BlockChain {
-
-}
-
 message Output {
     Hash address = 1;
     int64 amount = 2;
 }
 
 message Input {
-    Signature signature = 1;
-    Hash referencedTransaction = 2;
-    int32 referencedOutputIndex = 3;
+    Hash referencedTransaction = 1;
+    int32 referencedOutputIndex = 2;
+}
+
+message UnsignedTransaction {
+    repeated Input inputs = 1;
+    repeated Output outputs = 2;
 }
 
 message Transaction {
     repeated Input inputs = 1;
     repeated Output outputs = 2;
+    repeated Signature signatures = 3;
 }
 
 message Block {

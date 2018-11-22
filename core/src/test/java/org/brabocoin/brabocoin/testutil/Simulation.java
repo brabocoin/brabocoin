@@ -107,7 +107,7 @@ public class Simulation {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(randomHash(), consensus.getBlockReward())
-                                )
+                                ), signatures
                         )
                 );
 
@@ -127,7 +127,7 @@ public class Simulation {
     public static Transaction randomTransaction(int inputBound, int outputBound) {
         List<Input> inputs = repeatedBuilder(Simulation::randomInput, inputBound);
         List<Output> outputs = repeatedBuilder(Simulation::randomOutput, outputBound);
-        return new Transaction(inputs, outputs);
+        return new Transaction(inputs, outputs, signatures);
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
