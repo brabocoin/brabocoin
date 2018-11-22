@@ -1,18 +1,17 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.TransactionPool;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
@@ -21,17 +20,16 @@ import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test {@link TransactionProcessor}.
@@ -171,11 +169,16 @@ class TransactionProcessorTest {
                 ) {
                     @Override
                     public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-                        if (transactionA.getHash().equals(transaction.getHash())) {
-                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
-                        } else {
+                        if (hash.equals(transaction.getHash())) {
                             return TransactionValidationResult.passed();
+                        } else {
+                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
                         }
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
                     }
                 };
             }
@@ -201,6 +204,29 @@ class TransactionProcessorTest {
     void processNewTransactionDependentAddOrphan() throws DatabaseException {
         Transaction transactionA = createDependentTransaction();
         Hash hash = transactionA.getHash();
+
+        state = new TestState(config) {
+            @Override
+            protected TransactionValidator createTransactionValidator() {
+                return new TransactionValidator(
+                    this
+                ) {
+                    @Override
+                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                        if (hash.equals(transaction.getHash())) {
+                            return TransactionValidationResult.passed();
+                        } else {
+                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                        }
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
@@ -230,6 +256,30 @@ class TransactionProcessorTest {
             Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashB = transactionB.getHash();
+
+        state = new TestState(config) {
+            @Override
+            protected TransactionValidator createTransactionValidator() {
+                return new TransactionValidator(
+                    this
+                ) {
+                    @Override
+                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                        if (hash.equals(transaction.getHash())) {
+                            return TransactionValidationResult.passed();
+                        } else {
+                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                        }
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+                };
+            }
+        };
+
         state.getTransactionProcessor().processNewTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
@@ -246,55 +296,6 @@ class TransactionProcessorTest {
 
         for (int i = 0; i < transactionC.getOutputs().size(); i++) {
             assertTrue(state.getPoolUTXODatabase().isUnspent(hashC, i));
-        }
-    }
-
-    @Test
-    void processNewTransactionIndependentAddOrphanInvalid() throws DatabaseException {
-        // Construct the chain UTXO such that the transaction becomes independent
-        Transaction transactionA = createIndependentTransaction();
-        Hash hash = transactionA.getHash();
-
-        // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
-        Transaction transactionB = new Transaction(
-            Arrays.asList(
-                new Input( hash, 0),
-                Simulation.randomInput()
-            ),
-            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-        );
-        state.getTransactionProcessor().processNewTransaction(transactionB);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transactionA);
-        assertTrue(result.getValidatedOrphans().isEmpty());
-
-        Hash hashB = transactionB.getHash();
-        for (int i = 0; i < transactionB.getOutputs().size(); i++) {
-            assertFalse(state.getPoolUTXODatabase().isUnspent(hashB, i));
-        }
-    }
-
-    @Test
-    void processNewTransactionDependentAddOrphanInvalid() throws DatabaseException {
-        Transaction transactionA = createDependentTransaction();
-        Hash hash = transactionA.getHash();
-
-        // Add orphan such that B -> A, but with other dependencies such that the orphan is still invalid.
-        Transaction transactionB = new Transaction(
-            Arrays.asList(
-                new Input( hash, 0),
-                Simulation.randomInput()
-            ),
-            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-        );
-        state.getTransactionProcessor().processNewTransaction(transactionB);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transactionA);
-        assertTrue(result.getValidatedOrphans().isEmpty());
-
-        Hash hashB = transactionB.getHash();
-        for (int i = 0; i < transactionB.getOutputs().size(); i++) {
-            assertFalse(state.getPoolUTXODatabase().isUnspent(hashB, i));
         }
     }
 

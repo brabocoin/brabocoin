@@ -4,7 +4,11 @@ import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
@@ -14,14 +18,22 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
+import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test {@link BlockProcessor}.
@@ -148,7 +160,7 @@ class BlockProcessorTest {
 
         // Check transaction pool
         assertFalse(state.getTransactionPool().hasValidTransaction(tHash));
-        assertFalse(state.getChainUTXODatabase().isUnspent(tHash, 0));
+        assertFalse(state.getPoolUTXODatabase().isUnspent(tHash, 0));
 
         // Check undo data
         assertNotNull(state.getBlockchain().findBlockUndo(hash));
@@ -402,6 +414,25 @@ class BlockProcessorTest {
                 )),
                 0);
         Hash hashG = blockG.getHash();
+
+        state = new TestState(config) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                    this
+                ) {
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        if (block.getHash().equals(blockF.getHash()) || block.getHash().equals(blockG.getHash())) {
+                            return BlockValidationResult.failed(new RuleBookFailMarker(
+                                KnownParentBlkRule.class));
+                        }
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
+
         state.getBlockProcessor().processNewBlock(blockA);
         state.getBlockProcessor().processNewBlock(blockB);
         state.getBlockProcessor().processNewBlock(blockC);
