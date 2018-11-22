@@ -13,7 +13,6 @@ import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,7 +65,7 @@ class TransactionValidatorTest {
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000), signatures
         );
 
         RuleBookResult result = transactionValidator.checkTransactionValid(transaction);
@@ -90,7 +89,7 @@ class TransactionValidatorTest {
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000), signatures
         );
 
         assertThrows(IllegalStateException.class, () -> transactionValidator.checkTransactionValid(transaction));

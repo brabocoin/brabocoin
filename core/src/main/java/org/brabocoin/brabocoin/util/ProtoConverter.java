@@ -30,7 +30,7 @@ public class ProtoConverter {
     }
 
 
-    public static <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D toDomain(P protoObject, Class<B> domainClassBuilder) {
+    public static <M extends D, D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable M toDomain(P protoObject, Class<B> domainClassBuilder) {
         B builder = CONVERTER.toDomain(domainClassBuilder, protoObject);
 
         if (builder == null) {

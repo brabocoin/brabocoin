@@ -1,90 +1,65 @@
 package org.brabocoin.brabocoin.model;
 
-import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
-import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
-import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Transaction with brabocoin inputs and outputs.
+ * Transaction with brabocoin inputs and outputs, including signatures for the inputs.
  */
 @ProtoClass(BrabocoinProtos.Transaction.class)
-public class Transaction implements ProtoModel<Transaction> {
+public class Transaction extends UnsignedTransaction {
 
-    /**
-     * Inputs used by the transaction.
-     */
     @ProtoField
-    private final @NotNull List<Input> inputs;
+    private final @NotNull List<Signature> signatures;
 
     /**
-     * Outputs used by the transaction.
+     * Create a transaction from an unsigned transaction.
+     *
+     * @param unsignedTransaction
+     *     The unsigned transaction.
+     * @param signatures
+     *     The signatures to sign with.
+     * @return The signed transaction.
      */
-    @ProtoField
-    private final @NotNull List<Output> outputs;
+    public static @NotNull Transaction fromUnsigned(@NotNull UnsignedTransaction unsignedTransaction,
+                                                    @NotNull List<Signature> signatures) {
+        return unsignedTransaction.sign(signatures);
+    }
 
-    /**
-     * Cached hash of this transaction.
-     */
-    private Hash hash;
+    public static @NotNull Transaction coinbase(@NotNull Output output) {
+        return new Transaction(
+            Collections.emptyList(),
+            Collections.singletonList(output),
+            Collections.emptyList()
+        );
+    }
 
     /**
      * Create a new transaction.
      *
-     * @param inputs  inputs used by the transaction.
-     * @param outputs outputs used by the transaction.
+     * @param inputs
+     *     Inputs used by the transaction.
+     * @param outputs
+     *     Outputs used by the transaction.
+     * @param signatures
+     *     The list of signatures of the transaction.
      */
-    public Transaction(@NotNull List<Input> inputs, @NotNull List<Output> outputs) {
-        this.inputs = new ArrayList<>(inputs);
-        this.outputs = new ArrayList<>(outputs);
+    public Transaction(@NotNull List<Input> inputs, @NotNull List<Output> outputs,
+                       @NotNull List<Signature> signatures) {
+        super(inputs, outputs);
+        this.signatures = new ArrayList<>(signatures);
     }
 
-    public @NotNull List<Input> getInputs() {
-        return inputs;
-    }
-
-    public @NotNull List<Output> getOutputs() {
-        return outputs;
-    }
-
-    /**
-     * Whether the transaction is a coinbase transaction.
-     * No inputs are allowed, and only one output.
-     *
-     * @return Whether the transaction is a coinbase transaction.
-     */
-    public boolean isCoinbase() {
-        return inputs.size() == 0 && outputs.size() == 1;
-    }
-
-    /**
-     * Gets the transaction hash using lazy computation if not available.
-     * <p>
-     * The hash of a block is the hashed output of the full transaction data.
-     * The hash is computed by applying the SHA-256 hashing function twice.
-     *
-     * @return The transaction hash.
-     */
-    public @NotNull Hash getHash() {
-        if (hash == null) {
-            ByteString data = getRawData();
-            hash = Hashing.digestSHA256(Hashing.digestSHA256(data));
-        }
-        return hash;
-    }
-
-    private @NotNull ByteString getRawData() {
-        return ProtoConverter.toProto(this, BrabocoinProtos.Transaction.class).toByteString();
+    public @NotNull List<Signature> getSignatures() {
+        return Collections.unmodifiableList(signatures);
     }
 
     @Override
@@ -93,20 +68,13 @@ public class Transaction implements ProtoModel<Transaction> {
     }
 
     @ProtoClass(BrabocoinProtos.Transaction.class)
-    public static class Builder implements ProtoBuilder<Transaction> {
+    public static class Builder extends UnsignedTransaction.Builder {
 
         @ProtoField
-        private List<Input.Builder> inputs;
-        @ProtoField
-        private List<Output.Builder> outputs;
+        private List<Signature.Builder> signatures;
 
-        public Builder setInputs(List<Input.Builder> inputs) {
-            this.inputs = inputs;
-            return this;
-        }
-
-        public Builder setOutputs(List<Output.Builder> outputs) {
-            this.outputs = outputs;
+        public Builder setSignatures(List<Signature.Builder> signatures) {
+            this.signatures = signatures;
             return this;
         }
 
@@ -114,35 +82,10 @@ public class Transaction implements ProtoModel<Transaction> {
         public Transaction build() {
             return new Transaction(
                     inputs.stream().map(Input.Builder::build).collect(Collectors.toList()),
-                    outputs.stream().map(Output.Builder::build).collect(Collectors.toList())
+                    outputs.stream().map(Output.Builder::build).collect(Collectors.toList()),
+                    signatures.stream().map(Signature.Builder::build).collect(Collectors.toList())
             );
         }
     }
 
-    /**
-     * Get the ByteString of this transaction without signature.
-     *
-     * @return ByteString of this transaction without signature.
-     */
-    public ByteString getSignableTransactionData() {
-        return ProtoConverter.toProtoBytes(new Transaction(
-                inputs.stream().map(
-                        i -> new Input(
-                                null,
-                                i.getReferencedTransaction(),
-                                i.getReferencedOutputIndex()
-                        )
-                ).collect(Collectors.toList()),
-                outputs
-        ), BrabocoinProtos.Transaction.class);
-    }
-
-    public Transaction getSignedTransaction(Map<Input, Signature> signatureMap) {
-        return new Transaction(
-                inputs.stream()
-                        .map(i -> new Input(signatureMap.get(i), i.getReferencedTransaction(), i.getReferencedOutputIndex()))
-                        .collect(Collectors.toList()),
-                outputs
-        );
-    }
 }

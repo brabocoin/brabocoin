@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -111,10 +110,7 @@ public class Miner {
         // TODO: do this better
         long amount = consensus.getBlockReward();
 
-        return new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(new Output(coinbaseAddress, amount))
-        );
+        return Transaction.coinbase(new Output(coinbaseAddress, amount));
     }
 
     /**

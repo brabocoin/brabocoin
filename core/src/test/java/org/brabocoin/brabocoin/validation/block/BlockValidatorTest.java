@@ -17,12 +17,10 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
@@ -97,7 +95,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), consensus.getBlockReward())
-                        ))
+                        ), signatures
+                )
         );
 
         Hash merkleRoot = new MerkleTree(consensus.getMerkleTreeHashFunction(),
@@ -147,7 +146,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), consensus.getBlockReward())
-                        ))
+                        ), signatures
+                )
         );
 
         Hash merkleRoot = new MerkleTree(consensus.getMerkleTreeHashFunction(),
@@ -198,8 +198,9 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), consensus.getBlockReward())
-                        )),
-                new Transaction(Collections.emptyList(), Collections.emptyList())
+                        ), signatures
+                ),
+                new Transaction(Collections.emptyList(), Collections.emptyList(), signatures)
         );
 
         Hash merkleRoot = new MerkleTree(consensus.getMerkleTreeHashFunction(),
@@ -252,7 +253,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), consensus.getBlockReward())
-                        ))
+                        ), signatures
+                )
         );
 
         Hash merkleRoot = new MerkleTree(consensus.getMerkleTreeHashFunction(),

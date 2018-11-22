@@ -33,7 +33,7 @@ class TransactionTest {
 
     @Test
     void protoConvertToDTOTransactionTest() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, signatures);
         BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
 
 
@@ -43,7 +43,7 @@ class TransactionTest {
 
     @Test
     void protoConvertToDOMTransactionTest() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, signatures);
         BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
         Transaction transactionReflection = ProtoConverter.toDomain(protoTransaction, Transaction.Builder.class);
 
@@ -53,7 +53,7 @@ class TransactionTest {
 
     @Test
     void testComputeHash() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, signatures);
         Hash hash = transaction.getHash();
         assertNotNull(hash);
     }

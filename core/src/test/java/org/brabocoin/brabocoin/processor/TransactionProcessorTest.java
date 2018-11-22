@@ -203,7 +203,7 @@ class TransactionProcessorTest {
                 .collect(Collectors.toList()),
             IntStream.range(0, 2)
                 .mapToObj(i -> Simulation.randomOutput())
-                .collect(Collectors.toList())
+                .collect(Collectors.toList()), signatures
         );
 
         // Construct the chain UTXO such that the transaction becomes independent
@@ -238,7 +238,7 @@ class TransactionProcessorTest {
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         processor.processNewTransaction(transactionB);
 
@@ -259,7 +259,7 @@ class TransactionProcessorTest {
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         processor.processNewTransaction(transactionB);
 
@@ -281,14 +281,14 @@ class TransactionProcessorTest {
         // Add orphans such that C -> B -> A
         Transaction transactionB = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hash, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         Hash hashB = transactionB.getHash();
         processor.processNewTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         Hash hashC = transactionC.getHash();
         ProcessedTransactionResult resultC = processor.processNewTransaction(transactionC);
@@ -315,7 +315,7 @@ class TransactionProcessorTest {
                 new Input(Simulation.randomSignature(), hash, 0),
                 Simulation.randomInput()
             ),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         processor.processNewTransaction(transactionB);
 
@@ -339,7 +339,7 @@ class TransactionProcessorTest {
                 new Input(Simulation.randomSignature(), hash, 0),
                 Simulation.randomInput()
             ),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         processor.processNewTransaction(transactionB);
 
@@ -370,7 +370,7 @@ class TransactionProcessorTest {
         // Add a dependent transaction that will be promoted
         Transaction transactionA = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.getHash(), 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         Hash hashA = transactionA.getHash();
         pool.addDependentTransaction(transactionA);
@@ -413,7 +413,7 @@ class TransactionProcessorTest {
         // Add independent transaction that will now become dependent
         Transaction independent = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), tFromBlock.getHash(), 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         Hash independentHash = independent.getHash();
         pool.addIndependentTransaction(independent);
@@ -422,7 +422,7 @@ class TransactionProcessorTest {
         // Add orphan transaction that will now become valid
         Transaction orphan = new Transaction(
             Collections.singletonList(new Input(Simulation.randomSignature(), iFromBlock.getReferencedTransaction(), iFromBlock.getReferencedOutputIndex())),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(Simulation.randomOutput()), signatures
         );
         Hash orphanHash = orphan.getHash();
         pool.addOrphanTransaction(orphan);

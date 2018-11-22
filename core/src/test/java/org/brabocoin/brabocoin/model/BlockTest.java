@@ -26,7 +26,7 @@ class BlockTest{
         }};
 
         List<Transaction> transactionList = new ArrayList<Transaction>() {{
-            add(new Transaction(inputList, outputList));
+            add(new Transaction(inputList, outputList, signatures));
         }};
 
         Block block = new Block(dummyHash, dummyHash, dummyHash, Simulation.randomBigInteger(), 7, transactionList);
