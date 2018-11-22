@@ -25,6 +25,12 @@ import java.util.stream.Collectors;
 public class Block implements ProtoModel<Block> {
 
     /**
+     * Number indicating the network this block belongs to.
+     */
+    @ProtoField
+    private final int networkId;
+
+    /**
      * Hash of the previous block in the blockchain.
      */
     @ProtoField
@@ -65,6 +71,17 @@ public class Block implements ProtoModel<Block> {
      */
     protected Hash hash;
 
+    @Deprecated
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
+        this.previousBlockHash = previousBlockHash;
+        this.merkleRoot = merkleRoot;
+        this.targetValue = targetValue;
+        this.nonce = nonce;
+        this.blockHeight = blockHeight;
+        this.transactions = new ArrayList<>(transactions);
+        this.networkId = 1;
+    }
+
     /**
      * Create a new block.
      *
@@ -74,14 +91,18 @@ public class Block implements ProtoModel<Block> {
      * @param nonce             Nonce for the proof-of-work.
      * @param blockHeight       Height of the block in the blockchain.
      * @param transactions      List of transactions contained in this block.
+     * @param networkId         Number indicating the network this block belongs to.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue,
+                 @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions,
+                 int networkId) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
         this.blockHeight = blockHeight;
         this.transactions = new ArrayList<>(transactions);
+        this.networkId = networkId;
     }
 
     /**
@@ -121,6 +142,10 @@ public class Block implements ProtoModel<Block> {
                 .concat(ByteString.copyFrom(getNonce().toByteArray()));
     }
 
+    public int getNetworkId() {
+        return networkId;
+    }
+
     public @NotNull Hash getPreviousBlockHash() {
         return previousBlockHash;
     }
@@ -154,6 +179,8 @@ public class Block implements ProtoModel<Block> {
     public static class Builder implements ProtoBuilder<Block> {
 
         @ProtoField
+        private int networkId;
+        @ProtoField
         private Hash.Builder previousBlockHash;
         @ProtoField
         private Hash.Builder merkleRoot;
@@ -165,6 +192,11 @@ public class Block implements ProtoModel<Block> {
         private int blockHeight;
         @ProtoField
         private List<Transaction.Builder> transactions;
+
+        public Builder setNetworkId(int networkId) {
+            this.networkId = networkId;
+            return this;
+        }
 
         public Builder setPreviousBlockHash(Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -205,7 +237,8 @@ public class Block implements ProtoModel<Block> {
                     blockHeight,
                     transactions.stream()
                             .map(Transaction.Builder::build)
-                            .collect(Collectors.toList())
+                            .collect(Collectors.toList()),
+                    networkId
             );
         }
     }
