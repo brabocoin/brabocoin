@@ -85,7 +85,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        )
+                        ),
+                        Collections.emptyList()
                 )
         );
 
@@ -126,7 +127,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        )
+                        ),
+                        Collections.emptyList()
                 )
         );
 
@@ -168,9 +170,10 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        )
+                        ),
+                        Collections.emptyList()
                 ),
-                new Transaction(Collections.emptyList(), Collections.emptyList(), signatures)
+                new Transaction(Collections.emptyList(), Collections.emptyList(), Collections.emptyList())
         );
 
         Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
@@ -213,7 +216,8 @@ class BlockValidatorTest {
                 new Transaction(Collections.emptyList(),
                         Collections.singletonList(
                                 new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        )
+                        ),
+                        Collections.emptyList()
                 )
         );
 

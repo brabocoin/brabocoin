@@ -124,7 +124,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -156,7 +156,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -190,7 +190,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -223,7 +223,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -257,7 +257,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -288,7 +288,7 @@ class BlockRuleTests {
                                 ),
                                 Collections.singletonList(
                                         Simulation.randomOutput()
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -339,7 +339,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -368,13 +368,13 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -403,7 +403,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -436,7 +436,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -462,7 +462,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 10L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -479,7 +479,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 20L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase2 = new Block(
                 coinbase.getHash(),
@@ -503,22 +503,22 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Arrays.asList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb.getHash(),
                                                 0
                                                 ),
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb2.getHash(),
                                                 0
                                         )
                                 ),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 29L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -546,7 +546,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 10L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -563,7 +563,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 20L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase2 = new Block(
                 coinbase.getHash(),
@@ -587,22 +587,22 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Arrays.asList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb.getHash(),
                                                 0
                                                 ),
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb2.getHash(),
                                                 0
                                         )
                                 ),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 30L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -629,7 +629,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), consensus.getMaxMoneyValue() / 2L + 5L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -646,7 +646,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), consensus.getMaxMoneyValue() / 2L + 5L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase2 = new Block(
                 coinbase.getHash(),
@@ -670,22 +670,22 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Arrays.asList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb.getHash(),
                                                 0
                                                 ),
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb2.getHash(),
                                                 0
                                         )
                                 ),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 1L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -719,7 +719,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -748,7 +748,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -777,7 +777,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -828,7 +828,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -879,7 +879,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -909,7 +909,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -938,7 +938,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -971,7 +971,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1004,7 +1004,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1035,7 +1035,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), consensus.getBlockReward())
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1059,7 +1059,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 10L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1076,7 +1076,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 20L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase2 = new Block(
                 coinbase.getHash(),
@@ -1108,11 +1108,11 @@ class BlockRuleTests {
                                                 consensus.getBlockReward()
                                                 + 5L
                                         )
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Collections.singletonList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb.getHash(),
                                                 0
                                                 )
@@ -1120,11 +1120,11 @@ class BlockRuleTests {
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(),
                                                 8)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Collections.singletonList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb2.getHash(),
                                                 0
                                         )
@@ -1132,7 +1132,7 @@ class BlockRuleTests {
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(),
                                                 17)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1155,7 +1155,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 10L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1172,7 +1172,7 @@ class BlockRuleTests {
                 Collections.emptyList(),
                 Collections.singletonList(
                         new Output(Simulation.randomHash(), 20L)
-                ), signatures
+                ), Collections.emptyList()
         );
         Block coinbase2 = new Block(
                 coinbase.getHash(),
@@ -1203,11 +1203,11 @@ class BlockRuleTests {
                                                 consensus.getBlockReward()
                                                 + 6L
                                         )
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Collections.singletonList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb.getHash(),
                                                 0
                                                 )
@@ -1215,11 +1215,11 @@ class BlockRuleTests {
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(),
                                                 8)
-                                ), signatures
+                                ), Collections.emptyList()
                         ),
                         new Transaction(
                                 Collections.singletonList(
-                                        new Input(Simulation.randomSignature(),
+                                        new Input(
                                                 cb2.getHash(),
                                                 0
                                         )
@@ -1227,7 +1227,7 @@ class BlockRuleTests {
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(),
                                                 17)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1257,7 +1257,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), consensus.getBlockReward() + 1)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1338,7 +1338,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1354,7 +1354,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1387,7 +1387,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );
@@ -1403,7 +1403,7 @@ class BlockRuleTests {
                                 Collections.emptyList(),
                                 Collections.singletonList(
                                         new Output(Simulation.randomHash(), 10L)
-                                ), signatures
+                                ), Collections.emptyList()
                         )
                 )
         );

@@ -46,7 +46,7 @@ class UTXOProcessorTest {
         Output output = Simulation.randomOutput();
         Transaction transaction = new Transaction(
             new ArrayList<>(),
-            Collections.singletonList(output), signatures
+            Collections.singletonList(output), Collections.emptyList()
         );
 
         Block block = new Block(

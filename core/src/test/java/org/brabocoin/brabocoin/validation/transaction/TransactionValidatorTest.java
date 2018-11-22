@@ -20,6 +20,7 @@ import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,7 +57,8 @@ class TransactionValidatorTest {
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000), signatures
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
+                Collections.emptyList()
         );
 
         RuleBookResult result = state.getTransactionValidator().checkTransactionValid(transaction);
@@ -71,7 +73,8 @@ class TransactionValidatorTest {
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000), signatures
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
+                Collections.emptyList()
         );
 
         assertThrows(IllegalStateException.class, () -> state.getTransactionValidator().checkTransactionValid(transaction));
