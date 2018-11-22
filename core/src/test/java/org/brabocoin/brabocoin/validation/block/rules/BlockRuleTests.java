@@ -10,11 +10,13 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -22,10 +24,12 @@ import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -161,34 +165,14 @@ class BlockRuleTests {
                 Collections.singletonList(UniqueUnspentCoinbaseBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        State state = new TestState(defaultConfig);
 
-        blockProcessor.processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -215,7 +199,7 @@ class BlockRuleTests {
                 Collections.singletonList(DuplicateStorageBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), new File(defaultConfig.blockStoreDirectory()), defaultConfig.maxBlockFileSize());
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
 
         FactMap facts = new FactMap();
@@ -248,34 +232,14 @@ class BlockRuleTests {
                 Collections.singletonList(DuplicateStorageBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        State state = new TestState(defaultConfig);
 
-        blockProcessor.processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("blockchain", blockchain);
+        facts.put("blockchain", state.getBlockchain());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -448,7 +412,7 @@ class BlockRuleTests {
                 Collections.singletonList(KnownParentBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), new File(defaultConfig.blockStoreDirectory()), defaultConfig.maxBlockFileSize());
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
 
         FactMap facts = new FactMap();
@@ -481,7 +445,7 @@ class BlockRuleTests {
                 Collections.singletonList(KnownParentBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), new File(defaultConfig.blockStoreDirectory()), defaultConfig.maxBlockFileSize());
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
 
         FactMap facts = new FactMap();
@@ -563,35 +527,15 @@ class BlockRuleTests {
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        State state = new TestState(defaultConfig);
 
-        blockProcessor.processNewBlock(coinbase);
-        blockProcessor.processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase);
+        state.getBlockProcessor().processNewBlock(coinbase2);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -666,36 +610,15 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
         ));
+        State state = new TestState(defaultConfig);
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
-
-        blockProcessor.processNewBlock(coinbase);
-        blockProcessor.processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase);
+        state.getBlockProcessor().processNewBlock(coinbase2);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -770,36 +693,15 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
         ));
+        State state = new TestState(defaultConfig);
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
-
-        blockProcessor.processNewBlock(coinbase);
-        blockProcessor.processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase);
+        state.getBlockProcessor().processNewBlock(coinbase2);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
         
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -1045,7 +947,7 @@ class BlockRuleTests {
                 Collections.singletonList(ValidBlockHeightBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), new File(defaultConfig.blockStoreDirectory()), defaultConfig.maxBlockFileSize());
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
 
         FactMap facts = new FactMap();
@@ -1078,7 +980,7 @@ class BlockRuleTests {
                 Collections.singletonList(ValidBlockHeightBlkRule.class)
         ));
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
+        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), new File(defaultConfig.blockStoreDirectory()), defaultConfig.maxBlockFileSize());
         Blockchain blockchain = new Blockchain(blockDatabase, consensus);
 
         FactMap facts = new FactMap();
@@ -1110,27 +1012,12 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
         ));
-
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
+        State state = new TestState(defaultConfig);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1156,27 +1043,12 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
         ));
-
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
+        State state = new TestState(defaultConfig);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1217,30 +1089,10 @@ class BlockRuleTests {
                 )
         );
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        State state = new TestState(defaultConfig);
 
-        blockProcessor.processNewBlock(coinbase);
-        blockProcessor.processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase);
+        state.getBlockProcessor().processNewBlock(coinbase2);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1292,7 +1144,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1332,31 +1184,10 @@ class BlockRuleTests {
                         cb2
                 )
         );
+        State state = new TestState(defaultConfig);
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
-
-        blockProcessor.processNewBlock(coinbase);
-        blockProcessor.processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase);
+        state.getBlockProcessor().processNewBlock(coinbase2);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1408,7 +1239,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -1434,27 +1265,12 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
         ));
-
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
+        State state = new TestState(defaultConfig);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("utxoSet", chainUtxoDatabase);
+        facts.put("utxoSet", state.getChainUTXODatabase());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -1546,35 +1362,14 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidParentBlkRule.class)
         ));
+        State state = new TestState(defaultConfig);
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
-
-        blockProcessor.processNewBlock(parent);
+        state.getBlockProcessor().processNewBlock(parent);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("blockchain", blockchain);
+        facts.put("blockchain", state.getBlockchain());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -1616,36 +1411,15 @@ class BlockRuleTests {
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidParentBlkRule.class)
         ));
+        State state = new TestState(defaultConfig);
 
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
-
-        blockProcessor.processNewBlock(parent);
-        blockchain.setBlockInvalid(parent.getHash());
+        state.getBlockProcessor().processNewBlock(parent);
+        state.getBlockchain().setBlockInvalid(parent.getHash());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("blockchain", blockchain);
+        facts.put("blockchain", state.getBlockchain());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
