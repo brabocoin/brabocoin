@@ -189,8 +189,8 @@ class BlockchainTest {
                 block1.getTargetValue(),
                 block1.getNonce(),
                 0,
-                block1.getTransactions()
-        );
+                block1.getTransactions(),
+                0);
 
         blockchain.addOrphan(block1);
         blockchain.addOrphan(block2);

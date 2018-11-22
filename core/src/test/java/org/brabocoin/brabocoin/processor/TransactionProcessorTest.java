@@ -14,8 +14,10 @@ import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,12 +49,6 @@ class TransactionProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        state = new TestState(config);
-    }
-
-    @Test
-    @Disabled
-    void processNewTransactionInvalid() throws DatabaseException {
         state = new TestState(config) {
             @Override
             protected TransactionValidator createTransactionValidator() {
@@ -81,58 +77,8 @@ class TransactionProcessorTest {
                 };
             }
         };
-
-        Transaction transaction = Simulation.randomTransaction(5, 5);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transaction);
-
-        assertEquals(ValidationStatus.INVALID, result.getStatus());
-        assertTrue(result.getValidatedOrphans().isEmpty());
     }
 
-    @Test
-    void processNewTransactionAlreadyStoredIndependent() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction(5, 5);
-        state.getTransactionPool().addIndependentTransaction(transaction);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transaction);
-        assertEquals(ValidationStatus.INVALID, result.getStatus());
-        assertTrue(result.getValidatedOrphans().isEmpty());
-    }
-
-    @Test
-    void processNewTransactionAlreadyStoredDependent() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction(5, 5);
-        state.getTransactionPool().addDependentTransaction(transaction);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transaction);
-        assertEquals(ValidationStatus.INVALID, result.getStatus());
-        assertTrue(result.getValidatedOrphans().isEmpty());
-    }
-
-    @Test
-    void processNewTransactionAlreadyStoredOrphan() throws DatabaseException {
-        Transaction transaction = Simulation.randomTransaction(5, 5);
-        state.getTransactionPool().addOrphanTransaction(transaction);
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(transaction);
-        assertEquals(ValidationStatus.INVALID, result.getStatus());
-        assertTrue(result.getValidatedOrphans().isEmpty());
-    }
-
-    @Test
-    void processNewTransactionOrphan() throws DatabaseException {
-        Transaction orphan = Simulation.randomTransaction(5, 5);
-        Hash hash = orphan.getHash();
-
-        ProcessedTransactionResult result = state.getTransactionProcessor().processNewTransaction(orphan);
-        assertEquals(ValidationStatus.ORPHAN, result.getStatus());
-        assertTrue(result.getValidatedOrphans().isEmpty());
-
-        for (int i = 0; i < orphan.getOutputs().size(); i++) {
-            assertFalse(state.getPoolUTXODatabase().isUnspent(hash, i));
-        }
-    }
 
     @Test
     void processNewTransactionIndependent() throws DatabaseException {
@@ -216,6 +162,24 @@ class TransactionProcessorTest {
         // Construct the chain UTXO such that the transaction becomes independent
         Transaction transactionA = createIndependentTransaction();
         Hash hash = transactionA.getHash();
+
+        state = new TestState(config) {
+            @Override
+            protected TransactionValidator createTransactionValidator() {
+                return new TransactionValidator(
+                        this
+                ) {
+                    @Override
+                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                        if (transactionA.getHash().equals(transaction.getHash())) {
+                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                        } else {
+                            return TransactionValidationResult.passed();
+                        }
+                    }
+                };
+            }
+        };
 
         // Add orphan such that B -> A
         Transaction transactionB = new Transaction(

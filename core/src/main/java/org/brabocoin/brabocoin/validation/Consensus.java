@@ -84,8 +84,8 @@ public class Consensus {
             TARGET_VALUE, // TODO: Determine target value
             BigInteger.ZERO,
             0,
-            Collections.emptyList()
-    );
+            Collections.emptyList(),
+            0);
 
     /**
      * Find the best valid block from the given collection of blocks.

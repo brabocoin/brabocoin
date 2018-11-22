@@ -11,19 +11,16 @@ import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.processor.BlockProcessor;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -34,7 +31,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -75,8 +71,8 @@ class BlockRuleTests {
                 consensus.getTargetValue(),
                 Simulation.randomBigInteger(),
                 0,
-                Collections.emptyList()
-        );
+                Collections.emptyList(),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CorrectTargetValueBlkRule.class)
@@ -97,8 +93,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 0,
-                Collections.emptyList()
-        );
+                Collections.emptyList(),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CorrectTargetValueBlkRule.class)
@@ -126,8 +122,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(UniqueUnspentCoinbaseBlkRule.class)
@@ -158,14 +154,36 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(UniqueUnspentCoinbaseBlkRule.class)
         ));
 
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -192,8 +210,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicateStorageBlkRule.class)
@@ -225,14 +243,36 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(DuplicateStorageBlkRule.class)
         ));
 
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -259,8 +299,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(HasCoinbaseBlkRule.class)
@@ -290,8 +330,8 @@ class BlockRuleTests {
                                         Simulation.randomOutput()
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(HasCoinbaseBlkRule.class)
@@ -312,8 +352,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 0,
-                Collections.emptyList()
-        );
+                Collections.emptyList(),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(HasCoinbaseBlkRule.class)
@@ -341,8 +381,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(HasSingleCoinbaseBlkRule.class)
@@ -376,8 +416,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(HasSingleCoinbaseBlkRule.class)
@@ -405,8 +445,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(KnownParentBlkRule.class)
@@ -438,8 +478,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(KnownParentBlkRule.class)
@@ -472,8 +512,8 @@ class BlockRuleTests {
                 1,
                 Collections.singletonList(
                         cb
-                )
-        );
+                ),
+                0);
 
         Transaction cb2 = new Transaction(
                 Collections.emptyList(),
@@ -489,8 +529,8 @@ class BlockRuleTests {
                 coinbase.getBlockHeight() + 1,
                 Collections.singletonList(
                         cb2
-                )
-        );
+                ),
+                0);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -520,14 +560,36 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 29L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
         ));
 
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(coinbase);
         state.getBlockProcessor().processNewBlock(coinbase2);
@@ -556,8 +618,8 @@ class BlockRuleTests {
                 1,
                 Collections.singletonList(
                         cb
-                )
-        );
+                ),
+                0);
 
         Transaction cb2 = new Transaction(
                 Collections.emptyList(),
@@ -573,8 +635,8 @@ class BlockRuleTests {
                 coinbase.getBlockHeight() + 1,
                 Collections.singletonList(
                         cb2
-                )
-        );
+                ),
+                0);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -604,8 +666,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 30L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
@@ -639,8 +701,8 @@ class BlockRuleTests {
                 1,
                 Collections.singletonList(
                         cb
-                )
-        );
+                ),
+                0);
 
         Transaction cb2 = new Transaction(
                 Collections.emptyList(),
@@ -656,8 +718,8 @@ class BlockRuleTests {
                 coinbase.getBlockHeight() + 1,
                 Collections.singletonList(
                         cb2
-                )
-        );
+                ),
+                0);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -687,8 +749,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 1L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(LegalTransactionFeesBlkRule.class)
@@ -721,8 +783,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxNonceBlkRule.class)
@@ -750,8 +812,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxNonceBlkRule.class)
@@ -779,8 +841,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxSizeBlkRule.class)
@@ -801,8 +863,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 1,
-                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 20000), 4)
-        );
+                Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 20000), 4),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(MaxSizeBlkRule.class)
@@ -830,8 +892,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(NonEmptyTransactionListBlkRule.class)
@@ -852,8 +914,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 1,
-                Collections.emptyList()
-        );
+                Collections.emptyList(),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(NonEmptyTransactionListBlkRule.class)
@@ -881,8 +943,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SatisfiesTargetValueBlkRule.class)
@@ -895,7 +957,6 @@ class BlockRuleTests {
         assertTrue(ruleBook.run(facts).isPassed());
     }
 
-    @Disabled // TODO: Hash comparison van Sten moet ff erin
     @Test
     void SatisfiesTargetValueBlkRuleFail() {
         Block block = new Block(
@@ -911,8 +972,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(SatisfiesTargetValueBlkRule.class)
@@ -940,8 +1001,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidBlockHeightBlkRule.class)
@@ -973,8 +1034,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidBlockHeightBlkRule.class)
@@ -1006,8 +1067,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
@@ -1037,8 +1098,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), consensus.getBlockReward())
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
@@ -1069,8 +1130,8 @@ class BlockRuleTests {
                 1,
                 Collections.singletonList(
                         cb
-                )
-        );
+                ),
+                0);
 
         Transaction cb2 = new Transaction(
                 Collections.emptyList(),
@@ -1086,10 +1147,32 @@ class BlockRuleTests {
                 coinbase.getBlockHeight() + 1,
                 Collections.singletonList(
                         cb2
-                )
-        );
+                ),
+                0);
 
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(coinbase);
         state.getBlockProcessor().processNewBlock(coinbase2);
@@ -1134,8 +1217,8 @@ class BlockRuleTests {
                                                 17)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
@@ -1165,8 +1248,8 @@ class BlockRuleTests {
                 1,
                 Collections.singletonList(
                         cb
-                )
-        );
+                ),
+                0);
 
         Transaction cb2 = new Transaction(
                 Collections.emptyList(),
@@ -1182,8 +1265,8 @@ class BlockRuleTests {
                 coinbase.getBlockHeight() + 1,
                 Collections.singletonList(
                         cb2
-                )
-        );
+                ),
+                0);
         State state = new TestState(defaultConfig);
 
         state.getBlockProcessor().processNewBlock(coinbase);
@@ -1229,8 +1312,8 @@ class BlockRuleTests {
                                                 17)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
@@ -1259,8 +1342,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), consensus.getBlockReward() + 1)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidCoinbaseOutputAmountBlkRule.class)
@@ -1287,8 +1370,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 1,
-                transactionList
-        );
+                transactionList,
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidMerkleRootBlkRule.class)
@@ -1311,8 +1394,8 @@ class BlockRuleTests {
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(),
                 1,
-                transactionList
-        );
+                transactionList,
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidMerkleRootBlkRule.class)
@@ -1340,8 +1423,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         Block block = new Block(
                 parent.getHash(),
@@ -1356,13 +1439,35 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidParentBlkRule.class)
         ));
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(parent);
 
@@ -1389,8 +1494,8 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         Block block = new Block(
                 parent.getHash(),
@@ -1405,13 +1510,35 @@ class BlockRuleTests {
                                         new Output(Simulation.randomHash(), 10L)
                                 ), Collections.emptyList()
                         )
-                )
-        );
+                ),
+                0);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(ValidParentBlkRule.class)
         ));
-        State state = new TestState(defaultConfig);
+        State state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
         state.getBlockProcessor().processNewBlock(parent);
         state.getBlockchain().setBlockInvalid(parent.getHash());

@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
@@ -11,19 +10,20 @@ import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.processor.BlockProcessor;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -41,6 +41,8 @@ class TransactionRuleTests {
 
     private static Signer signer;
 
+    private State state;
+
 
     @BeforeAll
     static void setUp() {
@@ -57,6 +59,60 @@ class TransactionRuleTests {
         };
 
         signer = new Signer(CURVE);
+    }
+
+    @BeforeEach
+    void setUpState() throws DatabaseException {
+        state = new TestState(defaultConfig) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+
+            @Override
+            protected TransactionValidator createTransactionValidator() {
+                return new TransactionValidator(
+                        this
+                ) {
+                    @Override
+                    public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+
+                    @Override
+                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                        return TransactionValidationResult.passed();
+                    }
+                };
+            }
+        };
     }
 
     @Test
@@ -112,9 +168,9 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
-        State state = new TestState(defaultConfig);
+                Collections.singletonList(coinbase),
+                0);
+
         state.getBlockProcessor().processNewBlock(block);
 
         Transaction spendCoinbase = new Transaction(
@@ -150,13 +206,12 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
         List<Block> blockList = new ArrayList<Block>() {{
             add(block);
         }};
         blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5));
-        State state = new TestState(defaultConfig);
 
         for (Block b : blockList) {
             state.getBlockProcessor().processNewBlock(b);
@@ -426,7 +481,6 @@ class TransactionRuleTests {
                         -1
                 )), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -434,8 +488,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(negativeOutputTransaction)
-        );
+                Collections.singletonList(negativeOutputTransaction),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -470,7 +524,7 @@ class TransactionRuleTests {
                         -1
                 )), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
+
 
         state.getTransactionProcessor().processNewTransaction(negativeOutputTransaction);
 
@@ -505,7 +559,7 @@ class TransactionRuleTests {
                         Long.MAX_VALUE - 1
                 )), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
+
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -513,8 +567,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(negativeOutputTransaction)
-        );
+                Collections.singletonList(negativeOutputTransaction),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -557,7 +611,7 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
+
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -565,8 +619,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(negativeOutputTransaction)
-        );
+                Collections.singletonList(negativeOutputTransaction),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -611,7 +665,6 @@ class TransactionRuleTests {
                         0
                 )), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         state.getTransactionProcessor().processNewTransaction(zeroOutputTransaction);
 
@@ -646,7 +699,6 @@ class TransactionRuleTests {
                         1
                 )), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -654,8 +706,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(positiveOutputTransaction)
-        );
+                Collections.singletonList(positiveOutputTransaction),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -690,9 +742,6 @@ class TransactionRuleTests {
                         1
                 )), Collections.emptyList()
         );
-
-        State state = new TestState(defaultConfig);
-
         state.getTransactionProcessor().processNewTransaction(positiveOutputTransaction);
 
         Transaction spendingTransaction = new Transaction(
@@ -969,7 +1018,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -977,8 +1025,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1026,7 +1074,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1034,8 +1081,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1083,7 +1130,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1091,8 +1137,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1154,7 +1200,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1162,8 +1207,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Arrays.asList(coinbaseOne, coinbaseTwo)
-        );
+                Arrays.asList(coinbaseOne, coinbaseTwo),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1238,7 +1283,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1246,8 +1290,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Arrays.asList(coinbaseOne, coinbaseTwo)
-        );
+                Arrays.asList(coinbaseOne, coinbaseTwo),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1322,7 +1366,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1330,8 +1373,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Arrays.asList(coinbaseOne, coinbaseTwo)
-        );
+                Arrays.asList(coinbaseOne, coinbaseTwo),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1433,7 +1476,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1441,8 +1483,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1484,7 +1526,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1492,8 +1533,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 
@@ -1536,7 +1577,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         state.getTransactionProcessor().processNewTransaction(coinbase);
 
@@ -1593,7 +1633,6 @@ class TransactionRuleTests {
                         )
                 ), Collections.emptyList()
         );
-        State state = new TestState(defaultConfig);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -1601,8 +1640,8 @@ class TransactionRuleTests {
             Simulation.randomHash(),
             Simulation.randomBigInteger(),
                 1,
-                Collections.singletonList(coinbase)
-        );
+                Collections.singletonList(coinbase),
+                0);
 
         state.getBlockProcessor().processNewBlock(block);
 

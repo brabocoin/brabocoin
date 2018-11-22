@@ -71,17 +71,6 @@ public class Block implements ProtoModel<Block> {
      */
     protected Hash hash;
 
-    @Deprecated
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions) {
-        this.previousBlockHash = previousBlockHash;
-        this.merkleRoot = merkleRoot;
-        this.targetValue = targetValue;
-        this.nonce = nonce;
-        this.blockHeight = blockHeight;
-        this.transactions = new ArrayList<>(transactions);
-        this.networkId = 1;
-    }
-
     /**
      * Create a new block.
      *
@@ -93,9 +82,7 @@ public class Block implements ProtoModel<Block> {
      * @param transactions      List of transactions contained in this block.
      * @param networkId         Number indicating the network this block belongs to.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue,
-                 @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions,
-                 int networkId) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions, int networkId) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;

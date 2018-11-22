@@ -51,6 +51,15 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
         this.outputs = new ArrayList<>(outputs);
     }
 
+    /**
+     * Copy constructor.
+     *
+     * @param unsignedTransaction Unsigned Transaction to copy
+     */
+    private UnsignedTransaction(UnsignedTransaction unsignedTransaction) {
+        this(unsignedTransaction.inputs, unsignedTransaction.outputs);
+    }
+
     public @NotNull List<Input> getInputs() {
         return Collections.unmodifiableList(inputs);
     }
@@ -85,8 +94,10 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
         return hash;
     }
 
+
+
     private @NotNull ByteString getRawData() {
-        return ProtoConverter.toProto(this, BrabocoinProtos.UnsignedTransaction.class).toByteString();
+        return ProtoConverter.toProto(new UnsignedTransaction(this), BrabocoinProtos.UnsignedTransaction.class).toByteString();
     }
 
     public Class<? extends ProtoBuilder> getBuilder() {

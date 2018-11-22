@@ -1,15 +1,9 @@
 package org.brabocoin.brabocoin.validation.block;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.dal.TransactionPool;
-import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -18,8 +12,6 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
@@ -28,7 +20,6 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.rules.NonContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,7 +29,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -99,8 +89,8 @@ class BlockValidatorTest {
                 state.getConsensus().getTargetValue(),
                 BigInteger.ZERO,
                 1,
-                transactionList
-        );
+                transactionList,
+                0);
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -141,8 +131,8 @@ class BlockValidatorTest {
                 state.getConsensus().getTargetValue(),
                 BigInteger.ZERO,
                 2,
-                transactionList
-        );
+                transactionList,
+                0);
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -185,8 +175,8 @@ class BlockValidatorTest {
                 state.getConsensus().getTargetValue(),
                 BigInteger.ZERO,
                 2,
-                transactionList
-        );
+                transactionList,
+                0);
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -230,8 +220,8 @@ class BlockValidatorTest {
                 state.getConsensus().getTargetValue(),
                 BigInteger.ZERO,
                 1,
-                transactionList
-        );
+                transactionList,
+                0);
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block

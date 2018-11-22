@@ -2,11 +2,7 @@ package org.brabocoin.brabocoin.processor;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
-import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.*;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -18,14 +14,12 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,45 +65,31 @@ class BlockProcessorTest {
                     }
                 };
             }
+
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
         };
     }
 
-    @Test
-    void invalidBlock() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
-
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(block);
-        assertEquals(ValidationStatus.INVALID, status);
-    }
-
-    @Test
-    void addAsOrphanParentUnknown() throws DatabaseException {
-        Block block = Simulation.randomOrphanBlock(
-                state.getConsensus(),
-                1,
-                10,
-                10,
-                20
-        );
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(block);
-
-        assertEquals(ValidationStatus.ORPHAN, status);
-        assertTrue(state.getBlockchain().isOrphan(block.getHash()));
-    }
-
-    @Test
-    void addAsOrphanParentOrphan() throws DatabaseException {
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        Block parent = blocks.get(0);
-        Block child = blocks.get(1);
-
-        state.getBlockchain().storeBlock(parent);
-        state.getBlockchain().addOrphan(parent);
-
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(child);
-        assertEquals(ValidationStatus.ORPHAN, status);
-        assertTrue(state.getBlockchain().isOrphan(child.getHash()));
-    }
 
     @Test
     void addCoinbaseToGenesis() throws DatabaseException {
@@ -147,8 +127,8 @@ class BlockProcessorTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(), 1,
-                Collections.singletonList(transaction)
-        );
+                Collections.singletonList(transaction),
+                0);
         Hash hash = block.getHash();
         Hash tHash = transaction.getHash();
 
@@ -210,8 +190,8 @@ class BlockProcessorTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(), 1,
-                Collections.singletonList(transactionA)
-        );
+                Collections.singletonList(transactionA),
+                0);
         Hash hashA = blockA.getHash();
         Hash tHashA = transactionA.getHash();
 
@@ -224,8 +204,8 @@ class BlockProcessorTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(), 2,
-                Collections.singletonList(transactionB)
-        );
+                Collections.singletonList(transactionB),
+                0);
         Hash tHashB = transactionB.getHash();
 
         state.getBlockProcessor().processNewBlock(blockA);
@@ -276,8 +256,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
@@ -288,8 +268,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashB = blockB.getHash();
 
         Transaction transaction = new Transaction(
@@ -303,8 +283,8 @@ class BlockProcessorTest {
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(), 1,
-                Collections.singletonList(transaction)
-        );
+                Collections.singletonList(transaction),
+                0);
         Hash hashC = blockC.getHash();
 
         // Add to transaction pool manually
@@ -346,8 +326,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
@@ -358,8 +338,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashB = blockB.getHash();
 
         Block blockC = new Block(
@@ -370,8 +350,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashC = blockC.getHash();
 
         Block blockD = new Block(
@@ -382,8 +362,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashD = blockD.getHash();
 
         Block blockE = new Block(
@@ -394,8 +374,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashE = blockE.getHash();
 
         Block blockF = new Block(
@@ -406,8 +386,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashF = blockF.getHash();
 
 
@@ -419,8 +399,8 @@ class BlockProcessorTest {
                 Collections.singletonList(new Transaction(
                         Collections.emptyList(),
                         Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                ))
-        );
+                )),
+                0);
         Hash hashG = blockG.getHash();
         state.getBlockProcessor().processNewBlock(blockA);
         state.getBlockProcessor().processNewBlock(blockB);

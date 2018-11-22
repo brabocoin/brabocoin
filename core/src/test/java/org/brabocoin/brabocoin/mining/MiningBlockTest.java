@@ -34,8 +34,8 @@ class MiningBlockTest {
             ).toByteArray())),
             BigInteger.ZERO,
             0,
-            Collections.emptyList()
-        );
+            Collections.emptyList(),
+                0);
     }
 
     @Test
@@ -48,8 +48,8 @@ class MiningBlockTest {
             ).toByteArray())),
             BigInteger.ZERO,
             0,
-            Collections.emptyList()
-        );
+            Collections.emptyList(),
+                0);
 
         Block minedBlock = block.mine(new Consensus());
 
@@ -64,8 +64,8 @@ class MiningBlockTest {
             new Hash(ByteString.copyFrom(new byte[1])),
             BigInteger.ZERO,
             0,
-            Collections.emptyList()
-        );
+            Collections.emptyList(),
+                0);
 
         AtomicReference<Block> minedBlock = new AtomicReference<>(block);
         Thread thread = new Thread(() -> {

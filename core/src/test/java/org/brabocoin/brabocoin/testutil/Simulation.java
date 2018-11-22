@@ -97,7 +97,7 @@ public class Simulation {
                 randomHash(),
                 randomHash(),
                 randomBigInteger(), blockHeight,
-                repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound));
+                repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound), 0);
     }
 
     public static Block randomOrphanBlock(Consensus consensus, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
@@ -121,8 +121,8 @@ public class Simulation {
                 consensus.getTargetValue(),
                 new BigInteger(consensus.getMaxNonceSize() * 8, RANDOM),
                 blockHeight,
-                transactions
-        ).mine(consensus);
+                transactions,
+                0).mine(consensus);
     }
 
     public static Transaction randomTransaction(int inputBound, int outputBound) {
@@ -170,11 +170,18 @@ public class Simulation {
         return generateNode(port, config, new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()));
     }
 
-    public static Node generateNode(int port, BraboConfig config, BlockDatabase proviedBlockDatabase) throws DatabaseException {
-        TestState state = new TestState(config){
+    public static Node generateNode(int port, BraboConfig config, BlockDatabase providedBlockDatabase) throws DatabaseException {
+        BraboConfig mockConfig = new MockBraboConfig(config) {
+            @Override
+            public int servicePort() {
+                return port;
+            }
+        };
+
+        TestState state = new TestState(mockConfig){
             @Override
             protected BlockDatabase createBlockDatabase() throws DatabaseException {
-                return proviedBlockDatabase;
+                return providedBlockDatabase;
             }
         };
 

@@ -328,6 +328,8 @@ class BlockDatabaseTest {
             }
         };
 
+        BlockDatabase newDatabase = new BlockDatabase(storage, new File(newConfig.blockStoreDirectory()), newConfig.maxBlockFileSize());
+
         File dir = new File(newDir);
         assertTrue(dir.exists());
 

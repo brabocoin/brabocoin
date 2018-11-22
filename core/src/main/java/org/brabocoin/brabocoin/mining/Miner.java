@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -36,6 +37,7 @@ public class Miner {
     private final @NotNull TransactionPool transactionPool;
     private final @NotNull Consensus consensus;
     private final @NotNull Random random;
+    private final int networkId;
 
     /**
      * Block that is currently mined.
@@ -55,10 +57,11 @@ public class Miner {
      *     A random instance, used to find a random starting nonce.
      */
     public Miner(@NotNull TransactionPool transactionPool, @NotNull Consensus consensus,
-                 @NotNull Random random) {
+                 @NotNull Random random, int networkId) {
         this.transactionPool = transactionPool;
         this.consensus = consensus;
         this.random = random;
+        this.networkId = networkId;
     }
 
     /**
@@ -95,8 +98,8 @@ public class Miner {
             consensus.getTargetValue(),
             randomStartingNonce,
             previousBlock.getBlockInfo().getBlockHeight() + 1,
-            transactions
-        );
+            transactions,
+            networkId);
 
         // TODO: this is actually not threadsafe...
         if (isStopped) {

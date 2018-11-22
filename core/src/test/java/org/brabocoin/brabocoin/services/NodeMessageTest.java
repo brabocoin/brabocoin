@@ -622,7 +622,7 @@ class NodeMessageTest {
             receivedProtoHashes.add(h);
         }
 
-        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
+        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> (Hash)ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
 
         for (Hash h : hashes) {
             assertTrue(receivedHashes.contains(h));

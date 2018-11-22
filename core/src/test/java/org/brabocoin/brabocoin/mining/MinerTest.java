@@ -50,7 +50,7 @@ class MinerTest {
                 return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
             }
         };
-        miner = new Miner(transactionPool, consensus, random);
+        miner = new Miner(transactionPool, consensus, random, defaultConfig.networkId());
     }
 
     @Test
@@ -249,7 +249,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random());
+        miner = new Miner(transactionPool, consensus, new Random(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -307,7 +307,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random());
+        miner = new Miner(transactionPool, consensus, new Random(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),

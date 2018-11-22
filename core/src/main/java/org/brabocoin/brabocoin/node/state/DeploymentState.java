@@ -155,7 +155,7 @@ public class DeploymentState implements State {
     }
 
     protected Miner createMiner() {
-        return new Miner(transactionPool, consensus, unsecureRandom);
+        return new Miner(transactionPool, consensus, unsecureRandom, config.networkId());
     }
 
     protected NodeEnvironment createEnvironment() {

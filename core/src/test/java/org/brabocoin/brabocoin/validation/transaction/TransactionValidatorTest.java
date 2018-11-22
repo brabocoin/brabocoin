@@ -17,6 +17,7 @@ import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -65,18 +66,5 @@ class TransactionValidatorTest {
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
-    }
-
-    @Test
-    void ruleBookResultFail() throws DatabaseException {
-        State state = new TestState(defaultConfig);
-
-        Transaction transaction = new Transaction(
-                Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
-                Collections.emptyList()
-        );
-
-        assertThrows(IllegalStateException.class, () -> state.getTransactionValidator().checkTransactionValid(transaction));
     }
 }
