@@ -17,8 +17,9 @@ message Signature {
     bytes publicKey = 3;
 }
 
-message BlockChain {
-
+message PrivateKey {
+    bytes value = 1;
+    bool encrypted = 2;
 }
 
 message Output {
