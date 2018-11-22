@@ -43,7 +43,7 @@ class MinerTest {
         Random random = new Random();
         BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
-        transactionPool = new TransactionPool(defaultConfig, random);
+        transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(),defaultConfig.maxOrphanTransactions(), random);
         consensus = new Consensus() {
             @Override
             public @NotNull Hash getTargetValue() {

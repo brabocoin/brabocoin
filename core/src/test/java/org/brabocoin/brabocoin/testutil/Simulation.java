@@ -5,6 +5,9 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.PublicKey;
+import org.brabocoin.brabocoin.dal.BlockDatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -13,15 +16,16 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
+import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 
+import java.io.File;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -161,123 +165,44 @@ public class Simulation {
         return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), publicKey);
     }
 
-//    public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
-//        return generateNode(port, config, new BlockDatabase(new HashMapDB(), config));
-//    }
-//
-//    public static Node generateNode(int port, BraboConfig config, BlockDatabase blockDatabase) throws DatabaseException {
-//        Consensus consensus = new Consensus();
-//        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-//        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-//        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-//        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-//        TransactionPool transactionPool = new TransactionPool(config, new Random());
-//        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-//        Signer signer = new Signer(EllipticCurve.secp256k1());
-//        TransactionValidator transactionValidator = new TransactionValidator(
-//                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-//        );
-//        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-//                transactionPool, chainUtxoDatabase, poolUtxo);
-//        BlockValidator blockValidator = new BlockValidator(
-//                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-//        );
-//        BlockProcessor blockProcessor = new BlockProcessor(
-//                blockchain,
-//                utxoProcessor,
-//                transactionProcessor,
-//                consensus,
-//                blockValidator);
-//
-//        return new Node(new NodeEnvironment(port,
-//                blockchain,
-//                chainUtxoDatabase,
-//                blockProcessor,
-//                peerProcessor,
-//                transactionPool,
-//                transactionProcessor,
-//                config));
-//    }
+    public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
+        return generateNode(port, config, new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()));
+    }
 
-//    public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
-//        return generateNodeAndProcessorWithBlocks(port, config, consensus, blocks).getKey();
-//    }
-//
-//    public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, Iterable<Block> blocks) throws DatabaseException {
-//        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
-//        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-//        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-//        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-//        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-//        TransactionPool transactionPool = new TransactionPool(config, new Random());
-//        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-//        Signer signer = new Signer(EllipticCurve.secp256k1());
-//        TransactionValidator transactionValidator = new TransactionValidator(
-//                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-//        );
-//        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-//                transactionPool, chainUtxoDatabase, poolUtxo);
-//        BlockValidator blockValidator = new BlockValidator(
-//                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-//        );
-//        BlockProcessor blockProcessor = new BlockProcessor(
-//                blockchain,
-//                utxoProcessor,
-//                transactionProcessor,
-//                consensus,
-//                blockValidator);
-//
-//        for (Block b : blocks) {
-//            blockProcessor.processNewBlock(b);
-//        }
-//
-//        return new AbstractMap.SimpleEntry<>(new Node(new NodeEnvironment(port,
-//                blockchain,
-//                chainUtxoDatabase,
-//                blockProcessor,
-//                peerProcessor,
-//                transactionPool,
-//                transactionProcessor,
-//                config)), blockProcessor);
-//    }
+    public static Node generateNode(int port, BraboConfig config, BlockDatabase proviedBlockDatabase) throws DatabaseException {
+        TestState state = new TestState(config){
+            @Override
+            protected BlockDatabase createBlockDatabase() throws DatabaseException {
+                return proviedBlockDatabase;
+            }
+        };
 
-//    public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, Iterable<Transaction> transactions) throws DatabaseException {
-//        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
-//        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-//        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-//        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-//        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-//        TransactionPool transactionPool = new TransactionPool(config, new Random());
-//        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-//        Signer signer = new Signer(EllipticCurve.secp256k1());
-//        TransactionValidator transactionValidator = new TransactionValidator(
-//                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-//        );
-//        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-//                transactionPool, chainUtxoDatabase, poolUtxo);
-//        BlockValidator blockValidator = new BlockValidator(
-//                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-//        );
-//        BlockProcessor blockProcessor = new BlockProcessor(
-//                blockchain,
-//                utxoProcessor,
-//                transactionProcessor,
-//                consensus,
-//                blockValidator);
-//
-//        for (Transaction t : transactions) {
-//            transactionProcessor.processNewTransaction(t);
-//        }
-//
-//        return new Node(new NodeEnvironment(port,
-//                blockchain,
-//                chainUtxoDatabase,
-//                blockProcessor,
-//                peerProcessor,
-//                transactionPool,
-//                transactionProcessor,
-//                config));
-//    }
+        return state.getNode();
+    }
+
+    public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
+        return generateNodeAndProcessorWithBlocks(port, config, consensus, blocks).getKey();
+    }
+
+    public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, Iterable<Block> blocks) throws DatabaseException {
+        TestState state = new TestState(config);
+
+        for (Block b : blocks) {
+            state.getBlockProcessor().processNewBlock(b);
+        }
+
+        return new AbstractMap.SimpleEntry<>(state.getNode(), state.getBlockProcessor());
+    }
+
+    public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, Iterable<Transaction> transactions) throws DatabaseException {
+        State state = new TestState(config);
+
+        for (Transaction t : transactions) {
+            state.getTransactionProcessor().processNewTransaction(t);
+        }
+
+        return state.getNode();
+    }
 
     public static BigInteger randomBigInteger() {
         return BigInteger.valueOf(RANDOM.nextInt());
