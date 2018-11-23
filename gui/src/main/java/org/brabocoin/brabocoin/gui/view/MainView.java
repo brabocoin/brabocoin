@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.controlsfx.control.HiddenSidesPane;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -58,8 +59,13 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
         // Initialize menu views
         try {
-            currentStateView = new CurrentStateView(new Blockchain(new BlockDatabase(new HashMapDB(), BraboConfigProvider
-                .getConfig().bind("brabo", BraboConfig.class)), new Consensus()));
+            BraboConfig config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+            currentStateView = new CurrentStateView(
+                new Blockchain(
+                    new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()),
+                    new Consensus()
+                )
+            );
         }
         catch (DatabaseException e) {
             e.printStackTrace();
