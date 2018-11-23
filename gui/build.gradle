@@ -7,6 +7,7 @@ repositories {
 dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
     compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
+    compile('org.fxmisc.cssfx:cssfx:1.0.0')
 
     compile project(':core')
 }
