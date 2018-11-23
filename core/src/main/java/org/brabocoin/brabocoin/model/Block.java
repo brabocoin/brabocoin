@@ -122,7 +122,8 @@ public class Block implements ProtoModel<Block> {
 
     @NotNull
     protected ByteString getRawHeader() {
-        return getPreviousBlockHash().getValue()
+        return ByteUtil.toByteString(getNetworkId())
+                .concat(getPreviousBlockHash().getValue())
                 .concat(getMerkleRoot().getValue())
                 .concat(getTargetValue().getValue())
                 .concat(ByteUtil.toByteString(getBlockHeight()))
