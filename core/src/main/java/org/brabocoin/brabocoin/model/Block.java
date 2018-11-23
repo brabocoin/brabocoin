@@ -74,15 +74,24 @@ public class Block implements ProtoModel<Block> {
     /**
      * Create a new block.
      *
-     * @param previousBlockHash Hash of the previous block in the blockchain.
-     * @param merkleRoot        Hash of the Merkle root.
-     * @param targetValue       Target value for the proof-of-work.
-     * @param nonce             Nonce for the proof-of-work.
-     * @param blockHeight       Height of the block in the blockchain.
-     * @param transactions      List of transactions contained in this block.
-     * @param networkId         Number indicating the network this block belongs to.
+     * @param previousBlockHash
+     *     Hash of the previous block in the blockchain.
+     * @param merkleRoot
+     *     Hash of the Merkle root.
+     * @param targetValue
+     *     Target value for the proof-of-work.
+     * @param nonce
+     *     Nonce for the proof-of-work.
+     * @param blockHeight
+     *     Height of the block in the blockchain.
+     * @param transactions
+     *     List of transactions contained in this block.
+     * @param networkId
+     *     Number indicating the network this block belongs to.
      */
-    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, List<Transaction> transactions, int networkId) {
+    public Block(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
+                 @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight,
+                 List<Transaction> transactions, int networkId) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -123,11 +132,11 @@ public class Block implements ProtoModel<Block> {
     @NotNull
     protected ByteString getRawHeader() {
         return ByteUtil.toByteString(getNetworkId())
-                .concat(getPreviousBlockHash().getValue())
-                .concat(getMerkleRoot().getValue())
-                .concat(getTargetValue().getValue())
-                .concat(ByteUtil.toByteString(getBlockHeight()))
-                .concat(ByteString.copyFrom(getNonce().toByteArray()));
+            .concat(getPreviousBlockHash().getValue())
+            .concat(getMerkleRoot().getValue())
+            .concat(getTargetValue().getValue())
+            .concat(ByteUtil.toByteString(getBlockHeight()))
+            .concat(ByteString.copyFrom(getNonce().toByteArray()));
     }
 
     public int getNetworkId() {
@@ -218,15 +227,16 @@ public class Block implements ProtoModel<Block> {
 
         @Override
         public Block build() {
-            return new Block(previousBlockHash.build(),
-                    merkleRoot.build(),
-                    targetValue.build(),
-                    nonce,
-                    blockHeight,
-                    transactions.stream()
-                            .map(Transaction.Builder::build)
-                            .collect(Collectors.toList()),
-                    networkId
+            return new Block(
+                previousBlockHash.build(),
+                merkleRoot.build(),
+                targetValue.build(),
+                nonce,
+                blockHeight,
+                transactions.stream()
+                    .map(Transaction.Builder::build)
+                    .collect(Collectors.toList()),
+                networkId
             );
         }
     }

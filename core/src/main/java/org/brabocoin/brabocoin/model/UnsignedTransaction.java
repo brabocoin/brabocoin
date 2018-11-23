@@ -54,7 +54,8 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
     /**
      * Copy constructor.
      *
-     * @param unsignedTransaction Unsigned Transaction to copy
+     * @param unsignedTransaction
+     *     Unsigned Transaction to copy
      */
     private UnsignedTransaction(UnsignedTransaction unsignedTransaction) {
         this(unsignedTransaction.inputs, unsignedTransaction.outputs);
@@ -95,9 +96,11 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
     }
 
 
-
     private @NotNull ByteString getRawData() {
-        return ProtoConverter.toProto(new UnsignedTransaction(this), BrabocoinProtos.UnsignedTransaction.class).toByteString();
+        return ProtoConverter.toProto(
+            new UnsignedTransaction(this),
+            BrabocoinProtos.UnsignedTransaction.class
+        ).toByteString();
     }
 
     public Class<? extends ProtoBuilder> getBuilder() {

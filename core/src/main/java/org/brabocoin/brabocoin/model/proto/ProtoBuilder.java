@@ -3,7 +3,7 @@ package org.brabocoin.brabocoin.model.proto;
 /**
  * Indicates a builder for a {@link ProtoModel} class.
  */
-public interface ProtoBuilder <P extends ProtoModel> {
+public interface ProtoBuilder<P extends ProtoModel> {
 
     /**
      * Convert the builder object to a {@link ProtoModel} domain class instance.

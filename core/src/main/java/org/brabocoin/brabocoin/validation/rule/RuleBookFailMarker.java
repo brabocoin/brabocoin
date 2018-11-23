@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation.rule;
 import org.jetbrains.annotations.Nullable;
 
 public class RuleBookFailMarker {
+
     private final Class<? extends Rule> failedRule;
 
     @Nullable
@@ -13,12 +14,13 @@ public class RuleBookFailMarker {
         this.child = null;
     }
 
-    public RuleBookFailMarker(Class<? extends Rule> failedRule, @Nullable RuleBookFailMarker child) {
+    public RuleBookFailMarker(Class<? extends Rule> failedRule,
+                              @Nullable RuleBookFailMarker child) {
         this.failedRule = failedRule;
         this.child = child;
     }
 
-    public boolean hasChild(){
+    public boolean hasChild() {
         return child != null;
     }
 

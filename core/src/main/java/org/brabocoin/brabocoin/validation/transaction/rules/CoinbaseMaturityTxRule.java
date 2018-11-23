@@ -12,22 +12,23 @@ import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
 
 /**
  * Transaction rule
- *
+ * <p>
  * Reject if the spent coinbase it not mature enough.
  */
 public class CoinbaseMaturityTxRule extends TransactionRule {
+
     private ReadonlyUTXOSet utxoSet;
     private IndexedChain mainChain;
 
     public boolean isValid() {
         try {
-            return transaction.getInputs()
-                    .stream()
-                    .map(rethrowFunction(utxoSet::findUnspentOutputInfo))
-                    .filter(Objects::nonNull)
-                    .filter(UnspentOutputInfo::isCoinbase)
-                    .allMatch(u -> u.getBlockHeight() <= mainChain.getHeight() - consensus.getCoinbaseMaturityDepth());
-        } catch (DatabaseException e) {
+            return transaction.getInputs().stream()
+                .map(rethrowFunction(utxoSet::findUnspentOutputInfo))
+                .filter(Objects::nonNull)
+                .filter(UnspentOutputInfo::isCoinbase)
+                .allMatch(u -> u.getBlockHeight() <= mainChain.getHeight() - consensus.getCoinbaseMaturityDepth());
+        }
+        catch (DatabaseException e) {
             e.printStackTrace();
             return false;
         }

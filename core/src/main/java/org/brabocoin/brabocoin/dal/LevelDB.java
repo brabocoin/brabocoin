@@ -6,6 +6,7 @@ import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +23,9 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
  * LevelDB Data Access Layer for the LevelDB Java Native Interface provided by fusesource.
  */
 public class LevelDB implements KeyValueStore {
+
     private static final Logger LOGGER = Logger.getLogger(LevelDB.class.getName());
+
     private DB database;
     private File databasePath;
     private Options options;
@@ -30,7 +33,8 @@ public class LevelDB implements KeyValueStore {
     /**
      * Construct a LevelDB Data Access Layer.
      *
-     * @param databasePath The path to store the database in.
+     * @param databasePath
+     *     The path to store the database in.
      */
     public LevelDB(final File databasePath) {
         options = new Options();
@@ -55,13 +59,15 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public synchronized void put(final ByteString key, final ByteString value) throws DatabaseException {
+    public synchronized void put(final ByteString key,
+                                 final ByteString value) throws DatabaseException {
         LOGGER.fine("Putting key-value pair.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("value: {0}", toHexString(value)));
         try {
             database.put(key.toByteArray(), value.toByteArray());
-        } catch (final DBException e) {
+        }
+        catch (final DBException e) {
             LOGGER.log(Level.SEVERE, "Exception when putting key-value pair: {0}", e.getMessage());
             throw new DatabaseException(e.getMessage());
         }
@@ -79,9 +85,13 @@ public class LevelDB implements KeyValueStore {
             }
 
             ByteString byteString = ByteString.copyFrom(data);
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Value found: {0}", toHexString(byteString)));
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Value found: {0}", toHexString(byteString))
+            );
             return byteString;
-        } catch (final DBException e) {
+        }
+        catch (final DBException e) {
             LOGGER.log(Level.SEVERE, "Exception while getting value: {0}", e.getMessage());
             throw new DatabaseException(e.getMessage());
         }
@@ -93,8 +103,13 @@ public class LevelDB implements KeyValueStore {
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         try {
             database.delete(key.toByteArray());
-        } catch (final DBException e) {
-            LOGGER.log(Level.SEVERE, "Exception while deleting key-value pair: {0}", e.getMessage());
+        }
+        catch (final DBException e) {
+            LOGGER.log(
+                Level.SEVERE,
+                "Exception while deleting key-value pair: {0}",
+                e.getMessage()
+            );
             throw new DatabaseException(e.getMessage());
         }
     }
@@ -109,7 +124,7 @@ public class LevelDB implements KeyValueStore {
     }
 
     @Override
-    public synchronized Iterator<Map.Entry<ByteString, ByteString>> iterator() {
+    public synchronized @NotNull Iterator<Map.Entry<ByteString, ByteString>> iterator() {
         LOGGER.fine("LevelDB iterator constructor.");
         return new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();

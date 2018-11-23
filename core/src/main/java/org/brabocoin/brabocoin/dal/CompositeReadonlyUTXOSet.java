@@ -38,7 +38,8 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public boolean isUnspent(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
+    public boolean isUnspent(@NotNull Hash transactionHash,
+                             int outputIndex) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             if (utxoSet.isUnspent(transactionHash, outputIndex)) {
                 return true;
@@ -61,7 +62,8 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash, int outputIndex) throws DatabaseException {
+    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
+                                                             int outputIndex) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             UnspentOutputInfo info = utxoSet.findUnspentOutputInfo(transactionHash, outputIndex);
             if (info != null) {

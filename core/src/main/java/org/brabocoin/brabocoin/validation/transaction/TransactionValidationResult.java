@@ -7,10 +7,12 @@ import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 
 public class TransactionValidationResult extends ValidationResult {
+
     /**
      * Create transaction validation result from rulebook result
      *
-     * @param result Rule book result
+     * @param result
+     *     Rule book result
      * @return Transaction validation result
      */
     public static TransactionValidationResult from(RuleBookResult result) {
@@ -30,7 +32,8 @@ public class TransactionValidationResult extends ValidationResult {
     /**
      * Constructor for a rule book result that is not passed, given the failed rule class.
      *
-     * @param failedRule The rule class for which the rule book failed
+     * @param failedRule
+     *     The rule class for which the rule book failed
      */
     private TransactionValidationResult(RuleBookFailMarker failedRule) {
         super(failedRule);

@@ -32,44 +32,45 @@ import java.util.logging.Logger;
  * Validation rules for transactions.
  */
 public class TransactionValidator {
+
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
     private static final RuleList ALL = new RuleList(
-            DuplicatePoolTxRule.class,
-            MaxSizeTxRule.class,
-            CoinbaseCreationTxRule.class,
-            InputOutputNotEmptyTxRule.class,
-            DuplicateInputTxRule.class,
-            PoolDoubleSpendingTxRule.class,
-            ValidInputUTXOTxRule.class,
-            CoinbaseMaturityTxRule.class,
-            OutputValueTxRule.class,
-            InputValueTxRange.class,
-            SufficientInputTxRule.class,
-            SignatureTxRule.class
+        DuplicatePoolTxRule.class,
+        MaxSizeTxRule.class,
+        CoinbaseCreationTxRule.class,
+        InputOutputNotEmptyTxRule.class,
+        DuplicateInputTxRule.class,
+        PoolDoubleSpendingTxRule.class,
+        ValidInputUTXOTxRule.class,
+        CoinbaseMaturityTxRule.class,
+        OutputValueTxRule.class,
+        InputValueTxRange.class,
+        SufficientInputTxRule.class,
+        SignatureTxRule.class
     );
 
     private static final RuleList AFTER_ORPHAN = new RuleList(
-            PoolDoubleSpendingTxRule.class,
-            ValidInputUTXOTxRule.class,
-            CoinbaseMaturityTxRule.class,
-            OutputValueTxRule.class,
-            InputValueTxRange.class,
-            SufficientInputTxRule.class,
-            SignatureTxRule.class
+        PoolDoubleSpendingTxRule.class,
+        ValidInputUTXOTxRule.class,
+        CoinbaseMaturityTxRule.class,
+        OutputValueTxRule.class,
+        InputValueTxRange.class,
+        SufficientInputTxRule.class,
+        SignatureTxRule.class
     );
 
     private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
-            InputOutputNotEmptyTxRule.class,
-            OutputValueTxRule.class
+        InputOutputNotEmptyTxRule.class,
+        OutputValueTxRule.class
     );
 
     private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
-            ValidInputUTXOTxRule.class,
-            CoinbaseMaturityTxRule.class,
-            InputValueTxRange.class,
-            SufficientInputTxRule.class,
-            SignatureTxRule.class
+        ValidInputUTXOTxRule.class,
+        CoinbaseMaturityTxRule.class,
+        InputValueTxRange.class,
+        SufficientInputTxRule.class,
+        SignatureTxRule.class
     );
 
     private static final RuleList ORPHAN = new RuleList(
@@ -87,7 +88,8 @@ public class TransactionValidator {
     /**
      * Construct transaction validator.
      *
-     * @param state The state for the node.
+     * @param state
+     *     The state for the node.
      */
     public TransactionValidator(@NotNull State state) {
         this.consensus = state.getConsensus();
@@ -114,21 +116,30 @@ public class TransactionValidator {
     /**
      * Checks whether a transaction is valid using all known transaction rules.
      *
-     * @param transaction The transaction.
+     * @param transaction
+     *     The transaction.
      * @return Whether the transaction is valid.
      */
     public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(transaction, compositeUTXO)));
+        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(
+            transaction,
+            compositeUTXO
+        )));
     }
 
     /**
      * Checks whether a transaction is valid after the transaction is no longer orphan.
      *
-     * @param transaction The transaction.
+     * @param transaction
+     *     The transaction.
      * @return Whether the transaction is valid.
      */
-    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+    public TransactionValidationResult checkTransactionPostOrphan(
+        @NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(
+            transaction,
+            compositeUTXO
+        )));
     }
 
     /**
@@ -139,7 +150,10 @@ public class TransactionValidator {
      * @return Whether the transaction is orphan.
      */
     public TransactionValidationResult checkTransactionOrphan(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(
+            transaction,
+            compositeUTXO
+        )));
     }
 
     /**
@@ -149,27 +163,41 @@ public class TransactionValidator {
      *     The transaction to check.
      * @return Whether the transaction is independent.
      */
-    public TransactionValidationResult checkTransactionIndependent(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, chainUTXODatabase)));
+    public TransactionValidationResult checkTransactionIndependent(
+        @NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(
+            transaction,
+            chainUTXODatabase
+        )));
     }
 
     /**
      * Perform a non-contextual check whether a transaction is valid in a block.
      *
-     * @param transaction The transaction.
+     * @param transaction
+     *     The transaction.
      * @return Whether the transaction is valid.
      */
-    public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(transaction, chainUTXODatabase)));
+    public TransactionValidationResult checkTransactionBlockNonContextual(
+        @NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(
+            transaction,
+            chainUTXODatabase
+        )));
     }
 
     /**
      * Perform a contextual check whether a transaction is valid in a block.
      *
-     * @param transaction The transaction.
+     * @param transaction
+     *     The transaction.
      * @return Whether the transaction is valid.
      */
-    public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(transaction, chainUTXODatabase)));
+    public TransactionValidationResult checkTransactionBlockContextual(
+        @NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(
+            transaction,
+            chainUTXODatabase
+        )));
     }
 }

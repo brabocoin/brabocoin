@@ -18,11 +18,13 @@ import org.jetbrains.annotations.Nullable;
 public class ProtoConverter {
 
     private static final Converter CONVERTER = Converter.create(
-            Configuration.builder().withInheritedFields().build()
+        Configuration.builder().withInheritedFields().build()
     );
 
     @Contract("null, _, _ -> null")
-    public static <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(@Nullable ByteString value, @NotNull Class<B> domainClassBuilder, @NotNull Parser<P> parser) throws InvalidProtocolBufferException {
+    public static <D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable D parseProtoValue(
+        @Nullable ByteString value, @NotNull Class<B> domainClassBuilder,
+        @NotNull Parser<P> parser) throws InvalidProtocolBufferException {
         if (value == null) {
             return null;
         }
@@ -33,7 +35,9 @@ public class ProtoConverter {
     }
 
 
-    public static <M extends D, D extends ProtoModel<D>, B extends ProtoBuilder<D>, P extends Message> @Nullable M toDomain(P protoObject, Class<B> domainClassBuilder) {
+    public static <M extends D, D extends ProtoModel<D>, B extends ProtoBuilder<D>,
+        P extends Message> @Nullable M toDomain(
+        P protoObject, Class<B> domainClassBuilder) {
         B builder = CONVERTER.toDomain(domainClassBuilder, protoObject);
 
         if (builder == null) {
@@ -63,7 +67,8 @@ public class ProtoConverter {
      * @return The raw bytes of the converted proto object, or {@code null} if the object could
      * not be converted.
      */
-    public static <D extends ProtoModel<D>, P extends Message> ByteString toProtoBytes(D domainObject, Class<P> protoClass) {
+    public static <D extends ProtoModel<D>, P extends Message> ByteString toProtoBytes(
+        D domainObject, Class<P> protoClass) {
         P proto = toProto(domainObject, protoClass);
         if (proto == null) {
             return null;

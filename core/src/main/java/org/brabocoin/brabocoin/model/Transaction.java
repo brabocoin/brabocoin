@@ -29,8 +29,9 @@ public class Transaction extends UnsignedTransaction {
      *     The signatures to sign with.
      * @return The signed transaction.
      */
-    public static @NotNull Transaction fromUnsigned(@NotNull UnsignedTransaction unsignedTransaction,
-                                                    @NotNull List<Signature> signatures) {
+    public static @NotNull Transaction fromUnsigned(
+        @NotNull UnsignedTransaction unsignedTransaction,
+        @NotNull List<Signature> signatures) {
         return unsignedTransaction.sign(signatures);
     }
 
@@ -81,9 +82,9 @@ public class Transaction extends UnsignedTransaction {
         @Override
         public Transaction build() {
             return new Transaction(
-                    inputs.stream().map(Input.Builder::build).collect(Collectors.toList()),
-                    outputs.stream().map(Output.Builder::build).collect(Collectors.toList()),
-                    signatures.stream().map(Signature.Builder::build).collect(Collectors.toList())
+                inputs.stream().map(Input.Builder::build).collect(Collectors.toList()),
+                outputs.stream().map(Output.Builder::build).collect(Collectors.toList()),
+                signatures.stream().map(Signature.Builder::build).collect(Collectors.toList())
             );
         }
     }

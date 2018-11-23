@@ -13,14 +13,17 @@ import java.util.Collections;
  * Provides the default Brabocoin configuration.
  */
 public class BraboConfigProvider {
+
     private final static String configFile = "application.yaml";
 
     public static ConfigurationProvider getConfig() {
-        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(Paths.get(configFile));
+        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(
+            Paths.get(configFile)
+        );
         final ConfigurationSource source = new ClasspathConfigurationSource(configFilesProvider);
 
         return new ConfigurationProviderBuilder()
-                .withConfigurationSource(source)
-                .build();
+            .withConfigurationSource(source)
+            .build();
     }
 }

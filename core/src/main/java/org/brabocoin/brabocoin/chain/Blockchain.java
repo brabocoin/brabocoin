@@ -26,6 +26,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * Manages all blocks known to the node, and maintains the indexed chain state.
  */
 public class Blockchain {
+
     private static final Logger LOGGER = Logger.getLogger(Blockchain.class.getName());
 
     /**
@@ -59,7 +60,8 @@ public class Blockchain {
      * @throws DatabaseException
      *     When the genesis block could not be stored.
      */
-    public Blockchain(@NotNull BlockDatabase database, @NotNull Consensus consensus) throws DatabaseException {
+    public Blockchain(@NotNull BlockDatabase database,
+                      @NotNull Consensus consensus) throws DatabaseException {
         this.database = database;
         this.orphanMap = HashMultimap.create();
         this.orphanIndex = new HashMap<>();
@@ -191,7 +193,10 @@ public class Blockchain {
         LOGGER.fine("Check if block is orphan.");
 
         boolean isOrphan = orphanIndex.containsKey(blockHash);
-        LOGGER.finest(() -> MessageFormat.format("Block {0} isOrphan={1}", toHexString(blockHash.getValue()), isOrphan));
+        LOGGER.finest(() -> MessageFormat.format("Block {0} isOrphan={1}",
+                                                 toHexString(blockHash.getValue()),
+                                                 isOrphan
+        ));
 
         return isOrphan;
     }

@@ -99,21 +99,30 @@ public class BlockProcessor {
 
         if (block == null) {
             LOGGER.severe("Main chain could not be synced: requested top block is not stored.");
-            throw new IllegalStateException("Main chain could not be synced: requested top block is not stored.");
+            throw new IllegalStateException(
+                "Main chain could not be synced: requested top block is not stored.");
         }
 
         Deque<IndexedBlock> fork = findValidFork(block);
 
         if (fork == null) {
-            LOGGER.severe("Main chain could not be synced: no fork from the top block to the main chain is found.");
-            throw new IllegalStateException("Main chain could not be synced: no fork from the top block to the main chain is found.");
+            LOGGER.severe(
+                "Main chain could not be synced: no fork from the top block to the main chain is "
+                    + "found.");
+            throw new IllegalStateException(
+                "Main chain could not be synced: no fork from the top block to the main chain is "
+                    + "found.");
         }
 
         IndexedBlock onChain = fork.pop();
 
         if (!blockchain.getMainChain().getTopBlock().getHash().equals(onChain.getHash())) {
-            LOGGER.severe("Main chain could not be synced: requested top block forks before current top block. UTXO set is corrupted.");
-            throw new IllegalStateException("Main chain could not be synced: requested top block forks before current top block. UTXO set is corrupted.");
+            LOGGER.severe(
+                "Main chain could not be synced: requested top block forks before current top "
+                    + "block. UTXO set is corrupted.");
+            throw new IllegalStateException(
+                "Main chain could not be synced: requested top block forks before current top "
+                    + "block. UTXO set is corrupted.");
         }
 
         // Connect all the blocks
@@ -121,7 +130,10 @@ public class BlockProcessor {
             blockchain.pushTopBlock(fork.pop());
         }
 
-        LOGGER.info(() -> MessageFormat.format("Synced main chain to height={0}.", blockchain.getMainChain().getHeight()));
+        LOGGER.info(() -> MessageFormat.format(
+            "Synced main chain to height={0}.",
+            blockchain.getMainChain().getHeight()
+        ));
     }
 
     /**
@@ -190,7 +202,8 @@ public class BlockProcessor {
      * @return The set of new top candidates from the orphan pool (that are now removed as
      * orphans and are added to the blockchain).
      */
-    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(@NotNull IndexedBlock newParent) throws DatabaseException {
+    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(
+        @NotNull IndexedBlock newParent) throws DatabaseException {
         LOGGER.fine("Processing orphans for top candidates.");
 
         Set<IndexedBlock> topCandidates = new HashSet<>();
@@ -207,7 +220,8 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.checkPostOrphanBlockValid(descendant).getStatus();
+                ValidationStatus status = blockValidator.checkPostOrphanBlockValid(descendant)
+                    .getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
                 if (status == ValidationStatus.ORPHAN) {
@@ -255,12 +269,14 @@ public class BlockProcessor {
         allCandidates.add(currentTop);
 
         // Attempt reorganization while there are still candidates
-        reorganization: while (true) {
+        reorganization:
+        while (true) {
             // Select the best top candidate
             IndexedBlock bestCandidate = consensus.bestValidBlock(allCandidates);
 
             if (bestCandidate == null) {
-                // No valid candidates are found, which means the current top is no valid candidate as well
+                // No valid candidates are found, which means the current top is no valid
+                // candidate as well
                 // TODO: error handling?
                 LOGGER.severe("Current main chain is invalid.");
                 return;
@@ -276,7 +292,9 @@ public class BlockProcessor {
             Deque<IndexedBlock> fork = findValidFork(bestCandidate);
             if (fork == null) {
                 // No valid fork is found, remove the best candidate
-                LOGGER.info("Fork is invalid, removing the selected candidate and attempt re-selecting new candidate.");
+                LOGGER.info(
+                    "Fork is invalid, removing the selected candidate and attempt re-selecting "
+                        + "new candidate.");
                 allCandidates.remove(bestCandidate);
                 continue;
             }
@@ -335,7 +353,8 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    private @Nullable Deque<IndexedBlock> findValidFork(@NotNull IndexedBlock block) throws DatabaseException {
+    private @Nullable Deque<IndexedBlock> findValidFork(
+        @NotNull IndexedBlock block) throws DatabaseException {
         LOGGER.fine("Find a fork.");
 
         Deque<IndexedBlock> fork = new ArrayDeque<>();

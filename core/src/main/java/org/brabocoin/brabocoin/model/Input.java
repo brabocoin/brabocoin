@@ -33,9 +33,9 @@ public class Input implements ProtoModel<Input> {
      * Create a new transaction input.
      *
      * @param referencedTransaction
-     *         Transaction of the referenced output.
+     *     Transaction of the referenced output.
      * @param referencedOutputIndex
-     *         Index of the referenced output.
+     *     Index of the referenced output.
      */
     public Input(@NotNull Hash referencedTransaction,
                  int referencedOutputIndex) {
@@ -81,11 +81,15 @@ public class Input implements ProtoModel<Input> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Input input = (Input) o;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Input input = (Input)o;
         return referencedOutputIndex == input.referencedOutputIndex &&
-                referencedTransaction.equals(input.referencedTransaction);
+            referencedTransaction.equals(input.referencedTransaction);
     }
 
     @Override

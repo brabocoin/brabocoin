@@ -15,6 +15,7 @@ import java.util.logging.Logger;
  * A representation of an peer in the network.
  */
 public class Peer {
+
     private static final Logger LOGGER = Logger.getLogger(Peer.class.getName());
     /**
      * The socket for this peer.
@@ -28,8 +29,10 @@ public class Peer {
     /**
      * Creates a peer from an address and port.
      *
-     * @param address The address of the peer.
-     * @param port    The port of the peer
+     * @param address
+     *     The address of the peer.
+     * @param port
+     *     The port of the peer
      */
     public Peer(InetAddress address, int port) throws MalformedSocketException {
         this(new InetSocketAddress(address, port));
@@ -38,7 +41,8 @@ public class Peer {
     /**
      * Creates a peer from a given socket address.
      *
-     * @param socketAddress The socket of the peer.
+     * @param socketAddress
+     *     The socket of the peer.
      */
     public Peer(InetSocketAddress socketAddress) throws MalformedSocketException {
         this.socket = socketAddress;
@@ -49,8 +53,10 @@ public class Peer {
     /**
      * Creates a peer from a string representation of a socket.
      *
-     * @param socket The string representation of a socket {hostname}:{port}
-     * @throws MalformedSocketException Thrown when the socket is malformed.
+     * @param socket
+     *     The string representation of a socket {hostname}:{port}
+     * @throws MalformedSocketException
+     *     Thrown when the socket is malformed.
      */
     public Peer(String socket) throws MalformedSocketException {
         this.socket = getSocketFromString(socket);
@@ -83,10 +89,11 @@ public class Peer {
         LOGGER.log(Level.INFO, "Setting up a new peer: {0}", toSocketString());
         try {
             this.channel = ManagedChannelBuilder
-                    .forAddress(socket.getHostString(), socket.getPort())
-                    .usePlaintext()
-                    .build();
-        } catch (IllegalArgumentException e) {
+                .forAddress(socket.getHostString(), socket.getPort())
+                .usePlaintext()
+                .build();
+        }
+        catch (IllegalArgumentException e) {
             LOGGER.log(Level.FINE, "Could not build channel for peer: {0}", e.getMessage());
             // hostname or port is invalid
             throw new MalformedSocketException("Invalid hostname or port on channel creation.");
@@ -118,28 +125,33 @@ public class Peer {
     /**
      * Tries to parse a InetSocketAddress from a {ip}:{port} string.
      *
-     * @param socket Socket in string format
+     * @param socket
+     *     Socket in string format
      * @return Instantiated InetSocketAddress
-     * @throws MalformedSocketException When the socket string has an invalid format.
+     * @throws MalformedSocketException
+     *     When the socket string has an invalid format.
      */
     private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {
         LOGGER.fine("Getting socket from string.");
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("String: {0}", socket));
         if (!socket.contains(":")) {
             LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
-            throw new MalformedSocketException("Socket representation does not contain a colon separator.");
+            throw new MalformedSocketException(
+                "Socket representation does not contain a colon separator.");
         }
 
         String[] socketSplit = socket.split(":");
         if (socketSplit.length != 2) {
             LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
-            throw new MalformedSocketException("Socket representation does not contain a single separator.");
+            throw new MalformedSocketException(
+                "Socket representation does not contain a single separator.");
         }
 
         int socketPort;
         try {
             socketPort = Integer.parseInt(socketSplit[1]);
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException("Socket port section is not an integer.");
         }
@@ -147,7 +159,8 @@ public class Peer {
         InetSocketAddress socketAddress;
         try {
             socketAddress = new InetSocketAddress(socketSplit[0], socketPort);
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
             throw new MalformedSocketException(e.getMessage());
         }
@@ -177,7 +190,12 @@ public class Peer {
 
     @Override
     public String toString() {
-        return String.format("%s:%d (%s)", socket.getHostString(), socket.getPort(), isRunning() ? "running" : "closed");
+        return String.format(
+            "%s:%d (%s)",
+            socket.getHostString(),
+            socket.getPort(),
+            isRunning() ? "running" : "closed"
+        );
     }
 
     /**
@@ -196,15 +214,18 @@ public class Peer {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        final Peer other = (Peer) obj;
+        }
+        final Peer other = (Peer)obj;
         return socket.getAddress().equals(other.socket.getAddress()) &&
-                socket.getPort() == other.socket.getPort();
+            socket.getPort() == other.socket.getPort();
     }
 
     /**

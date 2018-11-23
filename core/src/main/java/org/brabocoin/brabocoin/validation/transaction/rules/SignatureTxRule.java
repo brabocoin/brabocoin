@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
  * All signatures of the input must be valid.
  */
 public class SignatureTxRule extends TransactionRule {
+
     private ReadonlyUTXOSet utxoSet;
 
     private Signer signer;
@@ -34,8 +35,10 @@ public class SignatureTxRule extends TransactionRule {
                     return signer.verifySignature(
                         signature,
                         Objects.requireNonNull(utxoSet.findUnspentOutputInfo(input)).getAddress(),
-                        transaction.getSignableTransactionData());
-                } catch (DatabaseException e) {
+                        transaction.getSignableTransactionData()
+                    );
+                }
+                catch (DatabaseException e) {
                     e.printStackTrace();
                     return false;
                 }

@@ -6,12 +6,14 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
- *
+ * <p>
  * Size of transaction should be limited.
  */
 public class MaxSizeTxRule extends TransactionRule {
+
     public boolean isValid() {
-        int size = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class).getSerializedSize();
+        int size = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class)
+            .getSerializedSize();
 
         // TODO: change this when mining exists
         return size < consensus.getMaxBlockSize() + consensus.getMaxNonceSize();

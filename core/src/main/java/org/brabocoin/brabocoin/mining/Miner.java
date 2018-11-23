@@ -8,7 +8,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * Miner can mine blocks.
- *
+ * <p>
  * The transactions that are included in the new block are selected from the transaction pool.
  * Only independent transactions are selected from the pool.
  */
@@ -76,7 +75,8 @@ public class Miner {
      *     The address to which the coinbase output is paid.
      * @return The mined block, or {@code null} if the mining process was interrupted.
      */
-    public @Nullable Block mineNewBlock(@NotNull IndexedBlock previousBlock, @NotNull Hash coinbaseAddress) {
+    public @Nullable Block mineNewBlock(@NotNull IndexedBlock previousBlock,
+                                        @NotNull Hash coinbaseAddress) {
         List<Transaction> transactions = collectTransactions();
 
         Transaction coinbase = createCoinbase(coinbaseAddress, transactions);
@@ -91,15 +91,22 @@ public class Miner {
         BigInteger randomStartingNonce = new BigInteger(consensus.getMaxNonceSize() * 8, random);
 
         LOGGER.fine("Starting to mine a new block.");
-        LOGGER.finest(() -> MessageFormat.format("previousBlockHeight={0}, randomStartingNonce={1}, transactionCount={2}", previousBlock.getBlockInfo().getBlockHeight(), randomStartingNonce.toString(16), transactions.size()));
+        LOGGER.finest(() -> MessageFormat.format(
+            "previousBlockHeight={0}, randomStartingNonce={1}, transactionCount={2}",
+            previousBlock.getBlockInfo().getBlockHeight(),
+            randomStartingNonce.toString(16),
+            transactions.size()
+        ));
 
-        block = new MiningBlock(previousBlock.getHash(),
+        block = new MiningBlock(
+            previousBlock.getHash(),
             merkleRoot,
             consensus.getTargetValue(),
             randomStartingNonce,
             previousBlock.getBlockInfo().getBlockHeight() + 1,
             transactions,
-            networkId);
+            networkId
+        );
 
         // TODO: this is actually not threadsafe...
         if (isStopped) {
@@ -109,7 +116,8 @@ public class Miner {
         return block.mine(consensus);
     }
 
-    private @NotNull Transaction createCoinbase(Hash coinbaseAddress, List<Transaction> transactions) {
+    private @NotNull Transaction createCoinbase(Hash coinbaseAddress,
+                                                List<Transaction> transactions) {
         // TODO: do this better
         long amount = consensus.getBlockReward();
 
@@ -140,10 +148,10 @@ public class Miner {
         // TODO: move to consensus?
         long availableBlockSize = consensus.getMaxBlockSize() - consensus.getMaxBlockHeaderSize();
 
-        // Compute the size in bytes really reserved for transactions (see protobuf serialization docs)
-        int maxTransactionsSize =
-            (int)Math.floor(availableBlockSize - Math.log(availableBlockSize) / Math
-            .log(2)) - consensus.getMaxCoinbaseTransactionSize();
+        // Compute the size in bytes really reserved for transactions (see protobuf serialization
+        // docs)
+        int maxTransactionsSize = (int)Math.floor(availableBlockSize - Math.log(availableBlockSize)
+            / Math.log(2)) - consensus.getMaxCoinbaseTransactionSize();
 
         int usedSize = 0;
         List<Transaction> transactions = new ArrayList<>();
@@ -168,7 +176,10 @@ public class Miner {
 
             // Skip if the max transactions size is reached
             if (usedSize + transactionSize > maxTransactionsSize) {
-                LOGGER.finest(() -> MessageFormat.format("Transaction with size {0} is skipped.", transactionSize));
+                LOGGER.finest(() -> MessageFormat.format(
+                    "Transaction with size {0} is skipped.",
+                    transactionSize
+                ));
                 continue;
             }
 

@@ -26,7 +26,8 @@ public class BrabocoinApplication {
     /**
      * Default configuration file.
      */
-    private static final BraboConfig DEFAULT_CONFIG = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+    private static final BraboConfig DEFAULT_CONFIG = BraboConfigProvider.getConfig()
+        .bind("brabo", BraboConfig.class);
 
     /**
      * The node.
@@ -35,7 +36,7 @@ public class BrabocoinApplication {
 
     /**
      * Set of storage objects that are created.
-     *
+     * <p>
      * These are maintained such that they can be properly closed when the application shuts down.
      */
     private final @NotNull Set<KeyValueStore> storages;

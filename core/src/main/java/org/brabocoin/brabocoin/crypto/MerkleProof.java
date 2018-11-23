@@ -68,11 +68,13 @@ public class MerkleProof {
 
         Hash result = hash;
         for (Step step : steps) {
-            Hash concat = step.side == Side.LEFT ? step.hash.concat(result) :
-                result.concat(step.hash);
+            Hash concat = step.side == Side.LEFT
+                ? step.hash.concat(result)
+                : result.concat(step.hash);
 
             Hash innerNode = hashingFunction.apply(concat);
-            LOGGER.finest(() -> MessageFormat.format("Intermediate node: {0}",
+            LOGGER.finest(() -> MessageFormat.format(
+                "Intermediate node: {0}",
                 toHexString(innerNode.getValue())
             ));
 
@@ -101,8 +103,9 @@ public class MerkleProof {
      *     The expected root of the Merkle tree.
      * @return Whether the proof applied to {@code hash} evaluates to the given {@code root}.
      */
-    public boolean producesRoot(@NotNull Hash hash, @NotNull Function<Hash, Hash> hashingFunction
-        , @NotNull Hash root) {
+    public boolean producesRoot(@NotNull Hash hash,
+                                @NotNull Function<Hash, Hash> hashingFunction,
+                                @NotNull Hash root) {
         return apply(hash, hashingFunction).equals(root);
     }
 
@@ -132,7 +135,9 @@ public class MerkleProof {
 
         /**
          * Create a new step with the hash that must be concatenated on the left side.
-         * @param hash The hash.
+         *
+         * @param hash
+         *     The hash.
          * @return The Merkle proof step.
          */
         @Contract("_ -> new")
@@ -142,7 +147,9 @@ public class MerkleProof {
 
         /**
          * Create a new step with the hash that must be concatenated on the right side.
-         * @param hash The hash.
+         *
+         * @param hash
+         *     The hash.
          * @return The Merkle proof step.
          */
         @Contract("_ -> new")
@@ -157,6 +164,7 @@ public class MerkleProof {
 
         /**
          * Get the hash that must be concatenated.
+         *
          * @return The hash.
          */
         public @NotNull Hash getHash() {
@@ -165,6 +173,7 @@ public class MerkleProof {
 
         /**
          * Get the side at which the hash must be concatenated.
+         *
          * @return The side.
          */
         public @NotNull Side getSide() {

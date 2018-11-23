@@ -45,15 +45,16 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      * Creates a new block file information holder.
      *
      * @param numberOfBlocks
-     *         Number of full blocks that are stored in this file.
+     *     Number of full blocks that are stored in this file.
      * @param size
-     *         Size of the file in bytes.
+     *     Size of the file in bytes.
      * @param lowestBlockHeight
-     *         Minimum block height of all the blocks stored in the file.
+     *     Minimum block height of all the blocks stored in the file.
      * @param highestBlockHeight
-     *         Maximum block height of all the blocks stored in the file.
+     *     Maximum block height of all the blocks stored in the file.
      */
-    public BlockFileInfo(int numberOfBlocks, int size, int lowestBlockHeight, int highestBlockHeight) {
+    public BlockFileInfo(int numberOfBlocks, int size, int lowestBlockHeight,
+                         int highestBlockHeight) {
         this.numberOfBlocks = numberOfBlocks;
         this.size = size;
         this.lowestBlockHeight = lowestBlockHeight;
@@ -70,7 +71,12 @@ public class BlockFileInfo implements ProtoModel<BlockFileInfo> {
      */
     @Contract(" -> new")
     public static @NotNull BlockFileInfo createEmpty() {
-        return new Builder().setNumberOfBlocks(0).setSize(0).setLowestBlockHeight(Integer.MAX_VALUE).setHighestBlockHeight(0).build();
+        return new Builder()
+            .setNumberOfBlocks(0)
+            .setSize(0)
+            .setLowestBlockHeight(Integer.MAX_VALUE)
+            .setHighestBlockHeight(0)
+            .build();
     }
 
     public int getNumberOfBlocks() {

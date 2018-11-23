@@ -8,11 +8,12 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
- *
+ * <p>
  * The amount of the referenced output of the input must be positive,
  * and the sum of these amounts must be smaller than the max transaction range decided by consensus.
  */
 public class InputValueTxRange extends TransactionRule {
+
     private ReadonlyUTXOSet utxoSet;
 
     public boolean isValid() {
@@ -21,7 +22,8 @@ public class InputValueTxRange extends TransactionRule {
             UnspentOutputInfo unspentOutputInfo;
             try {
                 unspentOutputInfo = utxoSet.findUnspentOutputInfo(input);
-            } catch (DatabaseException e) {
+            }
+            catch (DatabaseException e) {
                 e.printStackTrace();
                 return false;
             }

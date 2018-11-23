@@ -5,10 +5,12 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
- *
- * Output values must be positive and the sum must be smaller than the max transaction range decided by consensus.
+ * <p>
+ * Output values must be positive and the sum must be smaller than the max transaction range
+ * decided by consensus.
  */
 public class OutputValueTxRule extends TransactionRule {
+
     public boolean isValid() {
         long sum = 0L;
         for (Output output : transaction.getOutputs()) {

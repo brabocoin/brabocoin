@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class RuleList {
+
     private final List<Class<? extends Rule>> rules;
 
     public RuleList(List<Class<? extends Rule>> rules) {

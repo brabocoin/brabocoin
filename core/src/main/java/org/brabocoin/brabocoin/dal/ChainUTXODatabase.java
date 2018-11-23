@@ -15,7 +15,8 @@ import java.util.logging.Logger;
 import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 
 /**
- * Provides the functionality of storing the unspent transaction outputs (UTXO) set for the blockchain.
+ * Provides the functionality of storing the unspent transaction outputs (UTXO) set for the
+ * blockchain.
  */
 public class ChainUTXODatabase extends UTXODatabase {
 
@@ -33,7 +34,8 @@ public class ChainUTXODatabase extends UTXODatabase {
      * @throws DatabaseException
      *     When the database could not be initialized.
      */
-    public ChainUTXODatabase(@NotNull KeyValueStore storage, @NotNull Consensus consensus) throws DatabaseException {
+    public ChainUTXODatabase(@NotNull KeyValueStore storage,
+                             @NotNull Consensus consensus) throws DatabaseException {
         super(storage);
         initialize(consensus.getGenesisBlock());
     }
@@ -53,7 +55,8 @@ public class ChainUTXODatabase extends UTXODatabase {
      * Retrieve the hash of the last block up to which the UTXO set is up-to-date.
      *
      * @return The block hash of the last processed block.
-     * @throws DatabaseException     When the data could not be retrieved.
+     * @throws DatabaseException
+     *     When the data could not be retrieved.
      */
     public synchronized @NotNull Hash getLastProcessedBlockHash() throws DatabaseException {
         LOGGER.log(Level.FINE, "Getting last processed block hash.");
@@ -75,12 +78,16 @@ public class ChainUTXODatabase extends UTXODatabase {
     /**
      * Sets the hash of the last block up to which the UTXO set is up-to-date.
      *
-     * @param hash     The hash of the last processed block.
+     * @param hash
+     *     The hash of the last processed block.
      * @throws DatabaseException
-          When the data could not be stored.
+     *     When the data could not be stored.
      */
     public synchronized void setLastProcessedBlockHash(@NotNull Hash hash) throws DatabaseException {
-        LOGGER.log(Level.FINE, "Sets the hash of the last block up to which the UTXO set is up-to-date.");
+        LOGGER.log(
+            Level.FINE,
+            "Sets the hash of the last block up to which the UTXO set is up-to-date."
+        );
         ByteString key = getBlockMarkerKey();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         ByteString value = getRawProtoValue(hash, BrabocoinProtos.Hash.class);

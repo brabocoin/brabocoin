@@ -21,7 +21,8 @@ public final class ByteUtil {
      * <p>
      * The resulting byte string will be 8 bytes long.
      *
-     * @param value The value to convert.
+     * @param value
+     *     The value to convert.
      * @return The byte string representation of the value.
      */
     public static @NotNull ByteString toByteString(long value) {
@@ -33,7 +34,8 @@ public final class ByteUtil {
      * <p>
      * The resulting byte string will be 4 bytes long.
      *
-     * @param value The value to convert.
+     * @param value
+     *     The value to convert.
      * @return The byte string representation of the value.
      */
     public static @NotNull ByteString toByteString(int value) {
@@ -46,7 +48,8 @@ public final class ByteUtil {
      * Note: only the first 4 bytes from the array will be read.
      * If the byte array contains more data, the following bytes are ignored.
      *
-     * @param value The value to convert.
+     * @param value
+     *     The value to convert.
      * @return The integer representation of the value.
      */
     public static int toInt(@NotNull ByteString value) {
@@ -56,7 +59,8 @@ public final class ByteUtil {
     /**
      * Convert a ByteString to a hexadecimal string representation of the bytes.
      *
-     * @param byteString The value to convert.
+     * @param byteString
+     *     The value to convert.
      * @return The hexadecimal representation of the bytes in a string.
      */
     public static String toHexString(ByteString byteString) {

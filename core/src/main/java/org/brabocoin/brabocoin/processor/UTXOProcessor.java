@@ -65,7 +65,8 @@ public class UTXOProcessor {
             for (Input input : transaction.getInputs()) {
                 outputInfos.add(database.findUnspentOutputInfo(input));
 
-                database.setOutputSpent(input.getReferencedTransaction(),
+                database.setOutputSpent(
+                    input.getReferencedTransaction(),
                     input.getReferencedOutputIndex()
                 );
             }
@@ -96,7 +97,8 @@ public class UTXOProcessor {
      * @throws DatabaseException
      *     When the database backend is not available.
      */
-    public void processBlockDisconnected(@NotNull Block block, @NotNull BlockUndo blockUndo) throws DatabaseException {
+    public void processBlockDisconnected(@NotNull Block block,
+                                         @NotNull BlockUndo blockUndo) throws DatabaseException {
         LOGGER.finest("Process disconnected block in UTXO set.");
 
         List<Transaction> transactions = block.getTransactions();
@@ -121,7 +123,8 @@ public class UTXOProcessor {
                 Input input = inputs.get(inputIndex);
                 UnspentOutputInfo info = inputInfos.get(inputIndex);
 
-                database.addUnspentOutputInfo(input.getReferencedTransaction(),
+                database.addUnspentOutputInfo(
+                    input.getReferencedTransaction(),
                     input.getReferencedOutputIndex(),
                     info
                 );

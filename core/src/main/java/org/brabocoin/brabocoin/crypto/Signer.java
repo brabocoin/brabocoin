@@ -61,10 +61,13 @@ public class Signer {
         LOGGER.fine("Signing a message.");
 
         // Check if private key is in bounds
-        if (!BigIntegerUtil.isInRangeExclusive(privateKey,
+        boolean inRange = BigIntegerUtil.isInRangeExclusive(
+            privateKey,
             BigInteger.ZERO,
             curve.getDomain().getN()
-        )) {
+        );
+
+        if (!inRange) {
             LOGGER.warning("Private key is out of valid range.");
             throw new IllegalArgumentException("Private key is not within range (0, n).");
         }
@@ -127,7 +130,8 @@ public class Signer {
 
         LOGGER.fine("Verifying crypto library signature.");
 
-        return signer.verifySignature(message.toByteArray(),
+        return signer.verifySignature(
+            message.toByteArray(),
             signature.getR(),
             signature.getS()
         );

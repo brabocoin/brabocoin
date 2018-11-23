@@ -40,7 +40,8 @@ public class EllipticCurve {
      *     The elliptic curve parameters.
      */
     public EllipticCurve(@NotNull X9ECParameters parameters) {
-        this.domain = new ECDomainParameters(parameters.getCurve(),
+        this.domain = new ECDomainParameters(
+            parameters.getCurve(),
             parameters.getG(),
             parameters.getN(),
             parameters.getH()
@@ -65,7 +66,8 @@ public class EllipticCurve {
      * @param point
      *     The point to decode.
      * @return The decoded point.
-     * @throws IllegalArgumentException When the point could not be decoded.
+     * @throws IllegalArgumentException
+     *     When the point could not be decoded.
      */
     public @NotNull ECPoint decodePoint(@NotNull ByteString point) throws IllegalArgumentException {
         LOGGER.fine("Decoding point from ByteString.");

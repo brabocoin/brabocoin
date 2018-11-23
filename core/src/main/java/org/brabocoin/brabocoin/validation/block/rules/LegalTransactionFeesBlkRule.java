@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
 
 public class LegalTransactionFeesBlkRule extends BlockRule {
+
     private ReadonlyUTXOSet utxoSet;
 
     @Override
@@ -20,7 +21,8 @@ public class LegalTransactionFeesBlkRule extends BlockRule {
             long fee;
             try {
                 fee = TransactionRuleUtil.computeFee(transaction, utxoSet);
-            } catch (DatabaseException e) {
+            }
+            catch (DatabaseException e) {
                 e.printStackTrace();
                 return false;
             }

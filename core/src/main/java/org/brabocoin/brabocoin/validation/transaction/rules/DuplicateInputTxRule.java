@@ -8,10 +8,11 @@ import java.util.Set;
 
 /**
  * Transaction rule
- *
+ * <p>
  * Transactions can not contain duplicate inputs.
  */
 public class DuplicateInputTxRule extends TransactionRule {
+
     public boolean isValid() {
         // Check for no duplicates
         Set<Input> seen = new HashSet<>();

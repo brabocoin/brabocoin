@@ -59,7 +59,8 @@ public class MerkleTree {
         this.hashingFunction = hashingFunction;
         this.leaves = new ArrayList<>(leaves);
 
-        LOGGER.fine(() -> MessageFormat.format("Initialized Merkle tree with {0} leaves.",
+        LOGGER.fine(() -> MessageFormat.format(
+            "Initialized Merkle tree with {0} leaves.",
             this.leaves.size()
         ));
     }
@@ -128,7 +129,8 @@ public class MerkleTree {
                 Hash innerNode = hashingFunction.apply(leftChild.concat(rightChild));
                 nodes.add(innerNode);
 
-                LOGGER.finest(() -> MessageFormat.format("Hash of next inner node: {0}",
+                LOGGER.finest(() -> MessageFormat.format(
+                    "Hash of next inner node: {0}",
                     toHexString(innerNode.getValue())
                 ));
 
