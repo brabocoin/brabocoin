@@ -139,6 +139,13 @@ public class PrivateKey implements ProtoModel<PrivateKey> {
         return new PrivateKey(value);
     }
 
+    /**
+     * Unlocks the current private key, storing a destructible decrypted {@link #unlockedValue} of the private key value.
+     *
+     * @param passphrase The destructible passphrase used to decrypt the value.
+     * @throws CipherException      When decryption fails
+     * @throws DestructionException When the passphrase could not be destructed
+     */
     public void unlock(Destructible<char[]> passphrase) throws CipherException, DestructionException {
         if (!encrypted) {
             throw new IllegalStateException("Unlocking is ill-defined for plain private keys");
@@ -152,6 +159,16 @@ public class PrivateKey implements ProtoModel<PrivateKey> {
     }
 
     /**
+     * Whether the current private key is locked.
+     *
+     * @return True when the wallet is not encrypted or if it is encrypted
+     * and the {@link #unlockedValue} exists and is not already destroyed
+     */
+    public boolean isUnlocked() {
+        return !encrypted || (unlockedValue != null && !unlockedValue.isDestroyed());
+    }
+
+    /**
      * Gets the value of this wallet.
      * If not {@link #encrypted}, just parse the value as Big Integer,
      * if {@link #encrypted}, get the {@link #unlockedValue}.
@@ -160,6 +177,7 @@ public class PrivateKey implements ProtoModel<PrivateKey> {
      * The user is responsible for destroyed the returned (plain) big integer.
      *
      * @return A destructible BigInteger private key
+     * @throws DestructionException When the unlocked value could not be destructed
      */
     public Destructible<BigInteger> getKey() throws DestructionException {
         if (!encrypted) {
