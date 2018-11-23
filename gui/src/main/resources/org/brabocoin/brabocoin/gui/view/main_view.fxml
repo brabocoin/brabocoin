@@ -1,11 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.PersistentToggleGroup?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import org.brabocoin.brabocoin.gui.view.LogPane?>
+<?import org.controlsfx.control.HiddenSidesPane?>
+<?import org.controlsfx.control.SegmentedButton?>
+<?import org.controlsfx.control.StatusBar?>
+<?import java.lang.Double?>
+<?import javafx.scene.layout.HBox?>
+<fx:root type="javafx.scene.layout.BorderPane"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.MainView"
+         prefHeight="800.0"
+         prefWidth="1200.0">
+    <fx:define>
+        <PersistentToggleGroup fx:id="toggleGroupMainNav"/>
+        <Double fx:id="mainNavIconSize" fx:value="20"/>
+    </fx:define>
 
-
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.brabocoin.brabocoin.gui.view.MainView">
-   <children>
-      <Button fx:id="blockchain" layoutX="274.0" layoutY="188.0" mnemonicParsing="false" onAction="#onBlockchain" text="Blockchain" />
-   </children>
-</AnchorPane>
+    <bottom>
+        <StatusBar fx:id="statusBar" text="" BorderPane.alignment="CENTER">
+            <leftItems>
+                <SegmentedButton>
+                    <buttons>
+                        <ToggleButton fx:id="logPaneToggleButton" text="Log"/>
+                    </buttons>
+                </SegmentedButton>
+            </leftItems>
+        </StatusBar>
+    </bottom>
+    <center>
+        <HiddenSidesPane fx:id="sidesPane" triggerDistance="0" animationDelay="0s" BorderPane.alignment="CENTER">
+            <content>
+                <BorderPane fx:id="viewContainer">
+                    <left>
+                        <VBox id="main-nav">
+                            <StackPane styleClass="logo">
+                                <Group StackPane.alignment="CENTER">
+                                    <HBox alignment="CENTER" spacing="15">
+                                        <BraboGlyph icon="BITCOIN" fontSize="40"/>
+                                        <Label styleClass="logo-text" text="Brabocoin"/>
+                                    </HBox>
+                                </Group>
+                            </StackPane>
+                            <ToggleButton fx:id="stateToggleButton" toggleGroup="$toggleGroupMainNav" text="Current state" selected="true">
+                                <graphic>
+                                    <BraboGlyph icon="DATABASE" fontSize="$mainNavIconSize"/>
+                                </graphic>
+                            </ToggleButton>
+                            <ToggleButton fx:id="validationToggleButton" toggleGroup="$toggleGroupMainNav" text="Validation sandbox">
+                                <graphic>
+                                    <BraboGlyph icon="TASKS" fontSize="$mainNavIconSize"/>
+                                </graphic>
+                            </ToggleButton>
+                            <ToggleButton fx:id="walletToggleButton" toggleGroup="$toggleGroupMainNav" text="Wallet">
+                                <graphic>
+                                    <BraboGlyph icon="WALLET" fontSize="$mainNavIconSize"/>
+                                </graphic>
+                            </ToggleButton>
+                            <ToggleButton fx:id="miningToggleButton" toggleGroup="$toggleGroupMainNav" text="Mining">
+                                <graphic>
+                                    <BraboGlyph icon="MICROCHIP" fontSize="$mainNavIconSize"/>
+                                </graphic>
+                            </ToggleButton>
+                            <ToggleButton fx:id="networkToggleButton" toggleGroup="$toggleGroupMainNav" text="Network">
+                                <graphic>
+                                    <BraboGlyph icon="BROADCAST_TOWER" fontSize="$mainNavIconSize"/>
+                                </graphic>
+                            </ToggleButton>
+                        </VBox>
+                    </left>
+                </BorderPane>
+            </content>
+            <bottom>
+                <LogPane fx:id="logPane"/>
+            </bottom>
+        </HiddenSidesPane>
+    </center>
+</fx:root>

@@ -1,3 +1,47 @@
-.button {
-    -fx-text-fill: red;
+#main-nav {
+    -fx-pref-width: 200;
+    -fx-background-color: -fx-base;
+}
+
+#main-nav > .logo {
+    -fx-background-color: -fx-accent;
+    -fx-pref-height: 75;
+}
+
+#main-nav > .logo .label {
+    -fx-text-fill: white;
+}
+
+#main-nav > .logo .logo-text {
+    -fx-font-size: 1.8em;
+}
+
+#main-nav > .toggle-button {
+    -fx-max-width: Infinity;
+    -fx-pref-height: 50;
+    -fx-alignment: center-left;
+    -fx-font-size: 1.2em;
+    -fx-text-fill: -fx-accent;
+
+    -fx-background-color: -fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-color;
+    -fx-background-insets: 0 0 -1 0, 0, 0 0 1 0, 0 0 2 0;
+
+    -fx-background-radius: 0;
+}
+
+#main-nav > .toggle-button:selected,
+#main-nav > .toggle-button:selected:focused {
+    -fx-color: -fx-faint-focus-color;
+    -fx-background-color: -fx-shadow-highlight-color, -fx-outer-border, derive(-fx-color, -22%);
+    -fx-background-insets: 0 0 -1 0, 0, 0 0 1 0;
+}
+
+#main-nav > .toggle-button:focused {
+    -fx-color: derive(-fx-faint-focus-color, -22%);
+}
+
+#main-nav > .toggle-button > .label {
+    -fx-alignment: center;
+    -fx-min-width: 2em;
+    -fx-text-fill: -fx-accent;
 }

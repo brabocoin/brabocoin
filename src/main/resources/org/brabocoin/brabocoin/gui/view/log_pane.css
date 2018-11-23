@@ -1,0 +1,120 @@
+.tool-bar {
+    -fx-background-color: -fx-box-border, -brabo-pane-toolbar-background;
+}
+
+.tool-bar:horizontal {
+    -fx-padding: 1 10;
+    -fx-max-height: 27;
+    -fx-pref-height: 27;
+    -fx-min-height: 27;
+    -fx-background-insets: 0, 1 0;
+}
+
+.tool-bar:vertical {
+    -fx-padding: 5 3;
+    -fx-max-width: 32;
+    -fx-pref-width: 32;
+    -fx-min-width: 32;
+    -fx-background-insets: 0, 0 1 0 0;
+}
+
+.tool-bar:horizontal .separator {
+    -fx-pref-width: 15;
+    -fx-padding: 5 0;
+}
+
+.tool-bar:vertical .separator {
+    -fx-pref-height: 7;
+    -fx-padding: 0 5;
+}
+
+.tool-bar .combo-box {
+    -fx-background-color: derive(-brabo-pane-toolbar-background, -8%);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0px;
+}
+
+#paneBar {
+    -fx-cursor: v-resize;
+}
+
+#paneBar .combo-box,
+#paneBar .button {
+    -fx-cursor: default;
+}
+
+#logTextArea {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+
+    -fx-font-family: monospace;
+}
+
+#logTextArea:focused {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+#logTextArea.search-enabled {
+    -fx-highlight-fill: yellow;
+}
+
+#logTextArea.search-enabled:focused {
+    -fx-highlight-fill: -fx-accent;
+}
+
+#logTextArea .content {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-radius: 0;
+}
+
+#logTextArea:focused .content {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}
+
+#logTextArea > .scroll-pane > .scroll-bar {
+    -fx-background-radius: 0;
+}
+
+#logTextArea > .scroll-pane > .corner {
+    -fx-background-radius: 0;
+}
+
+.icon-button {
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+
+    -fx-min-width: 0;
+    -fx-min-height: 0;
+
+    -fx-background-color: -brabo-pane-toolbar-background;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.icon-button .glyph-font {
+    -fx-text-overrun: clip;
+}
+
+.icon-button:hover {
+    -fx-background-color: -fx-box-border, derive(-brabo-pane-toolbar-background, -4%);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 0;
+}
+
+.icon-button:selected {
+    -fx-background-color: -fx-box-border, derive(-brabo-pane-toolbar-background, -8%);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 0;
+}
+
+.icon-button .label {
+    -fx-text-fill: derive(-fx-text-inner-color, 35%);
+}

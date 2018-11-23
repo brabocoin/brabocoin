@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import org.brabocoin.brabocoin.gui.control.LogTextArea?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import javafx.scene.layout.VBox?>
+<fx:root type="javafx.scene.layout.BorderPane"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.LogPane"
+         prefHeight="300" minHeight="85">
+    <top>
+        <ToolBar fx:id="paneBar">
+            <Label text="Application log"/>
+            <Separator/>
+            <Label text="Show log level:"/>
+            <ComboBox fx:id="logLevelComboBox" promptText="Log level"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button styleClass="icon-button" onAction="#closePane">
+                <graphic>
+                    <BraboGlyph icon="MINUS"/>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Hide"/>
+                </tooltip>
+            </Button>
+        </ToolBar>
+    </top>
+    <left>
+        <ToolBar orientation="VERTICAL">
+            <ToggleButton styleClass="icon-button" fx:id="wordWrapToggleButton">
+                <graphic>
+                    <BraboGlyph icon="LEVEL_DOWN_ALT" rotate="90"/>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Use line wrapping"/>
+                </tooltip>
+            </ToggleButton>
+            <ToggleButton styleClass="icon-button" fx:id="scrollToEndToggleButton">
+                <graphic>
+                    <BraboGlyph icon="ANGLE_DOUBLE_DOWN"/>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Scroll to the end"/>
+                </tooltip>
+            </ToggleButton>
+            <Separator/>
+            <ToggleButton styleClass="icon-button" fx:id="findToggleButton">
+                <graphic>
+                    <BraboGlyph icon="SEARCH"/>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Find"/>
+                </tooltip>
+            </ToggleButton>
+        </ToolBar>
+    </left>
+    <center>
+        <VBox fx:id="contentWrapper">
+            <LogTextArea fx:id="logTextArea" editable="false" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </center>
+</fx:root>
