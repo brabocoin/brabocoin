@@ -56,7 +56,7 @@ class BlockDatabaseTest {
     @BeforeEach
     void setUp() throws DatabaseException {
         storage = new HashMapDB();
-        database = new BlockDatabase(storage, config);
+        database = new BlockDatabase(storage, new File(config.blockStoreDirectory()), config.maxBlockFileSize());
     }
 
     @AfterEach
@@ -243,7 +243,7 @@ class BlockDatabaseTest {
             }
         };
 
-        database = new BlockDatabase(storage, smallConfig);
+        database = new BlockDatabase(storage, new File(smallConfig.blockStoreDirectory()), smallConfig.maxBlockFileSize());
 
         Block block = Simulation.randomBlockChainGenerator(1).get(0);
         Hash hash = block.getHash();
@@ -328,7 +328,7 @@ class BlockDatabaseTest {
             }
         };
 
-        BlockDatabase newDatabase = new BlockDatabase(storage, newConfig);
+        BlockDatabase newDatabase = new BlockDatabase(storage, new File(newConfig.blockStoreDirectory()), newConfig.maxBlockFileSize());
 
         File dir = new File(newDir);
         assertTrue(dir.exists());
@@ -348,7 +348,7 @@ class BlockDatabaseTest {
             }
         };
 
-        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, newConfig));
+        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, new File(newConfig.blockStoreDirectory()), newConfig.maxBlockFileSize()));
     }
 
     @Test
@@ -362,7 +362,7 @@ class BlockDatabaseTest {
             }
         };
 
-        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, newConfig));
+        assertThrows(DatabaseException.class, () -> new BlockDatabase(storage, new File(newConfig.blockStoreDirectory()), newConfig.maxBlockFileSize()));
     }
 
     @Test

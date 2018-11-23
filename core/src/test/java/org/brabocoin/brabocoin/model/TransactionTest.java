@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,8 +22,8 @@ class TransactionTest {
     @BeforeAll
     static void setUp() {
         inputList = new ArrayList<Input>() {{
-            add(new Input(Simulation.randomSignature(), transactionHash, 0));
-            add(new Input(Simulation.randomSignature(), transactionHash, 0));
+            add(new Input(transactionHash, 0));
+            add(new Input(transactionHash, 0));
         }};
 
         outputList = new ArrayList<Output>() {{
@@ -33,7 +34,7 @@ class TransactionTest {
 
     @Test
     void protoConvertToDTOTransactionTest() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, Collections.emptyList());
         BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
 
 
@@ -43,7 +44,7 @@ class TransactionTest {
 
     @Test
     void protoConvertToDOMTransactionTest() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, Collections.emptyList());
         BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
         Transaction transactionReflection = ProtoConverter.toDomain(protoTransaction, Transaction.Builder.class);
 
@@ -53,7 +54,7 @@ class TransactionTest {
 
     @Test
     void testComputeHash() {
-        Transaction transaction = new Transaction(inputList, outputList);
+        Transaction transaction = new Transaction(inputList, outputList, Collections.emptyList());
         Hash hash = transaction.getHash();
         assertNotNull(hash);
     }

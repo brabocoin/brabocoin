@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -86,19 +85,17 @@ public class BlockProcessor {
      * Used when initializing the blockchain from disk. The main chain needs to be loaded in
      * memory according to the last processed block in the UTXO set.
      *
-     * @param utxoSet
-     *     The chain UTXO set to sync the blockchain with.
      * @throws DatabaseException
      *     When either of the databases is not available.
      * @throws IllegalStateException
      *     When the blockchain could not be synced with the UTXO set. Most likely either one of
      *     the databases is corrupt, in which case the node has to rebuild all indices.
      */
-    public void syncMainChainWithUTXOSet(@NotNull ChainUTXODatabase utxoSet) throws DatabaseException, IllegalStateException {
+    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
         LOGGER.info("Syncing main chain with UTXO set.");
 
         // Get the top block from the UTXO set
-        IndexedBlock block = blockchain.getIndexedBlock(utxoSet.getLastProcessedBlockHash());
+        IndexedBlock block = blockchain.getIndexedBlock(utxoProcessor.getLastProcessedBlockHash());
 
         if (block == null) {
             LOGGER.severe("Main chain could not be synced: requested top block is not stored.");
@@ -143,25 +140,21 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public ProcessedBlockStatus processNewBlock(@NotNull Block block) throws DatabaseException {
+    public ValidationStatus processNewBlock(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        ValidationStatus status = ValidationStatus.VALID;
-//        ValidationStatus status = blockValidator.checkBlockValid(
-//                BlockValidator.RuleLists.INCOMING_BLOCK,
-//                block,
-                /* TODO: HELP! ); */
+        ValidationStatus status = blockValidator.checkIncomingBlockValid(block).getStatus();
 
         if (status == ValidationStatus.INVALID) {
             LOGGER.info("New block is invalid.");
-            return ProcessedBlockStatus.INVALID;
+            return ValidationStatus.INVALID;
         }
 
         if (status == ValidationStatus.ORPHAN) {
             LOGGER.info("New block is added as orphan.");
             blockchain.addOrphan(block);
-            return ProcessedBlockStatus.ORPHAN;
+            return ValidationStatus.ORPHAN;
         }
 
         // Store the block on disk
@@ -175,7 +168,7 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
-        return ProcessedBlockStatus.VALID;
+        return ValidationStatus.VALID;
     }
 
     private @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {
@@ -214,11 +207,7 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = ValidationStatus.VALID;
-//                ProcessedBlockStatus status = blockValidator.checkBlockValid(
-//                        BlockValidator.RuleLists.AFTER_ORPHAN,
-//                        descendant);
-                /* TODO: HELP! */
+                ValidationStatus status = blockValidator.checkPostOrphanBlockValid(descendant).getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
                 if (status == ValidationStatus.ORPHAN) {
@@ -436,12 +425,9 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-//        if (!blockValidator.checkBlockValid(
-//                BlockValidator.RuleLists.CONNECT_TO_CHAIN,
-//                block)) {
-//            return false;
-//        }
-        /* TODO: Help! */
+        if (!blockValidator.checkConnectBlockValid(block).isPassed()) {
+            return false;
+        }
 
         BlockUndo undo = utxoProcessor.processBlockConnected(block);
 

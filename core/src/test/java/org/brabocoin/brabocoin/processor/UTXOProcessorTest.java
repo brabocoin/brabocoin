@@ -46,7 +46,7 @@ class UTXOProcessorTest {
         Output output = Simulation.randomOutput();
         Transaction transaction = new Transaction(
             new ArrayList<>(),
-            Collections.singletonList(output)
+            Collections.singletonList(output), Collections.emptyList()
         );
 
         Block block = new Block(
@@ -54,8 +54,8 @@ class UTXOProcessorTest {
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomBigInteger(), 0,
-            Collections.singletonList(transaction)
-        );
+            Collections.singletonList(transaction),
+                0);
 
         // Check undo is empty
         BlockUndo undo = processor.processBlockConnected(block);

@@ -8,17 +8,20 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,51 +54,17 @@ class TransactionValidatorTest {
 
     @Test
     void ruleBookResult() throws DatabaseException {
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
+        State state = new TestState(defaultConfig);
 
         Transaction transaction = new Transaction(
                 Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
+                Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
+                Collections.emptyList()
         );
 
-        RuleBookResult result = transactionValidator.checkTransactionValid(transaction);
+        RuleBookResult result = state.getTransactionValidator().checkTransactionValid(transaction);
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
-    }
-
-    @Test
-    void ruleBookResultFail() throws DatabaseException {
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), defaultConfig);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        TransactionPool transactionPool = new TransactionPool(defaultConfig, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, null, poolUtxo, signer
-        );
-
-        Transaction transaction = new Transaction(
-                Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000)
-        );
-
-        assertThrows(IllegalStateException.class, () -> transactionValidator.checkTransactionValid(transaction));
     }
 }

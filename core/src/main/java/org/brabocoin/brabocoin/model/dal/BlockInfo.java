@@ -21,6 +21,12 @@ import java.math.BigInteger;
 public class BlockInfo implements ProtoModel<BlockInfo> {
 
     /**
+     * Number indicating the network this block belongs to.
+     */
+    @ProtoField
+    private final int networkId;
+
+    /**
      * Hash of the previous block in the blockchain.
      */
     @ProtoField
@@ -125,6 +131,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param transactionCount
      *     The number of transactions in the block, including the coinbase
      *     transaction.
+     * @param networkId
+     *     Number indicating the network this block belongs to.
      * @param valid
      *     Indicates whether the block is considered valid.
      * @param timeReceived
@@ -140,13 +148,14 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
      */
-    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, boolean valid, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
+    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, int networkId, boolean valid, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
         this.nonce = nonce;
         this.blockHeight = blockHeight;
         this.transactionCount = transactionCount;
+        this.networkId = networkId;
         this.timeReceived = timeReceived;
         this.valid = valid;
         this.fileNumber = fileNumber;
@@ -154,6 +163,10 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.sizeInFile = sizeInFile;
         this.offsetInUndoFile = offsetInUndoFile;
         this.sizeInUndoFile = sizeInUndoFile;
+    }
+
+    public int getNetworkId() {
+        return networkId;
     }
 
     public int getBlockHeight() {
@@ -217,6 +230,9 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     public static class Builder implements ProtoBuilder<BlockInfo> {
 
         @ProtoField
+        private int networkId;
+
+        @ProtoField
         private Hash.Builder previousBlockHash;
 
         @ProtoField
@@ -254,6 +270,11 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
         @ProtoField
         private int sizeInUndoFile;
+
+        public Builder setNetworkId(int networkId) {
+            this.networkId = networkId;
+            return this;
+        }
 
         public Builder setPreviousBlockHash(@NotNull Hash.Builder previousBlockHash) {
             this.previousBlockHash = previousBlockHash;
@@ -327,8 +348,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 merkleRoot.build(),
                 targetValue.build(),
                 nonce, blockHeight,
-                transactionCount,
-                valid,
+                transactionCount, networkId, valid,
                 timeReceived,
                 fileNumber,
                 offsetInFile,

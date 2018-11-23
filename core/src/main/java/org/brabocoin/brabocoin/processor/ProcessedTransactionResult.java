@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class ProcessedTransactionResult {
     /**
      * The status of the newly added transaction.
      */
-    private final @NotNull ProcessedTransactionStatus status;
+    private final @NotNull ValidationStatus status;
 
     /**
      * List of any orphans that are added to the transaction pool (as dependent transactions) as
@@ -32,7 +33,7 @@ public class ProcessedTransactionResult {
      *     ist of any orphans that are added to the transaction pool (as dependent transactions)
      *     as a result of the new transaction being present in the transaction pool.
      */
-    public ProcessedTransactionResult(@NotNull ProcessedTransactionStatus status,
+    public ProcessedTransactionResult(@NotNull ValidationStatus status,
                                       @NotNull List<Transaction> addedOrphans) {
         this.status = status;
         this.addedOrphans = new ArrayList<>(addedOrphans);
@@ -43,7 +44,7 @@ public class ProcessedTransactionResult {
      *
      * @return The status of the newly added transaction.
      */
-    public ProcessedTransactionStatus getStatus() {
+    public ValidationStatus getStatus() {
         return status;
     }
 

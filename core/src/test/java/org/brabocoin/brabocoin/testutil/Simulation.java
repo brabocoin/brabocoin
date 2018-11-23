@@ -1,31 +1,34 @@
 package org.brabocoin.brabocoin.testutil;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.PublicKey;
-import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.dal.BlockDatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.mining.MiningBlock;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
-import org.brabocoin.brabocoin.processor.PeerProcessor;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public class Simulation {
     private static Random RANDOM = new Random();
@@ -71,8 +74,7 @@ public class Simulation {
                     block.getMerkleRoot(),
                     block.getTargetValue(),
                     block.getNonce(), block.getBlockHeight(),
-                    block.getTransactions().size(),
-                    false,
+                    block.getTransactions().size(), 1, true,
                     0,
                     0,
                     0,
@@ -90,20 +92,44 @@ public class Simulation {
     }
 
     public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
-        long creationTime = new Date().getTime();
-
         return new Block(
                 previousHash,
                 randomHash(),
                 randomHash(),
                 randomBigInteger(), blockHeight,
-                repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound));
+                repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound), 0);
+    }
+
+    public static Block randomOrphanBlock(Consensus consensus, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+        List<Transaction> transactions =
+                Collections.singletonList(
+                        new Transaction(
+                                Collections.emptyList(),
+                                Collections.singletonList(
+                                        new Output(randomHash(), consensus.getBlockReward())
+                                ),
+                                Collections.emptyList()
+                        )
+                );
+
+        return new MiningBlock(
+                randomHash(),
+                new MerkleTree(
+                        consensus.getMerkleTreeHashFunction(),
+                        transactions.stream().map(Transaction::getHash).collect(Collectors.toList())
+                ).getRoot(),
+                consensus.getTargetValue(),
+                new BigInteger(consensus.getMaxNonceSize() * 8, RANDOM),
+                blockHeight,
+                transactions,
+                0).mine(consensus);
     }
 
     public static Transaction randomTransaction(int inputBound, int outputBound) {
         List<Input> inputs = repeatedBuilder(Simulation::randomInput, inputBound);
         List<Output> outputs = repeatedBuilder(Simulation::randomOutput, outputBound);
-        return new Transaction(inputs, outputs);
+        List<Signature> signatures = repeatedBuilder(Simulation::randomSignature, inputBound);
+        return new Transaction(inputs, outputs, signatures);
     }
 
     public static <U> List<U> repeatedBuilder(Callable<U> builder, int bound) {
@@ -119,7 +145,7 @@ public class Simulation {
     }
 
     public static Input randomInput() {
-        return new Input(randomSignature(), randomHash(), RANDOM.nextInt(5));
+        return new Input(randomHash(), RANDOM.nextInt(5));
     }
 
     public static Output randomOutput() {
@@ -142,41 +168,25 @@ public class Simulation {
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
-        return generateNode(port, config, new BlockDatabase(new HashMapDB(), config));
+        return generateNode(port, config, new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()));
     }
 
-    public static Node generateNode(int port, BraboConfig config, BlockDatabase blockDatabase) throws DatabaseException {
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+    public static Node generateNode(int port, BraboConfig config, BlockDatabase providedBlockDatabase) throws DatabaseException {
+        BraboConfig mockConfig = new MockBraboConfig(config) {
+            @Override
+            public int servicePort() {
+                return port;
+            }
+        };
 
-        return new Node(new NodeEnvironment(port,
-                blockchain,
-                chainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config));
+        TestState state = new TestState(mockConfig){
+            @Override
+            protected BlockDatabase createBlockDatabase() throws DatabaseException {
+                return providedBlockDatabase;
+            }
+        };
+
+        return state.getNode();
     }
 
     public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
@@ -184,79 +194,23 @@ public class Simulation {
     }
 
     public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, Iterable<Block> blocks) throws DatabaseException {
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        TestState state = new TestState(config);
 
         for (Block b : blocks) {
-            blockProcessor.processNewBlock(b);
+            state.getBlockProcessor().processNewBlock(b);
         }
 
-        return new AbstractMap.SimpleEntry<>(new Node(new NodeEnvironment(port,
-                blockchain,
-                chainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config)), blockProcessor);
+        return new AbstractMap.SimpleEntry<>(state.getNode(), state.getBlockProcessor());
     }
 
     public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, Iterable<Transaction> transactions) throws DatabaseException {
-        BlockDatabase blockDatabase = new BlockDatabase(new HashMapDB(), config);
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
-        ChainUTXODatabase chainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(chainUtxoDatabase);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        UTXODatabase poolUtxo = new UTXODatabase(new HashMapDB());
-        Signer signer = new Signer(EllipticCurve.secp256k1());
-        TransactionValidator transactionValidator = new TransactionValidator(
-                consensus, blockchain.getMainChain(), transactionPool, chainUtxoDatabase, poolUtxo, signer
-        );
-        TransactionProcessor transactionProcessor = new TransactionProcessor(transactionValidator,
-                transactionPool, chainUtxoDatabase, poolUtxo);
-        BlockValidator blockValidator = new BlockValidator(
-                consensus, transactionValidator, transactionProcessor, blockchain, chainUtxoDatabase, signer
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
+        State state = new TestState(config);
 
         for (Transaction t : transactions) {
-            transactionProcessor.processNewTransaction(t);
+            state.getTransactionProcessor().processNewTransaction(t);
         }
 
-        return new Node(new NodeEnvironment(port,
-                blockchain,
-                chainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config));
+        return state.getNode();
     }
 
     public static BigInteger randomBigInteger() {

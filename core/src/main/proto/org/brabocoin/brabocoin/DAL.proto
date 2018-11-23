@@ -11,19 +11,20 @@ option java_outer_classname = "BrabocoinStorageProtos";
 
 
 message BlockInfo {
-    Hash previousBlockHash = 1;
-    Hash merkleRoot = 2;
-    Hash targetValue = 3;
-    bytes nonce = 4;
-    int32 blockHeight = 5;
-    int32 transactionCount = 6;
-    bool valid = 7;
-    int64 timeReceived = 8;
-    int32 fileNumber = 9;
-    int32 offsetInFile = 10;
-    int32 sizeInFile = 11;
-    int32 offsetInUndoFile = 12;
-    int32 sizeInUndoFile = 13;
+    int32 networkId = 1;
+    Hash previousBlockHash = 2;
+    Hash merkleRoot = 3;
+    Hash targetValue = 4;
+    bytes nonce = 5;
+    int32 blockHeight = 6;
+    int32 transactionCount = 7;
+    bool valid = 8;
+    int64 timeReceived = 9;
+    int32 fileNumber = 10;
+    int32 offsetInFile = 11;
+    int32 sizeInFile = 12;
+    int32 offsetInUndoFile = 13;
+    int32 sizeInUndoFile = 14;
 }
 
 message BlockFileInfo {

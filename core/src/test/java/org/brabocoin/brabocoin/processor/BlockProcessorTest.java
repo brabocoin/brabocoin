@@ -1,29 +1,39 @@
 package org.brabocoin.brabocoin.processor;
 
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.crypto.EllipticCurve;
-import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
+import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.List;
-import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test {@link BlockProcessor}.
@@ -34,18 +44,7 @@ class BlockProcessorTest {
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
     private static BraboConfig config;
 
-    private UTXOProcessor utxoProcessor;
-    private Blockchain blockchain;
-    private BlockValidator blockValidator;
-    private TransactionValidator transactionValidator;
-    private Consensus consensus;
-    private BlockProcessor blockProcessor;
-    private TransactionProcessor transactionProcessor;
-    private TransactionPool transactionPool;
-    private ChainUTXODatabase utxoFromChain;
-    private UTXODatabase utxoFromPool;
-    private CompositeReadonlyUTXOSet compositeUtxo;
-    private Signer signer;
+    private TestState state;
 
     @BeforeAll
     static void loadConfig() {
@@ -68,356 +67,408 @@ class BlockProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        consensus = new Consensus();
-        utxoFromChain = new ChainUTXODatabase(new HashMapDB(), consensus);
-        utxoFromPool = new UTXODatabase(new HashMapDB());
-        utxoProcessor = new UTXOProcessor(utxoFromChain);
-        transactionPool = new TransactionPool(config, new Random());
-        blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        compositeUtxo = new CompositeReadonlyUTXOSet(utxoFromChain, utxoFromPool);
-        signer = new Signer(EllipticCurve.secp256k1());
-        transactionValidator = new TransactionValidator(
-                null, null, null, null, null,null
-        );
-        transactionProcessor = new TransactionProcessor(transactionValidator, transactionPool, utxoFromChain, utxoFromPool);
-        blockValidator = new BlockValidator(
-                null, null, null, null, null,null
-        );
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
-    }
-
-    @Disabled
-    @Test
-    void invalidBlock() throws DatabaseException {
-        blockValidator = new BlockValidator(
-                null, null, null, null, null,null
-        ) {
+        state = new TestState(config) {
             @Override
-            public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                return BlockValidationResult.passed();
+            protected Consensus createConsensus() {
+                return new Consensus() {
+                    @Override
+                    public @NotNull Hash getTargetValue() {
+                        return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+                    }
+                };
             }
 
             @Override
-            public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                return BlockValidationResult.passed();
-            }
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
 
-            @Override
-            public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
-                return BlockValidationResult.passed();
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
             }
         };
-
-        blockProcessor = new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
-
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
-
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
-        assertEquals(ProcessedBlockStatus.INVALID, status);
     }
 
-    @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
-    void addAsOrphanParentUnknown() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1).get(0);
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
-
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        assertTrue(blockchain.isOrphan(block.getHash()));
-    }
-
-    @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
-    void addAsOrphanParentOrphan() throws DatabaseException {
-        List<Block> blocks = Simulation.randomBlockChainGenerator(2);
-        Block parent = blocks.get(0);
-        Block child = blocks.get(1);
-
-        blockchain.storeBlock(parent);
-        blockchain.addOrphan(parent);
-
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(child);
-        assertEquals(ProcessedBlockStatus.ORPHAN, status);
-        assertTrue(blockchain.isOrphan(child.getHash()));
-    }
 
     @Test
     void addCoinbaseToGenesis() throws DatabaseException {
+        state = new TestState(config) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
+
         Output output = Simulation.randomOutput();
         Transaction transaction = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(output)
+                Collections.emptyList(),
+                Collections.singletonList(output), Collections.emptyList()
         );
         Block block = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction)
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transaction),
+                0);
         Hash hash = block.getHash();
         Hash tHash = transaction.getHash();
 
         // Add to transaction pool manually
-        transactionPool.addIndependentTransaction(transaction);
-        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
+        state.getTransactionPool().addIndependentTransaction(transaction);
+        state.getPoolUTXODatabase().setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(block);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(block);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
-        assertEquals(hash, blockchain.getMainChain().getTopBlock().getHash());
-        assertEquals(1, blockchain.getMainChain().getHeight());
+        assertEquals(ValidationStatus.VALID, status);
+        assertEquals(hash, state.getBlockchain().getMainChain().getTopBlock().getHash());
+        assertEquals(1, state.getBlockchain().getMainChain().getHeight());
 
         // Check UTXO
-        assertTrue(utxoFromChain.isUnspent(tHash, 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(tHash, 0));
 
         // Check transaction pool
-        assertFalse(transactionPool.hasValidTransaction(tHash));
-        assertFalse(utxoFromPool.isUnspent(tHash, 0));
+        assertFalse(state.getTransactionPool().hasValidTransaction(tHash));
+        assertFalse(state.getPoolUTXODatabase().isUnspent(tHash, 0));
 
         // Check undo data
-        assertNotNull(blockchain.findBlockUndo(hash));
+        assertNotNull(state.getBlockchain().findBlockUndo(hash));
     }
 
     @Test
     void connectNonCoinbase() throws DatabaseException {
+        state = new TestState(config) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
+
         Output output = Simulation.randomOutput();
         Transaction transactionA = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(output)
+                Collections.emptyList(),
+                Collections.singletonList(output), Collections.emptyList()
         );
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transactionA)
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transactionA),
+                0);
         Hash hashA = blockA.getHash();
         Hash tHashA = transactionA.getHash();
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), tHashA, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+                Collections.singletonList(new Input( tHashA, 0)),
+                Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(transactionB)
-        );
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(transactionB),
+                0);
         Hash tHashB = transactionB.getHash();
 
-        blockProcessor.processNewBlock(blockA);
+        state.getBlockProcessor().processNewBlock(blockA);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockB);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
+        assertEquals(ValidationStatus.VALID, status);
 
         // Check UTXO
-        assertTrue(utxoFromChain.isUnspent(tHashB, 0));
-        assertFalse(utxoFromChain.isUnspent(tHashA, 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(tHashB, 0));
+        assertFalse(state.getChainUTXODatabase().isUnspent(tHashA, 0));
     }
 
     @Test
     void addAsFork() throws DatabaseException {
+        state = new TestState(config) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                        this
+                ) {
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
+
         // Main chain: genesis - A - B
         // Fork:              \_ C
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashB = blockB.getHash();
 
         Transaction transaction = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(Simulation.randomOutput())
+                Collections.emptyList(),
+                Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash tHash = transaction.getHash();
 
         Block blockC = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction)
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(transaction),
+                0);
         Hash hashC = blockC.getHash();
 
         // Add to transaction pool manually
-        transactionPool.addIndependentTransaction(transaction);
-        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
+        state.getTransactionPool().addIndependentTransaction(transaction);
+        state.getPoolUTXODatabase().setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        blockProcessor.processNewBlock(blockA);
-        blockProcessor.processNewBlock(blockB);
+        state.getBlockProcessor().processNewBlock(blockA);
+        state.getBlockProcessor().processNewBlock(blockB);
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockC);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
-        assertEquals(hashB, blockchain.getMainChain().getTopBlock().getHash());
-        assertEquals(2, blockchain.getMainChain().getHeight());
-        assertTrue(blockchain.isBlockStored(hashC));
+        assertEquals(ValidationStatus.VALID, status);
+        assertEquals(hashB, state.getBlockchain().getMainChain().getTopBlock().getHash());
+        assertEquals(2, state.getBlockchain().getMainChain().getHeight());
+        assertTrue(state.getBlockchain().isBlockStored(hashC));
 
         // Check UTXO
-        assertFalse(utxoFromChain.isUnspent(tHash, 0));
+        assertFalse(state.getChainUTXODatabase().isUnspent(tHash, 0));
 
         // Check transaction pool
-        assertTrue(transactionPool.hasValidTransaction(tHash));
-        assertTrue(utxoFromPool.isUnspent(tHash, 0));
+        assertTrue(state.getTransactionPool().hasValidTransaction(tHash));
+        assertTrue(state.getPoolUTXODatabase().isUnspent(tHash, 0));
 
         // Check undo data
-        assertNull(blockchain.findBlockUndo(hashC));
+        assertNull(state.getBlockchain().findBlockUndo(hashC));
     }
 
     @Test
-    @Disabled("Fails because transaction rules are not yet implemented.")
     void addAsForkWithOrphansSwitch() throws DatabaseException {
         // Main chain: genesis - A - B - C
         // Fork:              \_ D - E - F - G
 
         Block blockA = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashA = blockA.getHash();
 
         Block blockB = new Block(
-            hashA,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashA,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashB = blockB.getHash();
 
         Block blockC = new Block(
-            hashB,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 3,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashB,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 3,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashC = blockC.getHash();
 
         Block blockD = new Block(
-            consensus.getGenesisBlock().getHash(),
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 1,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                state.getConsensus().getGenesisBlock().getHash(),
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 1,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashD = blockD.getHash();
 
         Block blockE = new Block(
-            hashD,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 2,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashD,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 2,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashE = blockE.getHash();
 
         Block blockF = new Block(
-            hashE,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 3,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashE,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 3,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashF = blockF.getHash();
 
 
         Block blockG = new Block(
-            hashF,
-            Simulation.randomHash(),
-            Simulation.randomHash(),
-            Simulation.randomBigInteger(), 4,
-            Collections.singletonList(new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput())
-            ))
-        );
+                hashF,
+                Simulation.randomHash(),
+                Simulation.randomHash(),
+                Simulation.randomBigInteger(), 4,
+                Collections.singletonList(new Transaction(
+                        Collections.emptyList(),
+                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+                )),
+                0);
         Hash hashG = blockG.getHash();
 
-        blockProcessor.processNewBlock(blockA);
-        blockProcessor.processNewBlock(blockB);
-        blockProcessor.processNewBlock(blockC);
-        blockProcessor.processNewBlock(blockD);
-        blockProcessor.processNewBlock(blockF);
-        blockProcessor.processNewBlock(blockG);
+        state = new TestState(config) {
+            @Override
+            protected BlockValidator createBlockValidator() {
+                return new BlockValidator(
+                    this
+                ) {
+                    @Override
+                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+                        if (block.getHash().equals(blockF.getHash()) || block.getHash().equals(blockG.getHash())) {
+                            return BlockValidationResult.failed(new RuleBookFailMarker(
+                                KnownParentBlkRule.class));
+                        }
+                        return BlockValidationResult.passed();
+                    }
+                };
+            }
+        };
 
-        ProcessedBlockStatus status = blockProcessor.processNewBlock(blockE);
+        state.getBlockProcessor().processNewBlock(blockA);
+        state.getBlockProcessor().processNewBlock(blockB);
+        state.getBlockProcessor().processNewBlock(blockC);
+        state.getBlockProcessor().processNewBlock(blockD);
+        state.getBlockProcessor().processNewBlock(blockF);
+        state.getBlockProcessor().processNewBlock(blockG);
+
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE);
 
         // Check chain
-        assertEquals(ProcessedBlockStatus.VALID, status);
-        assertEquals(hashG, blockchain.getMainChain().getTopBlock().getHash());
-        assertEquals(4, blockchain.getMainChain().getHeight());
+        assertEquals(ValidationStatus.VALID, status);
+        assertEquals(hashG, state.getBlockchain().getMainChain().getTopBlock().getHash());
+        assertEquals(4, state.getBlockchain().getMainChain().getHeight());
 
-        assertTrue(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashD)));
-        assertTrue(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashE)));
-        assertTrue(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashF)));
+        assertTrue(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashD)));
+        assertTrue(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashE)));
+        assertTrue(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashF)));
 
-        assertFalse(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashA)));
-        assertFalse(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashB)));
-        assertFalse(blockchain.getMainChain().contains(blockchain.getIndexedBlock(hashC)));
+        assertFalse(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashA)));
+        assertFalse(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashB)));
+        assertFalse(state.getBlockchain().getMainChain().contains(state.getBlockchain().getIndexedBlock(hashC)));
 
         // Check UTXO
-        assertFalse(utxoFromChain.isUnspent(blockA.getTransactions().get(0).getHash(), 0));
-        assertFalse(utxoFromChain.isUnspent(blockB.getTransactions().get(0).getHash(), 0));
-        assertFalse(utxoFromChain.isUnspent(blockC.getTransactions().get(0).getHash(), 0));
+        assertFalse(state.getChainUTXODatabase().isUnspent(blockA.getTransactions().get(0).getHash(), 0));
+        assertFalse(state.getChainUTXODatabase().isUnspent(blockB.getTransactions().get(0).getHash(), 0));
+        assertFalse(state.getChainUTXODatabase().isUnspent(blockC.getTransactions().get(0).getHash(), 0));
 
-        assertTrue(utxoFromChain.isUnspent(blockD.getTransactions().get(0).getHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockE.getTransactions().get(0).getHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockF.getTransactions().get(0).getHash(), 0));
-        assertTrue(utxoFromChain.isUnspent(blockG.getTransactions().get(0).getHash(), 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(blockD.getTransactions().get(0).getHash(), 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(blockE.getTransactions().get(0).getHash(), 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(blockF.getTransactions().get(0).getHash(), 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(blockG.getTransactions().get(0).getHash(), 0));
 
         // Check transaction pool
-        assertTrue(transactionPool.hasValidTransaction(blockA.getTransactions().get(0).getHash()));
-        assertTrue(transactionPool.hasValidTransaction(blockB.getTransactions().get(0).getHash()));
-        assertTrue(transactionPool.hasValidTransaction(blockC.getTransactions().get(0).getHash()));
+        assertTrue(state.getTransactionPool().hasValidTransaction(blockA.getTransactions().get(0).getHash()));
+        assertTrue(state.getTransactionPool().hasValidTransaction(blockB.getTransactions().get(0).getHash()));
+        assertTrue(state.getTransactionPool().hasValidTransaction(blockC.getTransactions().get(0).getHash()));
     }
 
 }

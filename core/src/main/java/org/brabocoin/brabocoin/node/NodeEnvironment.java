@@ -14,15 +14,16 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
-import org.brabocoin.brabocoin.processor.ProcessedBlockStatus;
 import org.brabocoin.brabocoin.processor.ProcessedTransactionResult;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
@@ -50,7 +51,6 @@ import java.util.stream.Collectors;
  */
 public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
-    private BraboConfig config;
 
     /*
      * Main loop timer
@@ -62,6 +62,7 @@ public class NodeEnvironment {
      */
 
     private int servicePort;
+    private int loopInterval;
     private Blockchain blockchain;
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
@@ -77,31 +78,17 @@ public class NodeEnvironment {
     /**
      * Construct a new node environment.
      *
-     * @param servicePort          The port on which the service is running.
-     * @param blockchain           The blockchain used in this node.
-     * @param chainUTXODatabase    The chain UTXO database.
-     * @param blockProcessor       The processor used to process blocks.
-     * @param peerProcessor        The processor used to manipulate the peer set.
-     * @param transactionPool      The transaction pool.
-     * @param transactionProcessor The transaction processor.
-     * @param config               The config used for this node.
+     * @param state The state for the node.
      */
-    public NodeEnvironment(int servicePort,
-                           Blockchain blockchain,
-                           ChainUTXODatabase chainUTXODatabase,
-                           BlockProcessor blockProcessor,
-                           PeerProcessor peerProcessor,
-                           TransactionPool transactionPool,
-                           TransactionProcessor transactionProcessor,
-                           BraboConfig config) {
-        this.servicePort = servicePort;
-        this.blockchain = blockchain;
-        this.chainUTXODatabase = chainUTXODatabase;
-        this.blockProcessor = blockProcessor;
-        this.peerProcessor = peerProcessor;
-        this.transactionPool = transactionPool;
-        this.transactionProcessor = transactionProcessor;
-        this.config = config;
+    public NodeEnvironment(@NotNull State state) {
+        this.servicePort = state.getConfig().servicePort();
+        this.loopInterval = state.getConfig().loopInterval();
+        this.blockchain = state.getBlockchain();
+        this.chainUTXODatabase = state.getChainUTXODatabase();
+        this.blockProcessor = state.getBlockProcessor();
+        this.peerProcessor = state.getPeerProcessor();
+        this.transactionPool = state.getTransactionPool();
+        this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
     }
 
@@ -126,7 +113,7 @@ public class NodeEnvironment {
             public void run() {
                 main();
             }
-        }, 0, config.loopInterval());
+        }, 0, loopInterval);
 
         updateBlockchain();
         seekTransactionPoolRequest();
@@ -239,7 +226,7 @@ public class NodeEnvironment {
     private synchronized void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         try {
             LOGGER.info("Received new block from peer.");
-            ProcessedBlockStatus processedBlockStatus = blockProcessor.processNewBlock(block);
+            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus));
             switch (processedBlockStatus) {
                 case ORPHAN:
@@ -319,8 +306,7 @@ public class NodeEnvironment {
             ProcessedTransactionResult result = transactionProcessor.processNewTransaction(transaction);
 
             switch (result.getStatus()) {
-                case DEPENDENT:
-                case INDEPENDENT:
+                case VALID:
                     if (propagate) {
                         final BrabocoinProtos.Hash protoTransactionHash = ProtoConverter.toProto(transaction.getHash(), BrabocoinProtos.Hash.class);
                         // TODO: We actually want to use async stub here, but that went wrong before (Cancelled exception by GRPC).
@@ -329,9 +315,8 @@ public class NodeEnvironment {
                     break;
 
                 case ORPHAN:
-                case ALREADY_STORED:
                 case INVALID:
-                    LOGGER.log(Level.FINE, "Transaction invalid, already stored or orphan.");
+                    LOGGER.log(Level.FINE, "Transaction invalid or orphan.");
                     break;
             }
 
@@ -785,23 +770,4 @@ public class NodeEnvironment {
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 
-    /**
-     * Sync the main chain with the UTXO set.
-     *
-     * @throws DatabaseException     When a database backend is not available.
-     * @throws IllegalStateException When the stored data is inconsistent and therefore most likely corrupted.
-     * @see BlockProcessor#syncMainChainWithUTXOSet(ChainUTXODatabase)
-     */
-    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
-        blockProcessor.syncMainChainWithUTXOSet(chainUTXODatabase);
-    }
-
-    /**
-     * Get the node service port.
-     *
-     * @return Node service port
-     */
-    public int getServicePort() {
-        return servicePort;
-    }
 }

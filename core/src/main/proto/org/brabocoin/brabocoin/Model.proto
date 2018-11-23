@@ -28,23 +28,29 @@ message Output {
 }
 
 message Input {
-    Signature signature = 1;
-    Hash referencedTransaction = 2;
-    int32 referencedOutputIndex = 3;
+    Hash referencedTransaction = 1;
+    int32 referencedOutputIndex = 2;
+}
+
+message UnsignedTransaction {
+    repeated Input inputs = 1;
+    repeated Output outputs = 2;
 }
 
 message Transaction {
     repeated Input inputs = 1;
     repeated Output outputs = 2;
+    repeated Signature signatures = 3;
 }
 
 message Block {
-    Hash previousBlockHash = 1;
-    Hash merkleRoot = 2;
-    Hash targetValue = 3;
-    bytes nonce = 4;
-    int32 blockHeight = 5;
-    repeated Transaction transactions = 6;
+    int32 networkId = 1;
+    Hash previousBlockHash = 2;
+    Hash merkleRoot = 3;
+    Hash targetValue = 4;
+    bytes nonce = 5;
+    int32 blockHeight = 6;
+    repeated Transaction transactions = 7;
 }
 
 message HandshakeRequest {

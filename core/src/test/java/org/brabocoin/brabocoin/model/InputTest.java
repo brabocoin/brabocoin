@@ -12,7 +12,7 @@ class InputTest {
     @Test
     void protoConvertInputToDTOTest() {
         String transactionHash = "test";
-        Input input = new Input(Simulation.randomSignature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
+        Input input = new Input(new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
         BrabocoinProtos.Input protoInput = ProtoConverter.toProto(input, BrabocoinProtos.Input.class);
 
         assertEquals(transactionHash, protoInput.getReferencedTransaction().getValue().toStringUtf8());
@@ -21,7 +21,7 @@ class InputTest {
     @Test
     void protoConvertInputToDOMTest() {
         String transactionHash = "test";
-        Input input = new Input(Simulation.randomSignature(), new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
+        Input input = new Input(new Hash(ByteString.copyFromUtf8(transactionHash)), 0);
         BrabocoinProtos.Input protoInput = ProtoConverter.toProto(input, BrabocoinProtos.Input.class);
         Input inputReflecion = ProtoConverter.toDomain(protoInput, Input.Builder.class);
 

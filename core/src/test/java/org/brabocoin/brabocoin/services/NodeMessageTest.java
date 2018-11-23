@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
@@ -21,6 +22,7 @@ import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -119,7 +122,7 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
+        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -191,7 +194,7 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
+        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -264,7 +267,7 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), config);
+        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -343,40 +346,24 @@ class NodeMessageTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                null, null, null, null, null, null
-        ),
-                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        BlockValidator blockValidator = new BlockValidator(
-                null, null, null, null, null, null
-        );
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
 
-        Node nodeA = new Node(new NodeEnvironment(8090,
-                blockchain,
-                ChainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config) {
             @Override
-            public void onReceiveBlockHash(@NotNull Hash blockHash, List<Peer> peer) {
-                finishLatch.countDown();
+            public int servicePort() {
+                return 8090;
             }
-        });
+        };
+
+        State stateA = new TestState(config) {
+            @Override
+            protected NodeEnvironment createEnvironment() {
+                return new NodeEnvironment(this) {
+                    @Override
+                    public void onReceiveBlockHash(@NotNull Hash blockHash, List<Peer> peer) {
+                        finishLatch.countDown();
+                    }
+                };
+            }
+        };
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -387,7 +374,7 @@ class NodeMessageTest {
             }
         });
 
-        nodeA.start();
+        stateA.getNode().start();
         nodeB.start();
 
         Hash announceHash = Simulation.randomHash();
@@ -412,7 +399,7 @@ class NodeMessageTest {
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
-        nodeA.stopAndBlock();
+        stateA.getNode().stopAndBlock();
         nodeB.stopAndBlock();
     }
 
@@ -424,40 +411,24 @@ class NodeMessageTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator(
-                null, null, null, null, null,null
-        );
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                null, null, null, null, null,null
-        ),
-                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
 
-        Node nodeA = new Node(new NodeEnvironment(8090,
-                blockchain,
-                ChainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config) {
             @Override
-            public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
-                finishLatch.countDown();
+            public int servicePort() {
+                return 8090;
             }
-        });
+        };
+
+        State stateA = new TestState(config) {
+            @Override
+            protected NodeEnvironment createEnvironment() {
+                return new NodeEnvironment(this) {
+                    @Override
+                    public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
+                        finishLatch.countDown();
+                    }
+                };
+            }
+        };
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -468,7 +439,7 @@ class NodeMessageTest {
             }
         });
 
-        nodeA.start();
+        stateA.getNode().start();
         nodeB.start();
 
         Hash announceHash = Simulation.randomHash();
@@ -493,7 +464,7 @@ class NodeMessageTest {
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
-        nodeA.stopAndBlock();
+        stateA.getNode().stopAndBlock();
         nodeB.stopAndBlock();
     }
 
@@ -504,38 +475,24 @@ class NodeMessageTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator(
-                null, null, null, null, null,null);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                null, null, null, null, null,null),
-                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
 
-        Node nodeA = new Node(new NodeEnvironment(8090,
-                blockchain,
-                ChainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config) {
             @Override
-            public int getTopBlockHeight() {
-                return 1234;
+            public int servicePort() {
+                return 8090;
             }
-        });
+        };
+
+        State stateA = new TestState(config) {
+            @Override
+            protected NodeEnvironment createEnvironment() {
+                return new NodeEnvironment(this) {
+                    @Override
+                    public int getTopBlockHeight() {
+                        return 1234;
+                    }
+                };
+            }
+        };
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -546,7 +503,7 @@ class NodeMessageTest {
             }
         });
 
-        nodeA.start();
+        stateA.getNode().start();
         nodeB.start();
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
@@ -557,7 +514,7 @@ class NodeMessageTest {
 
         assertEquals(1234, blockHeight.getHeight());
 
-        nodeA.stopAndBlock();
+        stateA.getNode().stopAndBlock();
         nodeB.stopAndBlock();
     }
 
@@ -568,37 +525,24 @@ class NodeMessageTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                null, null, null, null, null,null),
-                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
 
-        Node nodeA = new Node(new NodeEnvironment(8090,
-                blockchain,
-                ChainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config) {
             @Override
-            public boolean isChainCompatible(@NotNull Hash blockHash) {
-                return false;
+            public int servicePort() {
+                return 8090;
             }
-        });
+        };
+
+        State stateA = new TestState(config) {
+            @Override
+            protected NodeEnvironment createEnvironment() {
+                return new NodeEnvironment(this) {
+                    @Override
+                    public boolean isChainCompatible(@NotNull Hash blockHash) {
+                        return false;
+                    }
+                };
+            }
+        };
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -609,7 +553,7 @@ class NodeMessageTest {
             }
         });
 
-        nodeA.start();
+        stateA.getNode().start();
         nodeB.start();
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
@@ -623,7 +567,7 @@ class NodeMessageTest {
 
         assertFalse(chainCompatibility.isCompatible());
 
-        nodeA.stopAndBlock();
+        stateA.getNode().stopAndBlock();
         nodeB.stopAndBlock();
     }
 
@@ -636,37 +580,24 @@ class NodeMessageTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
-        Consensus consensus = new Consensus();
-        Blockchain blockchain = new Blockchain(new BlockDatabase(new HashMapDB(), config), consensus);
-        ChainUTXODatabase ChainUtxoDatabase = new ChainUTXODatabase(new HashMapDB(), consensus);
-        UTXOProcessor utxoProcessor = new UTXOProcessor(ChainUtxoDatabase);
-        BlockValidator blockValidator = new BlockValidator(null, null, null, null, null,null);
-        PeerProcessor peerProcessor = new PeerProcessor(new HashSet<>(), config);
-        TransactionPool transactionPool = new TransactionPool(config, new Random());
-        TransactionProcessor transactionProcessor = new TransactionProcessor(new TransactionValidator(
-                null, null, null, null, null,null),
-                transactionPool, ChainUtxoDatabase, new UTXODatabase(new HashMapDB()));
-        BlockProcessor blockProcessor = new BlockProcessor(
-                blockchain,
-                utxoProcessor,
-                transactionProcessor,
-                consensus,
-                blockValidator);
 
-        Node nodeA = new Node(new NodeEnvironment(8090,
-                blockchain,
-                ChainUtxoDatabase,
-                blockProcessor,
-                peerProcessor,
-                transactionPool,
-                transactionProcessor,
-                config) {
             @Override
-            public List<Hash> getBlocksAbove(Hash blockHash) {
-                return hashes;
+            public int servicePort() {
+                return 8090;
             }
-        });
+        };
+
+        State stateA = new TestState(config) {
+            @Override
+            protected NodeEnvironment createEnvironment() {
+                return new NodeEnvironment(this) {
+                    @Override
+                    public List<Hash> getBlocksAbove(Hash blockHash) {
+                        return hashes;
+                    }
+                };
+            }
+        };
 
         Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
             @Override
@@ -677,7 +608,7 @@ class NodeMessageTest {
             }
         });
 
-        nodeA.start();
+        stateA.getNode().start();
         nodeB.start();
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
@@ -691,7 +622,7 @@ class NodeMessageTest {
             receivedProtoHashes.add(h);
         }
 
-        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
+        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> (Hash)ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
 
         for (Hash h : hashes) {
             assertTrue(receivedHashes.contains(h));
@@ -701,7 +632,7 @@ class NodeMessageTest {
             assertTrue(hashes.contains(h));
         }
 
-        nodeA.stopAndBlock();
+        stateA.getNode().stopAndBlock();
         nodeB.stopAndBlock();
     }
 }

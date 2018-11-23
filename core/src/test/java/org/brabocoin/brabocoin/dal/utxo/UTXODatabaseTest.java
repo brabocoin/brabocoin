@@ -51,7 +51,7 @@ public class UTXODatabaseTest {
         database.setOutputsUnspent(transaction, 0);
 
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
-            Input input = new Input(Simulation.randomSignature(), hash, i);
+            Input input = new Input(hash, i);
             assertTrue(database.isUnspent(input));
         }
     }
@@ -93,7 +93,7 @@ public class UTXODatabaseTest {
         Hash hash = transaction.getHash();
         database.setOutputsUnspent(transaction, Collections.singletonList(0), 0);
 
-        Input input = new Input(Simulation.randomSignature(), hash, 0);
+        Input input = new Input(hash, 0);
         UnspentOutputInfo info = database.findUnspentOutputInfo(input);
 
         assertNotNull(info);

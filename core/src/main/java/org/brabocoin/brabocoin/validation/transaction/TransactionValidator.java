@@ -2,12 +2,12 @@ package org.brabocoin.brabocoin.validation.transaction;
 
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
@@ -16,9 +16,9 @@ import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseCreationTxRu
 import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseMaturityTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicateInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.InputValueTxRange;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
-import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
@@ -71,39 +71,32 @@ public class TransactionValidator {
             SufficientInputTxRule.class,
             SignatureTxRule.class
     );
+
+    private static final RuleList ORPHAN = new RuleList(
+        ValidInputUTXOTxRule.class
+    );
+
     private Consensus consensus;
     private IndexedChain mainChain;
     private TransactionPool transactionPool;
     private ReadonlyUTXOSet chainUTXODatabase;
-    private UTXODatabase poolUTXO;
+    private UTXODatabase poolUTXODatabase;
     private ReadonlyUTXOSet compositeUTXO;
     private Signer signer;
 
     /**
      * Construct transaction validator.
      *
-     * @param consensus       Consensus object
-     * @param mainChain       The indexed main chain
-     * @param transactionPool Transaction pool
-     * @param chainUTXO       UTXO database for the main chain
-     * @param poolUTXO        Pool UTXO
-     * @param signer          Signer object
+     * @param state The state for the node.
      */
-    public TransactionValidator(
-            Consensus consensus,
-            IndexedChain mainChain,
-            TransactionPool transactionPool,
-            ChainUTXODatabase chainUTXO,
-            UTXODatabase poolUTXO,
-            Signer signer) {
-        this.consensus = consensus;
-        this.mainChain = mainChain;
-        this.transactionPool = transactionPool;
-        this.chainUTXODatabase = chainUTXO;
-        this.poolUTXO = poolUTXO;
-        this.signer = signer;
-
-        this.compositeUTXO = (chainUTXO != null && poolUTXO != null) ? new CompositeReadonlyUTXOSet(chainUTXO, poolUTXO) : null;
+    public TransactionValidator(@NotNull State state) {
+        this.consensus = state.getConsensus();
+        this.mainChain = state.getBlockchain().getMainChain();
+        this.transactionPool = state.getTransactionPool();
+        this.chainUTXODatabase = state.getChainUTXODatabase();
+        this.poolUTXODatabase = state.getPoolUTXODatabase();
+        this.signer = state.getSigner();
+        this.compositeUTXO = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
     }
 
     private FactMap createFactMap(@NotNull Transaction transaction, ReadonlyUTXOSet utxoSet) {
@@ -136,6 +129,28 @@ public class TransactionValidator {
      */
     public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
         return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+    }
+
+    /**
+     * Check whether a transaction is orphan.
+     *
+     * @param transaction
+     *     The transaction to check.
+     * @return Whether the transaction is orphan.
+     */
+    public TransactionValidationResult checkTransactionOrphan(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, compositeUTXO)));
+    }
+
+    /**
+     * Check whether a transaction is independent.
+     *
+     * @param transaction
+     *     The transaction to check.
+     * @return Whether the transaction is independent.
+     */
+    public TransactionValidationResult checkTransactionIndependent(@NotNull Transaction transaction) {
+        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(transaction, chainUTXODatabase)));
     }
 
     /**

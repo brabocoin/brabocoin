@@ -37,7 +37,7 @@ class TransactionPoolTest {
 
     @BeforeEach
     void setUp() {
-        pool = new TransactionPool(config, new Random());
+        pool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(),new Random());
     }
 
     @Test
@@ -147,15 +147,15 @@ class TransactionPoolTest {
         pool.addOrphanTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashA, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashB = transactionB.getHash();
         pool.addOrphanTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashC = transactionC.getHash();
         pool.addOrphanTransaction(transactionC);
@@ -178,15 +178,15 @@ class TransactionPoolTest {
         pool.addDependentTransaction(transactionA);
 
         Transaction transactionB = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashA, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashA, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashB = transactionB.getHash();
         pool.addDependentTransaction(transactionB);
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashC = transactionC.getHash();
         pool.addDependentTransaction(transactionC);
@@ -271,7 +271,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -280,8 +280,8 @@ class TransactionPoolTest {
         Hash hashB = transactionB.getHash();
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashC = transactionC.getHash();
 
@@ -313,7 +313,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -322,8 +322,8 @@ class TransactionPoolTest {
         Hash hashB = transactionB.getHash();
 
         Transaction transactionC = new Transaction(
-            Collections.singletonList(new Input(Simulation.randomSignature(), hashB, 0)),
-            Collections.singletonList(Simulation.randomOutput())
+            Collections.singletonList(new Input( hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
         );
         Hash hashC = transactionC.getHash();
 
@@ -355,7 +355,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -394,7 +394,7 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig, mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();

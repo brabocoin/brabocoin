@@ -59,8 +59,8 @@ class BlockchainTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        database = new BlockDatabase(new HashMapDB(), config);
         consensus = new Consensus();
+        database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
         blockchain = new Blockchain(database, consensus);
     }
 
@@ -189,8 +189,8 @@ class BlockchainTest {
                 block1.getTargetValue(),
                 block1.getNonce(),
                 0,
-                block1.getTransactions()
-        );
+                block1.getTransactions(),
+                0);
 
         blockchain.addOrphan(block1);
         blockchain.addOrphan(block2);

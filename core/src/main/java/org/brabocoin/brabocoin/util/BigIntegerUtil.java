@@ -46,11 +46,6 @@ public final class BigIntegerUtil {
      * @return Max BigInteger for the given number of bytes
      */
     public static BigInteger getMaxBigInteger(int byteCount) {
-        byte[] maxByteArray = new byte[byteCount];
-        for (int i = 0; i < byteCount; i++) {
-            maxByteArray[i] = Byte.MAX_VALUE;
-        }
-        return new BigInteger(maxByteArray);
+        return BigInteger.valueOf(2).pow(byteCount * 8).subtract(BigInteger.ONE);
     }
-
 }

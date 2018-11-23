@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -40,7 +41,7 @@ public class Consensus {
      */
     private static final Hash TARGET_VALUE = new Hash(
             ByteString.copyFrom(
-                    BigInteger.valueOf(257).multiply(BigInteger.TEN.pow(67)).toByteArray()
+                    BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
             )
     );
     /**
@@ -72,16 +73,19 @@ public class Consensus {
 
     private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
 
+    /**
+     * Elliptic curve.
+     */
+    private static final EllipticCurve CURVE = EllipticCurve.secp256k1();
+
     private static final @NotNull Block GENESIS_BLOCK = new Block(
             new Hash(ByteString.EMPTY),
             new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
             TARGET_VALUE, // TODO: Determine target value
             BigInteger.ZERO,
             0,
-            Collections.emptyList()
-    );
-
-    private final BigInteger maxNonce = new BigInteger("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+            Collections.emptyList(),
+            0);
 
     /**
      * Find the best valid block from the given collection of blocks.
@@ -158,5 +162,9 @@ public class Consensus {
      */
     public long getMinimumTransactionFee() {
         return MINIMUM_TRANSACTION_FEE;
+    }
+
+    public @NotNull EllipticCurve getCurve() {
+        return CURVE;
     }
 }

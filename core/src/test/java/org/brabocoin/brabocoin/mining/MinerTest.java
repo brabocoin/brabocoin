@@ -43,14 +43,14 @@ class MinerTest {
         Random random = new Random();
         BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
-        transactionPool = new TransactionPool(defaultConfig, random);
+        transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(),defaultConfig.maxOrphanTransactions(), random);
         consensus = new Consensus() {
             @Override
             public @NotNull Hash getTargetValue() {
                 return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
             }
         };
-        miner = new Miner(transactionPool, consensus, random);
+        miner = new Miner(transactionPool, consensus, random, defaultConfig.networkId());
     }
 
     @Test
@@ -63,8 +63,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,
@@ -105,8 +104,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,
@@ -154,8 +152,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,
@@ -200,8 +197,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,
@@ -249,7 +245,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random());
+        miner = new Miner(transactionPool, consensus, new Random(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -259,8 +255,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,
@@ -307,7 +302,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random());
+        miner = new Miner(transactionPool, consensus, new Random(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -317,8 +312,7 @@ class MinerTest {
                 consensus.getGenesisBlock().getTargetValue(),
                 consensus.getGenesisBlock().getNonce(),
                 consensus.getGenesisBlock().getBlockHeight(),
-                consensus.getGenesisBlock().getTransactions().size(),
-                true,
+                consensus.getGenesisBlock().getTransactions().size(), consensus.getGenesisBlock().getNetworkId(), true,
                 0,
                 0,
                 0,

@@ -12,6 +12,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public int networkId() {
+        return this.delegator.networkId();
+    }
+
+    @Override
     public int loopInterval() {
         return delegator.loopInterval();
     }
