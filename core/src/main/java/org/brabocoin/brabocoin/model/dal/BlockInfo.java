@@ -70,7 +70,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
     /**
      * Indicates whether the block is considered valid.
-     *
+     * <p>
      * Note: this does not guarantee that the block is indeed fully valid, as multiple checks must
      * be performed that are context-dependent. When this field is {@code false}, the block is
      * definitely invalid and cannot become valid at a later time.
@@ -148,7 +148,11 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
      */
-    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot, @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight, int transactionCount, int networkId, boolean valid, long timeReceived, int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile, int sizeInUndoFile) {
+    public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
+                     @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight,
+                     int transactionCount, int networkId, boolean valid, long timeReceived,
+                     int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile,
+                     int sizeInUndoFile) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -348,11 +352,15 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 merkleRoot.build(),
                 targetValue.build(),
                 nonce, blockHeight,
-                transactionCount, networkId, valid,
+                transactionCount,
+                networkId,
+                valid,
                 timeReceived,
                 fileNumber,
                 offsetInFile,
-                sizeInFile, offsetInUndoFile, sizeInUndoFile
+                sizeInFile,
+                offsetInUndoFile,
+                sizeInUndoFile
             );
         }
     }

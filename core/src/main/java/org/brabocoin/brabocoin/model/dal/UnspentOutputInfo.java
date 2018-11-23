@@ -44,13 +44,13 @@ public class UnspentOutputInfo implements ProtoModel<UnspentOutputInfo> {
      * Creates a new unspent output information holder.
      *
      * @param coinbase
-     *         Whether the output is from a coinbase transaction.
+     *     Whether the output is from a coinbase transaction.
      * @param blockHeight
-     *         The height of the block where the transaction of this output is recorded.
+     *     The height of the block where the transaction of this output is recorded.
      * @param amount
-     *         The amount of brabocoin for this output.
+     *     The amount of brabocoin for this output.
      * @param address
-     *         The address to which this output is directed.
+     *     The address to which this output is directed.
      */
     public UnspentOutputInfo(boolean coinbase, int blockHeight, long amount, Hash address) {
         this.coinbase = coinbase;

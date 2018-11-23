@@ -29,9 +29,9 @@ public class Output implements ProtoModel<Output> {
      * Create a new output.
      *
      * @param address
-     *         Address of the receiver of the output amount.
+     *     Address of the receiver of the output amount.
      * @param amount
-     *         Amount paid to the output receiver.
+     *     Amount paid to the output receiver.
      */
     public Output(@NotNull Hash address, long amount) {
         this.address = address;

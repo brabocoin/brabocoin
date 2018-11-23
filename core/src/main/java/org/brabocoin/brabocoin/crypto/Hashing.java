@@ -19,6 +19,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
  * Hashing functions.
  */
 public final class Hashing {
+
     private static final Logger LOGGER = Logger.getLogger(Hashing.class.getName());
     private static SHA256.Digest SHA256Digest = new SHA256.Digest();
     private static RIPEMD160.Digest RIPEMD160Digest = new RIPEMD160.Digest();
@@ -34,7 +35,8 @@ public final class Hashing {
     /**
      * Compute the SHA-256 hash of a message.
      *
-     * @param message The message to be hashed.
+     * @param message
+     *     The message to be hashed.
      * @return The hashed message.
      */
     public static Hash digestSHA256(@NotNull ByteString message) {
@@ -45,7 +47,8 @@ public final class Hashing {
     /**
      * Compute the SHA-256 hash of a message.
      *
-     * @param message The message to be hashed.
+     * @param message
+     *     The message to be hashed.
      * @return The hashed message.
      */
     public static Hash digestSHA256(@NotNull Hash message) {
@@ -56,7 +59,8 @@ public final class Hashing {
     /**
      * Compute the RIPEMD-160 hash of a message.
      *
-     * @param message The message to be hashed.
+     * @param message
+     *     The message to be hashed.
      * @return The hashed message.
      */
     public static Hash digestRIPEMD160(@NotNull ByteString message) {
@@ -67,7 +71,8 @@ public final class Hashing {
     /**
      * Compute the RIPEMD-160 hash of a message.
      *
-     * @param message The message to be hashed.
+     * @param message
+     *     The message to be hashed.
      * @return The hashed message.
      */
     public static Hash digestRIPEMD160(@NotNull Hash message) {
@@ -76,10 +81,15 @@ public final class Hashing {
     }
 
     private synchronized static @NotNull Hash digest(@NotNull MessageDigest messageDigest,
-                                        @NotNull ByteString message) {
-        LOGGER.log(Level.FINE, "Digest for ByteString message using MessageDigest: {0}", messageDigest.getAlgorithm());
+                                                     @NotNull ByteString message) {
+        LOGGER.log(
+            Level.FINE,
+            "Digest for ByteString message using MessageDigest: {0}",
+            messageDigest.getAlgorithm()
+        );
         Hash hash = new Hash(ByteString.copyFrom(messageDigest.digest(message.toByteArray())));
-        LOGGER.log(Level.FINEST, () -> MessageFormat.format("{0} ( {1} ) = {2}",
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format(
+            "{0} ( {1} ) = {2}",
             messageDigest.getAlgorithm(),
             toHexString(message),
             toHexString(hash.getValue())

@@ -1,17 +1,22 @@
 package org.brabocoin.brabocoin.validation.rule;
 
-import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
+import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.fact.UninitializedFact;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class RuleBook {
+
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
 
     private final RuleList ruleList;
@@ -28,7 +33,8 @@ public class RuleBook {
                 if (!rule.isValid()) {
                     passedRule = false;
                 }
-            } catch (NullPointerException e) {
+            }
+            catch (NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Rule failed: {0}", e.getMessage());
                 passedRule = false;
             }
@@ -44,9 +50,9 @@ public class RuleBook {
 
     private List<Rule> getInstantiatedRules(FactMap facts) {
         return ruleList.getRules().stream()
-                .map(r -> getInstantiatedRule(r, facts))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            .map(r -> getInstantiatedRule(r, facts))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
     private Rule getInstantiatedRule(Class<? extends Rule> ruleClass, FactMap facts) {
@@ -60,28 +66,35 @@ public class RuleBook {
 
             for (Field field : fields) {
                 field.setAccessible(true);
-                boolean hasChildRuleFailMarkerFlag = field.getAnnotation(CompositeRuleFailMarker.class) != null;
+                boolean hasChildRuleFailMarkerFlag =
+                    field.getAnnotation(CompositeRuleFailMarker.class) != null;
                 if (hasChildRuleFailMarkerFlag) {
                     continue;
                 }
 
                 Object fieldValue = facts.entrySet().stream()
-                        .filter(f -> f.getKey().equals(field.getName()))
-                        .findFirst()
-                        .map(Map.Entry::getValue)
-                        .orElse(null);
+                    .filter(f -> f.getKey().equals(field.getName()))
+                    .findFirst()
+                    .map(Map.Entry::getValue)
+                    .orElse(null);
                 if (fieldValue != null) {
                     if (fieldValue instanceof UninitializedFact) {
                         throw new IllegalStateException("Fact found that is uninitialized.");
                     }
                     field.set(rule, fieldValue);
-                } else {
-                    throw new IllegalStateException(MessageFormat.format("Could not find field {0} in fact map for rule {1}.", field.getName(), rule.getClass().getName()));
+                }
+                else {
+                    throw new IllegalStateException(MessageFormat.format(
+                        "Could not find field {0} in fact map for rule {1}.",
+                        field.getName(),
+                        rule.getClass().getName()
+                    ));
                 }
             }
 
             return rule;
-        } catch (InstantiationException | IllegalAccessException e) {
+        }
+        catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
 
@@ -109,7 +122,9 @@ public class RuleBook {
         RuleBookFailMarker failMarker = null;
 
         for (Field field : fields) {
-            boolean hasChildFailMarker = !Objects.isNull(field.getAnnotation(CompositeRuleFailMarker.class));
+            boolean hasChildFailMarker = !Objects.isNull(
+                field.getAnnotation(CompositeRuleFailMarker.class)
+            );
             if (!hasChildFailMarker) {
                 continue;
             }
@@ -118,10 +133,11 @@ public class RuleBook {
                 field.setAccessible(true);
                 Object marker = field.get(rule);
                 if (marker instanceof RuleBookFailMarker) {
-                    failMarker = (RuleBookFailMarker) marker;
+                    failMarker = (RuleBookFailMarker)marker;
                     break;
                 }
-            } catch (IllegalAccessException e) {
+            }
+            catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
         }

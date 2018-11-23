@@ -27,23 +27,32 @@ public class MiningBlock extends Block {
 
     /**
      * Create a new mining block block.
-     *  @param previousBlockHash
+     *
+     * @param previousBlockHash
      *     Hash of the previous block in the blockchain.
      * @param merkleRoot
      *     Hash of the Merkle root.
      * @param targetValue
- *     Target value for the proof-of-work.
+     *     Target value for the proof-of-work.
      * @param nonce
-*     Starting nonce for the proof-of-work.
+     *     Starting nonce for the proof-of-work.
      * @param blockHeight
-*     Height of the block in the blockchain.
+     *     Height of the block in the blockchain.
      * @param transactions
      * @param networkId
      */
     public MiningBlock(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                        @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight,
                        List<Transaction> transactions, int networkId) {
-        super(previousBlockHash, merkleRoot, targetValue, nonce, blockHeight, transactions, networkId);
+        super(
+            previousBlockHash,
+            merkleRoot,
+            targetValue,
+            nonce,
+            blockHeight,
+            transactions,
+            networkId
+        );
 
         this.nonce = nonce;
     }
@@ -97,7 +106,8 @@ public class MiningBlock extends Block {
             getNonce(),
             getBlockHeight(),
             getTransactions(),
-            getNetworkId());
+            getNetworkId()
+        );
     }
 
     /**

@@ -7,16 +7,21 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
 
 /**
  * Transaction rule
- *
+ * <p>
  * The sum of inputs must be greater than the sum of outputs.
  */
 public class SufficientInputTxRule extends TransactionRule {
+
     private ReadonlyUTXOSet utxoSet;
 
     public boolean isValid() {
         try {
-            return TransactionRuleUtil.computeFee(transaction, utxoSet) >= consensus.getMinimumTransactionFee();
-        } catch (DatabaseException e) {
+            return TransactionRuleUtil.computeFee(
+                transaction,
+                utxoSet
+            ) >= consensus.getMinimumTransactionFee();
+        }
+        catch (DatabaseException e) {
             e.printStackTrace();
             return false;
         }

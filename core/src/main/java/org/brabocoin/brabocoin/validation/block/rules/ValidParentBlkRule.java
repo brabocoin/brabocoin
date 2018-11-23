@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class ValidParentBlkRule extends BlockRule {
+
     private Blockchain blockchain;
 
     @Override
@@ -16,7 +17,8 @@ public class ValidParentBlkRule extends BlockRule {
                 return false;
             }
             return indexedBlock.getBlockInfo().isValid();
-        } catch (DatabaseException e) {
+        }
+        catch (DatabaseException e) {
             e.printStackTrace();
             return false;
         }

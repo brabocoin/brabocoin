@@ -36,36 +36,38 @@ import java.util.logging.Logger;
  * Validates blocks.
  */
 public class BlockValidator {
+
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 
     private static final RuleList INCOMING_BLOCK = new RuleList(
-            MaxNonceBlkRule.class,
-            MaxSizeBlkRule.class,
-            DuplicateStorageBlkRule.class,
-            SatisfiesTargetValueBlkRule.class,
-            CorrectTargetValueBlkRule.class,
-            NonEmptyTransactionListBlkRule.class,
-            HasCoinbaseBlkRule.class,
-            HasSingleCoinbaseBlkRule.class,
-            ValidMerkleRootBlkRule.class,
-            NonContextualTransactionCheckBlkRule.class,
-            KnownParentBlkRule.class,
-            ValidParentBlkRule.class,
-            ValidBlockHeightBlkRule.class
+        MaxNonceBlkRule.class,
+        MaxSizeBlkRule.class,
+        DuplicateStorageBlkRule.class,
+        SatisfiesTargetValueBlkRule.class,
+        CorrectTargetValueBlkRule.class,
+        NonEmptyTransactionListBlkRule.class,
+        HasCoinbaseBlkRule.class,
+        HasSingleCoinbaseBlkRule.class,
+        ValidMerkleRootBlkRule.class,
+        NonContextualTransactionCheckBlkRule.class,
+        KnownParentBlkRule.class,
+        ValidParentBlkRule.class,
+        ValidBlockHeightBlkRule.class
     );
 
     private static final RuleList AFTER_ORPHAN = new RuleList(
-            KnownParentBlkRule.class,
-            ValidParentBlkRule.class,
-            ValidBlockHeightBlkRule.class
+        KnownParentBlkRule.class,
+        ValidParentBlkRule.class,
+        ValidBlockHeightBlkRule.class
     );
 
     private static final RuleList CONNECT_TO_CHAIN = new RuleList(
-            UniqueUnspentCoinbaseBlkRule.class,
-            ContextualTransactionCheckBlkRule.class,
-            LegalTransactionFeesBlkRule.class,
-            ValidCoinbaseOutputAmountBlkRule.class
+        UniqueUnspentCoinbaseBlkRule.class,
+        ContextualTransactionCheckBlkRule.class,
+        LegalTransactionFeesBlkRule.class,
+        ValidCoinbaseOutputAmountBlkRule.class
     );
+
     private Consensus consensus;
     private TransactionValidator transactionValidator;
     private TransactionProcessor transactionProcessor;

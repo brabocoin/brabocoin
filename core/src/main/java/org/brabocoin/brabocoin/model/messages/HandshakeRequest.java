@@ -27,6 +27,7 @@ public class HandshakeRequest implements ProtoModel<HandshakeRequest> {
 
     @ProtoClass(BrabocoinProtos.HandshakeRequest.class)
     public static class Builder implements ProtoBuilder<HandshakeRequest> {
+
         @ProtoField
         private int servicePort;
 

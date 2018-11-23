@@ -21,7 +21,7 @@ import java.util.function.Function;
  * @param <D>
  *     The dependency.
  */
-public class RecursiveMultiDependenceIndex <K, V, D> extends MultiDependenceIndex<K, V, D> {
+public class RecursiveMultiDependenceIndex<K, V, D> extends MultiDependenceIndex<K, V, D> {
 
     /**
      * Links the value to a dependency object, to traverse the dependencies within the index

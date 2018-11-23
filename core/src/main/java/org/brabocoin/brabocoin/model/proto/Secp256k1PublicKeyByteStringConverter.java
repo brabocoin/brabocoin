@@ -12,7 +12,7 @@ public class Secp256k1PublicKeyByteStringConverter implements TypeConverter<Publ
 
     @Override
     public PublicKey toDomainValue(Object instance) {
-        return PublicKey.fromCompressed(((ByteString)instance), EllipticCurve.secp256k1());
+        return PublicKey.fromCompressed((ByteString)instance, EllipticCurve.secp256k1());
     }
 
     @Override

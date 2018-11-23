@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 
 public abstract class BlockRule implements Rule {
+
     protected Block block;
     protected Consensus consensus;
 

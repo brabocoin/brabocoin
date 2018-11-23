@@ -43,9 +43,12 @@ public class TransactionProcessor {
     /**
      * Create a new transaction processor.
      *
-     * @param transactionValidator The transaction validator.
-     * @param transactionPool      The transaction pool.
-     * @param utxoFromPool         The UTXO database of the transaction pool.
+     * @param transactionValidator
+     *     The transaction validator.
+     * @param transactionPool
+     *     The transaction pool.
+     * @param utxoFromPool
+     *     The UTXO database of the transaction pool.
      */
     public TransactionProcessor(@NotNull TransactionValidator transactionValidator,
                                 @NotNull TransactionPool transactionPool,
@@ -59,12 +62,15 @@ public class TransactionProcessor {
     /**
      * Add a new transaction to the transaction pool.
      *
-     * @param transaction The new transaction.
+     * @param transaction
+     *     The new transaction.
      * @return The status of the transaction in the transaction pool and any orphans that are
      * added as a result.
-     * @throws DatabaseException When either of the UTXO databases is not available.
+     * @throws DatabaseException
+     *     When either of the UTXO databases is not available.
      */
-    public ProcessedTransactionResult processNewTransaction(@NotNull Transaction transaction) throws DatabaseException {
+    public ProcessedTransactionResult processNewTransaction(
+        @NotNull Transaction transaction) throws DatabaseException {
         LOGGER.fine("Processing new transaction.");
         ValidationStatus status = processTransaction(transaction);
         List<Transaction> orphans = addValidOrphans(transaction.getHash());
@@ -77,7 +83,10 @@ public class TransactionProcessor {
     private @NotNull List<Transaction> addValidOrphans(@NotNull Hash hash) {
         // Check if any orphan transactions can be added as well
         List<Transaction> removed = removeValidOrphans(hash);
-        LOGGER.info(() -> MessageFormat.format("{0} orphans are added to the transaction pool.", removed.size()));
+        LOGGER.info(() -> MessageFormat.format(
+            "{0} orphans are added to the transaction pool.",
+            removed.size()
+        ));
 
         return removed;
     }
@@ -85,33 +94,42 @@ public class TransactionProcessor {
     private @NotNull List<Transaction> removeValidOrphans(@NotNull Hash hash) {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
-                if (transactionValidator.checkTransactionOrphan(t).getStatus() != ValidationStatus.ORPHAN) {
+                ValidationStatus status = transactionValidator.checkTransactionOrphan(t)
+                    .getStatus();
+
+                if (status != ValidationStatus.ORPHAN) {
                     return processDeorphanatedTransaction(t) == ValidationStatus.VALID;
                 }
-            } catch (DatabaseException ignored) {
+            }
+            catch (DatabaseException ignored) {
             }
 
             return false;
         });
     }
 
-    private ValidationStatus processTransaction(@NotNull Transaction transaction) throws DatabaseException {
-        ValidationStatus status = transactionValidator.checkTransactionValid(transaction).getStatus();
+    private ValidationStatus processTransaction(
+        @NotNull Transaction transaction) throws DatabaseException {
+        ValidationStatus status = transactionValidator.checkTransactionValid(transaction)
+            .getStatus();
 
         processTransactionWithoutValidation(transaction, status);
 
         return status;
     }
 
-    private ValidationStatus processDeorphanatedTransaction(@NotNull Transaction transaction) throws DatabaseException {
-        ValidationStatus status = transactionValidator.checkTransactionPostOrphan(transaction).getStatus();
+    private ValidationStatus processDeorphanatedTransaction(
+        @NotNull Transaction transaction) throws DatabaseException {
+        ValidationStatus status = transactionValidator.checkTransactionPostOrphan(transaction)
+            .getStatus();
 
         processTransactionWithoutValidation(transaction, status);
 
         return status;
     }
 
-    private void processTransactionWithoutValidation(@NotNull Transaction transaction, ValidationStatus status) throws DatabaseException {
+    private void processTransactionWithoutValidation(@NotNull Transaction transaction,
+                                                     ValidationStatus status) throws DatabaseException {
 
         if (status == ValidationStatus.INVALID) {
             LOGGER.info("New transaction is invalid.");
@@ -129,7 +147,9 @@ public class TransactionProcessor {
         }
 
         // Validated transaction: update pool UTXO set
-        LOGGER.fine("New transaction can be added to transaction pool. Set outputs unspent in transaction pool UTXO.");
+        LOGGER.fine(
+            "New transaction can be added to transaction pool. Set outputs unspent in transaction"
+                + " pool UTXO.");
         utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
         if (transactionValidator.checkTransactionIndependent(transaction).isPassed()) {
@@ -149,8 +169,10 @@ public class TransactionProcessor {
      * transaction pool. By this change, dependent transactions might be promoted to independent
      * transactions.
      *
-     * @param block The block that is connected to the main chain.
-     * @throws DatabaseException When the UTXO database is not available.
+     * @param block
+     *     The block that is connected to the main chain.
+     * @throws DatabaseException
+     *     When the UTXO database is not available.
      */
     public void processTopBlockConnected(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing top block connected.");
@@ -159,7 +181,10 @@ public class TransactionProcessor {
             Hash hash = transaction.getHash();
 
             // Remove from pool
-            LOGGER.finest(() -> MessageFormat.format("Removing transaction {0} from transaction pool.", toHexString(hash.getValue())));
+            LOGGER.finest(() -> MessageFormat.format(
+                "Removing transaction {0} from transaction pool.",
+                toHexString(hash.getValue())
+            ));
             transactionPool.removeValidatedTransaction(hash);
 
             // Set UTXO from pool as spent
@@ -175,7 +200,10 @@ public class TransactionProcessor {
         LOGGER.fine("Promoting dependent transactions to dependent when possible.");
         for (Transaction transaction : block.getTransactions()) {
             Hash hash = transaction.getHash();
-            transactionPool.promoteDependentToIndependentFromParent(hash, t -> transactionValidator.checkTransactionIndependent(t).isPassed());
+            transactionPool.promoteDependentToIndependentFromParent(
+                hash,
+                t -> transactionValidator.checkTransactionIndependent(t).isPassed()
+            );
         }
 
         transactionPool.limitTransactionPoolSize();
@@ -190,8 +218,10 @@ public class TransactionProcessor {
      * <p>
      * Note that all transactions in the block are already validated.
      *
-     * @param block The block that is disconnected from the main chain.
-     * @throws DatabaseException When the UTXO database is not available.
+     * @param block
+     *     The block that is disconnected from the main chain.
+     * @throws DatabaseException
+     *     When the UTXO database is not available.
      */
     public void processTopBlockDisconnected(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing top block disconnected.");
@@ -200,8 +230,8 @@ public class TransactionProcessor {
             // Add transactions to pool and update pool UTXO set
             processTransactionWithoutValidation(transaction, ValidationStatus.VALID);
             LOGGER.finest(() -> MessageFormat.format(
-                    "Added transaction {0} to transaction pool.",
-                    toHexString(transaction.getHash().getValue())
+                "Added transaction {0} to transaction pool.",
+                toHexString(transaction.getHash().getValue())
             ));
 
             // Some previously independent transactions may depend the processed transaction

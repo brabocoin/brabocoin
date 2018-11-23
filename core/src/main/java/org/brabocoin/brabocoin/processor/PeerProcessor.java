@@ -22,9 +22,11 @@ import java.util.stream.Collectors;
 
 /**
  * Manages all tasks related to a set of peers.
- * This includes bootstrapping and maintaining the peer set to match the desired number of peers set in the config.
+ * This includes bootstrapping and maintaining the peer set to match the desired number of peers
+ * set in the config.
  */
 public class PeerProcessor {
+
     private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
     private Set<Peer> peers;
     private BraboConfig config;
@@ -32,8 +34,10 @@ public class PeerProcessor {
     /**
      * Create a new peer processor for a referenced set of peers and a config file.
      *
-     * @param peers  Set of peers to manage.
-     * @param config Config to use for this processor.
+     * @param peers
+     *     Set of peers to manage.
+     * @param config
+     *     Config to use for this processor.
      */
     public PeerProcessor(Set<Peer> peers, BraboConfig config) {
         this.peers = peers;
@@ -49,15 +53,24 @@ public class PeerProcessor {
         LOGGER.fine("Instantiating bootstrap peers.");
         List<Peer> configPeers = new ArrayList<>();
         for (final String peerSocket : config.bootstrapPeers()) {
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer socket read from config: {0}", peerSocket));
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Peer socket read from config: {0}", peerSocket)
+            );
             try {
                 Peer p = new Peer(peerSocket);
                 configPeers.add(p);
-                LOGGER.log(Level.FINEST, () -> MessageFormat.format("Peer created and added to peer set: {0}", p));
-            } catch (MalformedSocketException e) {
-                LOGGER.log(Level.WARNING, "Peer socket ( {0} ) is malformed, exception message: {0}", new Object[]{
-                        peerSocket, e.getMessage()
-                });
+                LOGGER.log(
+                    Level.FINEST,
+                    () -> MessageFormat.format("Peer created and added to peer set: {0}", p)
+                );
+            }
+            catch (MalformedSocketException e) {
+                LOGGER.log(
+                    Level.WARNING,
+                    "Peer socket ( {0} ) is malformed, exception message: {0}",
+                    new Object[] {peerSocket, e.getMessage()}
+                );
                 // TODO: Handle invalid peer socket representation in the config.
                 // Exit throwing an error to the user or skip this peer?
             }
@@ -70,7 +83,8 @@ public class PeerProcessor {
      * Tries to handshake with bootstrapping peers until the desired number of peers are found.
      * This constant is defined in the config.
      *
-     * @param servicePort The service port of the local node.
+     * @param servicePort
+     *     The service port of the local node.
      */
     public synchronized void bootstrap(int servicePort) {
         LOGGER.info("Bootstrapping initiated.");
@@ -95,9 +109,16 @@ public class PeerProcessor {
                 continue;
             }
 
-            LOGGER.log(Level.FINEST, "Response acquired, got {0} peers.", response.getPeers().size());
+            LOGGER.log(
+                Level.FINEST,
+                "Response acquired, got {0} peers.",
+                response.getPeers().size()
+            );
 
-            LOGGER.log(Level.FINEST, "Adding handshake peer to peer list, as handshake was successful.");
+            LOGGER.log(
+                Level.FINEST,
+                "Adding handshake peer to peer list, as handshake was successful."
+            );
             // We got a response from the current handshake peer, register this peer as valid
             peers.add(handshakePeer);
 
@@ -111,8 +132,13 @@ public class PeerProcessor {
                         // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
                         handshakePeers.add(discoveredPeer);
                     }
-                } catch (MalformedSocketException e) {
-                    LOGGER.log(Level.WARNING, "Error while parsing raw peer socket string: {0}", e.getMessage());
+                }
+                catch (MalformedSocketException e) {
+                    LOGGER.log(
+                        Level.WARNING,
+                        "Error while parsing raw peer socket string: {0}",
+                        e.getMessage()
+                    );
                     // TODO: Ignore and continue?
                 }
             }
@@ -126,21 +152,24 @@ public class PeerProcessor {
     /**
      * Handshake with the given port, sending the local service port number.
      *
-     * @param peer        Peer to handshake with
-     * @param servicePort Local service port
+     * @param peer
+     *     Peer to handshake with
+     * @param servicePort
+     *     Local service port
      * @return HandshakeResponse object.
      */
     public HandshakeResponse handshake(Peer peer, int servicePort) {
         BrabocoinProtos.HandshakeResponse protoResponse;
         try {
             protoResponse = peer.getBlockingStub()
-                    .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
-                    .handshake(
-                            ProtoConverter.toProto(
-                                    new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
-                            )
-                    );
-        } catch (StatusRuntimeException e) {
+                .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
+                .handshake(
+                    ProtoConverter.toProto(
+                        new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
+                    )
+                );
+        }
+        catch (StatusRuntimeException e) {
             LOGGER.log(Level.WARNING, "Error while handshaking with peer: {0}", e.getMessage());
             return null;
         }
@@ -170,18 +199,20 @@ public class PeerProcessor {
     /**
      * Get all peers matching this client address
      *
-     * @param address The address to match.
+     * @param address
+     *     The address to match.
      * @return The list of peers matching the address.
      */
     public synchronized List<Peer> findClientPeers(InetAddress address) {
         return peers.stream().filter(p -> p.getAddress().equals(address))
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     /**
      * Add the peer to the set of peers.
      *
-     * @param peer The peer to add.
+     * @param peer
+     *     The peer to add.
      */
     public synchronized void addPeer(Peer peer) {
         peers.add(peer);

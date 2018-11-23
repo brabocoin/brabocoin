@@ -111,7 +111,11 @@ public class DeploymentState implements State {
     }
 
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
-        return new BlockDatabase(blockStorage, new File(config.blockStoreDirectory()), config.maxBlockFileSize());
+        return new BlockDatabase(
+            blockStorage,
+            new File(config.blockStoreDirectory()),
+            config.maxBlockFileSize()
+        );
     }
 
     protected ChainUTXODatabase createChainUTXODatabase() throws DatabaseException {
@@ -127,11 +131,21 @@ public class DeploymentState implements State {
     }
 
     protected TransactionPool createTransactionPool() {
-        return new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(), unsecureRandom);
+        return new TransactionPool(
+            config.maxTransactionPoolSize(),
+            config.maxOrphanTransactions(),
+            unsecureRandom
+        );
     }
 
     protected BlockProcessor createBlockProcessor() {
-        return new BlockProcessor(blockchain, utxoProcessor, transactionProcessor, consensus, blockValidator);
+        return new BlockProcessor(
+            blockchain,
+            utxoProcessor,
+            transactionProcessor,
+            consensus,
+            blockValidator
+        );
     }
 
     protected UTXOProcessor createUtxoProcessor() {

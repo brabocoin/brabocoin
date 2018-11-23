@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation.rule;
 import org.jetbrains.annotations.Nullable;
 
 public class RuleBookResult {
+
     protected final boolean passed;
 
     @Nullable
@@ -18,7 +19,8 @@ public class RuleBookResult {
     /**
      * Constructor for a rule book result that is not passed, given the failed rule class.
      *
-     * @param failedRule The rule class for which the rule book failed
+     * @param failedRule
+     *     The rule class for which the rule book failed
      */
     protected RuleBookResult(@Nullable RuleBookFailMarker failedRule) {
         this.passed = false;

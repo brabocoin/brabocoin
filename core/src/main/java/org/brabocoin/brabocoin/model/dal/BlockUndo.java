@@ -57,9 +57,11 @@ public class BlockUndo implements ProtoModel<BlockUndo> {
 
         @Override
         public BlockUndo build() {
-            return new BlockUndo(transactionUndos.stream()
-                .map(TransactionUndo.Builder::build)
-                .collect(Collectors.toList()));
+            return new BlockUndo(
+                transactionUndos.stream()
+                    .map(TransactionUndo.Builder::build)
+                    .collect(Collectors.toList())
+            );
         }
     }
 }

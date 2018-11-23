@@ -5,10 +5,11 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
  * Transaction rule
- *
+ * <p>
  * Transactions that exist in the transaction pool are invalid.
  */
 public class DuplicatePoolTxRule extends TransactionRule {
+
     private TransactionPool transactionPool;
 
     public boolean isValid() {

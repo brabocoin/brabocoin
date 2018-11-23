@@ -4,7 +4,14 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
-import io.grpc.*;
+import io.grpc.Grpc;
+import io.grpc.Metadata;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import io.grpc.ServerInterceptors;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -33,9 +40,10 @@ import java.util.stream.Collectors;
  * A full node on the Brabocoin network.
  */
 public class Node {
+
     private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
     private static final AtomicReference<ServerCall<?, ?>> serverCallCapture =
-            new AtomicReference<ServerCall<?, ?>>();
+        new AtomicReference<ServerCall<?, ?>>();
 
     /**
      * Service parameters
@@ -48,13 +56,14 @@ public class Node {
      * {@link ServerCall#getAttributes()}
      */
     private static ServerInterceptor recordServerCallInterceptor(
-            final AtomicReference<ServerCall<?, ?>> serverCallCapture) {
+        final AtomicReference<ServerCall<?, ?>> serverCallCapture) {
         return new ServerInterceptor() {
             @Override
             public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
-                    ServerCall<ReqT, RespT> call,
-                    Metadata requestHeaders,
-                    ServerCallHandler<ReqT, RespT> next) {
+                ServerCall<ReqT, RespT> call,
+                Metadata requestHeaders,
+                ServerCallHandler<ReqT, RespT> next) {
+
                 serverCallCapture.set(call);
                 return next.startCall(call, requestHeaders);
             }
@@ -63,10 +72,13 @@ public class Node {
 
     public Node(NodeEnvironment environment, int servicePort) {
         this.server = ServerBuilder.forPort(servicePort)
-                .addService(ServerInterceptors.intercept(
-                        new NodeService(),
-                        recordServerCallInterceptor(serverCallCapture)))
-                .build();
+            .addService(
+                ServerInterceptors.intercept(
+                    new NodeService(),
+                    recordServerCallInterceptor(serverCallCapture)
+                )
+            )
+            .build();
         this.environment = environment;
     }
 
@@ -107,13 +119,22 @@ public class Node {
         logIncomingCall(call, receivedMessage, Level.INFO);
     }
 
-    private void logIncomingCall(String call, MessageOrBuilder receivedMessage, Level receivedLogLevel) {
+    private void logIncomingCall(String call, MessageOrBuilder receivedMessage,
+                                 Level receivedLogLevel) {
         LOGGER.log(receivedLogLevel, "Received {0} call.", call);
         LOGGER.log(Level.FINEST, () -> {
             try {
-                return MessageFormat.format("Received data: {0}", JsonFormat.printer().print(receivedMessage));
-            } catch (InvalidProtocolBufferException e) {
-                LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.", e);
+                return MessageFormat.format(
+                    "Received data: {0}",
+                    JsonFormat.printer().print(receivedMessage)
+                );
+            }
+            catch (InvalidProtocolBufferException e) {
+                LOGGER.log(
+                    Level.WARNING,
+                    "Could not log the JSON format of the response message.",
+                    e
+                );
             }
 
             return "";
@@ -123,69 +144,104 @@ public class Node {
     private void logOutgoingResponse(MessageOrBuilder responseMessage) {
         LOGGER.log(Level.FINEST, () -> {
             try {
-                return MessageFormat.format("Responding with data: {0}", JsonFormat.printer().print(responseMessage));
-            } catch (InvalidProtocolBufferException e) {
-                LOGGER.log(Level.WARNING, "Could not log the JSON format of the response message.", e);
+                return MessageFormat.format(
+                    "Responding with data: {0}",
+                    JsonFormat.printer().print(responseMessage)
+                );
+            }
+            catch (InvalidProtocolBufferException e) {
+                LOGGER.log(
+                    Level.WARNING,
+                    "Could not log the JSON format of the response message.",
+                    e
+                );
             }
             return "";
         });
     }
 
     private class NodeService extends NodeGrpc.NodeImplBase {
+
         @Override
-        public void handshake(BrabocoinProtos.HandshakeRequest request, StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
+        public void handshake(BrabocoinProtos.HandshakeRequest request,
+                              StreamObserver<BrabocoinProtos.HandshakeResponse> responseObserver) {
             logIncomingCall("handshake", request);
 
-            HandshakeResponse response = new HandshakeResponse(environment.getPeers().stream().map(Peer::toSocketString).collect(Collectors.toList()));
-            BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(response, BrabocoinProtos.HandshakeResponse.class);
+            HandshakeResponse response = new HandshakeResponse(
+                environment.getPeers()
+                    .stream()
+                    .map(Peer::toSocketString)
+                    .collect(Collectors.toList())
+            );
+            BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(
+                response,
+                BrabocoinProtos.HandshakeResponse.class
+            );
             logOutgoingResponse(protoResponse);
 
             responseObserver.onNext(protoResponse);
             responseObserver.onCompleted();
 
             // Add the client as a valid peer.
-            InetSocketAddress clientAddress = (InetSocketAddress) serverCallCapture.get().getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
+                .getAttributes()
+                .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             if (clientAddress != null) {
                 environment.addClientPeer(clientAddress.getAddress(), request.getServicePort());
             }
         }
 
         @Override
-        public void announceBlock(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceBlock(BrabocoinProtos.Hash request,
+                                  StreamObserver<Empty> responseObserver) {
             logIncomingCall("announceBlock", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
 
-            InetSocketAddress clientAddress = (InetSocketAddress) serverCallCapture.get().getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
+                .getAttributes()
+                .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             if (clientAddress != null) {
                 List<Peer> peers = environment.findClientPeers(clientAddress.getAddress());
                 environment.onReceiveBlockHash(hash, peers);
-            } else {
-                LOGGER.log(Level.WARNING, "Could not find the client peer announcing the block hash, ignoring.");
+            }
+            else {
+                LOGGER.log(
+                    Level.WARNING,
+                    "Could not find the client peer announcing the block hash, ignoring."
+                );
             }
         }
 
         @Override
-        public void announceTransaction(BrabocoinProtos.Hash request, StreamObserver<Empty> responseObserver) {
+        public void announceTransaction(BrabocoinProtos.Hash request,
+                                        StreamObserver<Empty> responseObserver) {
             logIncomingCall("announceTransaction", request);
 
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
 
-            InetSocketAddress clientAddress = (InetSocketAddress) serverCallCapture.get().getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
+                .getAttributes()
+                .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             if (clientAddress != null) {
                 List<Peer> peers = environment.findClientPeers(clientAddress.getAddress());
                 environment.onReceiveTransactionHash(hash, peers);
-            } else {
-                LOGGER.log(Level.WARNING, "Could not find the client peer announcing the block hash, ignoring.");
+            }
+            else {
+                LOGGER.log(
+                    Level.WARNING,
+                    "Could not find the client peer announcing the block hash, ignoring."
+                );
             }
         }
 
         @Override
-        public StreamObserver<BrabocoinProtos.Hash> getBlocks(StreamObserver<BrabocoinProtos.Block> responseObserver) {
+        public StreamObserver<BrabocoinProtos.Hash> getBlocks(
+            StreamObserver<BrabocoinProtos.Block> responseObserver) {
             LOGGER.log(Level.INFO, "getBlocks message received.");
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
@@ -197,7 +253,10 @@ public class Node {
                         return;
                     }
 
-                    BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(block, BrabocoinProtos.Block.class);
+                    BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(
+                        block,
+                        BrabocoinProtos.Block.class
+                    );
 
                     logOutgoingResponse(protoBlock);
 
@@ -206,7 +265,11 @@ public class Node {
 
                 @Override
                 public void onError(Throwable t) {
-                    LOGGER.log(Level.WARNING, "Error occurred during getBlocks stream: {0}", t.getMessage());
+                    LOGGER.log(
+                        Level.WARNING,
+                        "Error occurred during getBlocks stream: {0}",
+                        t.getMessage()
+                    );
                 }
 
                 @Override
@@ -219,7 +282,8 @@ public class Node {
         }
 
         @Override
-        public StreamObserver<BrabocoinProtos.Hash> getTransactions(StreamObserver<BrabocoinProtos.Transaction> responseObserver) {
+        public StreamObserver<BrabocoinProtos.Hash> getTransactions(
+            StreamObserver<BrabocoinProtos.Transaction> responseObserver) {
             LOGGER.log(Level.INFO, "getTransactions message received.");
             return new StreamObserver<BrabocoinProtos.Hash>() {
                 @Override
@@ -231,7 +295,10 @@ public class Node {
                         return;
                     }
 
-                    BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class);
+                    BrabocoinProtos.Transaction protoTransaction = ProtoConverter.toProto(
+                        transaction,
+                        BrabocoinProtos.Transaction.class
+                    );
 
                     logOutgoingResponse(protoTransaction);
 
@@ -240,7 +307,11 @@ public class Node {
 
                 @Override
                 public void onError(Throwable t) {
-                    LOGGER.log(Level.WARNING, "Error occurred during getTransactions stream: {0}", t.getMessage());
+                    LOGGER.log(
+                        Level.WARNING,
+                        "Error occurred during getTransactions stream: {0}",
+                        t.getMessage()
+                    );
                 }
 
                 @Override
@@ -253,11 +324,15 @@ public class Node {
         }
 
         @Override
-        public void seekTransactionPool(Empty request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
+        public void seekTransactionPool(Empty request,
+                                        StreamObserver<BrabocoinProtos.Hash> responseObserver) {
             logIncomingCall("seekTransactionPool", request);
             Set<Hash> transactionHashSet = environment.getTransactionHashSet();
             for (Hash h : transactionHashSet) {
-                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(h, BrabocoinProtos.Hash.class);
+                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(
+                    h,
+                    BrabocoinProtos.Hash.class
+                );
                 logOutgoingResponse(protoHash);
                 responseObserver.onNext(protoHash);
             }
@@ -266,10 +341,14 @@ public class Node {
         }
 
         @Override
-        public void discoverTopBlockHeight(Empty request, StreamObserver<BrabocoinProtos.BlockHeight> responseObserver) {
+        public void discoverTopBlockHeight(Empty request,
+                                           StreamObserver<BrabocoinProtos.BlockHeight> responseObserver) {
             logIncomingCall("discoverTopBlockHeight", request);
             BlockHeight blockHeight = new BlockHeight(environment.getTopBlockHeight());
-            BrabocoinProtos.BlockHeight protoBlockHeight = ProtoConverter.toProto(blockHeight, BrabocoinProtos.BlockHeight.class);
+            BrabocoinProtos.BlockHeight protoBlockHeight = ProtoConverter.toProto(
+                blockHeight,
+                BrabocoinProtos.BlockHeight.class
+            );
 
             logOutgoingResponse(protoBlockHeight);
             responseObserver.onNext(protoBlockHeight);
@@ -277,11 +356,17 @@ public class Node {
         }
 
         @Override
-        public void checkChainCompatible(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.ChainCompatibility> responseObserver) {
+        public void checkChainCompatible(BrabocoinProtos.Hash request,
+                                         StreamObserver<BrabocoinProtos.ChainCompatibility> responseObserver) {
             logIncomingCall("checkChainCompatible", request);
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
-            ChainCompatibility compatibility = new ChainCompatibility(environment.isChainCompatible(hash));
-            BrabocoinProtos.ChainCompatibility protoChainCompatibility = ProtoConverter.toProto(compatibility, BrabocoinProtos.ChainCompatibility.class);
+            ChainCompatibility compatibility = new ChainCompatibility(
+                environment.isChainCompatible(hash)
+            );
+            BrabocoinProtos.ChainCompatibility protoChainCompatibility = ProtoConverter.toProto(
+                compatibility,
+                BrabocoinProtos.ChainCompatibility.class
+            );
 
             logOutgoingResponse(protoChainCompatibility);
             responseObserver.onNext(protoChainCompatibility);
@@ -289,12 +374,16 @@ public class Node {
         }
 
         @Override
-        public void seekBlockchain(BrabocoinProtos.Hash request, StreamObserver<BrabocoinProtos.Hash> responseObserver) {
+        public void seekBlockchain(BrabocoinProtos.Hash request,
+                                   StreamObserver<BrabocoinProtos.Hash> responseObserver) {
             logIncomingCall("seekBlockchain", request);
             Hash hash = ProtoConverter.toDomain(request, Hash.Builder.class);
             List<Hash> hashList = environment.getBlocksAbove(hash);
             for (Hash h : hashList) {
-                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(h, BrabocoinProtos.Hash.class);
+                BrabocoinProtos.Hash protoHash = ProtoConverter.toProto(
+                    h,
+                    BrabocoinProtos.Hash.class
+                );
 
                 logOutgoingResponse(protoHash);
                 responseObserver.onNext(protoHash);

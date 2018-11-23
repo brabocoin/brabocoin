@@ -12,7 +12,9 @@ import java.util.logging.Logger;
 import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 
 public class HashMapDB implements KeyValueStore {
+
     private static final Logger LOGGER = Logger.getLogger(HashMapDB.class.getName());
+
     private Map<ByteString, ByteString> map = new HashMap<>();
 
     @Override

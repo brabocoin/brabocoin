@@ -20,6 +20,7 @@ import java.util.function.Function;
  * Consensus rules.
  */
 public class Consensus {
+
     /**
      * The max block size, excluding the nonce.
      */
@@ -35,19 +36,20 @@ public class Consensus {
     /**
      * Max money value.
      */
-    private static final long MAX_MONEY_VALUE = (long) (3E9);
+    private static final long MAX_MONEY_VALUE = (long)(3E9);
     /**
      * Constant target value.
      */
     private static final Hash TARGET_VALUE = new Hash(
-            ByteString.copyFrom(
-                    BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
-            )
+        ByteString.copyFrom(
+            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
+        )
     );
     /**
      * Double SHA256 hash.
      */
-    private static final Function<Hash, Hash> DOUBLE_SHA = (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
+    private static final Function<Hash, Hash> DOUBLE_SHA =
+        (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
 
     /**
      * The max nonce value.
@@ -79,26 +81,29 @@ public class Consensus {
     private static final EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     private static final @NotNull Block GENESIS_BLOCK = new Block(
-            new Hash(ByteString.EMPTY),
-            new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
-            TARGET_VALUE, // TODO: Determine target value
-            BigInteger.ZERO,
-            0,
-            Collections.emptyList(),
-            0);
+        new Hash(ByteString.EMPTY),
+        new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
+        TARGET_VALUE, // TODO: Determine target value
+        BigInteger.ZERO,
+        0,
+        Collections.emptyList(),
+        0
+    );
 
     /**
      * Find the best valid block from the given collection of blocks.
      *
-     * @param blocks The blocks to compare.
+     * @param blocks
+     *     The blocks to compare.
      * @return The best block, or {@code null} if the given collection contained no valid blocks.
      */
     public @Nullable IndexedBlock bestValidBlock(@NotNull Collection<IndexedBlock> blocks) {
         return blocks.stream()
-                .filter(i -> i.getBlockInfo().isValid())
+            .filter(i -> i.getBlockInfo().isValid())
             .max(Comparator.<IndexedBlock>comparingInt(b -> b.getBlockInfo()
-                        .getBlockHeight()).thenComparing(Comparator.comparing(IndexedBlock::getHash).reversed()))
-                .orElse(null);
+                .getBlockHeight()).thenComparing(Comparator.comparing(IndexedBlock::getHash)
+                .reversed()))
+            .orElse(null);
     }
 
     public long getCoin() {
@@ -142,8 +147,7 @@ public class Consensus {
         return TARGET_VALUE;
     }
 
-    public @NotNull Function<Hash, Hash> getMerkleTreeHashFunction()
-    {
+    public @NotNull Function<Hash, Hash> getMerkleTreeHashFunction() {
         return DOUBLE_SHA;
     }
 

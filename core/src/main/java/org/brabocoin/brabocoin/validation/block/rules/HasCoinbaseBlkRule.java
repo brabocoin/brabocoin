@@ -4,6 +4,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 public class HasCoinbaseBlkRule extends BlockRule {
+
     @Override
     public boolean isValid() {
         Transaction coinbase = block.getCoinbaseTransaction();

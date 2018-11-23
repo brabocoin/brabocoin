@@ -9,8 +9,6 @@ import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;
 
-import java.math.BigInteger;
-
 /**
  * Represents a hash value.
  */
@@ -27,7 +25,7 @@ public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
      * Creates a new Hash.
      *
      * @param value
-     *         The value of the hash.
+     *     The value of the hash.
      */
     public Hash(@NotNull ByteString value) {
         this.value = value;
@@ -82,10 +80,14 @@ public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
 
         if (lengthDifference > 0) {
             thisArray = value.toByteArray();
-            otherArray = ByteString.copyFrom(new byte[lengthDifference]).concat(o.value).toByteArray();
+            otherArray = ByteString.copyFrom(new byte[lengthDifference])
+                .concat(o.value)
+                .toByteArray();
         }
         else if (lengthDifference < 0) {
-            thisArray = ByteString.copyFrom(new byte[-lengthDifference]).concat(value).toByteArray();
+            thisArray = ByteString.copyFrom(new byte[-lengthDifference])
+                .concat(value)
+                .toByteArray();
             otherArray = o.value.toByteArray();
         }
         else {

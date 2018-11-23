@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResul
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 
 public class ContextualTransactionCheckBlkRule extends BlockRule {
+
     private TransactionValidator transactionValidator;
 
     @CompositeRuleFailMarker
@@ -19,7 +20,8 @@ public class ContextualTransactionCheckBlkRule extends BlockRule {
             if (transaction.isCoinbase()) {
                 continue;
             }
-            TransactionValidationResult result = transactionValidator.checkTransactionBlockContextual(transaction);
+            TransactionValidationResult result =
+                transactionValidator.checkTransactionBlockContextual(transaction);
 
             if (!result.isPassed()) {
                 childFailMarker = result.getFailMarker();

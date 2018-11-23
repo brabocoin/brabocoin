@@ -60,9 +60,11 @@ public class TransactionUndo implements ProtoModel<TransactionUndo> {
 
         @Override
         public TransactionUndo build() {
-            return new TransactionUndo(outputInfoList.stream()
-                .map(UnspentOutputInfo.Builder::build)
-                .collect(Collectors.toList()));
+            return new TransactionUndo(
+                outputInfoList.stream()
+                    .map(UnspentOutputInfo.Builder::build)
+                    .collect(Collectors.toList())
+            );
         }
     }
 }

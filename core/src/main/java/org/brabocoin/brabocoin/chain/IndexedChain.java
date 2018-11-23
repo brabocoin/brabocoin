@@ -118,7 +118,7 @@ public class IndexedChain {
      * @throws IllegalStateException
      *     When the current top block is the genesis block.
      */
-    @NotNull synchronized IndexedBlock popTopBlock() throws IllegalStateException {
+    synchronized @NotNull IndexedBlock popTopBlock() throws IllegalStateException {
         LOGGER.fine("Pop top block from chain.");
         if (getHeight() == 0) {
             LOGGER.warning("Not popped, only genesis block is left.");
