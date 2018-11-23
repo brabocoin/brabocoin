@@ -2,13 +2,7 @@ package org.brabocoin.brabocoin.wallet;
 
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
-import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
-import org.brabocoin.brabocoin.util.Destructible;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
