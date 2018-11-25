@@ -193,4 +193,8 @@ public class Miner {
 
         return transactions;
     }
+
+    public @Nullable MiningBlock getMiningBlock() {
+        return block;
+    }
 }

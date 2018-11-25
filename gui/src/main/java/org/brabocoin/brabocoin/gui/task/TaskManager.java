@@ -1,12 +1,10 @@
 package org.brabocoin.brabocoin.gui.task;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
 import org.controlsfx.control.StatusBar;
@@ -20,7 +18,7 @@ public class TaskManager {
     private static final Node INDICATOR = new ProgressIndicator();
 
     private final @NotNull StatusBar statusBar;
-    private final @NotNull ObservableList<Task> tasks;
+    private final @NotNull ObservableList<Task<?>> tasks;
 
     public TaskManager(@NotNull StatusBar statusBar) {
         this.tasks = FXCollections.observableArrayList();
@@ -51,21 +49,19 @@ public class TaskManager {
         ));
     }
 
-    public void runTask(@NotNull Task task) {
-        task.stateProperty().addListener(
-            (ChangeListener<Worker.State>)(obs, old, state) -> {
-                switch (state) {
-                    case SCHEDULED:
-                        tasks.add(task);
-                        break;
+    public void runTask(@NotNull Task<?> task) {
+        task.stateProperty().addListener((obs, old, state) -> {
+            switch (state) {
+                case SCHEDULED:
+                    tasks.add(task);
+                    break;
 
-                    case FAILED: // TODO: error handling?
-                    case SUCCEEDED:
-                    case CANCELLED:
-                        tasks.remove(task);
-                }
+                case FAILED: // TODO: error handling?
+                case SUCCEEDED:
+                case CANCELLED:
+                    tasks.remove(task);
             }
-        );
+        });
 
         new Thread(task).start();
     }
