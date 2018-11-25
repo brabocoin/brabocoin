@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Button?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import javafx.scene.control.Separator?>
+<fx:root type="javafx.scene.layout.BorderPane"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.MinerView">
+
+    <top>
+        <ToolBar>
+            <Button text="Auto-mine top block" onAction="#autoMine">
+                <graphic>
+                    <BraboGlyph icon="MAGIC"/>
+                </graphic>
+            </Button>
+            <Separator/>
+            <Button text="Stop" onAction="#stop">
+                <graphic>
+                    <BraboGlyph icon="STOP"/>
+                </graphic>
+            </Button>
+        </ToolBar>
+    </top>
+    <center>
+
+    </center>
+</fx:root>

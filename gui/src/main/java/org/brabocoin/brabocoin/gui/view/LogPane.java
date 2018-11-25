@@ -117,7 +117,7 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
         logLevelComboBox.setItems(logLevels);
 
         // Bind log level combo box to log handler
-        rootLogger.setLevel(Level.FINE);
+        rootLogger.setLevel(Level.INFO);
         logLevelComboBox.setValue(rootLogger.getLevel());
         logLevelComboBox.valueProperty().addListener((obs, old, val) -> rootLogger.setLevel(val));
 

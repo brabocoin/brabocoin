@@ -5,16 +5,24 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
+import javafx.scene.Node;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
+import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 /**
  * Main view for the Brabocoin application.
@@ -27,11 +35,18 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @FXML private HiddenSidesPane sidesPane;
     @FXML private BorderPane viewContainer;
 
+    @FXML private ToggleGroup toggleGroupMainNav;
     @FXML private ToggleButton stateToggleButton;
+    @FXML private ToggleButton miningToggleButton;
 
+    @FXML private StatusBar statusBar;
     @FXML private LogPane logPane;
 
+    private @NotNull TaskManager taskManager;
+
+    private Map<Toggle, Supplier<Node>> toggleToViewMap;
     private CurrentStateView currentStateView;
+    private MinerView minerView;
 
     /**
      * Create the main view.
@@ -47,6 +62,9 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Initialize task manager
+        taskManager = new TaskManager(statusBar);
+
         // Bind log pane toggle button to the log pane
         ObjectBinding<Side> paneSideBinding = Bindings.createObjectBinding(
             () -> logPaneToggleButton.isSelected() ? Side.BOTTOM : null,
@@ -57,17 +75,32 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         // Set log pane close binding
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
-        // Initialize menu views
-        currentStateView = new CurrentStateView(state.getBlockchain());
+        // Initialize menu view mapping
+        toggleToViewMap = new HashMap<>();
+        toggleToViewMap.put(stateToggleButton, this::getCurrentStateView);
+        toggleToViewMap.put(miningToggleButton, this::getMinerView);
 
-        // Bind main nav buttons to views
-        stateToggleButton.selectedProperty().addListener((obs, old, selected) -> {
-            if (selected) {
-                viewContainer.setCenter(currentStateView);
-            }
+        toggleGroupMainNav.selectedToggleProperty().addListener((obs, old, selected) -> {
+            viewContainer.setCenter(toggleToViewMap.get(selected).get());
         });
 
         // Set initial view
-        viewContainer.setCenter(currentStateView);
+        viewContainer.setCenter(getCurrentStateView());
+    }
+
+    private @NotNull CurrentStateView getCurrentStateView() {
+        if (currentStateView == null) {
+            currentStateView = new CurrentStateView(state.getBlockchain());
+        }
+
+        return currentStateView;
+    }
+
+    private @NotNull MinerView getMinerView() {
+        if (minerView == null) {
+            minerView = new MinerView(state.getMiner(), state.getBlockchain(), taskManager);
+        }
+
+        return minerView;
     }
 }
