@@ -57,8 +57,12 @@ public class BrabocoinApplication {
         storages = Sets.newHashSet(state.getBlockStorage(), state.getUtxoStorage());
     }
 
+    public BrabocoinApplication() throws DatabaseException {
+        this(DEFAULT_CONFIG);
+    }
+
     public static void main(String[] args) throws DatabaseException, IOException {
-        BrabocoinApplication application = new BrabocoinApplication(DEFAULT_CONFIG);
+        BrabocoinApplication application = new BrabocoinApplication();
         application.start();
     }
 
@@ -116,5 +120,9 @@ public class BrabocoinApplication {
                 }
             }
         }
+    }
+
+    public @NotNull State getState() {
+        return state;
     }
 }

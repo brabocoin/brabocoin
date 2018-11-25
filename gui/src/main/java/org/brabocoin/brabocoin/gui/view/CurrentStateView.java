@@ -41,29 +41,20 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private TableColumn<IndexedBlock, Hash> hashColumn;
     @FXML private TableColumn<IndexedBlock, Double> sizeColumn;
 
-    private Blockchain blockchain;
+    private final @NotNull Blockchain blockchain;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
-    /**
-     * Create the current state view.
-     */
-    public CurrentStateView() {
-        this(null);
-    }
-
-    public CurrentStateView(Blockchain blockchain) {
+    public CurrentStateView(@NotNull Blockchain blockchain) {
         super();
         this.blockchain = blockchain;
+
         BraboControlInitializer.initialize(this);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
-
-        if (blockchain != null) {
-            loadMainChain();
-        }
+        loadMainChain();
     }
 
     private void loadTable() {
@@ -110,10 +101,4 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             observableBlocks.add(chain.getBlockAtHeight(i));
         }
     }
-
-    public void setBlockchain(@NotNull Blockchain blockchain) {
-        this.blockchain = blockchain;
-        loadMainChain();
-    }
-
 }

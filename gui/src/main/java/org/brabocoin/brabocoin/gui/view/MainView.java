@@ -7,18 +7,12 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
-import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -26,6 +20,8 @@ import java.util.ResourceBundle;
  * Main view for the Brabocoin application.
  */
 public class MainView extends BorderPane implements BraboControl, Initializable {
+
+    private final @NotNull State state;
 
     @FXML private ToggleButton logPaneToggleButton;
     @FXML private HiddenSidesPane sidesPane;
@@ -39,9 +35,13 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     /**
      * Create the main view.
+     *
+     * @param state The application state.
      */
-    public MainView() {
+    public MainView(@NotNull State state) {
         super();
+        this.state = state;
+
         BraboControlInitializer.initialize(this);
     }
 
@@ -58,18 +58,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
         // Initialize menu views
-        try {
-            BraboConfig config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
-            currentStateView = new CurrentStateView(
-                new Blockchain(
-                    new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()),
-                    new Consensus()
-                )
-            );
-        }
-        catch (DatabaseException e) {
-            e.printStackTrace();
-        }
+        currentStateView = new CurrentStateView(state.getBlockchain());
 
         // Bind main nav buttons to views
         stateToggleButton.selectedProperty().addListener((obs, old, selected) -> {

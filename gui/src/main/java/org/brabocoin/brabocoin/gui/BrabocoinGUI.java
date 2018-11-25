@@ -4,9 +4,12 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.brabocoin.brabocoin.BrabocoinApplication;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.view.MainView;
 import org.fxmisc.cssfx.CSSFX;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +33,10 @@ public class BrabocoinGUI extends Application {
     );
 
     @Override
-    public void start(Stage stage) {
-        MainView mainView = new MainView();
+    public void start(Stage stage) throws DatabaseException, IOException {
+        BrabocoinApplication application = new BrabocoinApplication();
+
+        MainView mainView = new MainView(application.getState());
         Scene scene = new Scene(mainView);
 
         // Auto CSS reloading
@@ -49,6 +54,8 @@ public class BrabocoinGUI extends Application {
         stage.setTitle("Brabocoin " + VERSION);
         stage.setScene(scene);
         stage.show();
+
+        application.start();
     }
 
     public static void main(String[] args) {
