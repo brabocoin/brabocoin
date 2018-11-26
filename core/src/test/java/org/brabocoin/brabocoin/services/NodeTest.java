@@ -1,10 +1,16 @@
 package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
@@ -63,7 +69,7 @@ public class NodeTest {
             @Override
             public @NotNull Hash getTargetValue() {
                 return new Hash(ByteString.copyFrom(
-                    BigInteger.valueOf(289).multiply(BigInteger.TEN.pow(69)).toByteArray()
+                    BigInteger.valueOf(2).pow(255).toByteArray()
                 ));
             }
         };
@@ -268,7 +274,8 @@ public class NodeTest {
         stateB.getNode().start();
         stateC.getNode().start();
 
-        stateA.getEnvironment().announceBlockRequest(stateA.getEnvironment().getBlock(newBlockHash));
+        stateA.getEnvironment()
+            .announceBlockRequest(stateA.getEnvironment().getBlock(newBlockHash));
 
         await().atMost(20, TimeUnit.SECONDS)
             .until(() -> stateC.getEnvironment().getTopBlockHeight() >= 1);
@@ -280,148 +287,297 @@ public class NodeTest {
         stateB.getNode().stopAndBlock();
         stateC.getNode().stopAndBlock();
     }
-    //
-    //    /**
-    //     * <em>Setup:</em>
-    //     * Two nodes: A and B.
-    //     * B has transaction X unknown to A.
-    //     * A's transaction pool is empty.
-    //     *
-    //     * <em>Expected result:</em>
-    //     * After announcing the transaction to A, A should eventually fetch the transaction
-    // from B and put it in the transaction pool.
-    //     */
-    //    @Test
-    //    @Disabled("Fails because transaction rules are not yet implemented.")
-    //    void announceTransactionToPeer() throws DatabaseException, IOException,
-    // InterruptedException {
-    //        // Create default node A
-    //        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
-    //            @Override
-    //            public String blockStoreDirectory() {
-    //                return super.blockStoreDirectory() + "/nodeA";
-    //            }
-    //        });
-    //
-    //        // Create a blockchain with a block mined on top of genesis block.
-    //        Consensus consensus = new Consensus();
-    //
-    //        Transaction newTransaction = Simulation.randomTransaction(0, 5);
-    //        Hash newTransactionHash = newTransaction.getHash();
-    //
-    //        Node nodeB = generateNodeWithTransactions(8091, new MockBraboConfig(defaultConfig) {
-    //            @Override
-    //            public String blockStoreDirectory() {
-    //                return super.blockStoreDirectory() + "/nodeB";
-    //            }
-    //
-    //            @Override
-    //            public List<String> bootstrapPeers() {
-    //                return Collections.singletonList("localhost:8090");
-    //            }
-    //        }, consensus, Collections.singletonList(newTransaction));
-    //
-    //        // Start nodes
-    //        nodeA.start();
-    //        nodeB.start();
-    //
-    //        nodeB.getEnvironment().announceTransactionRequest(nodeB.getEnvironment()
-    // .getTransaction(newTransactionHash));
-    //
-    //        await().atMost(20, TimeUnit.SECONDS)
-    //                .until(() -> nodeA.getEnvironment().getTransactionHashSet().contains
-    // (newTransactionHash));
-    //
-    //        assertNotNull(nodeA.getEnvironment().getTransaction(newTransactionHash));
-    //        assertEquals(1, nodeA.getEnvironment().getTransactionHashSet().size());
-    //
-    //        nodeA.stopAndBlock();
-    //        nodeB.stopAndBlock();
-    //    }
-    //
-    //    /**
-    //     * <em>Setup:</em>
-    //     * Three nodes: A, B and C.
-    //     * C has a transaction X unknown to A and B.
-    //     * A and B's transaction pools are empty.
-    //     *
-    //     * <em>Expected result:</em>
-    //     * After announcing the transaction to B, B should eventually fetch the transaction
-    // from C and put it in in the transaction pool.
-    //     * B should then announce the transaction to A, which should in turn fetch the
-    // transaction from B and add it to its transaction pool.
-    //     */
-    //    @Test
-    //    void announceTransactionPropagatedToPeerLimitedPeers() throws DatabaseException,
-    // IOException, InterruptedException {
-    //        // Create default node A
-    //        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
-    //            @Override
-    //            public String blockStoreDirectory() {
-    //                return super.blockStoreDirectory() + "/nodeA";
-    //            }
-    //
-    //            @Override
-    //            public int targetPeerCount() {
-    //                return 1;
-    //            }
-    //        });
-    //
-    //        // Create a blockchain with a block mined on top of genesis block.
-    //        Consensus consensus = new Consensus();
-    //
-    //        Transaction newTransaction = Simulation.randomTransaction(0, 5);
-    //        Hash newTransactionHash = newTransaction.getHash();
-    //
-    //        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
-    //            @Override
-    //            public String blockStoreDirectory() {
-    //                return super.blockStoreDirectory() + "/nodeB";
-    //            }
-    //
-    //            @Override
-    //            public List<String> bootstrapPeers() {
-    //                return Collections.singletonList("localhost:8090");
-    //            }
-    //        });
-    //
-    //        Node nodeC = generateNodeWithTransactions(8092, new MockBraboConfig(defaultConfig) {
-    //            @Override
-    //            public String blockStoreDirectory() {
-    //                return super.blockStoreDirectory() + "/nodeC";
-    //            }
-    //
-    //            @Override
-    //            public List<String> bootstrapPeers() {
-    //                return Collections.singletonList("localhost:8091");
-    //            }
-    //
-    //            @Override
-    //            public int targetPeerCount() {
-    //                return 1;
-    //            }
-    //        }, consensus, Collections.singletonList(newTransaction));
-    //
-    //        // Start nodes
-    //        nodeA.start();
-    //        nodeB.start();
-    //        nodeC.start();
-    //
-    //        nodeC.getEnvironment().announceTransactionRequest(nodeC.getEnvironment()
-    // .getTransaction(newTransactionHash));
-    //
-    //        await().atMost(30, TimeUnit.SECONDS)
-    //                .until(() -> nodeA.getEnvironment().getTransactionHashSet().contains
-    // (newTransactionHash));
-    //
-    //        assertNotNull(nodeA.getEnvironment().getTransaction(newTransactionHash));
-    //        assertEquals(1, nodeA.getEnvironment().getTransactionHashSet().size());
-    //
-    //        nodeA.stopAndBlock();
-    //        nodeB.stopAndBlock();
-    //        nodeC.stopAndBlock();
-    //    }
-    //
+
+    /**
+     * <em>Setup:</em>
+     * Two nodes: A and B.
+     * B has transaction X unknown to A.
+     * A's transaction pool is empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to A, A should eventually fetch the transaction
+     * from B and put it in the transaction pool.
+     */
+    @Test
+    void announceTransactionToPeer() throws DatabaseException, IOException,
+                                            InterruptedException {
+        // Create default node A
+        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+
+            @Override
+            public int servicePort() {
+                return 8090;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+
+        // Mine 100 blocks to create valid output for new transaction
+        BigInteger privateKey = Simulation.randomPrivateKey();
+        PublicKey publicKey = stateA.getConsensus()
+            .getCurve()
+            .getPublicKeyFromPrivateKey(privateKey);
+
+        Miner minerA = stateA.getMiner();
+
+        IndexedBlock previousBlock = stateA.getBlockchain()
+            .getMainChain()
+            .getGenesisBlock();
+        Hash coinbaseOutputAddress = publicKey.getHash();
+
+        for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
+            Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
+            stateA.getBlockProcessor().processNewBlock(newBlock);
+
+            previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+            coinbaseOutputAddress = Simulation.randomHash();
+        }
+
+        IndexedBlock afterGenesisIndexed = stateA.getBlockchain()
+            .getMainChain()
+            .getBlockAtHeight(1);
+        assertNotNull(afterGenesisIndexed);
+        Block afterGenesis = stateA.getBlockchain().getBlock(afterGenesisIndexed);
+
+        UnsignedTransaction utx = new UnsignedTransaction(
+            Collections.singletonList(new Input(
+                afterGenesis.getCoinbaseTransaction().getHash(),
+                0
+            )),
+            Collections.singletonList(
+                new Output(Simulation.randomHash(), mockConsensus.getBlockReward() - 1)
+            )
+        );
+
+        Transaction tx = utx.sign(
+            Collections.singletonList(stateA.getSigner().signMessage(
+                utx.getSignableTransactionData(), privateKey
+            ))
+        );
+
+        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8090"
+                );
+            }
+
+            @Override
+            public int servicePort() {
+                return 8091;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+        // Start nodes
+        stateA.getNode().start();
+        stateB.getNode().start();
+
+
+        await().atMost(50, TimeUnit.SECONDS)
+            .until(() -> stateB.getBlockchain().getMainChain().getHeight() == 101);
+
+        stateA.getTransactionProcessor().processNewTransaction(tx);
+
+        stateA.getEnvironment().announceTransactionRequest(stateA.getEnvironment()
+            .getTransaction(tx.getHash()));
+
+        await().atMost(20, TimeUnit.SECONDS)
+            .until(() -> stateB.getEnvironment().getTransactionHashSet().contains(tx.getHash()));
+
+        assertNotNull(stateB.getEnvironment().getTransaction(tx.getHash()));
+        assertEquals(1, stateB.getEnvironment().getTransactionHashSet().size());
+
+        stateA.getNode().stopAndBlock();
+        stateB.getNode().stopAndBlock();
+    }
+
+
+    /**
+     * <em>Setup:</em>
+     * Three nodes: A, B and C.
+     * C has a transaction X unknown to A and B.
+     * A and B's transaction pools are empty.
+     *
+     * <em>Expected result:</em>
+     * After announcing the transaction to B, B should eventually fetch the transaction
+     * from C and put it in in the transaction pool.
+     * B should then announce the transaction to A, which should in turn fetch the
+     * transaction from B and add it to its transaction pool.
+     */
+    @Test
+    void announceTransactionPropagatedToPeerLimitedPeers() throws DatabaseException,
+                                                                  IOException,
+                                                                  InterruptedException {
+        // Create default node A
+        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeA";
+            }
+
+            @Override
+            public int servicePort() {
+                return 8090;
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+        // Mine 100 blocks to create valid output for new transaction
+        BigInteger privateKey = Simulation.randomPrivateKey();
+        PublicKey publicKey = stateA.getConsensus()
+            .getCurve()
+            .getPublicKeyFromPrivateKey(privateKey);
+
+        Miner minerA = stateA.getMiner();
+
+        IndexedBlock previousBlock = stateA.getBlockchain()
+            .getMainChain()
+            .getGenesisBlock();
+        Hash coinbaseOutputAddress = publicKey.getHash();
+
+        for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
+            Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
+            stateA.getBlockProcessor().processNewBlock(newBlock);
+
+            previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+            coinbaseOutputAddress = Simulation.randomHash();
+        }
+
+        IndexedBlock afterGenesisIndexed = stateA.getBlockchain()
+            .getMainChain()
+            .getBlockAtHeight(1);
+        assertNotNull(afterGenesisIndexed);
+        Block afterGenesis = stateA.getBlockchain().getBlock(afterGenesisIndexed);
+
+        UnsignedTransaction utx = new UnsignedTransaction(
+            Collections.singletonList(new Input(
+                afterGenesis.getCoinbaseTransaction().getHash(),
+                0
+            )),
+            Collections.singletonList(
+                new Output(Simulation.randomHash(), mockConsensus.getBlockReward() - 1)
+            )
+        );
+
+        Transaction tx = utx.sign(
+            Collections.singletonList(stateA.getSigner().signMessage(
+                utx.getSignableTransactionData(), privateKey
+            ))
+        );
+
+        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeB";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8090"
+                );
+            }
+
+            @Override
+            public int servicePort() {
+                return 8091;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+
+        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
+            public String blockStoreDirectory() {
+                return super.blockStoreDirectory() + "/nodeC";
+            }
+
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8091"
+                );
+            }
+
+            @Override
+            public int servicePort() {
+                return 8092;
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+        // Start nodes
+        stateA.getNode().start();
+        stateB.getNode().start();
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> stateB.getBlockchain().getMainChain().getHeight() == stateA.getBlockchain()
+                .getMainChain()
+                .getHeight());
+        stateC.getNode().start();
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> stateC.getBlockchain().getMainChain().getHeight() == stateA.getBlockchain()
+                .getMainChain()
+                .getHeight());
+
+
+        stateA.getTransactionProcessor().processNewTransaction(tx);
+
+        stateA.getEnvironment().announceTransactionRequest(stateA.getEnvironment()
+            .getTransaction(tx.getHash()));
+
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> stateC.getEnvironment().getTransactionHashSet().contains
+                (tx.getHash()));
+
+        assertNotNull(stateC.getEnvironment().getTransaction(tx.getHash()));
+        assertEquals(1, stateC.getEnvironment().getTransactionHashSet().size());
+
+        stateA.getNode().stopAndBlock();
+        stateB.getNode().stopAndBlock();
+        stateC.getNode().stopAndBlock();
+    }
+
     //    /**
     //     * <em>Setup:</em>
     //     * Three nodes: A, B and C.
@@ -837,7 +993,8 @@ public class NodeTest {
     //        nodeA.getEnvironment().announceBlockRequest(fork2Block2);
     //
     //        await().atMost(30, TimeUnit.SECONDS)
-    //                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeC.getEnvironment().getTopBlockHeight());
+    //                .until(() -> nodeA.getEnvironment().getTopBlockHeight() == nodeC
+    // .getEnvironment().getTopBlockHeight());
     //
     //        assertEquals(
     //                nodeA.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0),
@@ -854,7 +1011,8 @@ public class NodeTest {
     //     */
     //    @Test
     //    void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
-    //        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(0, 5), 200);
+    //        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation
+    // .randomTransaction(0, 5), 200);
     //
     //        Node nodeA = generateNodeWithTransactions(8090, new MockBraboConfig(defaultConfig) {
     //            @Override
@@ -880,7 +1038,8 @@ public class NodeTest {
     //        nodeB.start();
     //
     //        await().atMost(30, TimeUnit.SECONDS)
-    //                .until(() -> nodeB.getEnvironment().getTransactionHashSet().size() == transactions.size());
+    //                .until(() -> nodeB.getEnvironment().getTransactionHashSet().size() ==
+    // transactions.size());
     //
     //        nodeA.stopAndBlock();
     //        nodeB.stopAndBlock();

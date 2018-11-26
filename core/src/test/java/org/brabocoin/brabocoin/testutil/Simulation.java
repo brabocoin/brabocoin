@@ -217,4 +217,8 @@ public class Simulation {
     public static BigInteger randomBigInteger() {
         return BigInteger.valueOf(RANDOM.nextInt());
     }
+
+    public static BigInteger randomPrivateKey() {
+        return BigInteger.valueOf(RANDOM.nextInt()).mod(new Consensus().getCurve().getDomain().getN());
+    }
 }
