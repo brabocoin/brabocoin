@@ -76,7 +76,13 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
         // Initialize menu view mapping
         currentStateView = new CurrentStateView(state.getBlockchain());
-        minerView = new MinerView(state.getMiner(), state.getBlockchain(), taskManager);
+        minerView = new MinerView(
+            state.getMiner(),
+            state.getBlockchain(),
+            state.getBlockProcessor(),
+            state.getNode().getEnvironment(),
+            taskManager
+        );
 
         toggleToViewMap = new HashMap<>();
         toggleToViewMap.put(stateToggleButton, currentStateView);

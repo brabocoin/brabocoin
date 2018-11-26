@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
@@ -16,7 +17,10 @@ import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.controlsfx.control.Notifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +35,13 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     private final @NotNull Miner miner;
     private final @NotNull Blockchain blockchain;
+    private final @NotNull BlockProcessor blockProcessor;
+    private final @NotNull NodeEnvironment nodeEnvironment;
 
     private final @NotNull TaskManager taskManager;
     private AnimationTimer timer;
 
     private @Nullable Task<Block> miningTask;
-    private @Nullable Block minedBlock;
 
     @FXML private TextField timeField;
     @FXML private TextField iterationsField;
@@ -44,10 +49,14 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     @FXML private TextField bestHashField;
 
     public MinerView(@NotNull Miner miner, @NotNull Blockchain blockchain,
+                     @NotNull BlockProcessor blockProcessor,
+                     @NotNull NodeEnvironment nodeEnvironment,
                      @NotNull TaskManager taskManager) {
         super();
         this.miner = miner;
         this.blockchain = blockchain;
+        this.blockProcessor = blockProcessor;
+        this.nodeEnvironment = nodeEnvironment;
         this.taskManager = taskManager;
 
         BraboControlInitializer.initialize(this);
@@ -122,8 +131,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         };
 
         miningTask.setOnSucceeded(event -> {
-            minedBlock = miningTask.getValue();
-            if (minedBlock == null) {
+            Block block = miningTask.getValue();
+            if (block == null) {
                 return;
             }
 
@@ -131,8 +140,18 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             
             Notifications.create()
                 .title("New block mined!")
-                .text("New block at height #" + minedBlock.getBlockHeight())
+                .text("New block at height #" + block.getBlockHeight())
                 .showConfirm();
+
+            try {
+                ValidationStatus status = blockProcessor.processNewBlock(block);
+                if (status == ValidationStatus.VALID) {
+                    nodeEnvironment.announceBlockRequest(block);
+                }
+            }
+            catch (DatabaseException e) {
+                e.printStackTrace();
+            }
         });
 
         miningTask.stateProperty().addListener((obs, old, state) -> {

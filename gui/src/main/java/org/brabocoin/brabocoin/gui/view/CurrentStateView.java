@@ -54,6 +54,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
+
+        blockDetailView = new BlockDetailView(blockchain);
+        masterDetailPane.setDetailNode(blockDetailView);
+
         loadMainChain();
     }
 
@@ -92,9 +96,9 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         });
     }
 
+    @FXML
     private void loadMainChain() {
-        blockDetailView = new BlockDetailView(blockchain);
-        masterDetailPane.setDetailNode(blockDetailView);
+        observableBlocks.clear();
 
         IndexedChain chain = blockchain.getMainChain();
         for (int i = chain.getHeight(); i >= 0; i--) {
