@@ -1,6 +1,8 @@
 package org.brabocoin.brabocoin;
 
+import com.beust.jcommander.JCommander;
 import com.google.common.collect.Sets;
+import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -10,6 +12,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Set;
@@ -22,12 +25,6 @@ import java.util.logging.Logger;
 public class BrabocoinApplication {
 
     private static final Logger LOGGER = Logger.getLogger(BrabocoinApplication.class.getName());
-
-    /**
-     * Default configuration file.
-     */
-    private static final BraboConfig DEFAULT_CONFIG = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
 
     /**
      * The node.
@@ -58,8 +55,32 @@ public class BrabocoinApplication {
     }
 
     public static void main(String[] args) throws DatabaseException, IOException {
-        BrabocoinApplication application = new BrabocoinApplication(DEFAULT_CONFIG);
+        BraboArgs arguments = new BraboArgs();
+
+        JCommander commander = JCommander.newBuilder()
+            .addObject(arguments)
+            .build();
+
+        commander.parse(args);
+
+        if (arguments.isHelp()) {
+            commander.usage();
+            return;
+        }
+
+        BraboConfig config = getConfig(arguments.getConfig());
+
+        BrabocoinApplication application = new BrabocoinApplication(config);
         application.start();
+    }
+
+    private static @NotNull BraboConfig getConfig(@Nullable String path) {
+        if (path == null) {
+            return BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+        }
+        else {
+            return BraboConfigProvider.getConfigFromFile(path).bind("brabo", BraboConfig.class);
+        }
     }
 
     /**
