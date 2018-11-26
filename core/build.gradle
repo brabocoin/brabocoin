@@ -65,12 +65,4 @@ jar {
 
 shadowJar {
     classifier = 'headless'
-    minimize {
-        exclude {
-            dependency('io.grpc:grpc-netty-shaded:.*:.*')
-            dependency('io.grpc:grpc-protobuf:.*:.*')
-            dependency('io.grpc:grpc-stub:.*:.*')
-            dependency('io.grpc:grpc-services:.*:.*')
-        }
-    }
 }
