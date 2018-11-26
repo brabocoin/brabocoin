@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,7 +71,7 @@ public class Consensus {
      */
     private static final long MINIMUM_TRANSACTION_FEE = 1;
 
-    private static final int MAX_BLOCK_HEADER_SIZE = 132;
+    private static final int MAX_BLOCK_HEADER_SIZE = 139;
 
     private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
 

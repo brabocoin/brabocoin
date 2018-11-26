@@ -4,9 +4,18 @@ import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.*;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
@@ -27,7 +36,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1673,6 +1686,72 @@ class TransactionRuleTests {
         facts.put("utxoSet", new CompositeReadonlyUTXOSet(state.getPoolUTXODatabase(), state.getChainUTXODatabase()));
 
         
+        assertFalse(ruleBook.run(facts).isPassed());
+    }
+
+    @Test
+    void SignatureCountTxRuleSuccess() {
+        Transaction tx = new Transaction(
+            Simulation.repeatedBuilder(Simulation::randomInput, 55),
+            Collections.singletonList(
+                Simulation.randomOutput()
+            ),
+            Simulation.repeatedBuilder(Simulation::randomSignature, 55)
+        );
+
+        RuleBook ruleBook = new RuleBook(new RuleList(
+            Collections.singletonList(SignatureCountTxRule.class)
+        ));
+
+
+        FactMap facts = new FactMap();
+        facts.put("transaction", tx);
+        facts.put("consensus", consensus);
+
+        assertTrue(ruleBook.run(facts).isPassed());
+    }
+
+    @Test
+    void SignatureCountTxRuleFailLess() {
+        Transaction tx = new Transaction(
+            Simulation.repeatedBuilder(Simulation::randomInput, 55),
+            Collections.singletonList(
+                Simulation.randomOutput()
+            ),
+            Simulation.repeatedBuilder(Simulation::randomSignature, 44)
+        );
+
+        RuleBook ruleBook = new RuleBook(new RuleList(
+            Collections.singletonList(SignatureCountTxRule.class)
+        ));
+
+
+        FactMap facts = new FactMap();
+        facts.put("transaction", tx);
+        facts.put("consensus", consensus);
+
+        assertFalse(ruleBook.run(facts).isPassed());
+    }
+
+    @Test
+    void SignatureCountTxRuleFailMore() {
+        Transaction tx = new Transaction(
+            Simulation.repeatedBuilder(Simulation::randomInput, 55),
+            Collections.singletonList(
+                Simulation.randomOutput()
+            ),
+            Simulation.repeatedBuilder(Simulation::randomSignature, 66)
+        );
+
+        RuleBook ruleBook = new RuleBook(new RuleList(
+            Collections.singletonList(SignatureCountTxRule.class)
+        ));
+
+
+        FactMap facts = new FactMap();
+        facts.put("transaction", tx);
+        facts.put("consensus", consensus);
+
         assertFalse(ruleBook.run(facts).isPassed());
     }
 }
