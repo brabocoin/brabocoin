@@ -48,7 +48,6 @@ subprojects {
 
     shadowJar {
         baseName = rootProject.name
-        minimize()
     }
 
     artifacts {

@@ -65,4 +65,7 @@ jar {
 
 shadowJar {
     classifier = 'headless'
+    minimize {
+        exclude(dependency('io.grpc:grpc-netty-shaded:.*:.*'))
+    }
 }
