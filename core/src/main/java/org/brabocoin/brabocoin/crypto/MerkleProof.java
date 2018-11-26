@@ -63,7 +63,7 @@ public class MerkleProof {
      *     The hashing function used to compute the value of the intermediate nodes.
      * @return The root of the Merkle tree as produced by this proof.
      */
-    public @NotNull Hash apply(@NotNull Hash hash, @NotNull Function<Hash, Hash> hashingFunction) {
+    public synchronized @NotNull Hash apply(@NotNull Hash hash, @NotNull Function<Hash, Hash> hashingFunction) {
         LOGGER.fine("Applying the proof to the given hash.");
 
         Hash result = hash;

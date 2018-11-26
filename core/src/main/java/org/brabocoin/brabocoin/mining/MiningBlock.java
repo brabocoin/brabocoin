@@ -113,7 +113,7 @@ public class MiningBlock extends Block {
     /**
      * Stop the execution of the {@link #mine(Consensus)} method.
      */
-    public void stop() {
+    public synchronized void stop() {
         stopped = true;
     }
 

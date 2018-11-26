@@ -15,9 +15,6 @@ public class MaxSizeTxRule extends TransactionRule {
         int size = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class)
             .getSerializedSize();
 
-        return size < consensus.getMaxBlockSize()
-            + consensus.getMaxNonceSize()
-            - consensus.getMaxBlockHeaderSize()
-            - Long.BYTES;
+        return size < consensus.getMaxTransactionSize();
     }
 }

@@ -121,7 +121,7 @@ public class Block implements ProtoModel<Block> {
      *
      * @return The block hash.
      */
-    public @NotNull Hash getHash() {
+    public synchronized @NotNull Hash getHash() {
         if (hash == null) {
             ByteString header = getRawHeader();
             hash = Hashing.digestSHA256(Hashing.digestSHA256(header));

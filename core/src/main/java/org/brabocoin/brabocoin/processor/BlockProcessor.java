@@ -91,7 +91,7 @@ public class BlockProcessor {
      *     When the blockchain could not be synced with the UTXO set. Most likely either one of
      *     the databases is corrupt, in which case the node has to rebuild all indices.
      */
-    public void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
+    public synchronized void syncMainChainWithUTXOSet() throws DatabaseException, IllegalStateException {
         LOGGER.info("Syncing main chain with UTXO set.");
 
         // Get the top block from the UTXO set
@@ -152,7 +152,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public ValidationStatus processNewBlock(@NotNull Block block) throws DatabaseException {
+    public synchronized ValidationStatus processNewBlock(@NotNull Block block) throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
@@ -183,7 +183,7 @@ public class BlockProcessor {
         return ValidationStatus.VALID;
     }
 
-    private @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {
+    private synchronized @NotNull IndexedBlock storeBlock(@NotNull Block block) throws DatabaseException {
         BlockInfo info = blockchain.storeBlock(block);
         Hash hash = block.getHash();
         return new IndexedBlock(hash, info);
@@ -202,7 +202,7 @@ public class BlockProcessor {
      * @return The set of new top candidates from the orphan pool (that are now removed as
      * orphans and are added to the blockchain).
      */
-    private @NotNull Set<IndexedBlock> processOrphansTopCandidates(
+    private synchronized @NotNull Set<IndexedBlock> processOrphansTopCandidates(
         @NotNull IndexedBlock newParent) throws DatabaseException {
         LOGGER.fine("Processing orphans for top candidates.");
 
@@ -260,7 +260,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void updateMainChain(Set<IndexedBlock> topCandidates) throws DatabaseException {
+    private synchronized void updateMainChain(Set<IndexedBlock> topCandidates) throws DatabaseException {
         LOGGER.fine("Updating main chain.");
 
         // Add the current top to the top candidates
@@ -353,7 +353,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    private @Nullable Deque<IndexedBlock> findValidFork(
+    private synchronized @Nullable Deque<IndexedBlock> findValidFork(
         @NotNull IndexedBlock block) throws DatabaseException {
         LOGGER.fine("Find a fork.");
 
@@ -393,7 +393,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private void disconnectTop() throws DatabaseException {
+    private synchronized void disconnectTop() throws DatabaseException {
         IndexedBlock top = blockchain.getMainChain().getTopBlock();
 
         Hash hash = top.getHash();
@@ -434,7 +434,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the blocks database is not available.
      */
-    private boolean connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
+    private synchronized boolean connectTopBlock(@NotNull IndexedBlock top) throws DatabaseException {
         LOGGER.finest(() -> MessageFormat.format(
             "Connecting block {0}",
             toHexString(top.getHash().getValue())

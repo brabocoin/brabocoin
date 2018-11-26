@@ -268,9 +268,7 @@ class MinerTest {
         Hash address = Hashing.digestRIPEMD160(ByteString.copyFromUtf8("Neerkant"));
 
         AtomicReference<Object> minedBlock = new AtomicReference<>(new Object());
-        Thread thread = new Thread(() -> {
-            minedBlock.set(miner.mineNewBlock(genesis, address));
-        });
+        Thread thread = new Thread(() -> minedBlock.set(miner.mineNewBlock(genesis, address)));
 
         thread.start();
 

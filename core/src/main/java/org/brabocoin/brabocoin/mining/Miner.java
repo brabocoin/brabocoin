@@ -145,13 +145,7 @@ public class Miner {
      * @return A list of independent transactions such that the maximum block size is not exceeded.
      */
     private @NotNull List<Transaction> collectTransactions() {
-        // TODO: move to consensus?
-        long availableBlockSize = consensus.getMaxBlockSize() - consensus.getMaxBlockHeaderSize();
-
-        // Compute the size in bytes really reserved for transactions (see protobuf serialization
-        // docs)
-        int maxTransactionsSize = (int)Math.floor(availableBlockSize - Math.log(availableBlockSize)
-            / Math.log(2)) - consensus.getMaxCoinbaseTransactionSize();
+        long maxTransactionsSize = consensus.getMaxTransactionSize();
 
         int usedSize = 0;
         List<Transaction> transactions = new ArrayList<>();
