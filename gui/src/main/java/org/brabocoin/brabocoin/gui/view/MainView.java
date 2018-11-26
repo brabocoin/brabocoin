@@ -22,7 +22,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.function.Supplier;
 
 /**
  * Main view for the Brabocoin application.
@@ -44,7 +43,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     private @NotNull TaskManager taskManager;
 
-    private Map<Toggle, Supplier<Node>> toggleToViewMap;
+    private Map<Toggle, Node> toggleToViewMap;
     private CurrentStateView currentStateView;
     private MinerView minerView;
 
@@ -76,31 +75,18 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
         // Initialize menu view mapping
+        currentStateView = new CurrentStateView(state.getBlockchain());
+        minerView = new MinerView(state.getMiner(), state.getBlockchain(), taskManager);
+
         toggleToViewMap = new HashMap<>();
-        toggleToViewMap.put(stateToggleButton, this::getCurrentStateView);
-        toggleToViewMap.put(miningToggleButton, this::getMinerView);
+        toggleToViewMap.put(stateToggleButton, currentStateView);
+        toggleToViewMap.put(miningToggleButton, minerView);
 
         toggleGroupMainNav.selectedToggleProperty().addListener((obs, old, selected) -> {
-            viewContainer.setCenter(toggleToViewMap.get(selected).get());
+            viewContainer.setCenter(toggleToViewMap.get(selected));
         });
 
         // Set initial view
-        viewContainer.setCenter(getCurrentStateView());
-    }
-
-    private @NotNull CurrentStateView getCurrentStateView() {
-        if (currentStateView == null) {
-            currentStateView = new CurrentStateView(state.getBlockchain());
-        }
-
-        return currentStateView;
-    }
-
-    private @NotNull MinerView getMinerView() {
-        if (minerView == null) {
-            minerView = new MinerView(state.getMiner(), state.getBlockchain(), taskManager);
-        }
-
-        return minerView;
+        viewContainer.setCenter(currentStateView);
     }
 }

@@ -45,3 +45,8 @@
     -fx-min-width: 2em;
     -fx-text-fill: -fx-accent;
 }
+
+.status-bar .progress-indicator {
+    -fx-max-height: 15;
+    -fx-max-width: 15;
+}

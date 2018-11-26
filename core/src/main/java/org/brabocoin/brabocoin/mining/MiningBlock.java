@@ -97,12 +97,9 @@ public class MiningBlock extends Block {
 
         if (bestHash == null || hash.compareTo(bestHash) < 0) {
             bestHash = hash;
-
-            // Only compare with target value when new best hash is found.
-            return hash.compareTo(getTargetValue()) <= 0;
         }
 
-        return false;
+        return hash.compareTo(getTargetValue()) <= 0;
     }
 
     @Override

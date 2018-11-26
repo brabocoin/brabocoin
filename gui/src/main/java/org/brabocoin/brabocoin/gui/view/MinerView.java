@@ -71,27 +71,31 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 long seconds = delta / 1000;
                 timeField.setText(String.format("%d:%02d", seconds / 60, seconds % 60));
 
-                MiningBlock block = miner.getMiningBlock();
-
-                if (block != null) {
-                    targetValueField.setText(ByteUtil.toHexString(
-                        block.getTargetValue().getValue(),
-                        Constants.BLOCK_HASH_SIZE
-                    ));
-
-                    iterationsField.setText(String.format("%,d", block.getIterations()));
-
-                    Hash bestHash = block.getBestHash();
-
-                    if (bestHash != null) {
-                        bestHashField.setText(ByteUtil.toHexString(
-                            block.getBestHash().getValue(),
-                            Constants.BLOCK_HASH_SIZE
-                        ));
-                    }
-                }
+                updateMinerInfo();
             }
         };
+    }
+
+    private void updateMinerInfo() {
+        MiningBlock block = miner.getMiningBlock();
+
+        if (block != null) {
+            targetValueField.setText(ByteUtil.toHexString(
+                block.getTargetValue().getValue(),
+                Constants.BLOCK_HASH_SIZE
+            ));
+
+            iterationsField.setText(String.format("%,d", block.getIterations()));
+
+            Hash bestHash = block.getBestHash();
+
+            if (bestHash != null) {
+                bestHashField.setText(ByteUtil.toHexString(
+                    block.getBestHash().getValue(),
+                    Constants.BLOCK_HASH_SIZE
+                ));
+            }
+        }
     }
 
     @FXML
@@ -123,6 +127,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 return;
             }
 
+            updateMinerInfo();
+            
             Notifications.create()
                 .title("New block mined!")
                 .text("New block at height #" + minedBlock.getBlockHeight())

@@ -14,6 +14,7 @@
 <?import org.controlsfx.control.StatusBar?>
 <?import java.lang.Double?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Separator?>
 <fx:root type="javafx.scene.layout.BorderPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.MainView"
@@ -32,6 +33,7 @@
                         <ToggleButton fx:id="logPaneToggleButton" text="Log"/>
                     </buttons>
                 </SegmentedButton>
+                <Separator orientation="VERTICAL" prefWidth="15"/>
             </leftItems>
         </StatusBar>
     </bottom>
