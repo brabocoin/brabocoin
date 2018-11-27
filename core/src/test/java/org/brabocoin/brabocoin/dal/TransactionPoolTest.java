@@ -263,6 +263,22 @@ class TransactionPoolTest {
 
     @Test
     void demoteToOrphan() {
+        List<Transaction> notifiedRemoved = new ArrayList<>();
+        List<Transaction> notifiedAdded = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+                notifiedRemoved.add(transaction);
+            }
+
+            @Override
+            public void onTransactionAddedAsOrphan(@NotNull Transaction transaction) {
+                notifiedAdded.add(transaction);
+            }
+        };
+        pool.addListener(listener);
+
         Transaction coinbase = Transaction.coinbase(new Output(Simulation.randomHash(), 100));
 
         Transaction transactionA = new Transaction(
@@ -298,6 +314,17 @@ class TransactionPoolTest {
         assertTrue(pool.isOrphan(hashA));
         assertTrue(pool.isOrphan(hashB));
         assertTrue(pool.isOrphan(hashC));
+
+        // Check listener
+        assertEquals(3, notifiedRemoved.size());
+        assertEquals(3, notifiedAdded.size());
+
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashA)));
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashB)));
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashC)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashA)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashB)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashC)));
     }
 
     @Test
