@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.chain;
 
+import org.brabocoin.brabocoin.model.Block;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +23,24 @@ public interface BlockchainListener {
      * @param block The block that was disconnected.
      */
     default void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+
+    }
+
+    /**
+     * Called when a block is added as orphan.
+     *
+     * @param block The block that was added as orphan.
+     */
+    default void onOrphanAdded(@NotNull Block block) {
+
+    }
+
+    /**
+     * Called when a block is removed as orphan.
+     *
+     * @param block The block that was removed as orphan.
+     */
+    default void onOrphanRemoved(@NotNull Block block) {
 
     }
 }

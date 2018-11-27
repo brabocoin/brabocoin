@@ -240,6 +240,8 @@ public class Blockchain {
         LOGGER.fine("Adding block as orphan.");
         orphanMap.put(block.getPreviousBlockHash(), block);
         orphanIndex.put(block.getHash(), block);
+
+        listeners.forEach(l -> l.onOrphanAdded(block));
     }
 
     /**
@@ -285,6 +287,8 @@ public class Blockchain {
 
         for (Block removedBlock : removed) {
             orphanIndex.remove(removedBlock.getHash());
+
+            listeners.forEach(l -> l.onOrphanRemoved(removedBlock));
         }
 
         return removed;
