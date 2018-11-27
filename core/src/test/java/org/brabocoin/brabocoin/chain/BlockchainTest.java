@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +62,7 @@ class BlockchainTest {
     void setUp() throws DatabaseException {
         consensus = new Consensus();
         database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
-        blockchain = new Blockchain(database, consensus);
+        blockchain = new Blockchain(database, consensus, 100, new Random());
     }
 
     @AfterEach

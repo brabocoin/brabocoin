@@ -10,4 +10,5 @@ brabo:
   maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions
+  maxOrphanBlocks: 100                # Max number of orphan blocks
   servicePort: 56129                  # Port on which the application listens for messages

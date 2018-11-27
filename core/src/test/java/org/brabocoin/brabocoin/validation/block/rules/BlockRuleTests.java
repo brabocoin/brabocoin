@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -234,7 +235,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -480,7 +481,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -518,7 +519,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -1063,7 +1064,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -1101,7 +1102,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus);
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);

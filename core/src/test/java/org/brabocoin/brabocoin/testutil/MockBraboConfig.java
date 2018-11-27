@@ -67,6 +67,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public int maxOrphanBlocks() {
+        return delegator.maxOrphanBlocks();
+    }
+
+    @Override
     public int servicePort() {
         return delegator.servicePort();
     }
