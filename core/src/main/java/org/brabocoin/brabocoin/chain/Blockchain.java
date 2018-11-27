@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -28,6 +29,11 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 public class Blockchain {
 
     private static final Logger LOGGER = Logger.getLogger(Blockchain.class.getName());
+
+    /**
+     * Listeners for blockchain events.
+     */
+    private final @NotNull Set<BlockchainListener> listeners;
 
     /**
      * Full block database.
@@ -65,6 +71,7 @@ public class Blockchain {
         this.database = database;
         this.orphanMap = HashMultimap.create();
         this.orphanIndex = new HashMap<>();
+        this.listeners = new HashSet<>();
 
         IndexedBlock genesis = storeGenesisBlock(consensus.getGenesisBlock());
         this.mainChain = new IndexedChain(genesis);
@@ -80,6 +87,24 @@ public class Blockchain {
         }
 
         return indexedGenesis;
+    }
+
+    /**
+     * Add a listener to blockchain events.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(@NotNull BlockchainListener listener) {
+        this.listeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to blockchain events.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(@NotNull BlockchainListener listener) {
+        this.listeners.remove(listener);
     }
 
     /**
@@ -274,7 +299,12 @@ public class Blockchain {
      * @see IndexedChain#popTopBlock()
      */
     public IndexedBlock popTopBlock() throws IllegalStateException {
-        return mainChain.popTopBlock();
+        IndexedBlock block = mainChain.popTopBlock();
+
+        // Notify listeners
+        listeners.forEach(l -> l.onTopBlockDisconnected(block));
+
+        return block;
     }
 
     /**
@@ -286,5 +316,8 @@ public class Blockchain {
      */
     public void pushTopBlock(@NotNull IndexedBlock block) {
         mainChain.pushTopBlock(block);
+
+        // Notify listeners
+        listeners.forEach(l -> l.onTopBlockConnected(block));
     }
 }

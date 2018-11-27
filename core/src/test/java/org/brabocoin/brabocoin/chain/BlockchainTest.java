@@ -213,4 +213,73 @@ class BlockchainTest {
     void getMainChain() {
         assertNotNull(blockchain.getMainChain());
     }
+
+    @Test
+    void topBlockConnectedListener() {
+        final IndexedBlock[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockConnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.pushTopBlock(block);
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void topBlockDisconnectedListener() {
+        final IndexedBlock[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.pushTopBlock(block);
+        blockchain.popTopBlock();
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void removeListener() {
+        final IndexedBlock[] notifiedBlock = {null, null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockConnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+
+            @Override
+            public void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.removeListener(listener);
+
+        blockchain.pushTopBlock(block);
+        blockchain.popTopBlock();
+
+        assertNull(notifiedBlock[0]);
+        assertNull(notifiedBlock[1]);
+    }
 }
