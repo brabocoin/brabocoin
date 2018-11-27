@@ -45,6 +45,11 @@ public class TransactionPool implements Iterable<Transaction> {
     private final static Logger LOGGER = Logger.getLogger(TransactionPool.class.getName());
 
     /**
+     * Listeners for transaction pool events.
+     */
+    private final @NotNull Set<TransactionPoolListener> listeners;
+
+    /**
      * The random instance.
      */
     private final Random random;
@@ -90,6 +95,7 @@ public class TransactionPool implements Iterable<Transaction> {
     public TransactionPool(int maxPoolSize, int maxOrphanPoolSize, @NotNull Random random) {
         LOGGER.info("Initializing transaction pool.");
 
+        this.listeners = new HashSet<>();
         this.maxOrphanPoolSize = maxOrphanPoolSize;
         this.maxPoolSize = maxPoolSize;
         this.random = random;
@@ -122,6 +128,26 @@ public class TransactionPool implements Iterable<Transaction> {
     }
 
     /**
+     * Add a listener to transaction pool events.
+     *
+     * @param listener
+     *     The listener to add.
+     */
+    public void addListener(@NotNull TransactionPoolListener listener) {
+        this.listeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to transaction pool events.
+     *
+     * @param listener
+     *     The listener to remove.
+     */
+    public void removeListener(@NotNull TransactionPoolListener listener) {
+        this.listeners.remove(listener);
+    }
+
+    /**
      * Add an independent transaction to the transaction pool.
      * <p>
      * An independent transaction has no dependencies on any other transactions that are not
@@ -133,11 +159,17 @@ public class TransactionPool implements Iterable<Transaction> {
      *
      * @param transaction
      *     The validated transaction to be stored as independent in the transaction pool.
+     * @throws IllegalArgumentException
+     *     If the transaction is already present as independent.
      */
     public synchronized void addIndependentTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding independent transaction.");
-        orphanTransactions.removeValue(transaction);
+        if (orphanTransactions.removeValue(transaction) != null) {
+            listeners.forEach(l -> l.onTransactionRemovedAsOrphan(transaction));
+        }
+
         independentTransactions.put(transaction);
+        listeners.forEach(l -> l.onTransactionAddedToPool(transaction));
 
         limitTransactionPoolSize();
     }
@@ -153,11 +185,19 @@ public class TransactionPool implements Iterable<Transaction> {
      *
      * @param transaction
      *     The validated transaction to be stored as dependent in the transaction pool.
+     * @throws IllegalArgumentException
+     *     If the transaction is already present as dependent.
      */
     public synchronized void addDependentTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding dependent transaction.");
-        orphanTransactions.removeValue(transaction);
+        if (orphanTransactions.removeValue(transaction) != null) {
+            listeners.forEach(l -> l.onTransactionRemovedAsOrphan(transaction));
+        }
+
         dependentTransactions.put(transaction);
+        listeners.forEach(l -> l.onTransactionAddedToPool(transaction));
+
+        limitTransactionPoolSize();
     }
 
     /**
@@ -171,11 +211,17 @@ public class TransactionPool implements Iterable<Transaction> {
                 Hash remove = dependentTransactions.getKeyAt(
                     random.nextInt(dependentTransactions.size())
                 );
-                dependentTransactions.removeKey(remove);
+                Transaction removedParent = dependentTransactions.removeKey(remove);
+                listeners.forEach(l -> l.onTransactionRemovedFromPool(removedParent));
+
                 List<Transaction> removed = dependentTransactions.removeMatchingDependants(
                     remove,
                     t -> true
                 );
+
+                for (Transaction t : removed) {
+                    listeners.forEach(l -> l.onTransactionRemovedFromPool(t));
+                }
 
                 LOGGER.finest(() -> MessageFormat.format(
                     "Removed {0} dependent transactions from the pool.",
@@ -186,7 +232,10 @@ public class TransactionPool implements Iterable<Transaction> {
                 Hash remove = independentTransactions.getKeyAt(
                     random.nextInt(independentTransactions.size())
                 );
-                independentTransactions.removeKey(remove);
+                Transaction removed = independentTransactions.removeKey(remove);
+
+                listeners.forEach(l -> l.onTransactionRemovedFromPool(removed));
+
                 LOGGER.finest("Removed an independent transactions from the pool.");
             }
         }
@@ -199,15 +248,20 @@ public class TransactionPool implements Iterable<Transaction> {
      *
      * @param transaction
      *     The transaction to be stored as orphan in the transaction pool.
+     * @throws IllegalArgumentException
+     *     If the transaction is already present as orphan.
      */
     public synchronized void addOrphanTransaction(@NotNull Transaction transaction) {
         LOGGER.fine("Adding orphan transaction.");
         orphanTransactions.put(transaction);
 
+        listeners.forEach(l -> l.onTransactionAddedAsOrphan(transaction));
+
         // Remove first orphan when size limit is reached
         while (orphanTransactions.size() > maxOrphanPoolSize) {
             Hash remove = orphanTransactions.getKeyAt(random.nextInt(orphanTransactions.size()));
-            orphanTransactions.removeKey(remove);
+            Transaction removed = orphanTransactions.removeKey(remove);
+            listeners.forEach(l -> l.onTransactionRemovedAsOrphan(removed));
             LOGGER.finest("Removed orphan transaction to limit max size of the pool.");
         }
     }
@@ -223,7 +277,8 @@ public class TransactionPool implements Iterable<Transaction> {
      * @return The transaction with the given hash, or {@code null} if no such transaction can be
      * found.
      */
-    public synchronized @Nullable Transaction findValidatedTransaction(@NotNull Hash transactionHash) {
+    public synchronized @Nullable Transaction findValidatedTransaction(
+        @NotNull Hash transactionHash) {
         LOGGER.fine("Finding validated transaction.");
         if (independentTransactions.containsKey(transactionHash)) {
             LOGGER.fine("Transaction found in independent set.");
@@ -244,8 +299,15 @@ public class TransactionPool implements Iterable<Transaction> {
      */
     public synchronized void removeValidatedTransaction(Hash hash) {
         LOGGER.fine("Removing validated transaction from the transaction pool.");
-        independentTransactions.removeKey(hash);
-        dependentTransactions.removeKey(hash);
+        Transaction independent = independentTransactions.removeKey(hash);
+        if (independent != null) {
+            listeners.forEach(l -> l.onTransactionRemovedFromPool(independent));
+        }
+
+        Transaction dependent = dependentTransactions.removeKey(hash);
+        if (dependent != null) {
+            listeners.forEach(l -> l.onTransactionRemovedFromPool(dependent));
+        }
     }
 
     /**
@@ -271,9 +333,20 @@ public class TransactionPool implements Iterable<Transaction> {
      *     Function validating whether the orphan can be removed.
      * @return The list of removed orphans.
      */
-    public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(@NotNull Hash parentHash,
-                                                                                @NotNull Function<Transaction, Boolean> orphanValidator) {
-        return orphanTransactions.removeMatchingDependants(parentHash, orphanValidator);
+    public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(
+        @NotNull Hash parentHash,
+        @NotNull Function<Transaction, Boolean> orphanValidator) {
+
+        List<Transaction> removed = orphanTransactions.removeMatchingDependants(
+            parentHash,
+            orphanValidator
+        );
+
+        for (Transaction t : removed) {
+            listeners.forEach(l -> l.onTransactionRemovedAsOrphan(t));
+        }
+
+        return removed;
     }
 
     /**
