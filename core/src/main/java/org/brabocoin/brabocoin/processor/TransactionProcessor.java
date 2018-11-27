@@ -9,11 +9,13 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
@@ -110,29 +112,30 @@ public class TransactionProcessor {
 
     private ValidationStatus processTransaction(
         @NotNull Transaction transaction) throws DatabaseException {
-        ValidationStatus status = transactionValidator.checkTransactionValid(transaction)
-            .getStatus();
+        TransactionValidationResult result =
+            transactionValidator.checkTransactionValid(transaction);
 
-        processTransactionWithoutValidation(transaction, status);
+        processTransactionWithoutValidation(transaction, result);
 
-        return status;
+        return result.getStatus();
     }
 
     private ValidationStatus processDeorphanatedTransaction(
         @NotNull Transaction transaction) throws DatabaseException {
-        ValidationStatus status = transactionValidator.checkTransactionPostOrphan(transaction)
-            .getStatus();
+        TransactionValidationResult result = transactionValidator.checkTransactionPostOrphan(
+            transaction);
 
-        processTransactionWithoutValidation(transaction, status);
+        processTransactionWithoutValidation(transaction, result);
 
-        return status;
+        return result.getStatus();
     }
 
     private void processTransactionWithoutValidation(@NotNull Transaction transaction,
-                                                     ValidationStatus status) throws DatabaseException {
+                                                     TransactionValidationResult result) throws DatabaseException {
 
+        ValidationStatus status = result.getStatus();
         if (status == ValidationStatus.INVALID) {
-            LOGGER.info("New transaction is invalid.");
+            LOGGER.log(Level.INFO, MessageFormat.format("New transaction is invalid, rulebook result: {0}", result));
             return;
         }
 
@@ -228,7 +231,7 @@ public class TransactionProcessor {
 
         for (Transaction transaction : block.getTransactions()) {
             // Add transactions to pool and update pool UTXO set
-            processTransactionWithoutValidation(transaction, ValidationStatus.VALID);
+            processTransactionWithoutValidation(transaction, TransactionValidationResult.passed());
             LOGGER.finest(() -> MessageFormat.format(
                 "Added transaction {0} to transaction pool.",
                 toHexString(transaction.getHash().getValue())

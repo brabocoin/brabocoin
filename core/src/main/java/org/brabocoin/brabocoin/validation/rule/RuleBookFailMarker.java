@@ -31,4 +31,11 @@ public class RuleBookFailMarker {
     public Class<? extends Rule> getFailedRule() {
         return failedRule;
     }
+
+    @Override
+    public String toString() {
+        return child != null ?
+            String.format("'%s' -> (%s)", failedRule, child) :
+            String.format("'%s'", failedRule);
+    }
 }

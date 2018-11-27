@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.validation.rule;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
+
 public class RuleBookResult {
 
     protected final boolean passed;
@@ -48,5 +50,10 @@ public class RuleBookResult {
 
     public RuleBookFailMarker getFailMarker() {
         return failedRule;
+    }
+
+    @Override
+    public String toString() {
+        return passed ? "Passed" : MessageFormat.format("Failed, marker: {0}", failedRule);
     }
 }
