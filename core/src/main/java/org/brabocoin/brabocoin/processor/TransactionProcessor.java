@@ -230,21 +230,29 @@ public class TransactionProcessor {
         LOGGER.fine("Processing top block disconnected.");
 
         for (Transaction transaction : block.getTransactions()) {
-            // Add transactions to pool and update pool UTXO set
-            processTransactionWithoutValidation(transaction, TransactionValidationResult.passed());
-            LOGGER.finest(() -> MessageFormat.format(
-                "Added transaction {0} to transaction pool.",
-                toHexString(transaction.getHash().getValue())
-            ));
+            if (transaction.isCoinbase()) {
+                // Do not add the coinbase transaction to the transaction pool.
+                // Instead, make sure depending transactions on this coinbase are demoted to orphan
+                transactionPool.demoteToOrphan(transaction.getHash());
+            }
+            else {
+                // Add transactions to pool and update pool UTXO set
+                processTransactionWithoutValidation(transaction, TransactionValidationResult.passed());
+                LOGGER.finest(() -> MessageFormat.format(
+                    "Added transaction {0} to transaction pool.",
+                    toHexString(transaction.getHash().getValue())
+                ));
 
-            // Some previously independent transactions may depend the processed transaction
-            // making it dependent
-            transactionPool.demoteIndependentToDependent(transaction.getHash());
+                // Some previously independent transactions may depend the processed transaction
+                // making it dependent
+                transactionPool.demoteIndependentToDependent(transaction.getHash());
 
-            // Some orphan transactions could be double-spending outputs that are used by the
-            // transactions in the disconnected block. These orphan transactions now become valid.
-            for (Input input : transaction.getInputs()) {
-                addValidOrphans(input.getReferencedTransaction());
+                // Some orphan transactions could be double-spending outputs that are used by the
+                // transactions in the disconnected block. These orphan transactions now become
+                // valid.
+                for (Input input : transaction.getInputs()) {
+                    addValidOrphans(input.getReferencedTransaction());
+                }
             }
         }
 
