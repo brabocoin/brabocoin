@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.Destructible;
@@ -16,7 +17,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +40,9 @@ class WalletIOTest {
         PrivateKey key = PrivateKey.plain(BigInteger.valueOf(12345));
 
         Wallet wallet = new Wallet(
-                Collections.singletonMap(curve.getPublicKeyFromPrivateKey(key.getKey().getReference().get()), key)
+                Collections.singletonList(
+                    new KeyPair(curve.getPublicKeyFromPrivateKey(key.getKey().getReference().get()), key)
+                )
         );
 
         WalletIO io = new WalletIO(
@@ -67,7 +70,7 @@ class WalletIOTest {
         );
 
         Wallet wallet = new Wallet(
-                Collections.singletonMap(publicKey, key)
+                Collections.singletonList(new KeyPair(publicKey, key))
         );
 
         WalletIO io = new WalletIO(
@@ -86,12 +89,9 @@ class WalletIOTest {
     void readAndWriteMultiplePlainKeys() throws CipherException, IOException, DestructionException {
         String passphrase = "MergeMuppetMaarDanEenStukkieLanger";
 
-        Map<PublicKey, PrivateKey> keys = Simulation.repeatedBuilder(Simulation::randomBigInteger, 100).stream()
-                .collect(Collectors.toMap(
-                        b -> curve.getPublicKeyFromPrivateKey(b),
-                        PrivateKey::plain
-                ));
-
+        List<KeyPair> keys = Simulation.repeatedBuilder(Simulation::randomBigInteger, 100).stream()
+                .map(b -> new KeyPair(curve.getPublicKeyFromPrivateKey(b), PrivateKey.plain(b)))
+                .collect(Collectors.toList());
 
         Wallet wallet = new Wallet(keys);
 
@@ -103,29 +103,31 @@ class WalletIOTest {
 
         Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray));
 
-        assertEquals(new HashSet<>(keys.values()), new HashSet<>(readWallet.getPrivateKeys()));
+        assertEquals(keys.stream().map(KeyPair::getPrivateKey).collect(Collectors.toSet()), new HashSet<>(readWallet.getPrivateKeys()));
     }
 
     @Test
     void readAndWriteMultipleEncryptedKeys() throws CipherException, IOException, DestructionException {
         String passphrase = "MergeMuppetMaarDanEenStukkieLanger";
 
-        Map<PublicKey, PrivateKey> keys = Simulation.repeatedBuilder(Simulation::randomBigInteger, 10).stream()
-                .collect(Collectors.toMap(
-                        b -> curve.getPublicKeyFromPrivateKey(b),
-                        b -> {
-                            try {
-                                return PrivateKey.encrypted(
-                                        new Destructible<>(() -> new BigInteger(b.toByteArray())),
-                                        new Destructible<>("jitPassphrase!"::toCharArray),
-                                        new BouncyCastleAES()
-                                );
-                            } catch (CipherException | DestructionException e) {
-                                e.printStackTrace();
-                                return null;
-                            }
-                        }
-                ));
+         List<KeyPair> keys = Simulation.repeatedBuilder(Simulation::randomBigInteger, 10).stream()
+                .map(b -> {
+                    try {
+                        return new KeyPair(
+                            curve.getPublicKeyFromPrivateKey(b),
+                            PrivateKey.encrypted(
+                                new Destructible<>(() -> new BigInteger(b.toByteArray())),
+                                new Destructible<>("jitPassphrase!"::toCharArray),
+                                new BouncyCastleAES()
+                            )
+                        );
+                    }
+                    catch (CipherException | DestructionException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                })
+                .collect(Collectors.toList());
 
 
         Wallet wallet = new Wallet(keys);
@@ -138,6 +140,6 @@ class WalletIOTest {
 
         Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray));
 
-        assertEquals(new HashSet<>(keys.values()), new HashSet<>(readWallet.getPrivateKeys()));
+        assertEquals(keys.stream().map(KeyPair::getPrivateKey).collect(Collectors.toSet()), new HashSet<>(readWallet.getPrivateKeys()));
     }
 }

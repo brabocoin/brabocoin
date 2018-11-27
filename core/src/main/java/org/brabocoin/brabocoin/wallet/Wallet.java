@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
+import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.Destructible;
@@ -14,15 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * The wallet data structure.
  */
-public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
+public class Wallet implements Iterable<KeyPair> {
+
     /**
-     * The mapping of a public key to a possibly encrypted private key.
+     * The public and private key collection.
      */
-    private Map<PublicKey, PrivateKey> keyMap;
+    private Collection<KeyPair> keyPairs;
 
     /**
      * The wallet UTXO set.
@@ -32,10 +35,11 @@ public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
     /**
      * Create a wallet for a given public to private key map.
      *
-     * @param keyMap Key map
+     * @param keyPairs
+     *     Key map
      */
-    public Wallet(Map<PublicKey, PrivateKey> keyMap) {
-        this.keyMap = keyMap;
+    public Wallet(Collection<KeyPair> keyPairs) {
+        this.keyPairs = keyPairs;
     }
 
     /**
@@ -44,7 +48,7 @@ public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
      * @return All public keys known to the wallet
      */
     public Collection<PublicKey> getPublicKeys() {
-        return keyMap.keySet();
+        return keyPairs.stream().map(KeyPair::getPublicKey).collect(Collectors.toList());
     }
 
     /**
@@ -53,29 +57,42 @@ public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
      * @return All private keys known to the wallet
      */
     public Collection<PrivateKey> getPrivateKeys() {
-        return keyMap.values();
+        return keyPairs.stream().map(KeyPair::getPrivateKey).collect(Collectors.toList());
     }
 
-
+    /**
+     * Finds a key pair.
+     *
+     * @param publicKey
+     *     The public key to find the key pair for
+     * @return The key pair or null if not found
+     */
+    public KeyPair findKeyPair(PublicKey publicKey) {
+        return keyPairs.stream().filter(p -> p.getPublicKey() == publicKey)
+            .findFirst()
+            .orElse(null);
+    }
 
     /**
      * Whether the private key corresponding to the given public key is encrypted.
      *
-     * @param publicKey The public key used to search the private key
+     * @param publicKey
+     *     The public key used to search the private key
      * @return Whether the matching private key is encrypted
      */
     public boolean isKeyPairEncrypted(PublicKey publicKey) {
-        if (!keyMap.containsKey(publicKey)) {
+        if (!getPublicKeys().contains(publicKey)) {
             throw new IllegalStateException("Public key does not exists in keymap");
         }
 
-        return keyMap.get(publicKey).isEncrypted();
+        return findKeyPair(publicKey).getPrivateKey().isEncrypted();
     }
 
     /**
      * Sign an unsigned transaction to create a signed transaction.
      *
-     * @param transaction Unsigned transaction
+     * @param transaction
+     *     Unsigned transaction
      * @return A signed transaction
      */
     public Transaction signTransaction(UnsignedTransaction transaction,
@@ -83,25 +100,23 @@ public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
         for (Input input : transaction.getInputs()) {
             UnspentOutputInfo outputInfo = utxoSet.findUnspentOutputInfo(input);
             if (outputInfo == null) {
-                throw new IllegalStateException("Could not find output info for input in the transaction");
+                throw new IllegalStateException(
+                    "Could not find output info for input in the transaction");
             }
 
             PublicKey publicKey = getPublicKeys().stream()
-                    .filter(pub -> pub.getHash().equals(outputInfo.getAddress()))
-                    .findFirst()
-                    .orElse(null);
+                .filter(pub -> pub.getHash().equals(outputInfo.getAddress()))
+                .findFirst()
+                .orElse(null);
 
             if (publicKey == null) {
-                throw new IllegalStateException("Referenced output uses address not found in wallet.");
+                throw new IllegalStateException(
+                    "Referenced output uses address not found in wallet.");
             }
 
-            PrivateKey privateKey = keyMap.get(publicKey);
+            KeyPair keyPair = findKeyPair(publicKey);
 
-            if (privateKey == null) {
-                throw new IllegalStateException("Public key has null private key in keymap.");
-            }
-
-            if (!privateKey.isUnlocked()) {
+            if (!keyPair.getPrivateKey().isUnlocked()) {
                 // TODO: Implement
             }
         }
@@ -112,7 +127,7 @@ public class Wallet implements Iterable<Map.Entry<PublicKey, PrivateKey>> {
 
     @NotNull
     @Override
-    public Iterator<Map.Entry<PublicKey, PrivateKey>> iterator() {
-        return keyMap.entrySet().iterator();
+    public Iterator<KeyPair> iterator() {
+        return keyPairs.iterator();
     }
 }
