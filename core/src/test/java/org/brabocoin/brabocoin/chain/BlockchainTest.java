@@ -143,6 +143,27 @@ class BlockchainTest {
     }
 
     @Test
+    void addOrphanSizeLimit() throws DatabaseException {
+        blockchain = new Blockchain(database, consensus, 2, new Random());
+
+        List<Block> notified = new ArrayList<>();
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onOrphanRemoved(@NotNull Block block) {
+                notified.add(block);
+            }
+        };
+        blockchain.addListener(listener);
+
+        List<Block> blocks = Simulation.randomBlockChainGenerator(3);
+        blocks.forEach(blockchain::addOrphan);
+
+        assertEquals(2, blocks.stream().map(Block::getHash).filter(blockchain::isOrphan).count());
+
+        assertEquals(1, notified.size());
+    }
+
+    @Test
     void findBlockUndoNonExistent() throws DatabaseException {
         Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         assertNull(blockchain.findBlockUndo(hash));
