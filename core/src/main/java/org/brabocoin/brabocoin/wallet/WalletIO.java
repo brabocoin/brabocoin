@@ -1,25 +1,24 @@
 package org.brabocoin.brabocoin.wallet;
 
-import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.crypto.PrivateKey;
-import org.brabocoin.brabocoin.model.proto.Secp256k1PublicKeyByteStringConverter;
+import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class WalletIO {
     private final Cipher cipher;
-    private Secp256k1PublicKeyByteStringConverter converter = new Secp256k1PublicKeyByteStringConverter();
 
     public WalletIO(Cipher cipher) {
         this.cipher = cipher;
@@ -34,26 +33,20 @@ public class WalletIO {
         byte[] decryptedBytes = cipher.decyrpt(rawBytes, passphrase.getReference().get());
 
         InputStream stream = new ByteArrayInputStream(decryptedBytes);
-        PublicKey publicKey;
-        Hash publicKeyHash;
-        PrivateKey privateKey;
 
-        Map<PublicKey, PrivateKey> keyList = new HashMap<>();
+        List<KeyPair> keyList = new ArrayList<>();
 
-        BrabocoinProtos.Hash protoPubHash = BrabocoinProtos.Hash.parseDelimitedFrom(stream);
-        BrabocoinProtos.PrivateKey protoKey = BrabocoinProtos.PrivateKey.parseDelimitedFrom(stream);
+        KeyPair keyPair;
+        BrabocoinProtos.KeyPair protoKeyPair = BrabocoinProtos.KeyPair.parseDelimitedFrom(stream);
 
-        while (protoPubHash != null && protoKey != null) {
-            publicKeyHash = ProtoConverter.toDomain(protoPubHash, Hash.Builder.class);
-            if (publicKeyHash == null) {
-                throw new IllegalStateException("Could not decode hash of public key.");
+        while (protoKeyPair != null) {
+            keyPair = ProtoConverter.toDomain(protoKeyPair, KeyPair.Builder.class);
+            if (keyPair == null) {
+                throw new IllegalStateException("Could not parse KeyPair from read wallet file");
             }
-            publicKey = converter.toDomainValue(publicKeyHash.getValue());
-            privateKey = ProtoConverter.toDomain(protoKey, PrivateKey.Builder.class);
-            keyList.put(publicKey, privateKey);
+            keyList.add(keyPair);
 
-            protoPubHash = BrabocoinProtos.Hash.parseDelimitedFrom(stream);
-            protoKey = BrabocoinProtos.PrivateKey.parseDelimitedFrom(stream);
+            protoKeyPair = BrabocoinProtos.KeyPair.parseDelimitedFrom(stream);
         }
 
         passphrase.destruct();
@@ -63,15 +56,10 @@ public class WalletIO {
 
     public void write(Wallet wallet, File keysFile, Destructible<char[]> passphrase) throws IOException, CipherException, DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (Map.Entry<PublicKey, PrivateKey> entry : wallet) {
-            ByteString pubKey = entry.getKey().toCompressed();
-            BrabocoinProtos.Hash protoPubHash = ProtoConverter.toProto(new Hash(pubKey), BrabocoinProtos.Hash.class);
-            BrabocoinProtos.PrivateKey protoKey = ProtoConverter.toProto(
-                    entry.getValue(), BrabocoinProtos.PrivateKey.class
-            );
+        for (KeyPair keyPair : wallet) {
+            BrabocoinProtos.KeyPair protoKeyPair = ProtoConverter.toProto(keyPair, BrabocoinProtos.KeyPair.class);
 
-            protoPubHash.writeDelimitedTo(outputStream);
-            protoKey.writeDelimitedTo(outputStream);
+            protoKeyPair.writeDelimitedTo(outputStream);
         }
 
         byte[] encryptedBytes = cipher.encrypt(outputStream.toByteArray(), passphrase.getReference().get());
