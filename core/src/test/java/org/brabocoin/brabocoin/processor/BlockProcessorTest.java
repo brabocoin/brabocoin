@@ -9,6 +9,7 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
@@ -97,6 +98,8 @@ class BlockProcessorTest {
                     public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
                         return BlockValidationResult.passed();
                     }
+
+
                 };
             }
         };
@@ -330,15 +333,17 @@ class BlockProcessorTest {
         // Main chain: genesis - A - B - C
         // Fork:              \_ D - E - F - G
 
+        Transaction transaction = new Transaction(
+            Collections.singletonList(Simulation.randomInput()),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+        );
+
         Block blockA = new Block(
                 state.getConsensus().getGenesisBlock().getHash(),
                 Simulation.randomHash(),
                 Simulation.randomHash(),
                 Simulation.randomBigInteger(), 1,
-                Collections.singletonList(new Transaction(
-                        Collections.emptyList(),
-                        Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-                )),
+                Collections.singletonList(transaction),
                 0);
         Hash hashA = blockA.getHash();
 
@@ -429,9 +434,22 @@ class BlockProcessorTest {
                         }
                         return BlockValidationResult.passed();
                     }
+
+                    @Override
+                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
+
+                    @Override
+                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                        return BlockValidationResult.passed();
+                    }
                 };
             }
         };
+
+        Input input = transaction.getInputs().get(0);
+        state.getChainUTXODatabase().addUnspentOutputInfo(input.getReferencedTransaction(), input.getReferencedOutputIndex(), new UnspentOutputInfo(false, 0, 10L, Simulation.randomHash()));
 
         state.getBlockProcessor().processNewBlock(blockA);
         state.getBlockProcessor().processNewBlock(blockB);
@@ -467,8 +485,8 @@ class BlockProcessorTest {
 
         // Check transaction pool
         assertTrue(state.getTransactionPool().hasValidTransaction(blockA.getTransactions().get(0).getHash()));
-        assertTrue(state.getTransactionPool().hasValidTransaction(blockB.getTransactions().get(0).getHash()));
-        assertTrue(state.getTransactionPool().hasValidTransaction(blockC.getTransactions().get(0).getHash()));
+        assertFalse(state.getTransactionPool().hasValidTransaction(blockB.getTransactions().get(0).getHash()));
+        assertFalse(state.getTransactionPool().hasValidTransaction(blockC.getTransactions().get(0).getHash()));
     }
 
 }

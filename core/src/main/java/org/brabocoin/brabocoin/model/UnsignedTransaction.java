@@ -87,7 +87,7 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
      *
      * @return The transaction hash.
      */
-    public @NotNull Hash getHash() {
+    public synchronized @NotNull Hash getHash() {
         if (hash == null) {
             ByteString data = getRawData();
             hash = Hashing.digestSHA256(Hashing.digestSHA256(data));

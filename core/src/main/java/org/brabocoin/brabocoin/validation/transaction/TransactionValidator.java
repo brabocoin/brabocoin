@@ -21,6 +21,7 @@ import org.brabocoin.brabocoin.validation.transaction.rules.InputValueTxRange;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.SignatureCountTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SufficientInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
@@ -61,6 +62,7 @@ public class TransactionValidator {
     );
 
     private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
+        SignatureCountTxRule.class,
         InputOutputNotEmptyTxRule.class,
         OutputValueTxRule.class
     );

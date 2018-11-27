@@ -56,7 +56,7 @@ public class Signer {
      *     The private key used to sign the message.
      * @return The signature, containing the private key, of the message.
      */
-    public @NotNull Signature signMessage(@NotNull ByteString message,
+    public synchronized @NotNull Signature signMessage(@NotNull ByteString message,
                                           @NotNull BigInteger privateKey) {
         LOGGER.fine("Signing a message.");
 
@@ -110,7 +110,7 @@ public class Signer {
      *     The message that is signed.
      * @return Whether the signature is valid.
      */
-    public boolean verifySignature(@NotNull Signature signature, @NotNull Hash publicKeyHash,
+    public synchronized boolean verifySignature(@NotNull Signature signature, @NotNull Hash publicKeyHash,
                                    @NotNull ByteString message) {
         LOGGER.fine("Verifying a signature.");
 

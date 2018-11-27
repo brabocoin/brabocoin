@@ -401,6 +401,38 @@ public class TransactionPool implements Iterable<Transaction> {
     }
 
     /**
+     * Demote all independent and dependent transactions that depend on {@code dependency} to
+     * orphan.
+     *
+     * @param dependency
+     *     The dependency.
+     */
+    public synchronized void demoteToOrphan(@NotNull Hash dependency) {
+        // TODO: add listeners
+
+        Collection<Transaction> independents =
+            independentTransactions.getFromDependency(dependency);
+
+        // Remove dependents that depend on dependency
+        List<Transaction> removed = dependentTransactions.removeMatchingDependants(dependency, t -> true);
+        removed.forEach(orphanTransactions::put);
+
+        // Remove dependents that depend on the removed independents
+        for (Transaction independent : independents) {
+            List<Transaction> dependents = dependentTransactions.removeMatchingDependants(independent.getHash(), t -> true);
+
+            dependents.forEach(orphanTransactions::put);
+        }
+
+        for (Transaction transaction : independents) {
+            independentTransactions.removeValue(transaction);
+            orphanTransactions.put(transaction);
+        }
+
+        LOGGER.fine("Demoted transactions from pool to orphan.");
+    }
+
+    /**
      * Checks whether the transaction is known to the transaction pool.
      *
      * @param hash

@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.dal;
 
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -258,6 +259,45 @@ class TransactionPoolTest {
 
         assertTrue(pool.isDependent(hash));
         assertFalse(pool.isIndependent(hash));
+    }
+
+    @Test
+    void demoteToOrphan() {
+        Transaction coinbase = Transaction.coinbase(new Output(Simulation.randomHash(), 100));
+
+        Transaction transactionA = new Transaction(
+            Collections.singletonList(new Input(coinbase.getHash(), 0)),
+            Collections.singletonList(Simulation.randomOutput()),
+            Collections.singletonList(Simulation.randomSignature())
+        );
+        Hash hashA = transactionA.getHash();
+        pool.addIndependentTransaction(transactionA);
+
+        Transaction transactionB = new Transaction(
+            Collections.singletonList(new Input(coinbase.getHash(), 0)),
+            Collections.singletonList(Simulation.randomOutput()),
+            Collections.singletonList(Simulation.randomSignature())
+        );
+        Hash hashB = transactionB.getHash();
+        pool.addDependentTransaction(transactionB);
+
+        Transaction transactionC = new Transaction(
+            Collections.singletonList(new Input(transactionA.getHash(), 0)),
+            Collections.singletonList(Simulation.randomOutput()),
+            Collections.singletonList(Simulation.randomSignature())
+        );
+        Hash hashC = transactionC.getHash();
+        pool.addDependentTransaction(transactionC);
+
+        pool.demoteToOrphan(coinbase.getHash());
+
+        assertFalse(pool.isIndependent(hashA));
+        assertFalse(pool.isDependent(hashB));
+        assertFalse(pool.isDependent(hashC));
+
+        assertTrue(pool.isOrphan(hashA));
+        assertTrue(pool.isOrphan(hashB));
+        assertTrue(pool.isOrphan(hashC));
     }
 
     @Test
