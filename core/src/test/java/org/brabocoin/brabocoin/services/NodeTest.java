@@ -21,7 +21,6 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -903,7 +902,6 @@ public class NodeTest {
      * main chain), B should again switch the main chain.
      */
     @Test
-    @Disabled
     void forkSwitching() throws DatabaseException, IOException, InterruptedException {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
@@ -1058,7 +1056,6 @@ public class NodeTest {
      main chain), B should again switch the main chain.
          */
         @Test
-        @Disabled("Fails because transaction rules are not yet implemented.")
         void forkSwitchingPropagated() throws DatabaseException, IOException,
      InterruptedException {
             // Create a blockchain with a block mined on top of genesis block.
@@ -1172,15 +1169,13 @@ public class NodeTest {
                 .getIndexedBlock(forkBlock1.getHash());
 
             Block forkBlock2 = minerA.mineNewBlock(forkBlock1Indexed, Simulation.randomHash());
-
-            stateA.getBlockProcessor().processNewBlock(forkBlock1);
             stateA.getBlockProcessor().processNewBlock(forkBlock2);
 
             assert forkBlock2.getBlockHeight() == stateA.getBlockchain().getMainChain().getHeight();
 
             stateA.getEnvironment().announceBlockRequest(forkBlock2);
 
-            await().atMost(30, TimeUnit.SECONDS)
+            await().atMost(60, TimeUnit.SECONDS)
                     .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateC.getEnvironment().getTopBlockHeight());
 
             assertEquals(
@@ -1189,13 +1184,11 @@ public class NodeTest {
 
             // Mine two block on top of new fork of A, what used to be the main chain
             Block fork2Block1 = minerA.mineNewBlock(mainChainTop, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(forkBlock1);
+            stateA.getBlockProcessor().processNewBlock(fork2Block1);
             IndexedBlock fork2Block1Indexed = stateA.getBlockchain()
-                .getIndexedBlock(forkBlock1.getHash());
+                .getIndexedBlock(fork2Block1.getHash());
 
             Block fork2Block2 = minerA.mineNewBlock(fork2Block1Indexed, Simulation.randomHash());
-
-            stateA.getBlockProcessor().processNewBlock(fork2Block1);
             stateA.getBlockProcessor().processNewBlock(fork2Block2);
 
             assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();

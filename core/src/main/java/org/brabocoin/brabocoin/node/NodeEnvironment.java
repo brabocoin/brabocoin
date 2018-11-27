@@ -257,7 +257,7 @@ public class NodeEnvironment {
                     messageQueue.add(() -> getBlocksRequest(
                         Collections.singletonList(block.getPreviousBlockHash()),
                         peers,
-                        propagate
+                        false
                     ));
                     // Fall-through intended
                 case VALID:
@@ -453,7 +453,7 @@ public class NodeEnvironment {
                                               boolean blocking) throws InterruptedException {
         LOGGER.info("Getting a list of blocks from peers.");
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(peers.size());
 
         for (Peer peer : peers) {
             // TODO: Check if async processing is done correctly.
@@ -876,7 +876,12 @@ public class NodeEnvironment {
             () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue()))
         );
         try {
-            return blockchain.getBlock(blockHash);
+            Block block = blockchain.getBlock(blockHash);
+            if (block != null) {
+                return block;
+            }
+
+            return blockchain.getOrphan(blockHash);
         }
         catch (DatabaseException e) {
             LOGGER.log(
