@@ -223,7 +223,8 @@ public class TransactionPool implements Iterable<Transaction> {
      * @return The transaction with the given hash, or {@code null} if no such transaction can be
      * found.
      */
-    public synchronized @Nullable Transaction findValidatedTransaction(@NotNull Hash transactionHash) {
+    public synchronized @Nullable Transaction findValidatedTransaction(
+        @NotNull Hash transactionHash) {
         LOGGER.fine("Finding validated transaction.");
         if (independentTransactions.containsKey(transactionHash)) {
             LOGGER.fine("Transaction found in independent set.");
@@ -271,8 +272,9 @@ public class TransactionPool implements Iterable<Transaction> {
      *     Function validating whether the orphan can be removed.
      * @return The list of removed orphans.
      */
-    public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(@NotNull Hash parentHash,
-                                                                                @NotNull Function<Transaction, Boolean> orphanValidator) {
+    public synchronized @NotNull List<Transaction> removeValidOrphansFromParent(
+        @NotNull Hash parentHash,
+        @NotNull Function<Transaction, Boolean> orphanValidator) {
         return orphanTransactions.removeMatchingDependants(parentHash, orphanValidator);
     }
 
@@ -325,6 +327,38 @@ public class TransactionPool implements Iterable<Transaction> {
             "Demoted {0} transactions from dependent to independent.",
             transactions.size()
         ));
+    }
+
+    /**
+     * Demote all independent and dependent transactions that depend on {@code dependency} to
+     * orphan.
+     *
+     * @param dependency
+     *     The dependency.
+     */
+    public synchronized void demoteToOrphan(@NotNull Hash dependency) {
+        // TODO: add listeners
+
+        Collection<Transaction> independents =
+            independentTransactions.getFromDependency(dependency);
+
+        // Remove dependents that depend on dependency
+        List<Transaction> removed = dependentTransactions.removeMatchingDependants(dependency, t -> true);
+        removed.forEach(orphanTransactions::put);
+
+        // Remove dependents that depend on the removed independents
+        for (Transaction independent : independents) {
+            List<Transaction> dependents = dependentTransactions.removeMatchingDependants(independent.getHash(), t -> true);
+
+            dependents.forEach(orphanTransactions::put);
+        }
+
+        for (Transaction transaction : independents) {
+            independentTransactions.removeValue(transaction);
+            orphanTransactions.put(transaction);
+        }
+
+        LOGGER.fine("Demoted transactions from pool to orphan.");
     }
 
     /**
