@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.wallet;
 
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
@@ -12,6 +13,7 @@ import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.Destructible;
+import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
@@ -39,6 +41,11 @@ public class Wallet implements Iterable<KeyPair> {
     private final Signer signer;
 
     /**
+     * The key generator used to generate private keys.
+     */
+    private final KeyGenerator keyGenerator;
+
+    /**
      * The wallet UTXO set.
      */
     private ReadonlyUTXOSet utxoSet;
@@ -49,9 +56,10 @@ public class Wallet implements Iterable<KeyPair> {
      * @param keyPairs
      *     Key map
      */
-    public Wallet(Collection<KeyPair> keyPairs, Signer signer) {
+    public Wallet(Collection<KeyPair> keyPairs, Signer signer, KeyGenerator keyGenerator) {
         this.keyPairs = keyPairs;
         this.signer = signer;
+        this.keyGenerator = keyGenerator;
     }
 
     /**
@@ -170,6 +178,37 @@ public class Wallet implements Iterable<KeyPair> {
         return TransactionSigningResult.signed(
             unsignedTransaction.sign(signatures)
         );
+    }
+
+    /**
+     * Generates and adds a plain key pair to the wallet.
+     *
+     * @param curve
+     *     The elliptic curve, used to get the order of the private key and deduce public keys.
+     * @return Key pair that was generated.
+     */
+    public KeyPair generatePlainKeyPair(EllipticCurve curve) throws DestructionException {
+        Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(curve.getDomain()
+            .getN());
+        PrivateKey privateKey = PrivateKey.plain(randomBigInteger.getReference().get());
+        PublicKey publicKey = curve.getPublicKeyFromPrivateKey(
+            Objects.requireNonNull(randomBigInteger.getReference().get())
+        );
+
+        KeyPair keyPair = new KeyPair(publicKey, privateKey);
+        keyPairs.add(keyPair);
+
+        return keyPair;
+    }
+
+    /**
+     * Generates and adds an encrypted key pair to the wallet.
+     *
+     * @return Key pair that was generated.
+     */
+    public KeyPair generateEncryptedKeyPair(Destructible<char[]> passphrase) {
+        // TODO: WIP
+        return null;
     }
 
     @NotNull
