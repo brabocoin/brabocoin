@@ -1,20 +1,26 @@
 package org.brabocoin.brabocoin.wallet;
 
 import org.brabocoin.brabocoin.crypto.PublicKey;
+import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +34,11 @@ public class Wallet implements Iterable<KeyPair> {
     private Collection<KeyPair> keyPairs;
 
     /**
+     * The signer used to sign transactions with.
+     */
+    private final Signer signer;
+
+    /**
      * The wallet UTXO set.
      */
     private ReadonlyUTXOSet utxoSet;
@@ -38,8 +49,9 @@ public class Wallet implements Iterable<KeyPair> {
      * @param keyPairs
      *     Key map
      */
-    public Wallet(Collection<KeyPair> keyPairs) {
+    public Wallet(Collection<KeyPair> keyPairs, Signer signer) {
         this.keyPairs = keyPairs;
+        this.signer = signer;
     }
 
     /**
@@ -74,6 +86,17 @@ public class Wallet implements Iterable<KeyPair> {
     }
 
     /**
+     * Find the private key for a public key.
+     *
+     * @param publicKey
+     *     The public key to find the private key for
+     * @return Private key or null if not found
+     */
+    public PrivateKey findPrivateKey(PublicKey publicKey) {
+        return Optional.ofNullable(findKeyPair(publicKey)).map(KeyPair::getPrivateKey).orElse(null);
+    }
+
+    /**
      * Whether the private key corresponding to the given public key is encrypted.
      *
      * @param publicKey
@@ -89,15 +112,21 @@ public class Wallet implements Iterable<KeyPair> {
     }
 
     /**
-     * Sign an unsigned transaction to create a signed transaction.
+     * Attempts to sign an unsigned transaction.
+     * <p>
+     * When successful, return a {@link TransactionSigningResult} with the resulting signed
+     * transaction. When unsuccessful, return a {@link TransactionSigningResult} that contains
+     * the key pair that was locked.
      *
-     * @param transaction
+     * @param unsignedTransaction
      *     Unsigned transaction
-     * @return A signed transaction
+     * @return A transaction signing result
      */
-    public Transaction signTransaction(UnsignedTransaction transaction,
-                                       Map<PublicKey, Destructible<char[]>> passphrases) throws DatabaseException {
-        for (Input input : transaction.getInputs()) {
+    public TransactionSigningResult signTransaction(
+        UnsignedTransaction unsignedTransaction) throws DatabaseException, DestructionException {
+        List<Signature> signatures = new ArrayList<>();
+
+        for (Input input : unsignedTransaction.getInputs()) {
             UnspentOutputInfo outputInfo = utxoSet.findUnspentOutputInfo(input);
             if (outputInfo == null) {
                 throw new IllegalStateException(
@@ -116,13 +145,31 @@ public class Wallet implements Iterable<KeyPair> {
 
             KeyPair keyPair = findKeyPair(publicKey);
 
-            if (!keyPair.getPrivateKey().isUnlocked()) {
-                // TODO: Implement
+            if (keyPair == null) {
+                throw new IllegalStateException(
+                    "Could not find key pair belonging to public key.");
             }
+
+            PrivateKey privateKey = keyPair.getPrivateKey();
+
+            if (!privateKey.isUnlocked()) {
+                return TransactionSigningResult.privateKeyLocked(keyPair);
+            }
+
+            Destructible<BigInteger> privateKeyValue = privateKey.getKey();
+            signatures.add(
+                signer.signMessage(
+                    unsignedTransaction.getSignableTransactionData(),
+                    Objects.requireNonNull(privateKeyValue.getReference().get())
+                )
+            );
+            privateKeyValue.destruct();
         }
 
-        // TODO: WIP here..
-        return null;
+
+        return TransactionSigningResult.signed(
+            unsignedTransaction.sign(signatures)
+        );
     }
 
     @NotNull
