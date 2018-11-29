@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +62,7 @@ class BlockchainTest {
     void setUp() throws DatabaseException {
         consensus = new Consensus();
         database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
-        blockchain = new Blockchain(database, consensus);
+        blockchain = new Blockchain(database, consensus, 100, new Random());
     }
 
     @AfterEach
@@ -142,6 +143,27 @@ class BlockchainTest {
     }
 
     @Test
+    void addOrphanSizeLimit() throws DatabaseException {
+        blockchain = new Blockchain(database, consensus, 2, new Random());
+
+        List<Block> notified = new ArrayList<>();
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onOrphanRemoved(@NotNull Block block) {
+                notified.add(block);
+            }
+        };
+        blockchain.addListener(listener);
+
+        List<Block> blocks = Simulation.randomBlockChainGenerator(3);
+        blocks.forEach(blockchain::addOrphan);
+
+        assertEquals(2, blocks.stream().map(Block::getHash).filter(blockchain::isOrphan).count());
+
+        assertEquals(1, notified.size());
+    }
+
+    @Test
     void findBlockUndoNonExistent() throws DatabaseException {
         Hash hash = new Hash(TEST_BLOCK.getHash().getValue().substring(1));
         assertNull(blockchain.findBlockUndo(hash));
@@ -212,5 +234,132 @@ class BlockchainTest {
     @Test
     void getMainChain() {
         assertNotNull(blockchain.getMainChain());
+    }
+
+    @Test
+    void topBlockConnectedListener() {
+        final IndexedBlock[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockConnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.pushTopBlock(block);
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void topBlockDisconnectedListener() {
+        final IndexedBlock[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.pushTopBlock(block);
+        blockchain.popTopBlock();
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void orphanAddedListener() {
+        final Block[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onOrphanAdded(@NotNull Block block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.addOrphan(block);
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void orphanRemovedListener() {
+        final Block[] notifiedBlock = {null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onOrphanRemoved(@NotNull Block block) {
+                notifiedBlock[0] = block;
+            }
+        };
+
+        Block block = Simulation.randomBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.addOrphan(block);
+        blockchain.removeOrphansOfParent(block.getPreviousBlockHash());
+
+        assertNotNull(notifiedBlock[0]);
+        assertEquals(notifiedBlock[0].getHash(), block.getHash());
+    }
+
+    @Test
+    void removeListener() {
+        final IndexedBlock[] notifiedBlock = {null, null};
+        final Block[] notifiedOrphanBlock = {null, null};
+
+        BlockchainListener listener = new BlockchainListener() {
+            @Override
+            public void onTopBlockConnected(@NotNull IndexedBlock block) {
+                notifiedBlock[0] = block;
+            }
+
+            @Override
+            public void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+                notifiedBlock[1] = block;
+            }
+
+            @Override
+            public void onOrphanAdded(@NotNull Block block) {
+                notifiedOrphanBlock[0] = block;
+            }
+
+            @Override
+            public void onOrphanRemoved(@NotNull Block block) {
+                notifiedOrphanBlock[1] = block;
+            }
+        };
+
+        IndexedBlock block = Simulation.randomIndexedBlockChainGenerator(1).get(0);
+        Block orphanBlock = Simulation.randomBlockChainGenerator(1).get(0);
+
+        blockchain.addListener(listener);
+        blockchain.removeListener(listener);
+
+        blockchain.pushTopBlock(block);
+        blockchain.popTopBlock();
+
+        blockchain.addOrphan(orphanBlock);
+        blockchain.removeOrphansOfParent(orphanBlock.getPreviousBlockHash());
+
+        assertNull(notifiedBlock[0]);
+        assertNull(notifiedBlock[1]);
+        assertNull(notifiedOrphanBlock[0]);
+        assertNull(notifiedOrphanBlock[1]);
     }
 }

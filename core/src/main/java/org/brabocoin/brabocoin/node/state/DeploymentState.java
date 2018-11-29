@@ -127,7 +127,7 @@ public class DeploymentState implements State {
     }
 
     protected Blockchain createBlockchain() throws DatabaseException {
-        return new Blockchain(blockDatabase, consensus);
+        return new Blockchain(blockDatabase, consensus, config.maxOrphanBlocks(), unsecureRandom);
     }
 
     protected TransactionPool createTransactionPool() {
@@ -184,10 +184,6 @@ public class DeploymentState implements State {
     @Override
     public BraboConfig getConfig() {
         return config;
-    }
-
-    public Random getUnsecureRandom() {
-        return unsecureRandom;
     }
 
     @NotNull

@@ -42,6 +42,13 @@ public interface BraboConfig {
     int maxOrphanTransactions();
 
     /**
+     * Maximum number of orphan blocks kept in memory.
+     *
+     * @return The maximum number of orphan blocks.
+     */
+    int maxOrphanBlocks();
+
+    /**
      * Port on which the application listens for messages on the network.
      *
      * @return The port number.

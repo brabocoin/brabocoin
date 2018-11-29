@@ -20,6 +20,7 @@ import org.controlsfx.control.HiddenSidesPane;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Random;
 import java.util.ResourceBundle;
 
 /**
@@ -63,7 +64,9 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             currentStateView = new CurrentStateView(
                 new Blockchain(
                     new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()),
-                    new Consensus()
+                    new Consensus(),
+                    100,
+                    new Random()
                 )
             );
         }

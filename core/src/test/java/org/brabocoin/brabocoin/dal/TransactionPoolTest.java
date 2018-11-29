@@ -8,10 +8,12 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -173,6 +175,46 @@ class TransactionPoolTest {
     }
 
     @Test
+    void removeValidOrphansFromParentListener() {
+        List<Transaction> notified = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
+                notified.add(transaction);
+            }
+        };
+        pool.addListener(listener);
+
+        Transaction transactionA = Simulation.randomTransaction(5, 5);
+        Hash hashA = transactionA.getHash();
+        pool.addOrphanTransaction(transactionA);
+
+        Transaction transactionB = new Transaction(
+            Collections.singletonList(new Input( hashA, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+        );
+        Hash hashB = transactionB.getHash();
+        pool.addOrphanTransaction(transactionB);
+
+        Transaction transactionC = new Transaction(
+            Collections.singletonList(new Input( hashB, 0)),
+            Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
+        );
+        Hash hashC = transactionC.getHash();
+        pool.addOrphanTransaction(transactionC);
+
+        Hash parent = transactionA.getInputs().get(0).getReferencedTransaction();
+
+        pool.removeValidOrphansFromParent(parent, t -> !t.getHash().equals(hashC));
+
+        assertEquals(2, notified.size());
+
+        assertTrue(notified.get(0).getHash().equals(hashA) || notified.get(1).getHash().equals(hashA));
+        assertTrue(notified.get(0).getHash().equals(hashB) || notified.get(1).getHash().equals(hashB));
+    }
+
+    @Test
     void promoteDependentToIndependentFromParent() {
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -221,6 +263,22 @@ class TransactionPoolTest {
 
     @Test
     void demoteToOrphan() {
+        List<Transaction> notifiedRemoved = new ArrayList<>();
+        List<Transaction> notifiedAdded = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+                notifiedRemoved.add(transaction);
+            }
+
+            @Override
+            public void onTransactionAddedAsOrphan(@NotNull Transaction transaction) {
+                notifiedAdded.add(transaction);
+            }
+        };
+        pool.addListener(listener);
+
         Transaction coinbase = Transaction.coinbase(new Output(Simulation.randomHash(), 100));
 
         Transaction transactionA = new Transaction(
@@ -256,6 +314,17 @@ class TransactionPoolTest {
         assertTrue(pool.isOrphan(hashA));
         assertTrue(pool.isOrphan(hashB));
         assertTrue(pool.isOrphan(hashC));
+
+        // Check listener
+        assertEquals(3, notifiedRemoved.size());
+        assertEquals(3, notifiedAdded.size());
+
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashA)));
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashB)));
+        assertTrue(notifiedAdded.stream().anyMatch(t -> t.getHash().equals(hashC)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashA)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashB)));
+        assertTrue(notifiedRemoved.stream().anyMatch(t -> t.getHash().equals(hashC)));
     }
 
     @Test
@@ -313,6 +382,16 @@ class TransactionPoolTest {
 
         pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
+        List<Transaction> notified = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+                notified.add(transaction);
+            }
+        };
+        pool.addListener(listener);
+
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
 
@@ -335,6 +414,10 @@ class TransactionPoolTest {
         assertFalse(pool.isDependent(hashC));
         assertTrue(pool.isDependent(hashB));
         assertTrue(pool.isIndependent(hashA));
+
+        // Assert listener reported removed transaction
+        assertEquals(1, notified.size());
+        assertEquals(hashC, notified.get(0).getHash());
     }
 
     @Test
@@ -354,6 +437,16 @@ class TransactionPoolTest {
         };
 
         pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
+
+        List<Transaction> notified = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+                notified.add(transaction);
+            }
+        };
+        pool.addListener(listener);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -377,6 +470,11 @@ class TransactionPoolTest {
         assertFalse(pool.isDependent(hashB));
         assertFalse(pool.isDependent(hashC));
         assertTrue(pool.isIndependent(hashA));
+
+        // Assert listener reported removed transaction
+        assertEquals(2, notified.size());
+        assertTrue(notified.get(0).getHash().equals(hashB) || notified.get(1).getHash().equals(hashB));
+        assertTrue(notified.get(0).getHash().equals(hashC) || notified.get(1).getHash().equals(hashC));
     }
 
     @Test
@@ -397,6 +495,16 @@ class TransactionPoolTest {
 
         pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
 
+        List<Transaction> notified = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+                notified.add(transaction);
+            }
+        };
+        pool.addListener(listener);
+
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
 
@@ -416,6 +524,11 @@ class TransactionPoolTest {
         assertFalse(pool.isIndependent(hashA));
         assertTrue(pool.isIndependent(hashB));
         assertFalse(pool.isDependent(hashC));
+
+        // Assert listener reported removed transaction
+        assertEquals(2, notified.size());
+        assertTrue(notified.get(0).getHash().equals(hashA) || notified.get(1).getHash().equals(hashA));
+        assertTrue(notified.get(0).getHash().equals(hashC) || notified.get(1).getHash().equals(hashC));
     }
 
     @Test
@@ -434,7 +547,21 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
+        pool = new TransactionPool(
+            newConfig.maxTransactionPoolSize(),
+            newConfig.maxOrphanTransactions(),
+            mockRandom
+        );
+
+        List<Transaction> notified = new ArrayList<>();
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
+                notified.add(transaction);
+            }
+        };
+        pool.addListener(listener);
 
         Transaction transactionA = Simulation.randomTransaction(5, 5);
         Hash hashA = transactionA.getHash();
@@ -453,5 +580,69 @@ class TransactionPoolTest {
         assertFalse(pool.isOrphan(hashA));
         assertTrue(pool.isOrphan(hashB));
         assertTrue(pool.isOrphan(hashC));
+
+        // Assert listener reported removed transaction
+        assertEquals(1, notified.size());
+        assertEquals(hashA, notified.get(0).getHash());
+    }
+
+    @Test
+    void transactionAddedToPoolListenerIndependent() {
+        final Transaction[] notifiedTx = {null};
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionAddedToPool(@NotNull Transaction transaction) {
+                notifiedTx[0] = transaction;
+            }
+        };
+
+        Transaction transaction = Simulation.randomTransaction(5, 5);
+
+        pool.addListener(listener);
+        pool.addIndependentTransaction(transaction);
+
+        assertNotNull(notifiedTx[0]);
+        assertEquals(notifiedTx[0].getHash(), transaction.getHash());
+    }
+
+    @Test
+    void transactionAddedToPoolListenerDependent() {
+        final Transaction[] notifiedTx = {null};
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionAddedToPool(@NotNull Transaction transaction) {
+                notifiedTx[0] = transaction;
+            }
+        };
+
+        Transaction transaction = Simulation.randomTransaction(5, 5);
+
+        pool.addListener(listener);
+        pool.addDependentTransaction(transaction);
+
+        assertNotNull(notifiedTx[0]);
+        assertEquals(notifiedTx[0].getHash(), transaction.getHash());
+    }
+
+    @Test
+    void transactionAddedAsOrphanListener() {
+        final Transaction[] notifiedTx = {null};
+
+        TransactionPoolListener listener = new TransactionPoolListener() {
+            @Override
+            public void onTransactionAddedAsOrphan(@NotNull Transaction transaction) {
+                notifiedTx[0] = transaction;
+            }
+        };
+
+        Transaction transaction = Simulation.randomTransaction(5, 5);
+
+        pool.addListener(listener);
+        pool.addOrphanTransaction(transaction);
+
+        assertNotNull(notifiedTx[0]);
+        assertEquals(notifiedTx[0].getHash(), transaction.getHash());
     }
 }

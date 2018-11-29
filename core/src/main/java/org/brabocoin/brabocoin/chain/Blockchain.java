@@ -14,7 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -28,6 +31,11 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 public class Blockchain {
 
     private static final Logger LOGGER = Logger.getLogger(Blockchain.class.getName());
+
+    /**
+     * Listeners for blockchain events.
+     */
+    private final @NotNull Set<BlockchainListener> listeners;
 
     /**
      * Full block database.
@@ -51,20 +59,37 @@ public class Blockchain {
     private final @NotNull Map<Hash, Block> orphanIndex;
 
     /**
+     * The maximum number of orphans.
+     */
+    private final int maxOrphans;
+
+    /**
+     * The random instance.
+     */
+    private final @NotNull Random random;
+
+    /**
      * Initializes a blockchain with a genesis block with the given database backend.
      *
      * @param database
      *     The block database backend.
      * @param consensus
      *     The consensus on which this blockchain needs to be constructed.
+     * @param maxOrphans
+     *     The maximum number of orphans to store.
+     * @param random The random instance.
      * @throws DatabaseException
      *     When the genesis block could not be stored.
      */
     public Blockchain(@NotNull BlockDatabase database,
-                      @NotNull Consensus consensus) throws DatabaseException {
+                      @NotNull Consensus consensus, int maxOrphans,
+                      @NotNull Random random) throws DatabaseException {
         this.database = database;
         this.orphanMap = HashMultimap.create();
         this.orphanIndex = new HashMap<>();
+        this.maxOrphans = maxOrphans;
+        this.random = random;
+        this.listeners = new HashSet<>();
 
         IndexedBlock genesis = storeGenesisBlock(consensus.getGenesisBlock());
         this.mainChain = new IndexedChain(genesis);
@@ -81,6 +106,24 @@ public class Blockchain {
         }
 
         return indexedGenesis;
+    }
+
+    /**
+     * Add a listener to blockchain events.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(@NotNull BlockchainListener listener) {
+        this.listeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to blockchain events.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(@NotNull BlockchainListener listener) {
+        this.listeners.remove(listener);
     }
 
     /**
@@ -217,6 +260,31 @@ public class Blockchain {
         LOGGER.fine("Adding block as orphan.");
         orphanMap.put(block.getPreviousBlockHash(), block);
         orphanIndex.put(block.getHash(), block);
+
+        listeners.forEach(l -> l.onOrphanAdded(block));
+
+        // Remove random orphan when size limit is reached
+        while (orphanIndex.size() > maxOrphans) {
+            Hash key = getRandomOrphanHash();
+            Block removed = orphanIndex.remove(key);
+            orphanMap.remove(removed.getPreviousBlockHash(), removed);
+
+            LOGGER.finest("Discarded random orphan block because maximum orphan index size was reached.");
+
+            listeners.forEach(l -> l.onOrphanRemoved(removed));
+        }
+    }
+
+    private Hash getRandomOrphanHash() {
+        int index = random.nextInt(orphanIndex.size());
+        Iterator<Hash> keys = orphanIndex.keySet().iterator();
+
+        while (index > 0) {
+            index--;
+            keys.next();
+        }
+
+        return keys.next();
     }
 
     /**
@@ -262,6 +330,8 @@ public class Blockchain {
 
         for (Block removedBlock : removed) {
             orphanIndex.remove(removedBlock.getHash());
+
+            listeners.forEach(l -> l.onOrphanRemoved(removedBlock));
         }
 
         return removed;
@@ -276,7 +346,12 @@ public class Blockchain {
      * @see IndexedChain#popTopBlock()
      */
     public IndexedBlock popTopBlock() throws IllegalStateException {
-        return mainChain.popTopBlock();
+        IndexedBlock block = mainChain.popTopBlock();
+
+        // Notify listeners
+        listeners.forEach(l -> l.onTopBlockDisconnected(block));
+
+        return block;
     }
 
     /**
@@ -288,6 +363,9 @@ public class Blockchain {
      */
     public void pushTopBlock(@NotNull IndexedBlock block) {
         mainChain.pushTopBlock(block);
+
+        // Notify listeners
+        listeners.forEach(l -> l.onTopBlockConnected(block));
     }
 
     /**
