@@ -17,6 +17,16 @@ message Signature {
     bytes publicKey = 3;
 }
 
+message PrivateKey {
+    bytes value = 1;
+    bool encrypted = 2;
+}
+
+message KeyPair {
+    bytes publicKey = 1;
+    PrivateKey privateKey = 2;
+}
+
 message Output {
     Hash address = 1;
     int64 amount = 2;

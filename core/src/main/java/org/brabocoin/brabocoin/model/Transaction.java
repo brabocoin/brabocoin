@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.model;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.jetbrains.annotations.NotNull;

@@ -13,4 +13,29 @@ public final class Constants {
      * entries in the transaction pool UTXO set.
      */
     public static final int TRANSACTION_POOL_HEIGHT = Integer.MAX_VALUE;
+
+    /**
+     * PBKDF2
+     */
+    public static final int PBKDF_ITERATIONS = 10000;
+
+    /**
+     * Salt length.
+     */
+    public static final int SALT_LENGTH = 64;
+
+    /**
+     * JIT phantom reference enqueue timeout in seconds.
+     */
+    public static final int JIT_PHANTOM_ENQUEUE_TIMEOUT = 20;
+
+    /**
+     * JIT object destruction timeout in seconds.
+     */
+    public static final int JIT_OBJECT_DESTRUCTION_TIMEOUT = 20;
+
+    /**
+     * JIT poll delay in milliseconds.
+     */
+    public static final int JIT_POLL_DELAY = 5;
 }

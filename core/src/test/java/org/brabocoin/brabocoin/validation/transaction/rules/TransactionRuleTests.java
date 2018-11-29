@@ -16,6 +16,7 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
