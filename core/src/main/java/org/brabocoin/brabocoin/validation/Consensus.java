@@ -87,8 +87,8 @@ public class Consensus {
 
     private static final @NotNull Block GENESIS_BLOCK = new Block(
         new Hash(ByteString.EMPTY),
-        new Hash(ByteString.copyFromUtf8("root")), // TODO: Merkle root needs implementation
-        TARGET_VALUE, // TODO: Determine target value
+        new Hash(ByteString.EMPTY),
+        TARGET_VALUE,
         BigInteger.ZERO,
         0,
         Collections.emptyList(),
@@ -181,7 +181,7 @@ public class Consensus {
         return getMaxBlockSize()
             + getMaxNonceSize()
             - getMaxBlockHeaderSize()
-            - Long.BYTES
-            - getMaxCoinbaseTransactionSize();
+            - getMaxCoinbaseTransactionSize()
+            - Long.BYTES;
     }
 }
