@@ -24,6 +24,21 @@ class DestructibleTest {
     }
 
     @Test
+    void destructTwice() throws DestructionException {
+        Destructible<BigInteger> destructibleDummy = new Destructible<>(
+                () -> BigInteger.valueOf(123)
+        );
+
+        assertEquals(BigInteger.valueOf(123), destructibleDummy.getReference().get());
+
+        destructibleDummy.destruct();
+        destructibleDummy.destruct();
+
+        assertTrue(destructibleDummy.isDestroyed());
+        assertNull(destructibleDummy.getReference().get());
+    }
+
+    @Test
     void destructHardReferencedObject() {
         Destructible<BigInteger> destructibleDummy = new Destructible<>(
                 () -> BigInteger.valueOf(123)

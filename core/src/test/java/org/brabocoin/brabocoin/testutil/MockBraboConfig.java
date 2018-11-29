@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import java.util.List;
 
 public class MockBraboConfig implements BraboConfig {
+
     BraboConfig delegator;
 
     public MockBraboConfig(BraboConfig delegator) {
@@ -69,5 +70,10 @@ public class MockBraboConfig implements BraboConfig {
     @Override
     public int servicePort() {
         return delegator.servicePort();
+    }
+
+    @Override
+    public String walletFile() {
+        return delegator.walletFile();
     }
 }

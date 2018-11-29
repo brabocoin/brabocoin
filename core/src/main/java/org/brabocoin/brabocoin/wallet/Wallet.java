@@ -1,9 +1,10 @@
 package org.brabocoin.brabocoin.wallet;
 
-import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Input;
@@ -13,6 +14,7 @@ import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.Destructible;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +38,11 @@ public class Wallet implements Iterable<KeyPair> {
     private Collection<KeyPair> keyPairs;
 
     /**
+     * Consensus used in this wallet.
+     */
+    private final Consensus consensus;
+
+    /**
      * The signer used to sign transactions with.
      */
     private final Signer signer;
@@ -56,8 +63,10 @@ public class Wallet implements Iterable<KeyPair> {
      * @param keyPairs
      *     Key map
      */
-    public Wallet(Collection<KeyPair> keyPairs, Signer signer, KeyGenerator keyGenerator) {
+    public Wallet(Collection<KeyPair> keyPairs, Consensus consensus, Signer signer,
+                  KeyGenerator keyGenerator) {
         this.keyPairs = keyPairs;
+        this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
     }
@@ -183,17 +192,18 @@ public class Wallet implements Iterable<KeyPair> {
     /**
      * Generates and adds a plain key pair to the wallet.
      *
-     * @param curve
-     *     The elliptic curve, used to get the order of the private key and deduce public keys.
      * @return Key pair that was generated.
      */
-    public KeyPair generatePlainKeyPair(EllipticCurve curve) throws DestructionException {
-        Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(curve.getDomain()
+    public KeyPair generatePlainKeyPair() throws DestructionException {
+        Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(consensus.getCurve()
+            .getDomain()
             .getN());
         PrivateKey privateKey = PrivateKey.plain(randomBigInteger.getReference().get());
-        PublicKey publicKey = curve.getPublicKeyFromPrivateKey(
+        PublicKey publicKey = consensus.getCurve().getPublicKeyFromPrivateKey(
             Objects.requireNonNull(randomBigInteger.getReference().get())
         );
+
+        randomBigInteger.destruct();
 
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
         keyPairs.add(keyPair);
@@ -204,11 +214,27 @@ public class Wallet implements Iterable<KeyPair> {
     /**
      * Generates and adds an encrypted key pair to the wallet.
      *
+     * @param passphrase
+     *     The passphrase to encrypt the private key with
+     * @param cipher
+     *     The cipher used to encrypt the private key with
      * @return Key pair that was generated.
      */
-    public KeyPair generateEncryptedKeyPair(Destructible<char[]> passphrase) {
-        // TODO: WIP
-        return null;
+    public KeyPair generateEncryptedKeyPair(Destructible<char[]> passphrase,
+                                            Cipher cipher) throws DestructionException, CipherException {
+        Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(consensus.getCurve()
+            .getDomain()
+            .getN());
+        // Also destructs the passphrase and big integer
+        PrivateKey privateKey = PrivateKey.encrypted(randomBigInteger, passphrase, cipher);
+        PublicKey publicKey = consensus.getCurve().getPublicKeyFromPrivateKey(
+            Objects.requireNonNull(randomBigInteger.getReference().get())
+        );
+
+        KeyPair keyPair = new KeyPair(publicKey, privateKey);
+        keyPairs.add(keyPair);
+
+        return keyPair;
     }
 
     @NotNull

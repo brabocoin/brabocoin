@@ -47,4 +47,11 @@ public interface BraboConfig {
      * @return The port number.
      */
     int servicePort();
+
+    /**
+     * File in which the wallet is stored.
+     *
+     * @return The wallet file path.
+     */
+    String walletFile();
 }

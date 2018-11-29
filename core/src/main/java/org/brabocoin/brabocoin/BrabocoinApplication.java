@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin;
 
 import com.google.common.collect.Sets;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
+import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -52,12 +53,12 @@ public class BrabocoinApplication {
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(@NotNull BraboConfig config) throws DatabaseException {
+    public BrabocoinApplication(@NotNull BraboConfig config) throws DatabaseException, CipherException {
         state = new DeploymentState(config);
         storages = Sets.newHashSet(state.getBlockStorage(), state.getUtxoStorage());
     }
 
-    public static void main(String[] args) throws DatabaseException, IOException {
+    public static void main(String[] args) throws DatabaseException, IOException, CipherException {
         BrabocoinApplication application = new BrabocoinApplication(DEFAULT_CONFIG);
         application.start();
     }

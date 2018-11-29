@@ -12,3 +12,4 @@ brabo:
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions
   servicePort: 56129                  # Port on which the application listens for messages
+  walletFile: wallet.dat              # Wallet file

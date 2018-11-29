@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
+import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
@@ -9,6 +11,7 @@ import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.dal.LevelDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
@@ -21,6 +24,9 @@ import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.wallet.WalletStorage;
+import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
+import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -36,6 +42,9 @@ public class DeploymentState implements State {
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
+    protected final @NotNull KeyGenerator keyGenerator;
+    protected final @NotNull WalletStorage walletStorage;
+    protected final @NotNull Cipher privateKeyCipher;
     protected final @NotNull KeyValueStore blockStorage;
     protected final @NotNull KeyValueStore utxoStorage;
     protected final @NotNull BlockDatabase blockDatabase;
@@ -61,6 +70,16 @@ public class DeploymentState implements State {
         consensus = createConsensus();
 
         signer = createSigner();
+
+        keyGenerator = createKeyGenerator();
+        try {
+            walletStorage = createWalletStorage();
+            privateKeyCipher = createPrivateKeyCipher();
+        }
+        catch (CipherException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Could not create state.");
+        }
 
         blockStorage = createBlockStorage();
         utxoStorage = createUtxoStorage();
@@ -88,6 +107,18 @@ public class DeploymentState implements State {
         environment = createEnvironment();
 
         node = createNode();
+    }
+
+    private Cipher createPrivateKeyCipher() throws CipherException {
+        return new BouncyCastleAES();
+    }
+
+    private WalletStorage createWalletStorage() throws CipherException {
+        return new WalletStorage(new BouncyCastleAES());
+    }
+
+    protected KeyGenerator createKeyGenerator() {
+        return new SecureRandomKeyGenerator();
     }
 
     protected Random createUnsecureRandom() {
@@ -297,4 +328,23 @@ public class DeploymentState implements State {
     public Node getNode() {
         return node;
     }
+
+    @NotNull
+    @Override
+    public KeyGenerator getKeyGenerator() {
+        return keyGenerator;
+    }
+
+    @NotNull
+    @Override
+    public WalletStorage getWalletStorage() {
+        return walletStorage;
+    }
+
+    @NotNull
+    @Override
+    public Cipher getPrivateKeyCipher() {
+        return privateKeyCipher;
+    }
+
 }
