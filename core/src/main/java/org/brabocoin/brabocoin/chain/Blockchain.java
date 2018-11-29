@@ -297,7 +297,7 @@ public class Blockchain {
      *     The orphan block hash to find the block for
      * @return Orphan block
      */
-    public Block getOrphan(@NotNull Hash blockHash) {
+    public @Nullable Block getOrphan(@NotNull Hash blockHash) {
         return orphanIndex.get(blockHash);
     }
 }
