@@ -181,6 +181,7 @@ public class Consensus {
         return getMaxBlockSize()
             + getMaxNonceSize()
             - getMaxBlockHeaderSize()
-            - Long.BYTES;
+            - Long.BYTES
+            - getMaxCoinbaseTransactionSize();
     }
 }
