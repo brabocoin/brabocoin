@@ -40,6 +40,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -243,7 +244,7 @@ public class NodeEnvironment {
      * @param propagate
      *     Whether or not to propagate the message to peers.
      */
-    private synchronized void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
+    private void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         try {
             LOGGER.info("Received new block from peer.");
             ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
@@ -256,7 +257,7 @@ public class NodeEnvironment {
                     messageQueue.add(() -> getBlocksRequest(
                         Collections.singletonList(block.getPreviousBlockHash()),
                         peers,
-                        propagate
+                        false
                     ));
                     // Fall-through intended
                 case VALID:
@@ -413,9 +414,7 @@ public class NodeEnvironment {
     //================================================================================
 
     /**
-     * Tries to acquire the blocks from the given peers using the {@code getBlocks} message,
-     * given the block hashes.
-     * Also propagates an announce block message if {@code propagate} is set to true.
+     * Default non blocking request for blocks.
      *
      * @param hashes
      *     The list of block hashes to fetch.
@@ -426,7 +425,35 @@ public class NodeEnvironment {
      */
     public synchronized void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
                                               boolean propagate) {
+        try {
+            getBlocksRequest(hashes, peers, propagate, false);
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+            LOGGER.severe("Interrupted exception while calling a non-blocking request for blocks");
+        }
+    }
+
+    /**
+     * Tries to acquire the blocks from the given peers using the {@code getBlocks} message,
+     * given the block hashes.
+     * Also propagates an announce block message if {@code propagate} is set to true.
+     *
+     * @param hashes
+     *     The list of block hashes to fetch.
+     * @param peers
+     *     The list of peers used to request the blocks.
+     * @param propagate
+     *     Whether or not to propagate an announce message to all peers.
+     * @param blocking
+     *     Whether or not to wait for the blocks to be received.
+     */
+    public synchronized void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
+                                              boolean propagate,
+                                              boolean blocking) throws InterruptedException {
         LOGGER.info("Getting a list of blocks from peers.");
+
+        final CountDownLatch latch = new CountDownLatch(peers.size());
 
         for (Peer peer : peers) {
             // TODO: Check if async processing is done correctly.
@@ -471,11 +498,13 @@ public class NodeEnvironment {
                             "Peer returned an error while getting block: {0}",
                             t.getMessage()
                         );
+                        latch.countDown();
                     }
 
                     @Override
                     public void onCompleted() {
                         LOGGER.log(Level.FINE, "Peer block stream completed.");
+                        latch.countDown();
                     }
                 });
 
@@ -487,6 +516,10 @@ public class NodeEnvironment {
                 hashStreamObserver.onNext(protoBlockHash);
             }
             hashStreamObserver.onCompleted();
+
+            if (blocking) {
+                latch.await();
+            }
         }
     }
 
@@ -600,11 +633,17 @@ public class NodeEnvironment {
         );
 
         if (hashes.size() > 0) {
-            messageQueue.add(() -> getBlocksRequest(
-                hashes,
-                Collections.singletonList(peer),
-                false
-            ));
+            try {
+                getBlocksRequest(
+                    hashes,
+                    Collections.singletonList(peer),
+                    false,
+                    true
+                );
+            }
+            catch (InterruptedException e) {
+                LOGGER.severe("Could not get blocks for blockchain seeking");
+            }
         }
     }
 
@@ -837,7 +876,12 @@ public class NodeEnvironment {
             () -> MessageFormat.format("Hash: {0}", ByteUtil.toHexString(blockHash.getValue()))
         );
         try {
-            return blockchain.getBlock(blockHash);
+            Block block = blockchain.getBlock(blockHash);
+            if (block != null) {
+                return block;
+            }
+
+            return blockchain.getOrphan(blockHash);
         }
         catch (DatabaseException e) {
             LOGGER.log(

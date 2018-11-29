@@ -128,8 +128,7 @@ public class PeerProcessor {
                 try {
                     final Peer discoveredPeer = new Peer(peerSocket);
                     LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
-                    if (!peers.contains(discoveredPeer)) {
-                        // TODO: Help? tests will fail with: && !discoveredPeer.isLocal()) {
+                    if (!peers.contains(discoveredPeer) && !(discoveredPeer.isLocal() && discoveredPeer.getPort() == servicePort)) {
                         handshakePeers.add(discoveredPeer);
                     }
                 }

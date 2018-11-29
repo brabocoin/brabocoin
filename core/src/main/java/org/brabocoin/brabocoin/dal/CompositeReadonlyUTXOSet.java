@@ -27,7 +27,7 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public boolean isUnspent(@NotNull Input input) throws DatabaseException {
+    public synchronized boolean isUnspent(@NotNull Input input) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             if (utxoSet.isUnspent(input)) {
                 return true;
@@ -38,7 +38,7 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public boolean isUnspent(@NotNull Hash transactionHash,
+    public synchronized boolean isUnspent(@NotNull Hash transactionHash,
                              int outputIndex) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             if (utxoSet.isUnspent(transactionHash, outputIndex)) {
@@ -50,7 +50,7 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Input input) throws DatabaseException {
+    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Input input) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             UnspentOutputInfo info = utxoSet.findUnspentOutputInfo(input);
             if (info != null) {
@@ -62,7 +62,7 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
-    public @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
+    public synchronized @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
                                                              int outputIndex) throws DatabaseException {
         for (ReadonlyUTXOSet utxoSet : utxoSets) {
             UnspentOutputInfo info = utxoSet.findUnspentOutputInfo(transactionHash, outputIndex);

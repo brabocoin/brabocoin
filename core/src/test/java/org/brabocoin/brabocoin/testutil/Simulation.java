@@ -18,18 +18,22 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 public class Simulation {
+
     private static Random RANDOM = new Random();
     private static EllipticCurve CURVE = EllipticCurve.secp256k1();
 
@@ -37,11 +41,14 @@ public class Simulation {
         return randomBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
     }
 
-    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
+                                                        int startBlockHeight) {
         return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5);
     }
 
-    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash, int startBlockHeight, int inputs, int outputs) {
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
+                                                        int startBlockHeight, int inputs,
+                                                        int outputs) {
         List<Block> list = new ArrayList<>();
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
@@ -57,29 +64,31 @@ public class Simulation {
         return randomIndexedBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
     }
 
-    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length, Hash previousHash, int startBlockHeight) {
+    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length, Hash previousHash,
+                                                                      int startBlockHeight) {
         List<IndexedBlock> list = new ArrayList<>();
         long creationTime = new Date().getTime();
 
         for (int i = startBlockHeight; i < startBlockHeight + length; i++) {
             Block block = randomBlock(
-                    previousHash,
+                previousHash,
 
-                    i,
-                    5, 5, 30);
+                i,
+                5, 5, 30
+            );
 
             BlockInfo info = new BlockInfo(
-                    block.getPreviousBlockHash(),
-                    block.getMerkleRoot(),
-                    block.getTargetValue(),
-                    block.getNonce(), block.getBlockHeight(),
-                    block.getTransactions().size(), 1, true,
-                    0,
-                    0,
-                    0,
-                    0,
-                    -1,
-                    -1
+                block.getPreviousBlockHash(),
+                block.getMerkleRoot(),
+                block.getTargetValue(),
+                block.getNonce(), block.getBlockHeight(),
+                block.getTransactions().size(), 1, true,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -1
             );
 
             previousHash = block.getHash();
@@ -90,38 +99,46 @@ public class Simulation {
         return list;
     }
 
-    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound,
+                                    int transactionOutputBound, int transactionsBound) {
         return new Block(
-                previousHash,
-                randomHash(),
-                randomHash(),
-                randomBigInteger(), blockHeight,
-                repeatedBuilder(() -> randomTransaction(transactionInputBound, transactionOutputBound), transactionsBound), 0);
+            previousHash,
+            randomHash(),
+            randomHash(),
+            randomBigInteger(), blockHeight,
+            repeatedBuilder(
+                () -> randomTransaction(transactionInputBound, transactionOutputBound),
+                transactionsBound
+            ), 0
+        );
     }
 
-    public static Block randomOrphanBlock(Consensus consensus, int blockHeight, int transactionInputBound, int transactionOutputBound, int transactionsBound) {
+    public static Block randomOrphanBlock(Consensus consensus, int blockHeight,
+                                          int transactionInputBound, int transactionOutputBound,
+                                          int transactionsBound) {
         List<Transaction> transactions =
-                Collections.singletonList(
-                        new Transaction(
-                                Collections.emptyList(),
-                                Collections.singletonList(
-                                        new Output(randomHash(), consensus.getBlockReward())
-                                ),
-                                Collections.emptyList()
-                        )
-                );
+            Collections.singletonList(
+                new Transaction(
+                    Collections.emptyList(),
+                    Collections.singletonList(
+                        new Output(randomHash(), consensus.getBlockReward())
+                    ),
+                    Collections.emptyList()
+                )
+            );
 
         return new MiningBlock(
-                randomHash(),
-                new MerkleTree(
-                        consensus.getMerkleTreeHashFunction(),
-                        transactions.stream().map(Transaction::getHash).collect(Collectors.toList())
-                ).getRoot(),
-                consensus.getTargetValue(),
-                new BigInteger(consensus.getMaxNonceSize() * 8, RANDOM),
-                blockHeight,
-                transactions,
-                0).mine(consensus);
+            randomHash(),
+            new MerkleTree(
+                consensus.getMerkleTreeHashFunction(),
+                transactions.stream().map(Transaction::getHash).collect(Collectors.toList())
+            ).getRoot(),
+            consensus.getTargetValue(),
+            new BigInteger(consensus.getMaxNonceSize() * 8, RANDOM),
+            blockHeight,
+            transactions,
+            0
+        ).mine(consensus);
     }
 
     public static Transaction randomTransaction(int inputBound, int outputBound) {
@@ -136,7 +153,8 @@ public class Simulation {
         for (int i = 0; i < bound; i++) {
             try {
                 list.add(builder.call());
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -167,10 +185,18 @@ public class Simulation {
     }
 
     public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
-        return generateNode(port, config, new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()));
+        return generateNode(
+            port,
+            config,
+            new BlockDatabase(new HashMapDB(),
+                new File(config.blockStoreDirectory()),
+                config.maxBlockFileSize()
+            )
+        );
     }
 
-    public static Node generateNode(int port, BraboConfig config, BlockDatabase providedBlockDatabase) throws DatabaseException {
+    public static Node generateNode(int port, BraboConfig config,
+                                    BlockDatabase providedBlockDatabase) throws DatabaseException {
         BraboConfig mockConfig = new MockBraboConfig(config) {
             @Override
             public int servicePort() {
@@ -178,9 +204,9 @@ public class Simulation {
             }
         };
 
-        TestState state = new TestState(mockConfig){
+        State state = new TestState(mockConfig) {
             @Override
-            protected BlockDatabase createBlockDatabase() throws DatabaseException {
+            protected BlockDatabase createBlockDatabase() {
                 return providedBlockDatabase;
             }
         };
@@ -188,31 +214,11 @@ public class Simulation {
         return state.getNode();
     }
 
-    public static Node generateNodeWithBlocks(int port, BraboConfig config, Consensus consensus, List<Block> blocks) throws DatabaseException {
-        return generateNodeAndProcessorWithBlocks(port, config, consensus, blocks).getKey();
-    }
-
-    public static Map.Entry<Node, BlockProcessor> generateNodeAndProcessorWithBlocks(int port, BraboConfig config, Consensus consensus, Iterable<Block> blocks) throws DatabaseException {
-        TestState state = new TestState(config);
-
-        for (Block b : blocks) {
-            state.getBlockProcessor().processNewBlock(b);
-        }
-
-        return new AbstractMap.SimpleEntry<>(state.getNode(), state.getBlockProcessor());
-    }
-
-    public static Node generateNodeWithTransactions(int port, BraboConfig config, Consensus consensus, Iterable<Transaction> transactions) throws DatabaseException {
-        State state = new TestState(config);
-
-        for (Transaction t : transactions) {
-            state.getTransactionProcessor().processNewTransaction(t);
-        }
-
-        return state.getNode();
-    }
-
     public static BigInteger randomBigInteger() {
         return BigInteger.valueOf(RANDOM.nextInt());
+    }
+
+    public static BigInteger randomPrivateKey() {
+        return BigInteger.valueOf(RANDOM.nextInt()).mod(new Consensus().getCurve().getDomain().getN());
     }
 }

@@ -90,7 +90,7 @@ class BlockValidatorTest {
                 BigInteger.ZERO,
                 1,
                 transactionList,
-                0);
+            state.getConfig().networkId());
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -132,7 +132,7 @@ class BlockValidatorTest {
                 BigInteger.ZERO,
                 2,
                 transactionList,
-                0);
+            state.getConfig().networkId());
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -176,7 +176,7 @@ class BlockValidatorTest {
                 BigInteger.ZERO,
                 2,
                 transactionList,
-                0);
+            state.getConfig().networkId());
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block
@@ -221,7 +221,7 @@ class BlockValidatorTest {
                 BigInteger.ZERO,
                 1,
                 transactionList,
-                0);
+                state.getConfig().networkId());
 
         BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
                 block

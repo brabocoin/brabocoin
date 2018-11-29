@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,18 +25,22 @@ public class Consensus {
      * The max block size, excluding the nonce.
      */
     private static final long MAX_BLOCK_SIZE = 1_000_000L; // In bytes
+
     /**
      * The max nonce size.
      */
     private static final int MAX_NONCE_SIZE = 16; // In bytes
+
     /**
      * Block maturity depth.
      */
     private static final int COINBASE_MATURITY_DEPTH = 100;
+
     /**
      * Max money value.
      */
     private static final long MAX_MONEY_VALUE = (long)(3E9);
+
     /**
      * Constant target value.
      */
@@ -46,6 +49,7 @@ public class Consensus {
             BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
         )
     );
+
     /**
      * Double SHA256 hash.
      */
@@ -58,9 +62,9 @@ public class Consensus {
     private static final BigInteger MAX_NONCE = BigIntegerUtil.getMaxBigInteger(MAX_NONCE_SIZE);
 
     /**
-     * The amount of miniBrabos that equals one Brabocoin.
+     * The amount of brabocents that equals one brabocoin.
      */
-    private static final long COIN = 1_000_000L;
+    private static final long COIN = 100L;
 
     /**
      * The block reward value.
@@ -68,11 +72,11 @@ public class Consensus {
     private static final long BLOCK_REWARD = COIN * 10;
 
     /**
-     * Minimum transaction fee in miniBrabos.
+     * Minimum transaction fee in brabocents.
      */
     private static final long MINIMUM_TRANSACTION_FEE = 1;
 
-    private static final int MAX_BLOCK_HEADER_SIZE = 132;
+    private static final int MAX_BLOCK_HEADER_SIZE = 139;
 
     private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
 
@@ -114,7 +118,7 @@ public class Consensus {
     /**
      * Determine amount of Brabocoin in a coinbase output.
      *
-     * @return Amount in miniBrabo's
+     * @return Amount in brabocents
      */
     public long getBlockReward() {
         return BLOCK_REWARD;
@@ -161,7 +165,7 @@ public class Consensus {
     }
 
     /**
-     * Minimum transaction fee in miniBrabos.
+     * Minimum transaction fee in brabocents.
      *
      * @return Minimum transaction fee.
      */
@@ -171,5 +175,12 @@ public class Consensus {
 
     public @NotNull EllipticCurve getCurve() {
         return CURVE;
+    }
+
+    public Long getMaxTransactionSize() {
+        return getMaxBlockSize()
+            + getMaxNonceSize()
+            - getMaxBlockHeaderSize()
+            - Long.BYTES;
     }
 }

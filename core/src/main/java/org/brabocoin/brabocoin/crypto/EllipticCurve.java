@@ -55,7 +55,7 @@ public class EllipticCurve {
      *     The private key.
      * @return The public key point.
      */
-    public @NotNull PublicKey getPublicKeyFromPrivateKey(@NotNull BigInteger privateKey) {
+    public synchronized @NotNull PublicKey getPublicKeyFromPrivateKey(@NotNull BigInteger privateKey) {
         LOGGER.fine("Generating public key from private key.");
         return new PublicKey(domain.getG().multiply(privateKey));
     }
@@ -69,7 +69,7 @@ public class EllipticCurve {
      * @throws IllegalArgumentException
      *     When the point could not be decoded.
      */
-    public @NotNull ECPoint decodePoint(@NotNull ByteString point) throws IllegalArgumentException {
+    public synchronized @NotNull ECPoint decodePoint(@NotNull ByteString point) throws IllegalArgumentException {
         LOGGER.fine("Decoding point from ByteString.");
         return domain.getCurve().decodePoint(point.toByteArray());
     }

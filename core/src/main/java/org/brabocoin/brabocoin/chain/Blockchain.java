@@ -70,7 +70,8 @@ public class Blockchain {
         this.mainChain = new IndexedChain(genesis);
     }
 
-    private @NotNull IndexedBlock storeGenesisBlock(@NotNull Block genesisBlock) throws DatabaseException {
+    private @NotNull IndexedBlock storeGenesisBlock(
+        @NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
         database.storeBlock(genesisBlock);
         IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.getHash());
@@ -193,9 +194,10 @@ public class Blockchain {
         LOGGER.fine("Check if block is orphan.");
 
         boolean isOrphan = orphanIndex.containsKey(blockHash);
-        LOGGER.finest(() -> MessageFormat.format("Block {0} isOrphan={1}",
-                                                 toHexString(blockHash.getValue()),
-                                                 isOrphan
+        LOGGER.finest(() -> MessageFormat.format(
+            "Block {0} isOrphan={1}",
+            toHexString(blockHash.getValue()),
+            isOrphan
         ));
 
         return isOrphan;
@@ -286,5 +288,16 @@ public class Blockchain {
      */
     public void pushTopBlock(@NotNull IndexedBlock block) {
         mainChain.pushTopBlock(block);
+    }
+
+    /**
+     * Get the orphan, given a hash.
+     *
+     * @param blockHash
+     *     The orphan block hash to find the block for
+     * @return Orphan block
+     */
+    public @Nullable Block getOrphan(@NotNull Hash blockHash) {
+        return orphanIndex.get(blockHash);
     }
 }

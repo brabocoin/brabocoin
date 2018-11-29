@@ -4,11 +4,13 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.CorrectTargetValueBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.DuplicateInputBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.HasCoinbaseBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.HasSingleCoinbaseBlkRule;
@@ -23,6 +25,7 @@ import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRu
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseOutputAmountBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidMerkleRootBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidNetworkIdBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
@@ -42,6 +45,7 @@ public class BlockValidator {
     private static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
         MaxSizeBlkRule.class,
+        ValidNetworkIdBlkRule.class,
         DuplicateStorageBlkRule.class,
         SatisfiesTargetValueBlkRule.class,
         CorrectTargetValueBlkRule.class,
@@ -50,6 +54,7 @@ public class BlockValidator {
         HasSingleCoinbaseBlkRule.class,
         ValidMerkleRootBlkRule.class,
         NonContextualTransactionCheckBlkRule.class,
+        DuplicateInputBlkRule.class,
         KnownParentBlkRule.class,
         ValidParentBlkRule.class,
         ValidBlockHeightBlkRule.class
@@ -74,6 +79,7 @@ public class BlockValidator {
     private Blockchain blockchain;
     private ReadonlyUTXOSet utxoSet;
     private Signer signer;
+    private BraboConfig config;
 
     public BlockValidator(@NotNull State state) {
         this.consensus = state.getConsensus();
@@ -82,6 +88,7 @@ public class BlockValidator {
         this.blockchain = state.getBlockchain();
         this.utxoSet = state.getChainUTXODatabase();
         this.signer = state.getSigner();
+        this.config = state.getConfig();
     }
 
     private FactMap createFactMap(@NotNull Block block) {
@@ -94,6 +101,7 @@ public class BlockValidator {
         facts.put("blockchain", blockchain);
         facts.put("utxoSet", utxoSet);
         facts.put("signer", signer);
+        facts.put("config", config);
 
         return facts;
     }

@@ -99,7 +99,7 @@ public class MerkleTree {
      * supplied leaf is {@code null}.
      */
     @Contract("!null -> !null; null -> null")
-    private @Nullable MerkleProof computeProofToRoot(@Nullable Hash leaf) {
+    private synchronized @Nullable MerkleProof computeProofToRoot(@Nullable Hash leaf) {
         LOGGER.fine("Computing proof for leaf.");
 
         // Working queue of nodes to process
