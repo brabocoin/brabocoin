@@ -22,7 +22,7 @@ public class PublicKey {
     /**
      * Prefix of the generated Base58check address (0x00, or 1 encoded in Base58).
      */
-    private static final ByteString ADDRESS_PREFIX = ByteString.copyFrom(new byte[1]);
+    private static final ByteString ADDRESS_PREFIX = ByteString.copyFrom(new byte[] { 0x00 });
 
     /**
      * The point on the elliptic curve corresponding to the public key.
