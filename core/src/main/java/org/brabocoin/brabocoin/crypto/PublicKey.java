@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.crypto;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.util.Base58Check;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,11 @@ import java.util.logging.Logger;
 public class PublicKey {
 
     private static final Logger LOGGER = Logger.getLogger(PublicKey.class.getName());
+
+    /**
+     * Prefix of the generated Base58check address (0x00, or 1 encoded in Base58).
+     */
+    private static final ByteString ADDRESS_PREFIX = ByteString.copyFrom(new byte[1]);
 
     /**
      * The point on the elliptic curve corresponding to the public key.
@@ -84,8 +90,7 @@ public class PublicKey {
      *
      * @return The address corresponding to the public key.
      */
-    public @NotNull String computeAddress() {
-        // TODO: implement Base58Check encoding of hash
-        return "";
+    public @NotNull String getAddress() {
+        return Base58Check.encode(ADDRESS_PREFIX.concat(getHash().getValue()));
     }
 }
