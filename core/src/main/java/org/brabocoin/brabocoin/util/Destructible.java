@@ -82,6 +82,10 @@ public class Destructible<U> {
      * @throws DestructionException When enqueuement times out or the queue was not cleared before timeout.
      */
     public void destruct() throws DestructionException {
+        if (destroyed) {
+            return;
+        }
+
         // Dereference object
         object = null;
 

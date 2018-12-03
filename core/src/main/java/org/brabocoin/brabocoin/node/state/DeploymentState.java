@@ -13,6 +13,8 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -21,15 +23,20 @@ import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.brabocoin.brabocoin.wallet.WalletStorage;
+import org.brabocoin.brabocoin.wallet.PassphraseSupplier;
+import org.brabocoin.brabocoin.wallet.Wallet;
+import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -42,9 +49,8 @@ public class DeploymentState implements State {
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
-    protected final @NotNull KeyGenerator keyGenerator;
-    protected final @NotNull WalletStorage walletStorage;
-    protected final @NotNull Cipher privateKeyCipher;
+    protected final @NotNull Wallet wallet;
+    protected final @NotNull WalletIO walletIO;
     protected final @NotNull KeyValueStore blockStorage;
     protected final @NotNull KeyValueStore utxoStorage;
     protected final @NotNull BlockDatabase blockDatabase;
@@ -62,7 +68,8 @@ public class DeploymentState implements State {
     protected final @NotNull NodeEnvironment environment;
     protected final @NotNull Node node;
 
-    public DeploymentState(@NotNull BraboConfig config) throws DatabaseException {
+    public DeploymentState(@NotNull BraboConfig config, @NotNull
+                           PassphraseSupplier passphraseSupplier) throws DatabaseException {
         this.config = config;
 
         unsecureRandom = createUnsecureRandom();
@@ -71,14 +78,18 @@ public class DeploymentState implements State {
 
         signer = createSigner();
 
-        keyGenerator = createKeyGenerator();
         try {
-            walletStorage = createWalletStorage();
-            privateKeyCipher = createPrivateKeyCipher();
+            walletIO = createWalletIO();
         }
         catch (CipherException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Could not create state.");
+            throw new StateInitializationException("Could not create wallet I/O object.", e);
+        }
+
+        try {
+            wallet = createWallet(passphraseSupplier);
+        }
+        catch (CipherException | DestructionException | IOException e) {
+            throw new StateInitializationException("Could not create wallet.", e);
         }
 
         blockStorage = createBlockStorage();
@@ -109,16 +120,36 @@ public class DeploymentState implements State {
         node = createNode();
     }
 
-    private Cipher createPrivateKeyCipher() throws CipherException {
-        return new BouncyCastleAES();
+    private WalletIO createWalletIO() throws CipherException {
+        return new WalletIO(
+            new BouncyCastleAES()
+        );
     }
 
-    private WalletStorage createWalletStorage() throws CipherException {
-        return new WalletStorage(new BouncyCastleAES());
-    }
+    private Wallet createWallet(PassphraseSupplier passphraseSupplier) throws CipherException, IOException, DestructionException {
+        Cipher privateKeyCipher = new BouncyCastleAES();
+        KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
 
-    protected KeyGenerator createKeyGenerator() {
-        return new SecureRandomKeyGenerator();
+        Destructible<char[]> passphrase;
+        Wallet wallet;
+        File walletFile = new File(config.walletFile());
+        if (walletFile.exists()) {
+            // Read wallet
+            passphrase = passphraseSupplier.supplyPassphrase(false);
+
+            wallet = walletIO.read(walletFile, passphrase, consensus, signer, keyGenerator, privateKeyCipher);
+        } else {
+            // Create new wallet
+            passphrase = passphraseSupplier.supplyPassphrase(true);
+            wallet = new Wallet(new ArrayList<>(), consensus, signer, keyGenerator, privateKeyCipher);
+
+            wallet.generatePlainKeyPair();
+
+            walletIO.write(wallet, walletFile, passphrase);
+        }
+
+        passphrase.destruct();
+        return wallet;
     }
 
     protected Random createUnsecureRandom() {
@@ -325,22 +356,13 @@ public class DeploymentState implements State {
         return node;
     }
 
-    @NotNull
     @Override
-    public KeyGenerator getKeyGenerator() {
-        return keyGenerator;
+    public @NotNull Wallet getWallet() {
+        return wallet;
     }
 
-    @NotNull
     @Override
-    public WalletStorage getWalletStorage() {
-        return walletStorage;
+    public @NotNull WalletIO getWalletIO() {
+        return walletIO;
     }
-
-    @NotNull
-    @Override
-    public Cipher getPrivateKeyCipher() {
-        return privateKeyCipher;
-    }
-
 }

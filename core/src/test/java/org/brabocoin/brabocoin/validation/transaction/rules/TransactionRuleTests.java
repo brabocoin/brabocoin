@@ -13,7 +13,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;

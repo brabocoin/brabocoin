@@ -58,17 +58,23 @@ public class Wallet implements Iterable<KeyPair> {
     private ReadonlyUTXOSet utxoSet;
 
     /**
+     * The cipher used to create private keys.
+     */
+    private Cipher privateKeyCipher;
+
+    /**
      * Create a wallet for a given public to private key map.
      *
      * @param keyPairs
      *     Key map
      */
     public Wallet(Collection<KeyPair> keyPairs, Consensus consensus, Signer signer,
-                  KeyGenerator keyGenerator) {
+                  KeyGenerator keyGenerator, Cipher privateKeyCipher) {
         this.keyPairs = keyPairs;
         this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
+        this.privateKeyCipher = privateKeyCipher;
     }
 
     /**
@@ -141,6 +147,7 @@ public class Wallet implements Iterable<KeyPair> {
      */
     public TransactionSigningResult signTransaction(
         UnsignedTransaction unsignedTransaction) throws DatabaseException, DestructionException {
+        List<PrivateKey> privateKeys = new ArrayList<>();
         List<Signature> signatures = new ArrayList<>();
 
         for (Input input : unsignedTransaction.getInputs()) {
@@ -173,6 +180,10 @@ public class Wallet implements Iterable<KeyPair> {
                 return TransactionSigningResult.privateKeyLocked(keyPair);
             }
 
+            privateKeys.add(privateKey);
+        }
+
+        for (PrivateKey privateKey : privateKeys) {
             Destructible<BigInteger> privateKeyValue = privateKey.getKey();
             signatures.add(
                 signer.signMessage(
@@ -182,7 +193,6 @@ public class Wallet implements Iterable<KeyPair> {
             );
             privateKeyValue.destruct();
         }
-
 
         return TransactionSigningResult.signed(
             unsignedTransaction.sign(signatures)
@@ -216,17 +226,19 @@ public class Wallet implements Iterable<KeyPair> {
      *
      * @param passphrase
      *     The passphrase to encrypt the private key with
-     * @param cipher
-     *     The cipher used to encrypt the private key with
      * @return Key pair that was generated.
      */
-    public KeyPair generateEncryptedKeyPair(Destructible<char[]> passphrase,
-                                            Cipher cipher) throws DestructionException, CipherException {
+    public KeyPair generateEncryptedKeyPair(
+        Destructible<char[]> passphrase) throws DestructionException, CipherException {
         Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(consensus.getCurve()
             .getDomain()
             .getN());
         // Also destructs the passphrase and big integer
-        PrivateKey privateKey = PrivateKey.encrypted(randomBigInteger, passphrase, cipher);
+        PrivateKey privateKey = PrivateKey.encrypted(
+            randomBigInteger,
+            passphrase,
+            privateKeyCipher
+        );
         PublicKey publicKey = consensus.getCurve().getPublicKeyFromPrivateKey(
             Objects.requireNonNull(randomBigInteger.getReference().get())
         );

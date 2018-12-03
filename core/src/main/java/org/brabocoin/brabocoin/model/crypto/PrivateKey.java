@@ -174,7 +174,7 @@ public class PrivateKey implements ProtoModel<PrivateKey> {
      * if {@link #encrypted}, get the {@link #unlockedValue}.
      * <p>
      * Note, this method locks an unlocked private key.
-     * The user is responsible for destroyed the returned (plain) big integer.
+     * The user is responsible for destroying the returned (plain) big integer.
      *
      * @return A destructible BigInteger private key
      * @throws DestructionException When the unlocked value could not be destructed

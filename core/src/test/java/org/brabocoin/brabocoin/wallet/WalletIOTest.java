@@ -11,10 +11,13 @@ import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.Destructible;
+import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -27,15 +30,23 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class WalletStorageTest {
+class WalletIOTest {
 
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
         .bind("brabo", BraboConfig.class);
-    private static final File walletFile = new File("src/test/resources/testwallet.dat");
+    private static final String walletPath = "src/test/resources/testwallet.dat";
+    private static final File walletFile = new File(walletPath);
     private EllipticCurve curve = EllipticCurve.secp256k1();
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void beforeEach() {
+        defaultConfig = new MockBraboConfig(defaultConfig) {
+            @Override
+            public String walletFile() {
+                return walletPath;
+            }
+        };
+
         if (walletFile.exists()) {
             walletFile.delete();
         }
@@ -59,22 +70,22 @@ class WalletStorageTest {
             ),
             state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        WalletStorage io = new WalletStorage(
-            new BouncyCastleAES(), wallet
-        );
+        WalletIO io = state.getWalletIO();
 
-        io.write(walletFile, new Destructible<>(passphrase::toCharArray));
+        io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        io.read(walletFile, new Destructible<>(passphrase::toCharArray),
+        Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        assertEquals(key, io.getWallet().getPrivateKeys().iterator().next());
+        assertEquals(key, readWallet.getPrivateKeys().iterator().next());
     }
 
     @Test
@@ -97,21 +108,23 @@ class WalletStorageTest {
             Collections.singletonList(new KeyPair(publicKey, key)),
             state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        WalletStorage io = new WalletStorage(
-            new BouncyCastleAES(), wallet
-        );
+        WalletIO io = state.getWalletIO();
 
-        io.write(walletFile, new Destructible<>(passphrase::toCharArray));
+        io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
+        Wallet readWallet = io.read(walletFile,
+            new Destructible<>(passphrase::toCharArray),
+            state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        assertEquals(key, io.getWallet().getPrivateKeys().iterator().next());
+        assertEquals(key, readWallet.getPrivateKeys().iterator().next());
     }
 
 
@@ -131,23 +144,23 @@ class WalletStorageTest {
             keys,
             state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        WalletStorage io = new WalletStorage(
-            new BouncyCastleAES(), wallet
-        );
+        WalletIO io = state.getWalletIO();
 
-        io.write(walletFile, new Destructible<>(passphrase::toCharArray));
+        io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
+        Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator()
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
         assertEquals(
             keys.stream().map(KeyPair::getPrivateKey).collect(Collectors.toSet()),
-            new HashSet<>(io.getWallet().getPrivateKeys())
+            new HashSet<>(readWallet.getPrivateKeys())
         );
     }
 
@@ -180,21 +193,23 @@ class WalletStorageTest {
 
         Wallet wallet = new Wallet(keys, state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator());
-
-        WalletStorage io = new WalletStorage(
-            new BouncyCastleAES(), wallet
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
         );
 
-        io.write(walletFile, new Destructible<>(passphrase::toCharArray));
+        WalletIO io = state.getWalletIO();
 
-        io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
+        io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
+
+        Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
             state.getSigner(),
-            state.getKeyGenerator());
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES()
+        );
 
         assertEquals(
             keys.stream().map(KeyPair::getPrivateKey).collect(Collectors.toSet()),
-            new HashSet<>(io.getWallet().getPrivateKeys())
+            new HashSet<>(readWallet.getPrivateKeys())
         );
     }
 }
