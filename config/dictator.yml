@@ -7,8 +7,10 @@ brabo:
   databaseDirectory: db               # Database subfolder
   blockStoreDirectory: data/blocks    # Subfolder to store block data
   utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data
+  walletStoreDirectory: data/wallet   # Subfolder to store wallet data
   maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions
   maxOrphanBlocks: 100                # Max number of orphan blocks
   servicePort: 56129                  # Port on which the application listens for messages
+  walletFile: wallet.dat              # Wallet file

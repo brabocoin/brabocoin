@@ -53,6 +53,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public String walletStoreDirectory() {
+        return delegator.walletStoreDirectory();
+    }
+
+    @Override
     public int maxBlockFileSize() {
         return delegator.maxBlockFileSize();
     }

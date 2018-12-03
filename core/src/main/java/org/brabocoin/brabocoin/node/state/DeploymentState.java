@@ -47,9 +47,11 @@ public class DeploymentState implements State {
     protected final @NotNull Cipher privateKeyCipher;
     protected final @NotNull KeyValueStore blockStorage;
     protected final @NotNull KeyValueStore utxoStorage;
+    protected final @NotNull KeyValueStore walletUTXOStorage;
     protected final @NotNull BlockDatabase blockDatabase;
     protected final @NotNull ChainUTXODatabase chainUTXODatabase;
     protected final @NotNull UTXODatabase poolUTXODatabase;
+    protected final @NotNull UTXODatabase walletUTXODatabase;
     protected final @NotNull Blockchain blockchain;
     protected final @NotNull TransactionPool transactionPool;
     protected final @NotNull BlockProcessor blockProcessor;
@@ -83,10 +85,12 @@ public class DeploymentState implements State {
 
         blockStorage = createBlockStorage();
         utxoStorage = createUtxoStorage();
+        walletUTXOStorage = createWalletUTXOStorage();
 
         blockDatabase = createBlockDatabase();
         chainUTXODatabase = createChainUTXODatabase();
         poolUTXODatabase = createPoolUTXODatabase();
+        walletUTXODatabase = createWalletUTXODatabase();
 
         blockchain = createBlockchain();
 
@@ -141,6 +145,10 @@ public class DeploymentState implements State {
         return new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));
     }
 
+    protected KeyValueStore createWalletUTXOStorage() {
+        return new LevelDB(new File(config.walletStoreDirectory(), config.databaseDirectory()));
+    }
+
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
         return new BlockDatabase(
             blockStorage,
@@ -155,6 +163,10 @@ public class DeploymentState implements State {
 
     protected UTXODatabase createPoolUTXODatabase() throws DatabaseException {
         return new UTXODatabase(new HashMapDB());
+    }
+
+    protected UTXODatabase createWalletUTXODatabase() throws DatabaseException {
+        return new UTXODatabase(walletUTXOStorage);
     }
 
     protected Blockchain createBlockchain() throws DatabaseException {
@@ -243,6 +255,12 @@ public class DeploymentState implements State {
 
     @NotNull
     @Override
+    public KeyValueStore getWalletUTXOStorage() {
+        return walletUTXOStorage;
+    }
+
+    @NotNull
+    @Override
     public BlockDatabase getBlockDatabase() {
         return blockDatabase;
     }
@@ -257,6 +275,12 @@ public class DeploymentState implements State {
     @Override
     public UTXODatabase getPoolUTXODatabase() {
         return poolUTXODatabase;
+    }
+
+    @NotNull
+    @Override
+    public UTXODatabase getWalletUTXODatabase() {
+        return walletUTXODatabase;
     }
 
     @NotNull

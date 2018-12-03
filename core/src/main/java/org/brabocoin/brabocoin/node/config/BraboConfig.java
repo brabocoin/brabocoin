@@ -20,6 +20,8 @@ public interface BraboConfig {
 
     String utxoStoreDirectory();
 
+    String walletStoreDirectory();
+
     /**
      * Maximim file size of the block storage files in bytes.
      *

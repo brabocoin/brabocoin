@@ -38,11 +38,15 @@ public interface State {
 
     @NotNull KeyValueStore getUtxoStorage();
 
+    @NotNull KeyValueStore getWalletUTXOStorage();
+
     @NotNull BlockDatabase getBlockDatabase();
 
     @NotNull ChainUTXODatabase getChainUTXODatabase();
 
     @NotNull UTXODatabase getPoolUTXODatabase();
+
+    @NotNull UTXODatabase getWalletUTXODatabase();
 
     @NotNull Blockchain getBlockchain();
 

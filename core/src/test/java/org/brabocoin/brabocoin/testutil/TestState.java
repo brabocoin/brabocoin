@@ -26,4 +26,9 @@ public class TestState extends DeploymentState {
     protected KeyValueStore createUtxoStorage() {
         return new HashMapDB();
     }
+
+    @Override
+    protected KeyValueStore createWalletUTXOStorage() {
+        return new HashMapDB();
+    }
 }
