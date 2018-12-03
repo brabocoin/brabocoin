@@ -20,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -35,7 +37,13 @@ public class UTXODatabase implements ReadonlyUTXOSet {
 
     private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");
+
     protected final @NotNull KeyValueStore storage;
+
+    /**
+     * Listeners for UTXO set events.
+     */
+    private final @NotNull Set<UTXOSetListener> listeners;
 
     /**
      * Creates a new UTXO set database using the provided key-value store.
@@ -47,6 +55,7 @@ public class UTXODatabase implements ReadonlyUTXOSet {
      */
     public UTXODatabase(@NotNull KeyValueStore storage) throws DatabaseException {
         this.storage = storage;
+        this.listeners = new HashSet<>();
 
         try {
             storage.open();
@@ -231,6 +240,8 @@ public class UTXODatabase implements ReadonlyUTXOSet {
 
         LOGGER.log(Level.FINE, "Storing key and value for outputIndex: {0}", outputIndex);
         store(key, value);
+
+        this.listeners.forEach(l -> l.onOutputUnspent(transactionHash, outputIndex, info));
     }
 
     protected synchronized <D extends ProtoModel<D>, P extends Message> ByteString getRawProtoValue(
@@ -264,5 +275,17 @@ public class UTXODatabase implements ReadonlyUTXOSet {
         ByteString key = getOutputKey(transactionHash, outputIndex);
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("key: {0}", toHexString(key)));
         storage.delete(key);
+
+        this.listeners.forEach(l -> l.onOutputSpent(transactionHash, outputIndex));
+    }
+
+    @Override
+    public void addListener(@NotNull UTXOSetListener listener) {
+        this.listeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(@NotNull UTXOSetListener listener) {
+        this.listeners.remove(listener);
     }
 }

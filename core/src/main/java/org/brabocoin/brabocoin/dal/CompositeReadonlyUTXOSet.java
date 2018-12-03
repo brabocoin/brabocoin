@@ -74,4 +74,13 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
         return null;
     }
 
+    @Override
+    public void addListener(@NotNull UTXOSetListener listener) {
+        utxoSets.forEach(s -> s.addListener(listener));
+    }
+
+    @Override
+    public void removeListener(@NotNull UTXOSetListener listener) {
+        utxoSets.forEach(s -> s.removeListener(listener));
+    }
 }
