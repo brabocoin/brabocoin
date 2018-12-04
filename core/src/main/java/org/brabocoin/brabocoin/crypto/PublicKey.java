@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.util.Base58Check;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.logging.Logger;
 
 
@@ -92,5 +93,22 @@ public class PublicKey {
      */
     public @NotNull String getAddress() {
         return Base58Check.encode(ADDRESS_PREFIX.concat(getHash().getValue()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PublicKey publicKey = (PublicKey)o;
+        return Objects.equals(point, publicKey.point);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(point);
     }
 }
