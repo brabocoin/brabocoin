@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class TestState extends DeploymentState {
 
     public TestState(@NotNull BraboConfig config) throws DatabaseException {
-        super(config);
+        super(config, (c) -> new Destructible<>("testpassphrase"::toCharArray));
     }
 
     @Override

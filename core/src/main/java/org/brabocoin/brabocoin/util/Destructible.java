@@ -9,6 +9,7 @@ import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -82,6 +83,16 @@ public class Destructible<U> {
      * @throws DestructionException When enqueuement times out or the queue was not cleared before timeout.
      */
     public void destruct() throws DestructionException {
+        if (object instanceof char[]) {
+            // Purge character array before destruction
+            char[] charArray = (char[]) object;
+            Arrays.fill(charArray, '\u0000');
+        }
+
+        if (destroyed) {
+            return;
+        }
+
         // Dereference object
         object = null;
 

@@ -19,8 +19,8 @@ import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.brabocoin.brabocoin.wallet.WalletStorage;
-import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
+import org.brabocoin.brabocoin.wallet.Wallet;
+import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -70,9 +70,7 @@ public interface State {
 
     @NotNull Node getNode();
 
-    @NotNull WalletStorage getWalletStorage();
+    @NotNull Wallet getWallet();
 
-    @NotNull KeyGenerator getKeyGenerator();
-
-    @NotNull Cipher getPrivateKeyCipher();
+    @NotNull WalletIO getWalletIO();
 }

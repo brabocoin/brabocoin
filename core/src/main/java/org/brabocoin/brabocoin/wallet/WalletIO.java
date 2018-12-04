@@ -20,22 +20,18 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WalletStorage {
+public class WalletIO {
+
     private final Cipher cipher;
-    private Wallet wallet = null;
 
-    public WalletStorage(Cipher cipher, Wallet wallet) {
-        this.cipher = cipher;
-        this.wallet = wallet;
-    }
-
-    public WalletStorage(Cipher cipher) {
+    public WalletIO(Cipher cipher) {
         this.cipher = cipher;
     }
 
-    public void read(File keysFile, Destructible<char[]> passphrase, Consensus consensus,
-                     Signer signer,
-                     KeyGenerator keyGenerator) throws IOException, CipherException,
+    public Wallet read(File keysFile, Destructible<char[]> passphrase, Consensus consensus,
+                       Signer signer,
+                       KeyGenerator keyGenerator,
+                       Cipher privateKeyCipher) throws IOException, CipherException,
                                                        DestructionException {
         if (!keysFile.exists()) {
             throw new IllegalArgumentException("File does not exists.");
@@ -63,10 +59,10 @@ public class WalletStorage {
 
         passphrase.destruct();
 
-        wallet = new Wallet(keyList, consensus, signer, keyGenerator);
+        return new Wallet(keyList, consensus, signer, keyGenerator, privateKeyCipher);
     }
 
-    public void write(File keysFile,
+    public void write(Wallet wallet, File keysFile,
                       Destructible<char[]> passphrase) throws IOException, CipherException,
                                                               DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -87,13 +83,5 @@ public class WalletStorage {
         passphrase.destruct();
 
         Files.write(keysFile.toPath(), encryptedBytes);
-    }
-
-    public Wallet getWallet() {
-        return wallet;
-    }
-
-    public boolean hasWallet() {
-        return wallet != null;
     }
 }
