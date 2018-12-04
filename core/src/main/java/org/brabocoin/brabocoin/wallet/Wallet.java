@@ -135,7 +135,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      * @return Whether this wallet has the key pair corresponding to this address.
      */
     public boolean hasAddress(@NotNull Hash address) {
-        return keyPairs.stream().anyMatch(p -> p.getPublicKeyHash().equals(address));
+        return keyPairs.stream().anyMatch(p -> p.getPublicKey().getHash().equals(address));
     }
 
     /**
@@ -264,17 +264,19 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
             .getDomain()
             .getN());
         // Also destructs the passphrase and big integer
+        PublicKey publicKey = consensus.getCurve().getPublicKeyFromPrivateKey(
+            Objects.requireNonNull(randomBigInteger.getReference().get())
+        );
         PrivateKey privateKey = PrivateKey.encrypted(
             randomBigInteger,
             passphrase,
             privateKeyCipher
         );
-        PublicKey publicKey = consensus.getCurve().getPublicKeyFromPrivateKey(
-            Objects.requireNonNull(randomBigInteger.getReference().get())
-        );
 
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
         keyPairs.add(keyPair);
+
+        randomBigInteger.destruct();
 
         return keyPair;
     }

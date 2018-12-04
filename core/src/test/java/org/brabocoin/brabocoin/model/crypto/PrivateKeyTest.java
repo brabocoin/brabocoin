@@ -24,7 +24,11 @@ class PrivateKeyTest {
                 superSecretKey, superSecretPassword, new BouncyCastleAES()
         );
 
+
+        assertTrue(superSecretKey.isDestroyed());
         assertNull(superSecretKey.getReference().get());
+
+        assertTrue(superSecretPassword.isDestroyed());
         assertNull(superSecretPassword.getReference().get());
 
         assertThrows(IllegalStateException.class, encrypted::getKey);
@@ -83,6 +87,39 @@ class PrivateKeyTest {
 
         assertFalse(value.isDestroyed());
         assertEquals(bladiebla, value.getReference().get());
+    }
+
+    @Test
+    void encryptedGetUnlockTwice() throws CipherException, DestructionException {
+        Destructible<BigInteger> superSecretKey = new Destructible<>(
+                // Create copy
+                () -> new BigInteger(Simulation.randomBigInteger().toByteArray())
+        );
+        Destructible<char[]> superSecretPassword = new Destructible<>(
+                "IkWilNietInRAMBlijven!"::toCharArray
+        );
+
+        PrivateKey encrypted = PrivateKey.encrypted(
+                superSecretKey, superSecretPassword, new BouncyCastleAES()
+        );
+
+        assertNull(superSecretKey.getReference().get());
+        assertNull(superSecretPassword.getReference().get());
+
+        Destructible<char[]> destructibleUnlockPassphrase = new Destructible<>(
+                "IkWilNietInRAMBlijven!"::toCharArray
+        );
+        encrypted.unlock(destructibleUnlockPassphrase);
+
+        Destructible<BigInteger> value = encrypted.getKey();
+
+        assertTrue(destructibleUnlockPassphrase.isDestroyed());
+        assertNull(destructibleUnlockPassphrase.getReference().get());
+
+        assertFalse(value.isDestroyed());
+        assertFalse(encrypted.isUnlocked());
+
+        assertThrows(IllegalStateException.class, encrypted::getKey);
     }
 
     @Test

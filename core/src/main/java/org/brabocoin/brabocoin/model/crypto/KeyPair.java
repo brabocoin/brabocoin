@@ -20,15 +20,9 @@ public class KeyPair implements ProtoModel<KeyPair> {
     @ProtoField
     private PrivateKey privateKey;
 
-    /**
-     * Cached hash of the public key.
-     */
-    private final @NotNull Hash publicKeyHash;
-
     public KeyPair(PublicKey publicKey, PrivateKey privateKey) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.publicKeyHash = publicKey.getHash();
     }
 
     @Override
@@ -38,10 +32,6 @@ public class KeyPair implements ProtoModel<KeyPair> {
 
     public PublicKey getPublicKey() {
         return publicKey;
-    }
-
-    public @NotNull Hash getPublicKeyHash() {
-        return publicKeyHash;
     }
 
     public PrivateKey getPrivateKey() {

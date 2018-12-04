@@ -25,12 +25,20 @@ import java.security.spec.KeySpec;
 public final class BouncyCastleAES extends KeyCipher {
     private static final int keyLength = 256;
     private static final Provider provider = new BouncyCastleProvider();
+    private static SecretKeyFactory secretKeyFactory;
     private static javax.crypto.Cipher cipher;
 
 
     public BouncyCastleAES() throws CipherException {
         if (cipher != null) {
             return;
+        }
+
+        try {
+            secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", provider);
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new CipherException("No such algorithm found", e);
         }
 
         try {
@@ -106,16 +114,10 @@ public final class BouncyCastleAES extends KeyCipher {
                 salt,
                 Constants.PBKDF_ITERATIONS,
                 keyLength);
-        SecretKeyFactory keyFac;
-        try {
-            keyFac = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", provider);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CipherException("Could not find secret key factory algorithm", e);
-        }
 
         javax.crypto.SecretKey pbeKey;
         try {
-            pbeKey = keyFac.generateSecret(pbeKeySpec);
+            pbeKey = secretKeyFactory.generateSecret(pbeKeySpec);
         } catch (InvalidKeySpecException e) {
             throw new CipherException("Invalid key spec for secret generation");
         }
