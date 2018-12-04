@@ -4,9 +4,12 @@ import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.dal.UTXOSetListener;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
@@ -19,18 +22,23 @@ import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
  * The wallet data structure.
  */
-public class Wallet implements Iterable<KeyPair> {
+public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
+
+    private static final Logger LOGGER = Logger.getLogger(Wallet.class.getName());
 
     /**
      * The public and private key collection.
@@ -55,7 +63,7 @@ public class Wallet implements Iterable<KeyPair> {
     /**
      * The wallet UTXO set.
      */
-    private ReadonlyUTXOSet utxoSet;
+    private final @NotNull UTXODatabase utxoSet;
 
     /**
      * The cipher used to create private keys.
@@ -67,14 +75,25 @@ public class Wallet implements Iterable<KeyPair> {
      *
      * @param keyPairs
      *     Key map
+     * @param utxoSet
+     *     The UTXO set for the wallet, containing only unspent outputs for the addresses
+     *     corresponding to the keys contained in the wallet.
+     * @param watchedUtxoSet
+     *     The UTXO set that must be watched for updates, which would normally be the UTXO sets
+     *     of the transaction pool and the blockchain.
      */
     public Wallet(Collection<KeyPair> keyPairs, Consensus consensus, Signer signer,
-                  KeyGenerator keyGenerator, Cipher privateKeyCipher) {
+                  KeyGenerator keyGenerator, Cipher privateKeyCipher, @NotNull UTXODatabase utxoSet,
+                  @NotNull ReadonlyUTXOSet watchedUtxoSet) {
         this.keyPairs = keyPairs;
         this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
         this.privateKeyCipher = privateKeyCipher;
+        this.utxoSet = utxoSet;
+
+        // Add listener to watched UTXO set
+        watchedUtxoSet.addListener(this);
     }
 
     /**
@@ -106,6 +125,17 @@ public class Wallet implements Iterable<KeyPair> {
         return keyPairs.stream().filter(p -> p.getPublicKey() == publicKey)
             .findFirst()
             .orElse(null);
+    }
+
+    /**
+     * Check whether the wallet contains this address.
+     *
+     * @param address
+     *     The address to find.
+     * @return Whether this wallet has the key pair corresponding to this address.
+     */
+    public boolean hasAddress(@NotNull Hash address) {
+        return keyPairs.stream().anyMatch(p -> p.getPublicKeyHash().equals(address));
     }
 
     /**
@@ -253,5 +283,37 @@ public class Wallet implements Iterable<KeyPair> {
     @Override
     public Iterator<KeyPair> iterator() {
         return keyPairs.iterator();
+    }
+
+    @Override
+    public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
+                                @NotNull UnspentOutputInfo info) {
+        if (!hasAddress(info.getAddress())) {
+            return;
+        }
+
+        try {
+            utxoSet.addUnspentOutputInfo(transactionHash, outputIndex, info);
+            LOGGER.info(() -> MessageFormat.format(
+                "Added {0} cents as spendable amount to wallet for address {1}.",
+                info.getAmount(),
+                PublicKey.getBase58AddressFromHash(info.getAddress())
+            ));
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
+            throw new RuntimeException("Wallet UTXO set could not be updated.", e);
+        }
+    }
+
+    @Override
+    public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
+        try {
+            utxoSet.setOutputSpent(transactionHash, outputIndex);
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
+            throw new RuntimeException("Wallet UTXO set could not be updated.", e);
+        }
     }
 }

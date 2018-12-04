@@ -2,6 +2,8 @@ package org.brabocoin.brabocoin.wallet;
 
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
@@ -10,6 +12,7 @@ import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,8 +34,10 @@ public class WalletIO {
     public Wallet read(File keysFile, Destructible<char[]> passphrase, Consensus consensus,
                        Signer signer,
                        KeyGenerator keyGenerator,
-                       Cipher privateKeyCipher) throws IOException, CipherException,
-                                                       DestructionException {
+                       Cipher privateKeyCipher,
+                       @NotNull UTXODatabase walletUTXOSet,
+                       @NotNull ReadonlyUTXOSet watchedUTXOSet) throws IOException, CipherException,
+                                                        DestructionException {
         if (!keysFile.exists()) {
             throw new IllegalArgumentException("File does not exists.");
         }
@@ -59,7 +64,7 @@ public class WalletIO {
 
         passphrase.destruct();
 
-        return new Wallet(keyList, consensus, signer, keyGenerator, privateKeyCipher);
+        return new Wallet(keyList, consensus, signer, keyGenerator, privateKeyCipher, walletUTXOSet, watchedUTXOSet);
     }
 
     public void write(Wallet wallet, File keysFile,

@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.wallet;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
@@ -16,7 +17,6 @@ import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -71,7 +71,9 @@ class WalletIOTest {
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         WalletIO io = state.getWalletIO();
@@ -82,7 +84,9 @@ class WalletIOTest {
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
@@ -109,7 +113,9 @@ class WalletIOTest {
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         WalletIO io = state.getWalletIO();
@@ -121,7 +127,9 @@ class WalletIOTest {
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
@@ -145,7 +153,9 @@ class WalletIOTest {
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         WalletIO io = state.getWalletIO();
@@ -155,7 +165,9 @@ class WalletIOTest {
         Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         assertEquals(
@@ -194,7 +206,9 @@ class WalletIOTest {
         Wallet wallet = new Wallet(keys, state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         WalletIO io = state.getWalletIO();
@@ -204,7 +218,9 @@ class WalletIOTest {
         Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
-            new BouncyCastleAES()
+            new BouncyCastleAES(),
+            state.getWalletUTXODatabase(),
+            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase())
         );
 
         assertEquals(

@@ -6,9 +6,11 @@ import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.dal.LevelDB;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -137,15 +139,33 @@ public class DeploymentState implements State {
         Destructible<char[]> passphrase;
         Wallet wallet;
         File walletFile = new File(config.walletFile());
+        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
         if (walletFile.exists()) {
             // Read wallet
             passphrase = passphraseSupplier.supplyPassphrase(false);
 
-            wallet = walletIO.read(walletFile, passphrase, consensus, signer, keyGenerator, privateKeyCipher);
+            wallet = walletIO.read(
+                walletFile,
+                passphrase,
+                consensus,
+                signer,
+                keyGenerator,
+                privateKeyCipher,
+                walletUTXODatabase,
+                watchUTXOSet
+            );
         } else {
             // Create new wallet
             passphrase = passphraseSupplier.supplyPassphrase(true);
-            wallet = new Wallet(new ArrayList<>(), consensus, signer, keyGenerator, privateKeyCipher);
+            wallet = new Wallet(
+                new ArrayList<>(),
+                consensus,
+                signer,
+                keyGenerator,
+                privateKeyCipher,
+                walletUTXODatabase,
+                watchUTXOSet
+            );
 
             wallet.generatePlainKeyPair();
 

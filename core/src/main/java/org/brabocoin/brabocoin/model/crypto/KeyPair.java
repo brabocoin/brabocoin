@@ -3,10 +3,12 @@ package org.brabocoin.brabocoin.model.crypto;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.PublicKey;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.model.proto.Secp256k1PublicKeyByteStringConverter;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a public and private key pair
@@ -18,9 +20,15 @@ public class KeyPair implements ProtoModel<KeyPair> {
     @ProtoField
     private PrivateKey privateKey;
 
+    /**
+     * Cached hash of the public key.
+     */
+    private final @NotNull Hash publicKeyHash;
+
     public KeyPair(PublicKey publicKey, PrivateKey privateKey) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
+        this.publicKeyHash = publicKey.getHash();
     }
 
     @Override
@@ -30,6 +38,10 @@ public class KeyPair implements ProtoModel<KeyPair> {
 
     public PublicKey getPublicKey() {
         return publicKey;
+    }
+
+    public @NotNull Hash getPublicKeyHash() {
+        return publicKeyHash;
     }
 
     public PrivateKey getPrivateKey() {
