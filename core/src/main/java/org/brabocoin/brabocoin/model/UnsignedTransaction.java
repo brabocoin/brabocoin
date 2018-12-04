@@ -36,7 +36,7 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
     /**
      * Cached hash of this transaction.
      */
-    private Hash hash;
+    protected Hash hash;
 
     /**
      * Create a new unsigned transaction.

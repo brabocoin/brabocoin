@@ -1,9 +1,12 @@
 package org.brabocoin.brabocoin.model;
 
+import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -89,4 +92,16 @@ public class Transaction extends UnsignedTransaction {
         }
     }
 
+    @Override
+    public @NotNull
+    synchronized Hash getHash() {
+        if (hash == null) {
+            ByteString data = ProtoConverter.toProto(
+                this,
+                BrabocoinProtos.Transaction.class
+            ).toByteString();
+            hash = Hashing.digestSHA256(Hashing.digestSHA256(data));
+        }
+        return hash;
+    }
 }
