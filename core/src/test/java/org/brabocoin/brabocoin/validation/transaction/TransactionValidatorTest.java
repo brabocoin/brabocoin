@@ -5,6 +5,8 @@ import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -17,6 +19,7 @@ import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -66,5 +69,27 @@ class TransactionValidatorTest {
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
+    }
+
+    @Test
+    void negativeOutputIndex() throws DatabaseException {
+        State state = new TestState(defaultConfig);
+
+        Transaction transaction = new Transaction(
+            Collections.singletonList(
+                new Input(Simulation.randomHash(), -1)
+            ),
+            Collections.singletonList(
+                new Output(Simulation.randomHash(), 100)
+            ),
+            Collections.singletonList(
+                Simulation.randomSignature()
+            )
+        );
+
+        RuleBookResult result = state.getTransactionValidator().checkTransactionValid(transaction);
+
+        assertFalse(result.isPassed());
+        assertEquals(ValidInputUTXOTxRule.class, result.getFailMarker().getFailedRule());
     }
 }
