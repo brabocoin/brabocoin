@@ -130,12 +130,7 @@ class TransactionRuleTests {
 
     @Test
     void CoinbaseCreationTxRuleFail() {
-        Transaction transaction = new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput()), 
-                Collections.emptyList()
-        );
-
+        Transaction transaction = Transaction.coinbase(Simulation.randomOutput(),0);
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(CoinbaseCreationTxRule.class)
         ));
@@ -170,10 +165,7 @@ class TransactionRuleTests {
     @Test
     void CoinbaseMaturityTxRuleFail() throws DatabaseException {
         Output output = Simulation.randomOutput();
-        Transaction coinbase = new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(output), Collections.emptyList()
-        );
+        Transaction coinbase = Transaction.coinbase(output,0);
 
         Block block = new Block(
                 consensus.getGenesisBlock().getHash(),
@@ -411,10 +403,7 @@ class TransactionRuleTests {
 
     @Test
     void OutputCountTxRuleCoinbaseSuccess() {
-        Transaction transaction = new Transaction(
-                Collections.emptyList(),
-                Collections.singletonList(Simulation.randomOutput()), Collections.emptyList()
-        );
+        Transaction transaction = Transaction.coinbase(Simulation.randomOutput(), 1);
 
         RuleBook ruleBook = new RuleBook(new RuleList(
                 Collections.singletonList(InputOutputNotEmptyTxRule.class)

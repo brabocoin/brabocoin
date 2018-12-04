@@ -79,7 +79,11 @@ public class Miner {
                                         @NotNull Hash coinbaseAddress) {
         List<Transaction> transactions = collectTransactions();
 
-        Transaction coinbase = createCoinbase(coinbaseAddress, transactions);
+        Transaction coinbase = createCoinbase(
+            coinbaseAddress,
+            transactions,
+            previousBlock.getBlockInfo().getBlockHeight() + 1
+        );
         transactions.add(0, coinbase);
 
         List<Hash> hashes = transactions.stream()
@@ -117,11 +121,12 @@ public class Miner {
     }
 
     private @NotNull Transaction createCoinbase(Hash coinbaseAddress,
-                                                List<Transaction> transactions) {
+                                                List<Transaction> transactions,
+                                                int blockHeight) {
         // TODO: do this better
         long amount = consensus.getBlockReward();
 
-        return Transaction.coinbase(new Output(coinbaseAddress, amount));
+        return Transaction.coinbase(new Output(coinbaseAddress, amount), blockHeight);
     }
 
     /**

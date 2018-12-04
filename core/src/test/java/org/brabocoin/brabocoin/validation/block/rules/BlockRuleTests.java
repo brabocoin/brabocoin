@@ -311,12 +311,7 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             0,
             Collections.singletonList(
-                new Transaction(
-                    Collections.emptyList(),
-                    Collections.singletonList(
-                        new Output(Simulation.randomHash(), 10L)
-                    ), Collections.emptyList()
-                )
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0)
             ),
             0
         );
@@ -426,18 +421,8 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             0,
             Arrays.asList(
-                new Transaction(
-                    Collections.emptyList(),
-                    Collections.singletonList(
-                        new Output(Simulation.randomHash(), 10L)
-                    ), Collections.emptyList()
-                ),
-                new Transaction(
-                    Collections.emptyList(),
-                    Collections.singletonList(
-                        new Output(Simulation.randomHash(), 10L)
-                    ), Collections.emptyList()
-                )
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0),
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0)
             ),
             0
         );
@@ -531,12 +516,7 @@ class BlockRuleTests {
 
     @Test
     void LegalTransactionFeesBlkRuleSuccess() throws DatabaseException {
-        Transaction cb = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(
-                new Output(Simulation.randomHash(), 10L)
-            ), Collections.emptyList()
-        );
+        Transaction cb = Transaction.coinbase(new Output(Simulation.randomHash(), 10L),1);
         Block coinbase = new Block(
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
@@ -549,12 +529,7 @@ class BlockRuleTests {
             0
         );
 
-        Transaction cb2 = new Transaction(
-            Collections.emptyList(),
-            Collections.singletonList(
-                new Output(Simulation.randomHash(), 20L)
-            ), Collections.emptyList()
-        );
+        Transaction cb2 = Transaction.coinbase(new Output(Simulation.randomHash(), 20L),2);
         Block coinbase2 = new Block(
             coinbase.getHash(),
             Simulation.randomHash(),
@@ -574,12 +549,7 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             1,
             Arrays.asList(
-                new Transaction(
-                    Collections.emptyList(),
-                    Collections.singletonList(
-                        new Output(Simulation.randomHash(), 10L)
-                    ), Collections.emptyList()
-                ),
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),1),
                 new Transaction(
                     Arrays.asList(
                         new Input(

@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
  */
 @ProtoClass(BrabocoinProtos.UnsignedTransaction.class)
 public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
+    /**
+     * Referenced transaction hash for coinbase input
+     */
+    protected static final @NotNull Hash coinbaseReferencedTransaction = new Hash(ByteString.copyFrom(new byte[] {0}));
 
     /**
      * Inputs used by the transaction.
@@ -76,7 +80,8 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
      * @return Whether the transaction is a coinbase transaction.
      */
     public boolean isCoinbase() {
-        return inputs.size() == 0 && outputs.size() == 1;
+        return inputs.size() == 1 && outputs.size() == 1
+            && inputs.get(0).getReferencedTransaction().equals(coinbaseReferencedTransaction);
     }
 
     /**

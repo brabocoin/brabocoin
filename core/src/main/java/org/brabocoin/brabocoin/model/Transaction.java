@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.model;
 
+import com.google.protobuf.ByteString;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
@@ -35,9 +36,16 @@ public class Transaction extends UnsignedTransaction {
         return unsignedTransaction.sign(signatures);
     }
 
-    public static @NotNull Transaction coinbase(@NotNull Output output) {
+    private static Input createCoinbaseInput(int blockHeight) {
+        return new Input(
+            coinbaseReferencedTransaction,
+            blockHeight
+        );
+    }
+
+    public static @NotNull Transaction coinbase(@NotNull Output output, int blockHeight) {
         return new Transaction(
-            Collections.emptyList(),
+            Collections.singletonList(createCoinbaseInput(blockHeight)),
             Collections.singletonList(output),
             Collections.emptyList()
         );
