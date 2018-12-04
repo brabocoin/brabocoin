@@ -6,7 +6,11 @@ public class SignatureCountTxRule extends TransactionRule {
 
     @Override
     public boolean isValid() {
-        return transaction.isCoinbase() || transaction.getInputs()
-            .size() == transaction.getSignatures().size();
+        int signatureCount = transaction.getSignatures().size();
+        if (transaction.isCoinbase()) {
+            return signatureCount == 0;
+        }
+
+        return transaction.getInputs().size() == signatureCount;
     }
 }
