@@ -23,6 +23,7 @@ import org.brabocoin.brabocoin.validation.block.rules.NonEmptyTransactionListBlk
 import org.brabocoin.brabocoin.validation.block.rules.SatisfiesTargetValueBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseBlockHeightBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseOutputAmountBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidMerkleRootBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidNetworkIdBlkRule;
@@ -57,13 +58,15 @@ public class BlockValidator {
         DuplicateInputBlkRule.class,
         KnownParentBlkRule.class,
         ValidParentBlkRule.class,
-        ValidBlockHeightBlkRule.class
+        ValidBlockHeightBlkRule.class,
+        ValidCoinbaseBlockHeightBlkRule.class
     );
 
     private static final RuleList AFTER_ORPHAN = new RuleList(
         KnownParentBlkRule.class,
         ValidParentBlkRule.class,
-        ValidBlockHeightBlkRule.class
+        ValidBlockHeightBlkRule.class,
+        ValidCoinbaseBlockHeightBlkRule.class
     );
 
     private static final RuleList CONNECT_TO_CHAIN = new RuleList(

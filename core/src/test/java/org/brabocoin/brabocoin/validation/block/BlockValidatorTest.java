@@ -72,12 +72,7 @@ class BlockValidatorTest {
         };
 
         List<Transaction> transactionList = Collections.singletonList(
-                new Transaction(Collections.emptyList(),
-                        Collections.singletonList(
-                                new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        ),
-                        Collections.emptyList()
-                )
+                Transaction.coinbase( new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),1)
         );
 
         Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
@@ -114,12 +109,7 @@ class BlockValidatorTest {
         };
 
         List<Transaction> transactionList = Collections.singletonList(
-                new Transaction(Collections.emptyList(),
-                        Collections.singletonList(
-                                new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        ),
-                        Collections.emptyList()
-                )
+                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2)
         );
 
         Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
@@ -157,12 +147,7 @@ class BlockValidatorTest {
         };
 
         List<Transaction> transactionList = Arrays.asList(
-                new Transaction(Collections.emptyList(),
-                        Collections.singletonList(
-                                new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        ),
-                        Collections.emptyList()
-                ),
+                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2),
                 new Transaction(Collections.emptyList(), Collections.emptyList(), Collections.emptyList())
         );
 
@@ -203,12 +188,7 @@ class BlockValidatorTest {
         };
 
         List<Transaction> transactionList = Collections.singletonList(
-                new Transaction(Collections.emptyList(),
-                        Collections.singletonList(
-                                new Output(Simulation.randomHash(), state.getConsensus().getBlockReward())
-                        ),
-                        Collections.emptyList()
-                )
+                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()), 1)
         );
 
         Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),

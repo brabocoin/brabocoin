@@ -279,7 +279,7 @@ class TransactionPoolTest {
         };
         pool.addListener(listener);
 
-        Transaction coinbase = Transaction.coinbase(new Output(Simulation.randomHash(), 100));
+        Transaction coinbase = Transaction.coinbase(new Output(Simulation.randomHash(), 100), 1);
 
         Transaction transactionA = new Transaction(
             Collections.singletonList(new Input(coinbase.getHash(), 0)),

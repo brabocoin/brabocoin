@@ -59,6 +59,13 @@ public class UTXOProcessor {
         List<TransactionUndo> undos = new ArrayList<>();
 
         for (Transaction transaction : block.getTransactions()) {
+            // Set all outputs as unspent
+            database.setOutputsUnspent(transaction, block.getBlockHeight());
+
+            if (transaction.isCoinbase()) {
+                continue;
+            }
+
             List<UnspentOutputInfo> outputInfos = new ArrayList<>();
 
             // Set all inputs as spent
@@ -73,9 +80,6 @@ public class UTXOProcessor {
 
             // Add to transaction undo
             undos.add(new TransactionUndo(outputInfos));
-
-            // Set all outputs as unspent
-            database.setOutputsUnspent(transaction, block.getBlockHeight());
         }
 
         // Move block pointer
@@ -108,15 +112,19 @@ public class UTXOProcessor {
         // Undo transactions in reverse order
         for (int i = transactions.size() - 1; i >= 0; i--) {
             Transaction transaction = transactions.get(i);
-            List<UnspentOutputInfo> inputInfos = undos.get(i).getOutputInfoList();
-            Hash hash = transaction.getHash();
 
+            Hash hash = transaction.getHash();
             // Set all outputs as spent
             List<Output> outputs = transaction.getOutputs();
             for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
                 database.setOutputSpent(hash, outputIndex);
             }
 
+            if (transaction.isCoinbase()) {
+                continue;
+            }
+
+            List<UnspentOutputInfo> inputInfos = undos.get(i).getOutputInfoList();
             // Apply undo for the inputs
             List<Input> inputs = transaction.getInputs();
             for (int inputIndex = 0; inputIndex < inputs.size(); inputIndex++) {
