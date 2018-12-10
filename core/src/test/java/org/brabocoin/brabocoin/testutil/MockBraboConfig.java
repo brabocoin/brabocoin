@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import java.util.List;
 
 public class MockBraboConfig implements BraboConfig {
+
     BraboConfig delegator;
 
     public MockBraboConfig(BraboConfig delegator) {
@@ -27,13 +28,18 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int bootstrapDeadline() {
-        return delegator.bootstrapDeadline();
+    public int handshakeDeadline() {
+        return delegator.handshakeDeadline();
     }
 
     @Override
     public List<String> bootstrapPeers() {
         return delegator.bootstrapPeers();
+    }
+
+    @Override
+    public int updatePeerInterval() {
+        return delegator.updatePeerInterval();
     }
 
     @Override

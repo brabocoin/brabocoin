@@ -26,18 +26,22 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.brabocoin.brabocoin.testutil.Simulation.generateNode;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NodeMessageTest {
+
     private Random random = new Random();
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
+        .bind("brabo", BraboConfig.class);
 
     @BeforeAll
     static void setUp() {
@@ -102,6 +106,97 @@ class NodeMessageTest {
         greeter.blockUntilShutdown();
     }
 
+    @Test
+    void updatePeer() throws DatabaseException, IOException, InterruptedException {
+        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return new ArrayList<>();
+            }
+
+            @Override
+            public int updatePeerInterval() {
+                return 3;
+            }
+        });
+
+        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8090"
+                );
+            }
+
+            @Override
+            public int updatePeerInterval() {
+                return 3;
+            }
+        });
+
+        Node nodeC = generateNode(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8091"
+                );
+            }
+
+            @Override
+            public int updatePeerInterval() {
+                return 3;
+            }
+        });
+
+        nodeA.start();
+        nodeB.start();
+        nodeC.start();
+
+        final Callable<Boolean> booleanCallable = () -> nodeA.getEnvironment()
+            .getPeers()
+            .size() >= 2 &&
+            nodeA.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size() &&
+            nodeB.getEnvironment().getPeers().size() == nodeC.getEnvironment().getPeers().size();
+
+
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(booleanCallable);
+
+        nodeC.stopAndBlock();
+
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> nodeA.getEnvironment().getPeers().size() == 1 &&
+                nodeA.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size()
+            );
+
+        Node nodeD = generateNode(8092, new MockBraboConfig(defaultConfig) {
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8091"
+                );
+            }
+
+            @Override
+            public int updatePeerInterval() {
+                return 3;
+            }
+
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        });
+
+        nodeD.start();
+
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> nodeA.getEnvironment()
+                .getPeers()
+                .size() >= 2 &&
+                nodeB.getEnvironment().getPeers().size() == nodeA.getEnvironment().getPeers().size() &&
+                nodeD.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size());
+    }
 
     @Test
     void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
@@ -114,7 +209,11 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
+        BlockDatabase database = new BlockDatabase(
+            new HashMapDB(),
+            new File(config.blockStoreDirectory()),
+            config.maxBlockFileSize()
+        );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -137,34 +236,38 @@ class NodeMessageTest {
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
-            @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
-            }
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub()
+            .getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+                @Override
+                public void onNext(BrabocoinProtos.Block value) {
+                    receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
+                }
 
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
+                @Override
+                public void onError(Throwable t) {
+                    finishLatch.countDown();
+                }
 
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
-            }
-        });
+                @Override
+                public void onCompleted() {
+                    finishLatch.countDown();
+                }
+            });
 
         for (Block block : blocks) {
-            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(
+                block.getHash(),
+                BrabocoinProtos.Hash.class
+            ));
         }
         requestObserver.onCompleted();
 
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::getHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+            .map(Block::getHash)
+            .map(Hash::getValue)
+            .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
@@ -186,7 +289,11 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
+        BlockDatabase database = new BlockDatabase(
+            new HashMapDB(),
+            new File(config.blockStoreDirectory()),
+            config.maxBlockFileSize()
+        );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -209,35 +316,39 @@ class NodeMessageTest {
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
-            @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
-            }
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub()
+            .getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+                @Override
+                public void onNext(BrabocoinProtos.Block value) {
+                    receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
+                }
 
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
+                @Override
+                public void onError(Throwable t) {
+                    finishLatch.countDown();
+                }
 
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
-            }
-        });
+                @Override
+                public void onCompleted() {
+                    finishLatch.countDown();
+                }
+            });
 
         for (int i = 0; i < random.nextInt(50); i++) {
             // send random hash
-            requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(
+                Simulation.randomHash(),
+                BrabocoinProtos.Hash.class
+            ));
         }
         requestObserver.onCompleted();
 
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::getHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+            .map(Block::getHash)
+            .map(Hash::getValue)
+            .collect(Collectors.toList());
 
         assertEquals(0, receivedBlocks.size());
         for (Block block : blocks) {
@@ -249,7 +360,8 @@ class NodeMessageTest {
     }
 
     @Test
-    void getBlocksIntermediateInvalidTest() throws DatabaseException, IOException, InterruptedException {
+    void getBlocksIntermediateInvalidTest() throws DatabaseException, IOException,
+                                                   InterruptedException {
         BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
@@ -259,7 +371,11 @@ class NodeMessageTest {
             }
         };
 
-        BlockDatabase database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
+        BlockDatabase database = new BlockDatabase(
+            new HashMapDB(),
+            new File(config.blockStoreDirectory()),
+            config.maxBlockFileSize()
+        );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
             database.storeBlock(b);
@@ -282,34 +398,44 @@ class NodeMessageTest {
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
         List<Block> receivedBlocks = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub().getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
-            @Override
-            public void onNext(BrabocoinProtos.Block value) {
-                receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
-            }
+        StreamObserver<BrabocoinProtos.Hash> requestObserver = nodeBpeer.getAsyncStub()
+            .getBlocks(new StreamObserver<BrabocoinProtos.Block>() {
+                @Override
+                public void onNext(BrabocoinProtos.Block value) {
+                    receivedBlocks.add(ProtoConverter.toDomain(value, Block.Builder.class));
+                }
 
-            @Override
-            public void onError(Throwable t) {
-                finishLatch.countDown();
-            }
+                @Override
+                public void onError(Throwable t) {
+                    finishLatch.countDown();
+                }
 
-            @Override
-            public void onCompleted() {
-                finishLatch.countDown();
-            }
-        });
+                @Override
+                public void onCompleted() {
+                    finishLatch.countDown();
+                }
+            });
 
         for (Block block : blocks) {
             for (int i = 0; i < random.nextInt(10); i++) {
                 // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+                requestObserver.onNext(ProtoConverter.toProto(
+                    Simulation.randomHash(),
+                    BrabocoinProtos.Hash.class
+                ));
             }
 
-            requestObserver.onNext(ProtoConverter.toProto(block.getHash(), BrabocoinProtos.Hash.class));
+            requestObserver.onNext(ProtoConverter.toProto(
+                block.getHash(),
+                BrabocoinProtos.Hash.class
+            ));
 
             for (int i = 0; i < random.nextInt(10); i++) {
                 // send random hash
-                requestObserver.onNext(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+                requestObserver.onNext(ProtoConverter.toProto(
+                    Simulation.randomHash(),
+                    BrabocoinProtos.Hash.class
+                ));
             }
         }
         requestObserver.onCompleted();
@@ -317,9 +443,9 @@ class NodeMessageTest {
         finishLatch.await(1, TimeUnit.MINUTES);
 
         List<ByteString> receivedBlockHashes = receivedBlocks.stream()
-                .map(Block::getHash)
-                .map(Hash::getValue)
-                .collect(Collectors.toList());
+            .map(Block::getHash)
+            .map(Hash::getValue)
+            .collect(Collectors.toList());
 
         assertEquals(blocks.size(), receivedBlocks.size());
         for (Block block : blocks) {
@@ -372,22 +498,26 @@ class NodeMessageTest {
         Hash announceHash = Simulation.randomHash();
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
-        nodeBpeer.getAsyncStub().announceBlock(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
+        nodeBpeer.getAsyncStub()
+            .announceBlock(
+                ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class),
+                new StreamObserver<Empty>() {
+                    @Override
+                    public void onNext(Empty value) {
 
-            }
+                    }
 
-            @Override
-            public void onError(Throwable t) {
+                    @Override
+                    public void onError(Throwable t) {
 
-            }
+                    }
 
-            @Override
-            public void onCompleted() {
+                    @Override
+                    public void onCompleted() {
 
-            }
-        });
+                    }
+                }
+            );
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
@@ -415,7 +545,8 @@ class NodeMessageTest {
             protected NodeEnvironment createEnvironment() {
                 return new NodeEnvironment(this) {
                     @Override
-                    public void onReceiveTransactionHash(@NotNull Hash transactionHash, List<Peer> peers) {
+                    public void onReceiveTransactionHash(@NotNull Hash transactionHash,
+                                                         List<Peer> peers) {
                         finishLatch.countDown();
                     }
                 };
@@ -437,22 +568,26 @@ class NodeMessageTest {
         Hash announceHash = Simulation.randomHash();
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
-        nodeBpeer.getAsyncStub().announceTransaction(ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class), new StreamObserver<Empty>() {
-            @Override
-            public void onNext(Empty value) {
+        nodeBpeer.getAsyncStub()
+            .announceTransaction(
+                ProtoConverter.toProto(announceHash, BrabocoinProtos.Hash.class),
+                new StreamObserver<Empty>() {
+                    @Override
+                    public void onNext(Empty value) {
 
-            }
+                    }
 
-            @Override
-            public void onError(Throwable t) {
+                    @Override
+                    public void onError(Throwable t) {
 
-            }
+                    }
 
-            @Override
-            public void onCompleted() {
+                    @Override
+                    public void onCompleted() {
 
-            }
-        });
+                    }
+                }
+            );
 
         assertTrue(finishLatch.await(1, TimeUnit.MINUTES));
 
@@ -500,7 +635,8 @@ class NodeMessageTest {
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
-        BlockHeight blockHeight = ProtoConverter.toDomain(nodeBpeer.getBlockingStub().discoverTopBlockHeight(Empty.newBuilder().build()), BlockHeight.Builder.class);
+        BlockHeight blockHeight = ProtoConverter.toDomain(nodeBpeer.getBlockingStub()
+            .discoverTopBlockHeight(Empty.newBuilder().build()), BlockHeight.Builder.class);
 
         assert blockHeight != null;
 
@@ -551,9 +687,9 @@ class NodeMessageTest {
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
         ChainCompatibility chainCompatibility = ProtoConverter.toDomain(
-                nodeBpeer.getBlockingStub().checkChainCompatible(
-                        ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class)
-                ), ChainCompatibility.Builder.class);
+            nodeBpeer.getBlockingStub().checkChainCompatible(
+                ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class)
+            ), ChainCompatibility.Builder.class);
 
         assert chainCompatibility != null;
 
@@ -605,7 +741,11 @@ class NodeMessageTest {
 
         Peer nodeBpeer = nodeB.getEnvironment().getPeers().iterator().next();
 
-        Iterator<BrabocoinProtos.Hash> hashIterator = nodeBpeer.getBlockingStub().seekBlockchain(ProtoConverter.toProto(Simulation.randomHash(), BrabocoinProtos.Hash.class));
+        Iterator<BrabocoinProtos.Hash> hashIterator = nodeBpeer.getBlockingStub()
+            .seekBlockchain(ProtoConverter.toProto(
+                Simulation.randomHash(),
+                BrabocoinProtos.Hash.class
+            ));
 
         List<BrabocoinProtos.Hash> receivedProtoHashes = new ArrayList<>();
         for (Iterator<BrabocoinProtos.Hash> it = hashIterator; it.hasNext(); ) {
@@ -614,7 +754,9 @@ class NodeMessageTest {
             receivedProtoHashes.add(h);
         }
 
-        List<Hash> receivedHashes = receivedProtoHashes.stream().map(h -> (Hash)ProtoConverter.toDomain(h, Hash.Builder.class)).collect(Collectors.toList());
+        List<Hash> receivedHashes = receivedProtoHashes.stream()
+            .map(h -> (Hash)ProtoConverter.toDomain(h, Hash.Builder.class))
+            .collect(Collectors.toList());
 
         for (Hash h : hashes) {
             assertTrue(receivedHashes.contains(h));

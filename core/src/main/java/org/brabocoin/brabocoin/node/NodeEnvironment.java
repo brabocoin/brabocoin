@@ -55,16 +55,17 @@ public class NodeEnvironment {
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
     /*
-     * Main loop timer
+     * Timers
      */
     private Timer mainLoopTimer;
+    private Timer updatePeerTimer;
 
     /*
      * Data holders
      */
-
     private int servicePort;
     private int loopInterval;
+    private int updatePeerInterval;
     private Blockchain blockchain;
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
@@ -86,6 +87,7 @@ public class NodeEnvironment {
     public NodeEnvironment(@NotNull State state) {
         this.servicePort = state.getConfig().servicePort();
         this.loopInterval = state.getConfig().loopInterval();
+        this.updatePeerInterval = state.getConfig().updatePeerInterval();
         this.blockchain = state.getBlockchain();
         this.chainUTXODatabase = state.getChainUTXODatabase();
         this.blockProcessor = state.getBlockProcessor();
@@ -118,6 +120,15 @@ public class NodeEnvironment {
             }
         }, 0, loopInterval);
 
+        updatePeerTimer = new Timer();
+        updatePeerTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                peerProcessor.clearDeadPeers(servicePort);
+                peerProcessor.discoverPeers(peerProcessor.copyPeersList(), servicePort);
+            }
+        }, 0, updatePeerInterval * 1000);
+
         updateBlockchain();
         seekTransactionPoolRequest();
     }
@@ -127,6 +138,8 @@ public class NodeEnvironment {
      */
     public synchronized void stop() {
         mainLoopTimer.cancel();
+        updatePeerTimer.cancel();
+        peerProcessor.stopPeers();
     }
 
     /**

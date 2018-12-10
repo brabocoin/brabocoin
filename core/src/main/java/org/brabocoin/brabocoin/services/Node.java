@@ -96,11 +96,6 @@ public class Node {
             server.shutdown();
         }
 
-        for (Peer p : environment.getPeers()) {
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
-            p.stop();
-        }
-
         environment.stop();
     }
 

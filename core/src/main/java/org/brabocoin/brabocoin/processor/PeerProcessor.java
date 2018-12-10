@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -80,28 +81,45 @@ public class PeerProcessor {
     }
 
     /**
+     * Discover peers using bootstrap peers.
+     *
+     * @param servicePort
+     *     The service port of the local node.
+     */
+    public synchronized void bootstrap(int servicePort) {
+        discoverPeers(getBootstrapPeers(), servicePort);
+    }
+
+    /**
+     * The filter to apply for every discovered peer.
+     *
+     * @param peer
+     *     Discovered peer
+     * @return True if the peer passes the filter.
+     */
+    protected synchronized boolean filterPeer(Peer peer) {
+        return !peer.isLocal();
+    }
+
+    /**
      * Tries to handshake with bootstrapping peers until the desired number of peers are found.
      * This constant is defined in the config.
      *
      * @param servicePort
      *     The service port of the local node.
      */
-    public synchronized void bootstrap(int servicePort) {
-        LOGGER.info("Bootstrapping initiated.");
-
-        // A list of peers for which we need to do a handshake
-        List<Peer> handshakePeers = getBootstrapPeers();
+    public synchronized void discoverPeers(List<Peer> handshakePeers, int servicePort) {
+        LOGGER.info("Discovering peers initiated.");
 
         if (handshakePeers.size() <= 0) {
-            LOGGER.severe("No bootstrapping peers found.");
+            LOGGER.severe("No handshake peers found.");
             // TODO: What to do now?
             return;
         }
 
         while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.get(0);
-            LOGGER.log(Level.FINEST, "Bootstrapping on peer: {0}", handshakePeer);
-            LOGGER.log(Level.FINEST, "Performing handshake.");
+            LOGGER.log(Level.FINEST, "Handshaking with peer: {0}", handshakePeer);
             // Perform a handshake with the peer
             HandshakeResponse response = handshake(handshakePeer, servicePort);
             if (response == null) {
@@ -128,7 +146,7 @@ public class PeerProcessor {
                 try {
                     final Peer discoveredPeer = new Peer(peerSocket);
                     LOGGER.log(Level.FINEST, "Discovered new peer parsed: {0}", discoveredPeer);
-                    if (!peers.contains(discoveredPeer) && !(discoveredPeer.isLocal() && discoveredPeer.getPort() == servicePort)) {
+                    if (!peers.contains(discoveredPeer) && filterPeer(discoveredPeer)) {
                         handshakePeers.add(discoveredPeer);
                     }
                 }
@@ -138,14 +156,28 @@ public class PeerProcessor {
                         "Error while parsing raw peer socket string: {0}",
                         e.getMessage()
                     );
-                    // TODO: Ignore and continue?
                 }
             }
 
             handshakePeers.remove(0);
         }
+    }
 
-        // TODO: Update peers when connection is lost.
+    /**
+     * Removes unresponsive peers, using the handshake RPC.
+     *
+     * @param servicePort
+     *     Local service port
+     */
+    public synchronized void clearDeadPeers(int servicePort) {
+        Iterator<Peer> peerIterator = peers.iterator();
+        while (peerIterator.hasNext()) {
+            Peer peer = peerIterator.next();
+            HandshakeResponse response = handshake(peer, servicePort);
+            if (response == null) {
+                peerIterator.remove();
+            }
+        }
     }
 
     /**
@@ -161,7 +193,7 @@ public class PeerProcessor {
         BrabocoinProtos.HandshakeResponse protoResponse;
         try {
             protoResponse = peer.getBlockingStub()
-                .withDeadlineAfter(config.bootstrapDeadline(), TimeUnit.MILLISECONDS)
+                .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
                         new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
@@ -215,5 +247,17 @@ public class PeerProcessor {
      */
     public synchronized void addPeer(Peer peer) {
         peers.add(peer);
+    }
+
+    /**
+     * Stop and remove all peers.
+     */
+    public void stopPeers() {
+        for (Peer p : peers) {
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
+            p.stop();
+        }
+
+        peers = new HashSet<>();
     }
 }

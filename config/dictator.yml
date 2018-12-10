@@ -2,8 +2,9 @@ brabo:
   networkId: 1                        # The network on which blocks are accepted
   loopInterval: 500                   # The interval in the main node loop, in milliseconds
   targetPeerCount: 10000              # Target of number of peers at which we stop discovering new peers
-  bootstrapDeadline: 2000             # In milliseconds per bootstrapping peer
+  handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
   bootstrapPeers: []                  # List of peers known at startup
+  updatePeerInterval: 30              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
   databaseDirectory: db               # Database subfolder
   blockStoreDirectory: data/blocks    # Subfolder to store block data
   utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data

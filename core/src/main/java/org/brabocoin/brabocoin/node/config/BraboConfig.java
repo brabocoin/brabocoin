@@ -10,9 +10,11 @@ public interface BraboConfig {
 
     int targetPeerCount();
 
-    int bootstrapDeadline();
+    int handshakeDeadline();
 
     List<String> bootstrapPeers();
+
+    int updatePeerInterval();
 
     String databaseDirectory();
 
@@ -21,7 +23,7 @@ public interface BraboConfig {
     String utxoStoreDirectory();
 
     /**
-     * Maximim file size of the block storage files in bytes.
+     * Maximum file size of the block storage files in bytes.
      *
      * @return The maximum file size.
      */
