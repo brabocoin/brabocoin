@@ -141,6 +141,7 @@ public class DeploymentState implements State {
         Destructible<char[]> passphrase;
         Wallet wallet;
         File walletFile = new File(config.walletFile());
+        File txHistoryFile = new File(config.transactionHistoryFile());
         ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
         if (walletFile.exists()) {
             // Read wallet
@@ -148,13 +149,15 @@ public class DeploymentState implements State {
 
             wallet = walletIO.read(
                 walletFile,
+                txHistoryFile,
                 passphrase,
                 consensus,
                 signer,
                 keyGenerator,
                 privateKeyCipher,
                 walletUTXODatabase,
-                watchUTXOSet
+                watchUTXOSet,
+                blockchain
             );
         } else {
             // Create new wallet
@@ -173,7 +176,7 @@ public class DeploymentState implements State {
 
             wallet.generatePlainKeyPair();
 
-            walletIO.write(wallet, walletFile, passphrase);
+            walletIO.write(wallet, walletFile, txHistoryFile, passphrase);
         }
 
         passphrase.destruct();

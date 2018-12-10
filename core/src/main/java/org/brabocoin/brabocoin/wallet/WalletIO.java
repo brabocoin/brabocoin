@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.wallet;
 
+import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
@@ -7,6 +9,7 @@ import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
+import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.ProtoConverter;
@@ -31,15 +34,21 @@ public class WalletIO {
         this.cipher = cipher;
     }
 
-    public Wallet read(File keysFile, Destructible<char[]> passphrase, Consensus consensus,
+    public Wallet read(File keysFile, File transactionHistoryFile, Destructible<char[]> passphrase,
+                       Consensus consensus,
                        Signer signer,
                        KeyGenerator keyGenerator,
                        Cipher privateKeyCipher,
                        @NotNull UTXODatabase walletUTXOSet,
-                       @NotNull ReadonlyUTXOSet watchedUTXOSet) throws IOException, CipherException,
-                                                        DestructionException {
+                       @NotNull ReadonlyUTXOSet watchedUTXOSet,
+                       @NotNull Blockchain blockchain) throws IOException, CipherException,
+                       DestructionException {
         if (!keysFile.exists()) {
-            throw new IllegalArgumentException("File does not exists.");
+            throw new IllegalArgumentException("Keys file does not exist.");
+        }
+
+        if (!transactionHistoryFile.exists()) {
+            throw new IllegalArgumentException("Transaction history does not exist.");
         }
 
         byte[] rawBytes = Files.readAllBytes(keysFile.toPath());
@@ -64,10 +73,31 @@ public class WalletIO {
 
         passphrase.destruct();
 
-        return new Wallet(keyList, consensus, signer, keyGenerator, privateKeyCipher, walletUTXOSet, watchedUTXOSet);
+        // Load transaction history
+        BrabocoinStorageProtos.TransactionHistory protoTxHistory = BrabocoinStorageProtos.TransactionHistory.parseFrom(
+            Files.readAllBytes(transactionHistoryFile.toPath())
+        );
+
+        TransactionHistory transactionHistory = ProtoConverter.toDomain(protoTxHistory, TransactionHistory.Builder.class);
+
+        if (transactionHistory == null) {
+            throw new IllegalStateException("Transaction history could not be read.");
+        }
+
+        return new Wallet(
+            keyList,
+            transactionHistory,
+            consensus,
+            signer,
+            keyGenerator,
+            privateKeyCipher,
+            walletUTXOSet,
+            watchedUTXOSet,
+            blockchain
+        );
     }
 
-    public void write(Wallet wallet, File keysFile,
+    public void write(Wallet wallet, File keysFile, File transactionHistoryFile,
                       Destructible<char[]> passphrase) throws IOException, CipherException,
                                                               DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -88,5 +118,17 @@ public class WalletIO {
         passphrase.destruct();
 
         Files.write(keysFile.toPath(), encryptedBytes);
+
+        // Write transaction history
+        ByteString txHistoryBytes = ProtoConverter.toProtoBytes(
+            wallet.getTransactionHistory(),
+            BrabocoinStorageProtos.TransactionHistory.class
+        );
+
+        if (txHistoryBytes == null) {
+            throw new IllegalStateException("Transaction history could not be saved.");
+        }
+
+        Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
     }
 }

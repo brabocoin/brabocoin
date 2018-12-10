@@ -398,4 +398,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
         return block;
     }
+
+    public @NotNull TransactionHistory getTransactionHistory() {
+        return transactionHistory;
+    }
 }

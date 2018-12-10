@@ -14,3 +14,4 @@ brabo:
   maxOrphanBlocks: 100                # Max number of orphan blocks
   servicePort: 56129                  # Port on which the application listens for messages
   walletFile: wallet.dat              # Wallet file
+  transactionHistoryFile: txhist.dat  # Wallet transaction history file

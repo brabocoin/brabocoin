@@ -86,4 +86,9 @@ public class MockBraboConfig implements BraboConfig {
     public String walletFile() {
         return delegator.walletFile();
     }
+
+    @Override
+    public String transactionHistoryFile() {
+        return delegator.transactionHistoryFile();
+    }
 }
