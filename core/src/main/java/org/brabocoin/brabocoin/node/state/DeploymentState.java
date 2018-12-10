@@ -83,19 +83,6 @@ public class DeploymentState implements State {
 
         signer = createSigner();
 
-        try {
-            walletIO = createWalletIO();
-        }
-        catch (CipherException e) {
-            throw new StateInitializationException("Could not create wallet I/O object.", e);
-        }
-
-        try {
-            wallet = createWallet(passphraseSupplier);
-        }
-        catch (CipherException | DestructionException | IOException e) {
-            throw new StateInitializationException("Could not create wallet.", e);
-        }
 
         blockStorage = createBlockStorage();
         utxoStorage = createUtxoStorage();
@@ -105,6 +92,7 @@ public class DeploymentState implements State {
         chainUTXODatabase = createChainUTXODatabase();
         poolUTXODatabase = createPoolUTXODatabase();
         walletUTXODatabase = createWalletUTXODatabase();
+
 
         blockchain = createBlockchain();
 
@@ -122,6 +110,19 @@ public class DeploymentState implements State {
 
         miner = createMiner();
 
+        try {
+            walletIO = createWalletIO();
+        }
+        catch (CipherException e) {
+            throw new StateInitializationException("Could not create wallet I/O object.", e);
+        }
+
+        try {
+            wallet = createWallet(passphraseSupplier);
+        }
+        catch (CipherException | DestructionException | IOException e) {
+            throw new StateInitializationException("Could not create wallet.", e);
+        }
         environment = createEnvironment();
 
         node = createNode();

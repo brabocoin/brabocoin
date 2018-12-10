@@ -4,6 +4,9 @@ import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
 import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
@@ -29,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WalletIOTest {
 
@@ -122,7 +126,8 @@ class WalletIOTest {
 
         io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        Wallet readWallet = io.read(walletFile,
+        Wallet readWallet = io.read(
+            walletFile,
             new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
@@ -133,6 +138,48 @@ class WalletIOTest {
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
+    }
+
+    @Test
+    void readAndWriteSingleEncryptedKeyInvalid() throws CipherException, IOException,
+                                                        DestructionException, DatabaseException {
+        String passphrase = "MergeMuppet";
+
+        Destructible<BigInteger> value = new Destructible<>(() -> BigInteger.valueOf(12345));
+        PublicKey publicKey = curve.getPublicKeyFromPrivateKey(value.getReference().get());
+
+        PrivateKey key = PrivateKey.encrypted(
+            value,
+            new Destructible<>("jitPassphrase!"::toCharArray),
+            new BouncyCastleAES()
+        );
+
+        State state = new TestState(defaultConfig);
+
+        Wallet wallet = new Wallet(
+            Collections.singletonList(new KeyPair(publicKey, key)),
+            state.getConsensus(),
+            state.getSigner(),
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES(),
+            new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB())
+        );
+
+        WalletIO io = state.getWalletIO();
+
+        io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
+
+        assertThrows(CipherException.class, () -> io.read(
+            walletFile,
+            new Destructible<>("fout"::toCharArray),
+            state.getConsensus(),
+            state.getSigner(),
+            new SecureRandomKeyGenerator(),
+            new BouncyCastleAES(),
+            new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB())
+        ));
     }
 
 
@@ -162,7 +209,9 @@ class WalletIOTest {
 
         io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
+        Wallet readWallet = io.read(walletFile,
+            new Destructible<>(passphrase::toCharArray),
+            state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
@@ -215,7 +264,9 @@ class WalletIOTest {
 
         io.write(wallet, walletFile, new Destructible<>(passphrase::toCharArray));
 
-        Wallet readWallet = io.read(walletFile, new Destructible<>(passphrase::toCharArray), state.getConsensus(),
+        Wallet readWallet = io.read(walletFile,
+            new Destructible<>(passphrase::toCharArray),
+            state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),

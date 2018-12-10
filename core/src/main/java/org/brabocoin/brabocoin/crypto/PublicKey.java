@@ -31,6 +31,11 @@ public class PublicKey {
     private final @NotNull ECPoint point;
 
     /**
+     * Cached hash
+     */
+    private Hash hash;
+
+    /**
      * Construct a public key from compressed form, on the provided elliptic curve.
      *
      * @param compressed
@@ -94,7 +99,11 @@ public class PublicKey {
      * @return The hash of the public key.
      */
     public @NotNull Hash getHash() {
-        return Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
+        if (hash == null) {
+            hash = Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
+        }
+
+        return hash;
     }
 
     /**
@@ -104,7 +113,7 @@ public class PublicKey {
      *
      * @return The address corresponding to the public key.
      */
-    public @NotNull String getAddress() {
+    public @NotNull String getBase58Address() {
         return getBase58AddressFromHash(getHash());
     }
 

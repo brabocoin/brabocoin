@@ -17,7 +17,7 @@ public final class Constants {
     /**
      * PBKDF2
      */
-    public static final int PBKDF_ITERATIONS = 10000;
+    public static final int PBKDF_ITERATIONS = 2000;
 
     /**
      * Salt length.
