@@ -196,6 +196,10 @@ class NodeMessageTest {
                 .size() >= 2 &&
                 nodeB.getEnvironment().getPeers().size() == nodeA.getEnvironment().getPeers().size() &&
                 nodeD.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size());
+
+        nodeA.stopAndBlock();
+        nodeB.stopAndBlock();
+        nodeD.stopAndBlock();
     }
 
     @Test

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class PeerProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
-    private Set<Peer> peers;
+    private volatile Set<Peer> peers;
     private BraboConfig config;
 
     /**
@@ -82,12 +82,9 @@ public class PeerProcessor {
 
     /**
      * Discover peers using bootstrap peers.
-     *
-     * @param servicePort
-     *     The service port of the local node.
      */
-    public synchronized void bootstrap(int servicePort) {
-        discoverPeers(getBootstrapPeers(), servicePort);
+    public synchronized void bootstrap() {
+        discoverPeers(getBootstrapPeers());
     }
 
     /**
@@ -104,11 +101,8 @@ public class PeerProcessor {
     /**
      * Tries to handshake with bootstrapping peers until the desired number of peers are found.
      * This constant is defined in the config.
-     *
-     * @param servicePort
-     *     The service port of the local node.
      */
-    public synchronized void discoverPeers(List<Peer> handshakePeers, int servicePort) {
+    public synchronized void discoverPeers(List<Peer> handshakePeers) {
         LOGGER.info("Discovering peers initiated.");
 
         if (handshakePeers.size() <= 0) {
@@ -121,8 +115,8 @@ public class PeerProcessor {
             Peer handshakePeer = handshakePeers.get(0);
             LOGGER.log(Level.FINEST, "Handshaking with peer: {0}", handshakePeer);
             // Perform a handshake with the peer
-            HandshakeResponse response = handshake(handshakePeer, servicePort);
-            if (response == null) {
+            HandshakeResponse response = handshake(handshakePeer);
+            if (response == null || config.networkId() != response.getNetworkId()) {
                 handshakePeers.remove(0);
                 continue;
             }
@@ -165,15 +159,12 @@ public class PeerProcessor {
 
     /**
      * Removes unresponsive peers, using the handshake RPC.
-     *
-     * @param servicePort
-     *     Local service port
      */
-    public synchronized void clearDeadPeers(int servicePort) {
+    public synchronized void clearDeadPeers() {
         Iterator<Peer> peerIterator = peers.iterator();
         while (peerIterator.hasNext()) {
             Peer peer = peerIterator.next();
-            HandshakeResponse response = handshake(peer, servicePort);
+            HandshakeResponse response = handshake(peer);
             if (response == null) {
                 peerIterator.remove();
             }
@@ -185,18 +176,16 @@ public class PeerProcessor {
      *
      * @param peer
      *     Peer to handshake with
-     * @param servicePort
-     *     Local service port
      * @return HandshakeResponse object.
      */
-    public HandshakeResponse handshake(Peer peer, int servicePort) {
+    public HandshakeResponse handshake(Peer peer) {
         BrabocoinProtos.HandshakeResponse protoResponse;
         try {
             protoResponse = peer.getBlockingStub()
                 .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
-                        new HandshakeRequest(servicePort), BrabocoinProtos.HandshakeRequest.class
+                        new HandshakeRequest(config.servicePort(), config.networkId()), BrabocoinProtos.HandshakeRequest.class
                     )
                 );
         }
@@ -212,7 +201,7 @@ public class PeerProcessor {
      *
      * @return List of peers.
      */
-    public synchronized List<Peer> copyPeersList() {
+    public List<Peer> copyPeersList() {
         LOGGER.fine("Creating a list copy of the set of peers.");
         return new ArrayList<>(peers);
     }
@@ -222,7 +211,7 @@ public class PeerProcessor {
      *
      * @return Set of peers.
      */
-    public synchronized Set<Peer> copyPeers() {
+    public Set<Peer> copyPeers() {
         LOGGER.fine("Creating a list copy of the set of peers.");
         return new HashSet<>(peers);
     }
@@ -252,7 +241,7 @@ public class PeerProcessor {
     /**
      * Stop and remove all peers.
      */
-    public void stopPeers() {
+    public synchronized void stopPeers() {
         for (Peer p : peers) {
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
             p.stop();

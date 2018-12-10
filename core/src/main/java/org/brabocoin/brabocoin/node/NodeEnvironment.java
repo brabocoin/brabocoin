@@ -109,7 +109,7 @@ public class NodeEnvironment {
      */
     public void setup() {
         LOGGER.info("Setting up the node environment.");
-        peerProcessor.bootstrap(servicePort);
+        peerProcessor.bootstrap();
         LOGGER.info("Environment setup done.");
 
         mainLoopTimer = new Timer();
@@ -124,8 +124,8 @@ public class NodeEnvironment {
         updatePeerTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                peerProcessor.clearDeadPeers(servicePort);
-                peerProcessor.discoverPeers(peerProcessor.copyPeersList(), servicePort);
+                peerProcessor.clearDeadPeers();
+                peerProcessor.discoverPeers(peerProcessor.copyPeersList());
             }
         }, 0, updatePeerInterval * 1000);
 
@@ -139,6 +139,7 @@ public class NodeEnvironment {
     public synchronized void stop() {
         mainLoopTimer.cancel();
         updatePeerTimer.cancel();
+
         peerProcessor.stopPeers();
     }
 

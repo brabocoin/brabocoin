@@ -50,9 +50,12 @@ message Block {
 
 message HandshakeRequest {
     int32 servicePort = 1;
+    int32 networkId = 2;
 }
+
 message HandshakeResponse {
     repeated string peers = 1;
+    int32 networkId = 2;
 }
 
 message BlockHeight {

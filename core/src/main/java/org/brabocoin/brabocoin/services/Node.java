@@ -46,6 +46,11 @@ public class Node {
         new AtomicReference<ServerCall<?, ?>>();
 
     /**
+     * The network id of this node
+     */
+    private final int networkId;
+
+    /**
      * Service parameters
      */
     private final Server server;
@@ -70,7 +75,7 @@ public class Node {
         };
     }
 
-    public Node(NodeEnvironment environment, int servicePort) {
+    public Node(NodeEnvironment environment, int servicePort, int networkId) {
         this.server = ServerBuilder.forPort(servicePort)
             .addService(
                 ServerInterceptors.intercept(
@@ -80,6 +85,7 @@ public class Node {
             )
             .build();
         this.environment = environment;
+        this.networkId = networkId;
     }
 
     public void start() throws IOException {
@@ -166,7 +172,8 @@ public class Node {
                 environment.getPeers()
                     .stream()
                     .map(Peer::toSocketString)
-                    .collect(Collectors.toList())
+                    .collect(Collectors.toList()),
+                networkId
             );
             BrabocoinProtos.HandshakeResponse protoResponse = ProtoConverter.toProto(
                 response,
@@ -176,6 +183,10 @@ public class Node {
 
             responseObserver.onNext(protoResponse);
             responseObserver.onCompleted();
+
+            if (networkId != request.getNetworkId()) {
+                return;
+            }
 
             // Add the client as a valid peer.
             InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()

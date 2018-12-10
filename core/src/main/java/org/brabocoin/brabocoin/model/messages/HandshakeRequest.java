@@ -12,8 +12,12 @@ public class HandshakeRequest implements ProtoModel<HandshakeRequest> {
     @ProtoField
     private int servicePort;
 
-    public HandshakeRequest(int servicePort) {
+    @ProtoField
+    private int networkId;
+
+    public HandshakeRequest(int servicePort, int networkId) {
         this.servicePort = servicePort;
+        this.networkId = networkId;
     }
 
     @Override
@@ -25,20 +29,30 @@ public class HandshakeRequest implements ProtoModel<HandshakeRequest> {
         return servicePort;
     }
 
+    public int getNetworkId() {
+        return networkId;
+    }
+
     @ProtoClass(BrabocoinProtos.HandshakeRequest.class)
     public static class Builder implements ProtoBuilder<HandshakeRequest> {
 
         @ProtoField
         private int servicePort;
 
-        public Builder setServicePort(int servicePort) {
+        @ProtoField
+        private int networkId;
+
+        public void setServicePort(int servicePort) {
             this.servicePort = servicePort;
-            return this;
+        }
+
+        public void setNetworkId(int networkId) {
+            this.networkId = networkId;
         }
 
         @Override
         public HandshakeRequest build() {
-            return new HandshakeRequest(servicePort);
+            return new HandshakeRequest(servicePort, networkId);
         }
     }
 }

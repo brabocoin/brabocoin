@@ -177,7 +177,7 @@ public class DeploymentState implements State {
     }
 
     protected Node createNode() {
-        return new Node(environment, config.servicePort());
+        return new Node(environment, config.servicePort(), config.networkId());
     }
 
     @NotNull
