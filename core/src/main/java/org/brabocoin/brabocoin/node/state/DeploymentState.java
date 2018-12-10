@@ -30,6 +30,7 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.PassphraseSupplier;
+import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -158,13 +159,15 @@ public class DeploymentState implements State {
             // Create new wallet
             passphrase = passphraseSupplier.supplyPassphrase(true);
             wallet = new Wallet(
-                new ArrayList<>(),
+                Collections.emptyList(),
+                new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
                 consensus,
                 signer,
                 keyGenerator,
                 privateKeyCipher,
                 walletUTXODatabase,
-                watchUTXOSet
+                watchUTXOSet,
+                blockchain
             );
 
             wallet.generatePlainKeyPair();

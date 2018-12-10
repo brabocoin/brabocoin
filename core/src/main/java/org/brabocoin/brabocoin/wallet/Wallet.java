@@ -1,5 +1,8 @@
 package org.brabocoin.brabocoin.wallet;
 
+import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.BlockchainListener;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
@@ -9,6 +12,7 @@ import org.brabocoin.brabocoin.dal.UTXOSetListener;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
@@ -16,10 +20,12 @@ import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.processor.BlockProcessorListener;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.text.MessageFormat;
@@ -36,29 +42,34 @@ import java.util.stream.Collectors;
 /**
  * The wallet data structure.
  */
-public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
+public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainListener, BlockProcessorListener {
 
     private static final Logger LOGGER = Logger.getLogger(Wallet.class.getName());
 
     /**
      * The public and private key collection.
      */
-    private Collection<KeyPair> keyPairs;
+    private final @NotNull List<KeyPair> keyPairs;
+
+    /**
+     * Transaction history.
+     */
+    private final @NotNull TransactionHistory transactionHistory;
 
     /**
      * Consensus used in this wallet.
      */
-    private final Consensus consensus;
+    private final @NotNull Consensus consensus;
 
     /**
      * The signer used to sign transactions with.
      */
-    private final Signer signer;
+    private final @NotNull Signer signer;
 
     /**
      * The key generator used to generate private keys.
      */
-    private final KeyGenerator keyGenerator;
+    private final @NotNull KeyGenerator keyGenerator;
 
     /**
      * The wallet UTXO set.
@@ -68,7 +79,9 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
     /**
      * The cipher used to create private keys.
      */
-    private Cipher privateKeyCipher;
+    private final @NotNull Cipher privateKeyCipher;
+
+    private final @NotNull Blockchain blockchain;
 
     /**
      * Create a wallet for a given public to private key map.
@@ -82,15 +95,19 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *     The UTXO set that must be watched for updates, which would normally be the UTXO sets
      *     of the transaction pool and the blockchain.
      */
-    public Wallet(Collection<KeyPair> keyPairs, Consensus consensus, Signer signer,
-                  KeyGenerator keyGenerator, Cipher privateKeyCipher, @NotNull UTXODatabase utxoSet,
-                  @NotNull ReadonlyUTXOSet watchedUtxoSet) {
-        this.keyPairs = keyPairs;
+    public Wallet(@NotNull List<KeyPair> keyPairs,
+                  @NotNull TransactionHistory transactionHistory, @NotNull Consensus consensus,
+                  @NotNull Signer signer, @NotNull KeyGenerator keyGenerator,
+                  @NotNull Cipher privateKeyCipher, @NotNull UTXODatabase utxoSet,
+                  @NotNull ReadonlyUTXOSet watchedUtxoSet, @NotNull Blockchain blockchain) {
+        this.keyPairs = new ArrayList<>(keyPairs);
+        this.transactionHistory = transactionHistory;
         this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
         this.privateKeyCipher = privateKeyCipher;
         this.utxoSet = utxoSet;
+        this.blockchain = blockchain;
 
         // Add listener to watched UTXO set
         watchedUtxoSet.addListener(this);
@@ -101,7 +118,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *
      * @return All public keys known to the wallet
      */
-    public Collection<PublicKey> getPublicKeys() {
+    public @NotNull Collection<PublicKey> getPublicKeys() {
         return keyPairs.stream().map(KeyPair::getPublicKey).collect(Collectors.toList());
     }
 
@@ -110,7 +127,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *
      * @return All private keys known to the wallet
      */
-    public Collection<PrivateKey> getPrivateKeys() {
+    public @NotNull Collection<PrivateKey> getPrivateKeys() {
         return keyPairs.stream().map(KeyPair::getPrivateKey).collect(Collectors.toList());
     }
 
@@ -119,10 +136,10 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *
      * @param publicKey
      *     The public key to find the key pair for
-     * @return The key pair or null if not found
+     * @return The key pair or {@code null} if not found
      */
-    public KeyPair findKeyPair(PublicKey publicKey) {
-        return keyPairs.stream().filter(p -> p.getPublicKey() == publicKey)
+    public @Nullable KeyPair findKeyPair(@NotNull PublicKey publicKey) {
+        return keyPairs.stream().filter(p -> p.getPublicKey().equals(publicKey))
             .findFirst()
             .orElse(null);
     }
@@ -143,9 +160,9 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *
      * @param publicKey
      *     The public key to find the private key for
-     * @return Private key or null if not found
+     * @return Private key or {@code null} if not found
      */
-    public PrivateKey findPrivateKey(PublicKey publicKey) {
+    public @Nullable PrivateKey findPrivateKey(@NotNull PublicKey publicKey) {
         return Optional.ofNullable(findKeyPair(publicKey)).map(KeyPair::getPrivateKey).orElse(null);
     }
 
@@ -156,12 +173,13 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *     The public key used to search the private key
      * @return Whether the matching private key is encrypted
      */
-    public boolean isKeyPairEncrypted(PublicKey publicKey) {
-        if (!getPublicKeys().contains(publicKey)) {
-            throw new IllegalStateException("Public key does not exists in keymap");
+    public boolean isKeyPairEncrypted(@NotNull PublicKey publicKey) {
+        KeyPair pair = findKeyPair(publicKey);
+        if (pair == null) {
+            throw new IllegalStateException("Public key does not exist in keymap.");
         }
 
-        return findKeyPair(publicKey).getPrivateKey().isEncrypted();
+        return pair.getPrivateKey().isEncrypted();
     }
 
     /**
@@ -234,7 +252,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *
      * @return Key pair that was generated.
      */
-    public KeyPair generatePlainKeyPair() throws DestructionException {
+    public @NotNull KeyPair generatePlainKeyPair() throws DestructionException {
         Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(consensus.getCurve()
             .getDomain()
             .getN());
@@ -258,8 +276,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
      *     The passphrase to encrypt the private key with
      * @return Key pair that was generated.
      */
-    public KeyPair generateEncryptedKeyPair(
-        Destructible<char[]> passphrase) throws DestructionException, CipherException {
+    public @NotNull KeyPair generateEncryptedKeyPair(
+        @NotNull Destructible<char[]> passphrase) throws DestructionException, CipherException {
         Destructible<BigInteger> randomBigInteger = keyGenerator.generateKey(consensus.getCurve()
             .getDomain()
             .getN());
@@ -279,9 +297,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
         return keyPair;
     }
 
-    @NotNull
     @Override
-    public Iterator<KeyPair> iterator() {
+    public @NotNull Iterator<KeyPair> iterator() {
         return keyPairs.iterator();
     }
 
@@ -315,5 +332,68 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener {
             LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
             throw new RuntimeException("Wallet UTXO set could not be updated.", e);
         }
+    }
+
+    @Override
+    public void onSyncWithUTXOSetStarted() {
+        this.blockchain.removeListener(this);
+    }
+
+    @Override
+    public void onSyncWithUTXOSetFinished() {
+        this.blockchain.addListener(this);
+    }
+
+    @Override
+    public void onTopBlockConnected(@NotNull IndexedBlock indexedBlock) {
+        Block block = getBlock(indexedBlock);
+
+        // Find transactions that pay to an address contained in this wallet
+        block.getTransactions().stream()
+            .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
+            .forEach(t -> transactionHistory.addConfirmedTransaction(
+                new ConfirmedTransaction(t, block.getBlockHeight())
+            ));
+
+        // Find my transactions that might be confirmed now
+        block.getTransactions().stream()
+            .filter(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()) != null)
+            .forEach(t -> {
+                transactionHistory.removeUnconfirmedTransaction(t.getHash());
+                transactionHistory.addConfirmedTransaction(
+                    new ConfirmedTransaction(t, block.getBlockHeight())
+                );
+            });
+    }
+
+    @Override
+    public void onTopBlockDisconnected(@NotNull IndexedBlock indexedBlock) {
+        Block block = getBlock(indexedBlock);
+
+        // Demote matching transactions in history from confirmed to unconfirmed
+        block.getTransactions().stream()
+            .filter(t -> transactionHistory.findConfirmedTransaction(t.getHash()) != null)
+            .forEach(t -> {
+                transactionHistory.removeConfirmedTransaction(t.getHash());
+                transactionHistory.addUnconfirmedTransaction(t);
+            });
+    }
+
+    private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {
+        Block block;
+        try {
+            block = blockchain.getBlock(indexedBlock);
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Wallet transaction history could not be updated.", e);
+            throw new RuntimeException("Wallet transaction history could not be updated.", e);
+        }
+
+        if (block == null) {
+            LOGGER.log(Level.SEVERE, "Wallet transaction history could not be updated.");
+            throw new RuntimeException("Wallet transaction history could not be updated.");
+        }
+
+        return block;
     }
 }

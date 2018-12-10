@@ -33,7 +33,7 @@ public class KeyPair implements ProtoModel<KeyPair> {
 
     @Override
     public Class<? extends ProtoBuilder> getBuilder() {
-        return null;
+        return Builder.class;
     }
 
     public PublicKey getPublicKey() {
