@@ -14,6 +14,8 @@ public interface BraboConfig {
 
     List<String> bootstrapPeers();
 
+    String dataDirectory();
+
     String databaseDirectory();
 
     String blockStoreDirectory();

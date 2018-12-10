@@ -59,17 +59,7 @@ class TransactionRuleTests {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
-
-            @Override
-            public String utxoStoreDirectory() {
-                return "src/test/resources/" + super.utxoStoreDirectory();
-            }
-        };
+        defaultConfig = new MockBraboConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }

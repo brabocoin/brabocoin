@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import java.util.List;
 
 public class MockBraboConfig implements BraboConfig {
+
     BraboConfig delegator;
 
     public MockBraboConfig(BraboConfig delegator) {
@@ -34,6 +35,11 @@ public class MockBraboConfig implements BraboConfig {
     @Override
     public List<String> bootstrapPeers() {
         return delegator.bootstrapPeers();
+    }
+
+    @Override
+    public String dataDirectory() {
+        return "src/test/resources/" + delegator.dataDirectory();
     }
 
     @Override

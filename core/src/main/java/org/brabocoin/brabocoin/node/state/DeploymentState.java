@@ -23,7 +23,7 @@ import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -103,17 +103,31 @@ public class DeploymentState implements State {
     }
 
     protected KeyValueStore createBlockStorage() {
-        return new LevelDB(new File(config.blockStoreDirectory(), config.databaseDirectory()));
+        return new LevelDB(Paths.get(
+            config.dataDirectory(),
+            Integer.toString(config.networkId()),
+            config.blockStoreDirectory(),
+            config.databaseDirectory()
+        ).toFile());
     }
 
     protected KeyValueStore createUtxoStorage() {
-        return new LevelDB(new File(config.utxoStoreDirectory(), config.databaseDirectory()));
+        return new LevelDB(Paths.get(
+            config.dataDirectory(),
+            Integer.toString(config.networkId()),
+            config.utxoStoreDirectory(),
+            config.databaseDirectory()
+        ).toFile());
     }
 
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
         return new BlockDatabase(
             blockStorage,
-            new File(config.blockStoreDirectory()),
+            Paths.get(
+                config.dataDirectory(),
+                Integer.toString(config.networkId()),
+                config.blockStoreDirectory()
+            ).toFile(),
             config.maxBlockFileSize()
         );
     }

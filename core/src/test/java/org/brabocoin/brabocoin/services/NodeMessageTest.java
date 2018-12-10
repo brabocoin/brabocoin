@@ -41,12 +41,7 @@ class NodeMessageTest {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
-        };
+        defaultConfig = new MockBraboConfig(defaultConfig);
     }
 
     @Test
