@@ -110,14 +110,23 @@ public class BlockValidator {
     }
 
     public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
+            return BlockValidationResult.passed();
+        }
         return BlockValidationResult.from(new RuleBook(INCOMING_BLOCK).run(createFactMap(block)));
     }
 
     public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
+            return BlockValidationResult.passed();
+        }
         return BlockValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(block)));
     }
 
     public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
+            return BlockValidationResult.passed();
+        }
         return BlockValidationResult.from(new RuleBook(CONNECT_TO_CHAIN).run(createFactMap(block)));
     }
 }
