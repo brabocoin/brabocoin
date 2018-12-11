@@ -5,6 +5,7 @@ import javafx.animation.AnimationTimer;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import org.brabocoin.brabocoin.Constants;
@@ -42,6 +43,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private AnimationTimer timer;
 
     private @Nullable Task<Block> miningTask;
+
+    @FXML private CheckBox continueMining;
 
     @FXML private TextField timeField;
     @FXML private TextField iterationsField;
@@ -147,6 +150,11 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 ValidationStatus status = blockProcessor.processNewBlock(block);
                 if (status == ValidationStatus.VALID) {
                     nodeEnvironment.announceBlockRequest(block);
+
+                    // Continue mining if setting is enabled
+                    if (continueMining.isSelected()) {
+                        autoMine();
+                    }
                 }
             }
             catch (DatabaseException e) {

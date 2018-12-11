@@ -34,7 +34,7 @@ public class BrabocoinGUI extends Application {
     );
 
     @Override
-    public void start(Stage stage) throws DatabaseException, IOException {
+    public void start(Stage stage) throws DatabaseException {
         BrabocoinApplication application = new BrabocoinApplication();
 
         MainView mainView = new MainView(application.getState());
