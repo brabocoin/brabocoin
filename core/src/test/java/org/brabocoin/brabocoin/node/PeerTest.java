@@ -18,7 +18,7 @@ class PeerTest {
     void validPeerInstantiationString() throws MalformedSocketException {
         Peer p = new Peer("hatseflats:666");
         assertNotNull(p);
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -30,7 +30,7 @@ class PeerTest {
         InetSocketAddress address = new InetSocketAddress(InetAddress.getLocalHost(), 1);
         Peer p = new Peer(address);
         assertNotNull(p);
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -76,12 +76,12 @@ class PeerTest {
     }
 
     /**
-     * Tests whether the stop method closes the peer channel.
+     * Tests whether the shutdown method closes the peer channel.
      */
     @Test()
     void peerStop() throws MalformedSocketException {
         Peer p = new Peer("localhost:123");
-        p.stop();
+        p.shutdown();
         assertFalse(p.isRunning());
     }
 
@@ -94,7 +94,7 @@ class PeerTest {
 
         assertNotNull(p.getBlockingStub());
 
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -106,7 +106,7 @@ class PeerTest {
 
         assertNotNull(p.getAsyncStub());
 
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -118,7 +118,7 @@ class PeerTest {
 
         assertTrue(p.toString().matches("\\w+:\\d+ \\(running\\)"));
 
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -130,7 +130,7 @@ class PeerTest {
 
         assertEquals(p, p);
 
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -143,8 +143,8 @@ class PeerTest {
 
         assertEquals(p, p2);
 
-        p.stop();
-        p2.stop();
+        p.shutdown();
+        p2.shutdown();
     }
 
     /**
@@ -157,8 +157,8 @@ class PeerTest {
 
         assertNotEquals(p, p2);
 
-        p.stop();
-        p2.stop();
+        p.shutdown();
+        p2.shutdown();
     }
 
     /**
@@ -171,8 +171,8 @@ class PeerTest {
 
         assertNotEquals(p, p2);
 
-        p.stop();
-        p2.stop();
+        p.shutdown();
+        p2.shutdown();
     }
 
     /**
@@ -184,7 +184,7 @@ class PeerTest {
 
         assertNotEquals(null, p);
 
-        p.stop();
+        p.shutdown();
     }
 
     /**
@@ -197,6 +197,6 @@ class PeerTest {
 
         assertNotEquals(p, o);
 
-        p.stop();
+        p.shutdown();
     }
 }

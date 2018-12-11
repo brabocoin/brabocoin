@@ -241,10 +241,10 @@ public class PeerProcessor {
     /**
      * Stop and remove all peers.
      */
-    public synchronized void stopPeers() {
+    public synchronized void shutdownPeers() {
         for (Peer p : peers) {
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Stopping peer: {0}", p));
-            p.stop();
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Shutting down peer: {0}", p));
+            p.shutdown();
         }
 
         peers = new HashSet<>();

@@ -108,7 +108,7 @@ public class Peer {
     /**
      * Close the channel to this peer.
      */
-    public void stop() {
+    public void shutdown() {
         LOGGER.log(Level.INFO, "Stopping peer: {0}", toSocketString());
         channel.shutdown();
     }

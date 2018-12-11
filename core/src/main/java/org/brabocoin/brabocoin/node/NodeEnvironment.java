@@ -140,7 +140,7 @@ public class NodeEnvironment {
         mainLoopTimer.cancel();
         updatePeerTimer.cancel();
 
-        peerProcessor.stopPeers();
+        peerProcessor.shutdownPeers();
     }
 
     /**
