@@ -109,8 +109,9 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
         this.utxoSet = utxoSet;
         this.blockchain = blockchain;
 
-        // Add listener to watched UTXO set
+        // Add listeners
         watchedUtxoSet.addListener(this);
+        this.blockchain.addListener(this);
     }
 
     /**

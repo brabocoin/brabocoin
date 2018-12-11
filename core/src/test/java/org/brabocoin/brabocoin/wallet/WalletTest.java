@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.wallet;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -12,6 +13,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.junit.jupiter.api.BeforeEach;
@@ -185,5 +187,85 @@ class WalletTest {
         assertNotNull(result.getTransaction());
     }
 
+    @Test
+    void onTopBlockConnectedKnownOutput() throws DatabaseException, DestructionException {
+        State state = new TestState(defaultConfig);
+        Wallet wallet = state.getWallet();
+        KeyPair plain = wallet.generatePlainKeyPair();
 
+        Transaction coinbaseTx = Transaction.coinbase(new Output(
+            plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
+        ));
+
+        Block block = new Block(
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
+            1,
+            Collections.singletonList(coinbaseTx),
+            0
+        );
+
+        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
+
+        assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
+    }
+
+    @Test
+    void onTopBlockConnectedPromoteToConfirmed() throws DatabaseException {
+        State state = new TestState(defaultConfig);
+        Wallet wallet = state.getWallet();
+
+        Transaction coinbaseTx = Transaction.coinbase(new Output(
+            Simulation.randomHash(), state.getConsensus().getBlockReward()
+        ));
+
+        wallet.getTransactionHistory().addUnconfirmedTransaction(coinbaseTx);
+
+        Block block = new Block(
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
+            1,
+            Collections.singletonList(coinbaseTx),
+            0
+        );
+
+        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
+
+        assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
+        assertNull(wallet.getTransactionHistory().findUnconfirmedTransaction(coinbaseTx.getHash()));
+    }
+
+    @Test
+    void onTopBlockDisconnected() throws DatabaseException, DestructionException {
+        State state = new TestState(defaultConfig);
+        Wallet wallet = state.getWallet();
+        KeyPair plain = wallet.generatePlainKeyPair();
+
+        Transaction coinbaseTx = Transaction.coinbase(new Output(
+            plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
+        ));
+
+        Block block = new Block(
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomHash(),
+            Simulation.randomBigInteger(),
+            1,
+            Collections.singletonList(coinbaseTx),
+            0
+        );
+
+        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
+        state.getBlockchain().popTopBlock();
+
+        assertNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
+        assertNotNull(wallet.getTransactionHistory().findUnconfirmedTransaction(coinbaseTx.getHash()));
+    }
 }
