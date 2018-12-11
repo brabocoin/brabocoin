@@ -64,6 +64,10 @@
     -fx-padding: 0;
 }
 
+.text-input.label-like:disabled {
+    -fx-opacity: 1;
+}
+
 .chip {
     -fx-padding: .25em .5em;
     -fx-background-radius: .25em;

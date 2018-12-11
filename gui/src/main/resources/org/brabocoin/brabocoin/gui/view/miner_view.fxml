@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import java.lang.Double?>
+<fx:root type="javafx.scene.layout.BorderPane"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.MinerView">
+    <fx:define>
+        <Double fx:id="vgap" fx:value="15"/>
+        <Double fx:id="hgap" fx:value="15"/>
+    </fx:define>
+
+    <top>
+        <ToolBar>
+            <Button text="Auto-mine top block" onAction="#autoMine">
+                <graphic>
+                    <BraboGlyph icon="MAGIC"/>
+                </graphic>
+            </Button>
+            <Separator/>
+            <Button text="Stop" onAction="#stop">
+                <graphic>
+                    <BraboGlyph icon="STOP"/>
+                </graphic>
+            </Button>
+        </ToolBar>
+    </top>
+    <center>
+        <GridPane vgap="$vgap" hgap="$hgap">
+            <Label text="Time" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="timeField"
+                       editable="false"
+                       disable="true"
+                       styleClass="label-like"
+                       GridPane.rowIndex="0"
+                       GridPane.columnIndex="1"
+                       GridPane.hgrow="ALWAYS"/>
+
+            <Label text="Iterations" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="iterationsField"
+                       editable="false"
+                       disable="true"
+                       styleClass="label-like"
+                       GridPane.rowIndex="1"
+                       GridPane.columnIndex="1"
+                       GridPane.hgrow="ALWAYS"/>
+
+            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="targetValueField"
+                       editable="false"
+                       disable="true"
+                       styleClass="label-like,hash"
+                       GridPane.rowIndex="2"
+                       GridPane.columnIndex="1"
+                       GridPane.hgrow="ALWAYS"/>
+
+            <Label text="Best hash" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+            <TextField fx:id="bestHashField"
+                       editable="false"
+                       disable="true"
+                       styleClass="label-like,hash"
+                       GridPane.rowIndex="3"
+                       GridPane.columnIndex="1"
+                       GridPane.hgrow="ALWAYS"/>
+        </GridPane>
+    </center>
+</fx:root>

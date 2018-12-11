@@ -94,9 +94,12 @@ public class BraboGlyph extends Glyph {
         CODE_BRANCH(Font.FONT_AWESOME, '\uf126'),
         DATABASE(Font.FONT_AWESOME, '\uf1c0'),
         LEVEL_DOWN_ALT(Font.FONT_AWESOME, '\uf3be'),
+        MAGIC(Font.FONT_AWESOME, '\uf0d0'),
         MICROCHIP(Font.FONT_AWESOME, '\uf2db'),
         MINUS(Font.FONT_AWESOME, '\uf068'),
+        PLUS(Font.FONT_AWESOME, '\uf067'),
         SEARCH(Font.FONT_AWESOME, '\uf002'),
+        STOP(Font.FONT_AWESOME, '\uf04d'),
         TASKS(Font.FONT_AWESOME, '\uf0ae'),
         TIMES(Font.FONT_AWESOME, '\uf00d'),
         WALLET(Font.FONT_AWESOME, '\uf555');

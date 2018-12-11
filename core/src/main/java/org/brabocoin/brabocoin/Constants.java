@@ -13,4 +13,6 @@ public final class Constants {
      * entries in the transaction pool UTXO set.
      */
     public static final int TRANSACTION_POOL_HEIGHT = Integer.MAX_VALUE;
+
+    public static final int BLOCK_HASH_SIZE = 32;
 }

@@ -5,22 +5,23 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
+import javafx.scene.Node;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
-import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.dal.BlockDatabase;
-import org.brabocoin.brabocoin.dal.HashMapDB;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.gui.task.TaskManager;
+import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
+import org.controlsfx.control.StatusBar;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -28,26 +29,42 @@ import java.util.ResourceBundle;
  */
 public class MainView extends BorderPane implements BraboControl, Initializable {
 
+    private final @NotNull State state;
+
     @FXML private ToggleButton logPaneToggleButton;
     @FXML private HiddenSidesPane sidesPane;
     @FXML private BorderPane viewContainer;
 
+    @FXML private ToggleGroup toggleGroupMainNav;
     @FXML private ToggleButton stateToggleButton;
+    @FXML private ToggleButton miningToggleButton;
 
+    @FXML private StatusBar statusBar;
     @FXML private LogPane logPane;
 
+    private @NotNull TaskManager taskManager;
+
+    private Map<Toggle, Node> toggleToViewMap;
     private CurrentStateView currentStateView;
+    private MinerView minerView;
 
     /**
      * Create the main view.
+     *
+     * @param state The application state.
      */
-    public MainView() {
+    public MainView(@NotNull State state) {
         super();
+        this.state = state;
+
         BraboControlInitializer.initialize(this);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Initialize task manager
+        taskManager = new TaskManager(statusBar);
+
         // Bind log pane toggle button to the log pane
         ObjectBinding<Side> paneSideBinding = Bindings.createObjectBinding(
             () -> logPaneToggleButton.isSelected() ? Side.BOTTOM : null,
@@ -58,27 +75,22 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         // Set log pane close binding
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
-        // Initialize menu views
-        try {
-            BraboConfig config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
-            currentStateView = new CurrentStateView(
-                new Blockchain(
-                    new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize()),
-                    new Consensus(),
-                    100,
-                    new Random()
-                )
-            );
-        }
-        catch (DatabaseException e) {
-            e.printStackTrace();
-        }
+        // Initialize menu view mapping
+        currentStateView = new CurrentStateView(state.getBlockchain());
+        minerView = new MinerView(
+            state.getMiner(),
+            state.getBlockchain(),
+            state.getBlockProcessor(),
+            state.getNode().getEnvironment(),
+            taskManager
+        );
 
-        // Bind main nav buttons to views
-        stateToggleButton.selectedProperty().addListener((obs, old, selected) -> {
-            if (selected) {
-                viewContainer.setCenter(currentStateView);
-            }
+        toggleToViewMap = new HashMap<>();
+        toggleToViewMap.put(stateToggleButton, currentStateView);
+        toggleToViewMap.put(miningToggleButton, minerView);
+
+        toggleGroupMainNav.selectedToggleProperty().addListener((obs, old, selected) -> {
+            viewContainer.setCenter(toggleToViewMap.get(selected));
         });
 
         // Set initial view

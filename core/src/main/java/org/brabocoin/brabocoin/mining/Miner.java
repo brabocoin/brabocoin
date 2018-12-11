@@ -77,6 +77,8 @@ public class Miner {
      */
     public @Nullable Block mineNewBlock(@NotNull IndexedBlock previousBlock,
                                         @NotNull Hash coinbaseAddress) {
+        isStopped = false;
+
         List<Transaction> transactions = collectTransactions();
 
         Transaction coinbase = createCoinbase(
@@ -189,5 +191,9 @@ public class Miner {
         }
 
         return transactions;
+    }
+
+    public @Nullable MiningBlock getMiningBlock() {
+        return block;
     }
 }

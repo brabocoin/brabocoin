@@ -25,6 +25,10 @@ public class MiningBlock extends Block {
 
     private @NotNull BigInteger nonce;
 
+    private @Nullable Hash bestHash;
+
+    private long iterations;
+
     /**
      * Create a new mining block block.
      *
@@ -74,6 +78,7 @@ public class MiningBlock extends Block {
 
         while (!stopped && !isBlockHashValid()) {
             nonce = nonce.add(BigInteger.ONE).mod(consensus.getMaxNonce());
+            iterations++;
         }
 
         // If forcefully stopped, and the block hash is still not valid, return null
@@ -88,7 +93,13 @@ public class MiningBlock extends Block {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isBlockHashValid() {
-        return getHash().compareTo(getTargetValue()) <= 0;
+        Hash hash = getHash();
+
+        if (bestHash == null || hash.compareTo(bestHash) < 0) {
+            bestHash = hash;
+        }
+
+        return hash.compareTo(getTargetValue()) <= 0;
     }
 
     @Override
@@ -129,5 +140,19 @@ public class MiningBlock extends Block {
     @Override
     public @NotNull BigInteger getNonce() {
         return nonce;
+    }
+
+    /**
+     * Get the best hash found while mining this block, or {@code null} if this block did not yet
+     * start mining.
+     *
+     * @return The best hash found while mining.
+     */
+    public @Nullable Hash getBestHash() {
+        return bestHash;
+    }
+
+    public long getIterations() {
+        return iterations;
     }
 }

@@ -24,8 +24,9 @@ public class BraboControlInitializer {
      *     The control to initialize.
      */
     public static void initialize(BraboControl control) {
-        FXMLLoader fxmlLoader = new FXMLLoader(control.getClass()
-            .getResource(control.fxmlFilePath()));
+        FXMLLoader fxmlLoader = new FXMLLoader(
+            control.getClass().getResource(control.fxmlFilePath())
+        );
         fxmlLoader.setControllerFactory(a -> control);
         fxmlLoader.setRoot(control);
 

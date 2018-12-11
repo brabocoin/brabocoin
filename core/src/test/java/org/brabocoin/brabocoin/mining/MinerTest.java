@@ -293,6 +293,7 @@ class MinerTest {
 
     @Test
     void stopImmediately() {
+        fail("Multithreading is hard.");
         consensus = new Consensus() {
             @Override
             public Hash getTargetValue() {
