@@ -127,11 +127,16 @@ public class WalletIO {
 
         passphrase.destruct();
 
+        File directory = keysFile.getParentFile();
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
         Files.write(keysFile.toPath(), encryptedBytes);
 
         // Write transaction history
+        ByteString txHistoryBytes;
         if (!wallet.getTransactionHistory().isEmpty()) {
-            ByteString txHistoryBytes = ProtoConverter.toProtoBytes(
+            txHistoryBytes = ProtoConverter.toProtoBytes(
                 wallet.getTransactionHistory(),
                 BrabocoinStorageProtos.TransactionHistory.class
             );
@@ -139,11 +144,15 @@ public class WalletIO {
             if (txHistoryBytes == null) {
                 throw new IllegalStateException("Transaction history could not be saved.");
             }
-
-            Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
         }
         else {
-            Files.write(transactionHistoryFile.toPath(), new byte[] {});
+            txHistoryBytes = ByteString.EMPTY;
         }
+
+        File txhistDirectory = transactionHistoryFile.getParentFile();
+        if (!txhistDirectory.exists()) {
+            txhistDirectory.mkdirs();
+        }
+        Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
     }
 }

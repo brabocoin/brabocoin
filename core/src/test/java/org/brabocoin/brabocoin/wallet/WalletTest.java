@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +35,13 @@ class WalletTest {
 
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
         .bind("brabo", BraboConfig.class);
-    private static final String walletPath = "src/test/resources/testwallet.dat";
-    private static final File walletFile = new File(walletPath);
+    private static final String walletPath = "testwallet.dat";
+    private static final File walletFile = Paths.get(
+        defaultConfig.dataDirectory(),
+        Integer.toString(defaultConfig.networkId()),
+        defaultConfig.walletStoreDirectory(),
+        walletPath
+    ).toFile();
 
     @BeforeEach
     void beforeEach() {
@@ -61,7 +67,7 @@ class WalletTest {
 
         Transaction coinbaseTx = Transaction.coinbase(new Output(
             plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
-        ));
+        ), 1);
 
         state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
 
@@ -91,7 +97,7 @@ class WalletTest {
 
         Transaction coinbaseTx = Transaction.coinbase(new Output(
             encrypted.getPublicKey().getHash(), state.getConsensus().getBlockReward()
-        ));
+        ), 1);
 
         state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
 
@@ -143,7 +149,7 @@ class WalletTest {
         for (int i = 0; i < N; i++) {
             coinbaseTxs.add(Transaction.coinbase(new Output(
                 keyPairs.get(i).getPublicKey().getHash(), state.getConsensus().getBlockReward()
-            )));
+            ), 1));
         }
 
         coinbaseTxs.forEach(t -> {
@@ -195,7 +201,7 @@ class WalletTest {
 
         Transaction coinbaseTx = Transaction.coinbase(new Output(
             plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
-        ));
+        ), 1);
 
         Block block = new Block(
             Simulation.randomHash(),
@@ -220,7 +226,7 @@ class WalletTest {
 
         Transaction coinbaseTx = Transaction.coinbase(new Output(
             Simulation.randomHash(), state.getConsensus().getBlockReward()
-        ));
+        ), 1);
 
         wallet.getTransactionHistory().addUnconfirmedTransaction(coinbaseTx);
 
@@ -249,7 +255,7 @@ class WalletTest {
 
         Transaction coinbaseTx = Transaction.coinbase(new Output(
             plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
-        ));
+        ), 1);
 
         Block block = new Block(
             Simulation.randomHash(),
