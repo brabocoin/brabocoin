@@ -1,18 +1,25 @@
 package org.brabocoin.brabocoin.gui;
 
+import com.google.protobuf.ByteString;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.view.MainView;
+import org.brabocoin.brabocoin.gui.window.ValidationWindow;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
 import org.fxmisc.cssfx.CSSFX;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +71,21 @@ public class BrabocoinGUI extends Application {
                 Platform.exit();
             }
         });
+
+        /**
+         * TODO: Remove me!
+         */
+        Block block = new Block(
+            new Hash(ByteString.copyFromUtf8("prev")),
+            new Hash(ByteString.copyFromUtf8("merkle")),
+            new Hash(ByteString.copyFromUtf8("target")),
+            BigInteger.valueOf(1234),
+            10,
+            Collections.emptyList(),
+            1
+        );
+        Dialog dialog = new ValidationWindow(application.getState().getBlockchain(), block);
+        dialog.showAndWait();
     }
 
     public static void main(String[] args) {

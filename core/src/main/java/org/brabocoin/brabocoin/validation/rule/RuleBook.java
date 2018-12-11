@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.validation.rule;
 
+import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
+import org.brabocoin.brabocoin.validation.annotation.IgnoredFact;
 import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.fact.UninitializedFact;
@@ -68,8 +70,21 @@ public class RuleBook {
                 field.setAccessible(true);
                 boolean hasChildRuleFailMarkerFlag =
                     field.getAnnotation(CompositeRuleFailMarker.class) != null;
-                if (hasChildRuleFailMarkerFlag) {
+                boolean isIgnored =
+                    field.getAnnotation(IgnoredFact.class) != null;
+                if (hasChildRuleFailMarkerFlag || isIgnored) {
                     continue;
+                }
+
+                boolean isCompositeRuleList =
+                    field.getAnnotation(CompositeRuleList.class) != null;
+                if (isCompositeRuleList) {
+                    Object o = field.get(rule);
+                    if (o instanceof RuleList) {
+                        continue;
+                    }
+
+                    throw new IllegalStateException("CompositeRuleList flag found on a non RuleList object.");
                 }
 
                 Object fieldValue = facts.entrySet().stream()

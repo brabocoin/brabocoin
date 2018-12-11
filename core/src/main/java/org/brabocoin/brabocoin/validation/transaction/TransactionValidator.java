@@ -61,7 +61,7 @@ public class TransactionValidator {
         SignatureTxRule.class
     );
 
-    private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
+    public static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
         SignatureCountTxRule.class,
         InputOutputNotEmptyTxRule.class,
         OutputValueTxRule.class

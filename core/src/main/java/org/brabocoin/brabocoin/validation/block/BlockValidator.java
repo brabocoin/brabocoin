@@ -43,7 +43,7 @@ public class BlockValidator {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 
-    private static final RuleList INCOMING_BLOCK = new RuleList(
+    public static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
         MaxSizeBlkRule.class,
         ValidNetworkIdBlkRule.class,
