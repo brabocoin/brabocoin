@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.wallet;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
-import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -13,12 +12,10 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
-import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import sun.net.www.content.text.plain;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,9 +23,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class WalletTest {
+
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
         .bind("brabo", BraboConfig.class);
     private static final String walletPath = "src/test/resources/testwallet.dat";
@@ -76,7 +77,8 @@ class WalletTest {
     }
 
     @Test
-    void signTransactionValidEncrypted() throws DatabaseException, DestructionException, CipherException {
+    void signTransactionValidEncrypted() throws DatabaseException, DestructionException,
+                                                CipherException {
         State state = new TestState(defaultConfig);
 
         Wallet wallet = state.getWallet();
@@ -114,7 +116,8 @@ class WalletTest {
     }
 
     @Test
-    void signTransactionValidMixed() throws DatabaseException, DestructionException, CipherException {
+    void signTransactionValidMixed() throws DatabaseException, DestructionException,
+                                            CipherException {
         State state = new TestState(defaultConfig);
 
         Wallet wallet = state.getWallet();
@@ -127,7 +130,8 @@ class WalletTest {
                 keyPairs.add(wallet.generateEncryptedKeyPair(
                     new Destructible<>(("superSecret" + i)::toCharArray)
                 ));
-            } else {
+            }
+            else {
                 keyPairs.add(wallet.generatePlainKeyPair());
             }
         }
@@ -162,20 +166,24 @@ class WalletTest {
             if (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED) {
                 KeyPair lockedKeyPair = result.getLockedKeyPair();
                 int i = 0;
-                while(!lockedKeyPair.getPrivateKey().isUnlocked()) {
+                while (!lockedKeyPair.getPrivateKey().isUnlocked()) {
                     try {
                         lockedKeyPair.getPrivateKey()
                             .unlock(new Destructible<>(("superSecret" + i)::toCharArray));
-                    } catch (CipherException e) {
+                    }
+                    catch (CipherException e) {
                         // ignore
                     }
                     i++;
                 }
             }
 
-        } while(result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED);
+        }
+        while (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED);
 
         assertEquals(TransactionSigningStatus.SIGNED, result.getStatus());
         assertNotNull(result.getTransaction());
     }
+
+
 }

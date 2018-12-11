@@ -4,8 +4,10 @@ import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.proto.ConfirmedTransactionMapEntryConverter;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
+import org.brabocoin.brabocoin.model.proto.TransactionMapEntryConverter;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      * <p>
      * Confirmed transactions are transactions that are recorded in a block on the main chain.
      */
+    @ProtoField(converter = ConfirmedTransactionMapEntryConverter.class)
     private final @NotNull Map<Hash, ConfirmedTransaction> confirmedTransactions;
 
     /**
@@ -33,6 +36,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      * Unconfirmed transactions are known transactions, but are not recorded in a block on the
      * main chain.
      */
+    @ProtoField(converter = TransactionMapEntryConverter.class)
     private final @NotNull Map<Hash, Transaction> unconfirmedTransactions;
 
     /**
@@ -150,5 +154,14 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
                 )
             );
         }
+    }
+
+    /**
+     * Returns whether no transactions are saved in the transaction history.
+     *
+     * @return Whether no transactions are in the history.
+     */
+    public boolean isEmpty() {
+        return confirmedTransactions.isEmpty() && unconfirmedTransactions.isEmpty();
     }
 }

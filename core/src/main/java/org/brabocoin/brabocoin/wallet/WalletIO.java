@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WalletIO {
@@ -73,15 +74,24 @@ public class WalletIO {
 
         passphrase.destruct();
 
+
         // Load transaction history
-        BrabocoinStorageProtos.TransactionHistory protoTxHistory = BrabocoinStorageProtos.TransactionHistory.parseFrom(
-            Files.readAllBytes(transactionHistoryFile.toPath())
-        );
-
-        TransactionHistory transactionHistory = ProtoConverter.toDomain(protoTxHistory, TransactionHistory.Builder.class);
-
-        if (transactionHistory == null) {
-            throw new IllegalStateException("Transaction history could not be read.");
+        byte[] txHistoryBytes = Files.readAllBytes(transactionHistoryFile.toPath());
+        TransactionHistory transactionHistory;
+        if (txHistoryBytes.length == 0) {
+            transactionHistory = new TransactionHistory(
+                Collections.emptyMap(),
+                Collections.emptyMap()
+            );
+        }
+        else {
+            BrabocoinStorageProtos.TransactionHistory protoTxHistory = BrabocoinStorageProtos.TransactionHistory.parseFrom(
+                txHistoryBytes
+            );
+            transactionHistory = ProtoConverter.toDomain(protoTxHistory, TransactionHistory.Builder.class);
+            if (transactionHistory == null) {
+                throw new IllegalStateException("Transaction history could not be read.");
+            }
         }
 
         return new Wallet(
@@ -120,15 +130,20 @@ public class WalletIO {
         Files.write(keysFile.toPath(), encryptedBytes);
 
         // Write transaction history
-        ByteString txHistoryBytes = ProtoConverter.toProtoBytes(
-            wallet.getTransactionHistory(),
-            BrabocoinStorageProtos.TransactionHistory.class
-        );
+        if (!wallet.getTransactionHistory().isEmpty()) {
+            ByteString txHistoryBytes = ProtoConverter.toProtoBytes(
+                wallet.getTransactionHistory(),
+                BrabocoinStorageProtos.TransactionHistory.class
+            );
 
-        if (txHistoryBytes == null) {
-            throw new IllegalStateException("Transaction history could not be saved.");
+            if (txHistoryBytes == null) {
+                throw new IllegalStateException("Transaction history could not be saved.");
+            }
+
+            Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
         }
-
-        Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
+        else {
+            Files.write(transactionHistoryFile.toPath(), new byte[] {});
+        }
     }
 }
