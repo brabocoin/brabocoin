@@ -37,8 +37,9 @@ import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Paths;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
@@ -140,8 +141,18 @@ public class DeploymentState implements State {
 
         Destructible<char[]> passphrase;
         Wallet wallet;
-        File walletFile = new File(config.walletFile());
-        File txHistoryFile = new File(config.transactionHistoryFile());
+        File walletFile = Paths.get(
+            config.dataDirectory(),
+            Integer.toString(config.networkId()),
+            config.walletStoreDirectory(),
+            config.walletFile()
+        ).toFile();
+        File txHistoryFile = Paths.get(
+            config.dataDirectory(),
+            Integer.toString(config.networkId()),
+            config.walletStoreDirectory(),
+            config.transactionHistoryFile()
+        ).toFile();
         ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
         if (walletFile.exists()) {
             // Read wallet
