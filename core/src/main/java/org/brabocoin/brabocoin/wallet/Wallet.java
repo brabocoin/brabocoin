@@ -307,6 +307,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
     @Override
     public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                 @NotNull UnspentOutputInfo info) {
+        // Filter UTXO from addresses in this wallet and add to the wallet UTXO
         if (!hasAddress(info.getAddress())) {
             return;
         }
@@ -327,6 +328,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     @Override
     public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
+        // Set the UTXO as spent in the wallet UTXO set as well
         try {
             utxoSet.setOutputSpent(transactionHash, outputIndex);
         }
@@ -338,11 +340,13 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     @Override
     public void onSyncWithUTXOSetStarted() {
+        // Do not listen for blockchain updates when syncing (internally) with the UTXO set
         this.blockchain.removeListener(this);
     }
 
     @Override
     public void onSyncWithUTXOSetFinished() {
+        // Listen for blockchain updates when syncing (internally) with the UTXO set is finished
         this.blockchain.addListener(this);
     }
 
