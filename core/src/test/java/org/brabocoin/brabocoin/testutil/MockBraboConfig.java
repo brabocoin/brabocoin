@@ -38,6 +38,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public String dataDirectory() {
+        return "src/test/resources/" + delegator.dataDirectory();
+    }
+
+    @Override
     public int updatePeerInterval() {
         return delegator.updatePeerInterval();
     }

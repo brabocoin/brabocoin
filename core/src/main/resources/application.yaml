@@ -6,9 +6,10 @@ brabo:
   bootstrapPeers:                     # List of peers known at startup
   - brabocoin.org:56129               #  - Dictator node
   updatePeerInterval: 45              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
+  dataDirectory: data                 # Data directory
+  blockStoreDirectory: blocks         # Subfolder to store block data
+  utxoStoreDirectory: utxo            # Subfolder to store UTXO data
   databaseDirectory: db               # Database subfolder
-  blockStoreDirectory: data/blocks    # Subfolder to store block data
-  utxoStoreDirectory: data/utxo       # Subfolder to store UTXO data
   maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions

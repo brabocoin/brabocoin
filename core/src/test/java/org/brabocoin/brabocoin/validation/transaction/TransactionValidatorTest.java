@@ -1,9 +1,7 @@
 package org.brabocoin.brabocoin.validation.transaction;
 
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
-import org.brabocoin.brabocoin.dal.*;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
@@ -11,8 +9,6 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.processor.TransactionProcessor;
-import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
@@ -20,14 +16,13 @@ import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class TransactionValidatorTest {
     static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
@@ -39,17 +34,7 @@ class TransactionValidatorTest {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
-
-            @Override
-            public String utxoStoreDirectory() {
-                return "src/test/resources/" + super.utxoStoreDirectory();
-            }
-        };
+        defaultConfig = new MockBraboConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }

@@ -51,15 +51,6 @@ public class NodeTest {
     @BeforeAll
     static void setUp() {
         defaultConfig = new MockBraboConfig(defaultConfig) {
-            @Override
-            public String blockStoreDirectory() {
-                return "src/test/resources/" + super.blockStoreDirectory();
-            }
-
-            @Override
-            public String utxoStoreDirectory() {
-                return "src/test/resources/" + super.utxoStoreDirectory();
-            }
 
             @Override
             public List<String> bootstrapPeers() {
@@ -79,7 +70,7 @@ public class NodeTest {
 
     @AfterEach
     void afterEach() throws IOException {
-        Files.walkFileTree(Paths.get("src/test/resources/data/"), new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(Paths.get("src/test/resources/"), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file,
                                              BasicFileAttributes attrs) throws IOException {
