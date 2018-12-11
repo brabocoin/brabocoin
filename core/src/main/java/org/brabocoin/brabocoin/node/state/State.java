@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
@@ -18,6 +19,8 @@ import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.wallet.Wallet;
+import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,11 +38,15 @@ public interface State {
 
     @NotNull KeyValueStore getUtxoStorage();
 
+    @NotNull KeyValueStore getWalletUTXOStorage();
+
     @NotNull BlockDatabase getBlockDatabase();
 
     @NotNull ChainUTXODatabase getChainUTXODatabase();
 
     @NotNull UTXODatabase getPoolUTXODatabase();
+
+    @NotNull UTXODatabase getWalletUTXODatabase();
 
     @NotNull Blockchain getBlockchain();
 
@@ -62,4 +69,8 @@ public interface State {
     @NotNull NodeEnvironment getEnvironment();
 
     @NotNull Node getNode();
+
+    @NotNull Wallet getWallet();
+
+    @NotNull WalletIO getWalletIO();
 }

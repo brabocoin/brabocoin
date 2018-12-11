@@ -31,6 +31,8 @@ public class BlockProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(BlockProcessor.class.getName());
 
+    private final @NotNull Set<BlockProcessorListener> listeners;
+
     /**
      * UTXO processor.
      */
@@ -79,6 +81,7 @@ public class BlockProcessor {
         this.transactionProcessor = transactionProcessor;
         this.consensus = consensus;
         this.blockValidator = blockValidator;
+        this.listeners = new HashSet<>();
     }
 
     /**
@@ -96,6 +99,8 @@ public class BlockProcessor {
     public synchronized void syncMainChainWithUTXOSet() throws DatabaseException,
                                                                IllegalStateException {
         LOGGER.info("Syncing main chain with UTXO set.");
+
+        listeners.forEach(BlockProcessorListener::onSyncWithUTXOSetStarted);
 
         // Get the top block from the UTXO set
         IndexedBlock block = blockchain.getIndexedBlock(utxoProcessor.getLastProcessedBlockHash());
@@ -132,6 +137,8 @@ public class BlockProcessor {
         while (!fork.isEmpty()) {
             blockchain.pushTopBlock(fork.pop());
         }
+
+        listeners.forEach(BlockProcessorListener::onSyncWithUTXOSetFinished);
 
         LOGGER.info(() -> MessageFormat.format(
             "Synced main chain to height={0}.",

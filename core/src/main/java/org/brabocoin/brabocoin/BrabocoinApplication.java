@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.google.common.collect.Sets;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
+import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
@@ -11,6 +12,7 @@ import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +52,8 @@ public class BrabocoinApplication {
      *     When one of the databases could not be initialized.
      */
     public BrabocoinApplication(@NotNull BraboConfig config) throws DatabaseException {
-        state = new DeploymentState(config);
+        // TODO: PassphraseSupplier
+        state = new DeploymentState(config, (c) -> new Destructible<>("BraboWachtwoord"::toCharArray));
         storages = Sets.newHashSet(state.getBlockStorage(), state.getUtxoStorage());
     }
 
