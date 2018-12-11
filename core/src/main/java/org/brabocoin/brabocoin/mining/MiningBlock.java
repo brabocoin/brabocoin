@@ -21,7 +21,7 @@ public class MiningBlock extends Block {
 
     private static final Logger LOGGER = Logger.getLogger(MiningBlock.class.getName());
 
-    private boolean stopped;
+    private volatile boolean stopped;
 
     private @NotNull BigInteger nonce;
 
@@ -124,7 +124,7 @@ public class MiningBlock extends Block {
     /**
      * Stop the execution of the {@link #mine(Consensus)} method.
      */
-    public synchronized void stop() {
+    public void stop() {
         stopped = true;
     }
 

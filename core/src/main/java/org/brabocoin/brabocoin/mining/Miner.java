@@ -114,7 +114,6 @@ public class Miner {
             networkId
         );
 
-        // TODO: this is actually not threadsafe...
         if (isStopped) {
             return null;
         }

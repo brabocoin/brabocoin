@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -293,7 +294,6 @@ class MinerTest {
 
     @Test
     void stopImmediately() {
-        fail("Multithreading is hard.");
         consensus = new Consensus() {
             @Override
             public Hash getTargetValue() {
@@ -324,11 +324,11 @@ class MinerTest {
         Hash address = Hashing.digestRIPEMD160(ByteString.copyFromUtf8("Neerkant"));
 
         AtomicReference<Object> minedBlock = new AtomicReference<>(new Object());
-        Thread thread = new Thread(() -> {
-            minedBlock.set(miner.mineNewBlock(genesis, address));
-        });
+        Thread thread = new Thread(() -> minedBlock.set(miner.mineNewBlock(genesis, address)));
 
         thread.start();
+
+        await().until(() -> miner.getMiningBlock() != null);
         miner.stop();
 
         try {
