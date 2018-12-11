@@ -19,7 +19,6 @@ import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
-import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;

@@ -55,7 +55,7 @@ public class BrabocoinApplication {
     }
 
     public BrabocoinApplication() throws DatabaseException {
-        this(DEFAULT_CONFIG);
+        this(getConfig(null));
     }
 
     public static void main(String[] args) throws DatabaseException, IOException {
