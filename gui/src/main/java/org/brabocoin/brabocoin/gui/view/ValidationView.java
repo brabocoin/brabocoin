@@ -10,9 +10,13 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.ValidationListener;
+import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.rule.Rule;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
-public class ValidationView extends MasterDetailPane implements BraboControl, Initializable {
+public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
+                                                                ValidationListener {
 
+    private final Map<Class, TreeItem<String>> ruleTreeItemMap;
+    private final Validator validator;
     private Transaction transaction;
     private Block block;
 
@@ -47,7 +56,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private void addRules(TreeItem<String> node, RuleList ruleList) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
-            ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+            ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.SQUARE));
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
             if (annotation instanceof ValidationRule) {
@@ -60,7 +69,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                         field.setAccessible(true);
                         if (field.getAnnotation(CompositeRuleList.class) != null) {
                             try {
-                                composite = (RuleList) field.get(rule.newInstance());
+                                composite = (RuleList)field.get(rule.newInstance());
                             }
                             catch (IllegalAccessException | InstantiationException e) {
                                 break;
@@ -76,26 +85,35 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                     addRules(ruleTreeItem, composite);
                     ruleTreeItem.setExpanded(true);
                 }
-            } else {
+            }
+            else {
                 ruleTreeItem.setValue("[Could not determine annotation type]");
             }
 
+            ruleTreeItemMap.put(rule, ruleTreeItem);
             node.getChildren().add(ruleTreeItem);
         }
     }
 
-    public ValidationView(@NotNull Blockchain blockchain, @NotNull Transaction transaction) {
+    public ValidationView(@NotNull Blockchain blockchain, @NotNull Transaction transaction, @NotNull
+        Validator<Transaction> validator) {
         super();
+        ruleTreeItemMap = new HashMap<>();
         this.transaction = transaction;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
     }
 
-    public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block) {
+    public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
+                          @NotNull Validator<Block> validator) {
         super();
+        ruleTreeItemMap = new HashMap<>();
         this.block = block;
+        this.validator = validator;
 
-        this.setDetailNode(new BlockDetailView(blockchain, block));
+        blockDetailView = new BlockDetailView(blockchain, block);
+        this.setDetailNode(blockDetailView);
 
         BraboControlInitializer.initialize(this);
     }
@@ -107,5 +125,31 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loadRules();
+
+        // Run validator
+        if (isForBlock()) {
+            BlockValidator validator = (BlockValidator) this.validator;
+            validator.addListener(this);
+            validator.checkIncomingBlockValid(block);
+        } else {
+            // TODO: implement
+        }
+    }
+
+    @Override
+    public void onRuleValidation(Rule rule, RuleBookResult result) {
+        TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
+
+        if (treeItem == null) {
+            // TODO: HELP!
+            return;
+        }
+
+        if (result.isPassed()) {
+            treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+        }
+        else {
+            treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS));
+        }
     }
 }

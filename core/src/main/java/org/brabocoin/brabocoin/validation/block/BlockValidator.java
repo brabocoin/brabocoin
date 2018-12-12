@@ -8,6 +8,8 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationListener;
+import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.CorrectTargetValueBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateInputBlkRule;
@@ -29,19 +31,24 @@ import org.brabocoin.brabocoin.validation.block.rules.ValidMerkleRootBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidNetworkIdBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * Validates blocks.
  */
-public class BlockValidator {
+public class BlockValidator implements Validator<Block> {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
+    private final List<ValidationListener> validationListeners;
 
     public static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
@@ -92,6 +99,7 @@ public class BlockValidator {
         this.utxoSet = state.getChainUTXODatabase();
         this.signer = state.getSigner();
         this.config = state.getConfig();
+        validationListeners = new ArrayList<>();
     }
 
     private FactMap createFactMap(@NotNull Block block) {
@@ -109,24 +117,51 @@ public class BlockValidator {
         return facts;
     }
 
+    /**
+     * Add a listener to validation events.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(@NotNull ValidationListener listener) {
+        this.validationListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to validation events.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(@NotNull ValidationListener listener) {
+        this.validationListeners.remove(listener);
+    }
+
     public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
-            return BlockValidationResult.passed();
-        }
-        return BlockValidationResult.from(new RuleBook(INCOMING_BLOCK).run(createFactMap(block)));
+        return run(block, INCOMING_BLOCK);
     }
 
     public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
-        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
-            return BlockValidationResult.passed();
-        }
-        return BlockValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(block)));
+        return run(block, AFTER_ORPHAN);
     }
 
     public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
+        return run(block, CONNECT_TO_CHAIN);
+    }
+
+    @Override
+    public void onRuleValidation(Rule rule, RuleBookResult result) {
+        validationListeners.forEach(l -> l.onRuleValidation(rule, result));
+    }
+
+    @Override
+    public BlockValidationResult run(@NotNull Block block, @NotNull RuleList ruleList) {
         if (block.getHash() == consensus.getGenesisBlock().getHash()) {
             return BlockValidationResult.passed();
         }
-        return BlockValidationResult.from(new RuleBook(CONNECT_TO_CHAIN).run(createFactMap(block)));
+
+        RuleBook ruleBook = new RuleBook(ruleList);
+
+        ruleBook.addListener(this);
+
+        return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
     }
 }

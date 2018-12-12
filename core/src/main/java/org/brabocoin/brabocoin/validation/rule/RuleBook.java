@@ -1,10 +1,12 @@
 package org.brabocoin.brabocoin.validation.rule;
 
+import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.IgnoredFact;
 import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.fact.UninitializedFact;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -19,12 +21,31 @@ import java.util.stream.Collectors;
 
 public class RuleBook {
 
+    private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
-
     private final RuleList ruleList;
 
     public RuleBook(RuleList ruleList) {
         this.ruleList = ruleList;
+        validationListeners = new ArrayList<>();
+    }
+
+    /**
+     * Add a listener to validation events.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(@NotNull ValidationListener listener) {
+        this.validationListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to validation events.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(@NotNull ValidationListener listener) {
+        this.validationListeners.remove(listener);
     }
 
     public RuleBookResult run(FactMap facts) {
@@ -43,8 +64,16 @@ public class RuleBook {
 
             if (!passedRule) {
                 RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass(), getChild(rule));
-                return RuleBookResult.failed(marker);
+                RuleBookResult result = RuleBookResult.failed(marker);
+                validationListeners.forEach(l -> l.onRuleValidation(
+                    rule, result
+                ));
+                return result;
             }
+
+            validationListeners.forEach(l -> l.onRuleValidation(
+                rule, RuleBookResult.passed()
+            ));
         }
 
         return RuleBookResult.passed();
@@ -84,7 +113,8 @@ public class RuleBook {
                         continue;
                     }
 
-                    throw new IllegalStateException("CompositeRuleList flag found on a non RuleList object.");
+                    throw new IllegalStateException(
+                        "CompositeRuleList flag found on a non RuleList object.");
                 }
 
                 Object fieldValue = facts.entrySet().stream()

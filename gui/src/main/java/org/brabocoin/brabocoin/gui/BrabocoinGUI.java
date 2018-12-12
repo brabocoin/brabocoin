@@ -84,7 +84,8 @@ public class BrabocoinGUI extends Application {
             Collections.emptyList(),
             1
         );
-        Dialog dialog = new ValidationWindow(application.getState().getBlockchain(), block);
+        Dialog dialog = new ValidationWindow(application.getState().getBlockchain(), block,
+            application.getState().getBlockValidator());
         dialog.showAndWait();
     }
 
