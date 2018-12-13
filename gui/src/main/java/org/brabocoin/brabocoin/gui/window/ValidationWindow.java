@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.gui.window;
 
+import javafx.scene.Node;
+import javafx.scene.control.ButtonType;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.ValidationView;
@@ -23,7 +25,7 @@ public class ValidationWindow extends BraboDialog {
      *     The block to create a validation window for
      */
     public ValidationWindow(Blockchain blockchain, Block block,
-                            Validator<Block> validator) throws IOException {
+                            Validator<Block> validator) {
         super();
         setTitle("Block Validation");
 
@@ -54,6 +56,12 @@ public class ValidationWindow extends BraboDialog {
         // Remove header
         setHeaderText(null);
         setGraphic(null);
+
+        // Add close button
+        this.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        Node closeButton = this.getDialogPane().lookupButton(ButtonType.CLOSE);
+        closeButton.managedProperty().bind(closeButton.visibleProperty());
+        closeButton.setVisible(false);
 
         this.getDialogPane().setMinWidth(WIDTH);
 

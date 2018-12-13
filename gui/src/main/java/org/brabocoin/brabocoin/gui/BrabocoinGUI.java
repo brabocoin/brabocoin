@@ -1,27 +1,16 @@
 package org.brabocoin.brabocoin.gui;
 
-import com.google.protobuf.ByteString;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.brabocoin.brabocoin.BrabocoinApplication;
-import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.view.MainView;
-import org.brabocoin.brabocoin.gui.window.ValidationWindow;
-import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
-import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.fxmisc.cssfx.CSSFX;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -91,52 +80,52 @@ public class BrabocoinGUI extends Application {
 //        Dialog dialog = new ValidationWindow(application.getState().getBlockchain(), block,
 //            application.getState().getBlockValidator());
 //        dialog.showAndWait();
-        Transaction transaction = new Transaction(
-            Arrays.asList(
-                new Input(
-                    new Hash(ByteString.copyFromUtf8("we;oirjewri")), 5
-                ),
-                new Input(
-                    new Hash(ByteString.copyFromUtf8("sd;lfkhdsalfj")), 4
-                ),
-                new Input(
-                    new Hash(ByteString.copyFromUtf8("afdasfafd")), 6
-                ),
-                new Input(
-                    new Hash(ByteString.copyFromUtf8("avlnawluiv")), 12
-                )
-            ),
-            Arrays.asList(
-                new Output(
-                    new Hash(ByteString.copyFromUtf8("sfsdsfd")), 12
-                ),
-                new Output(
-                    new Hash(ByteString.copyFromUtf8("fsdfsdf")), 444
-                ),
-                new Output(
-                    new Hash(ByteString.copyFromUtf8("sdafds")), 11
-                ),
-                new Output(
-                    new Hash(ByteString.copyFromUtf8("asfdsaf")), 12
-                )
-            ),
-            Arrays.asList(
-                new Signature(
-                    BigInteger.valueOf(12345),
-                    BigInteger.valueOf(54321),
-                    new PublicKey(
-                        new Consensus().getCurve().getDomain().getG().multiply(BigInteger.valueOf(833838))
-                    )
-                )
-            )
-        );
-
-        Dialog dialog = new ValidationWindow(
-            transaction,
-            application.getState().getTransactionValidator()
-        );
-
-        dialog.showAndWait();
+//        Transaction transaction = new Transaction(
+//            Arrays.asList(
+//                new Input(
+//                    new Hash(ByteString.copyFromUtf8("we;oirjewri")), 5
+//                ),
+//                new Input(
+//                    new Hash(ByteString.copyFromUtf8("sd;lfkhdsalfj")), 4
+//                ),
+//                new Input(
+//                    new Hash(ByteString.copyFromUtf8("afdasfafd")), 6
+//                ),
+//                new Input(
+//                    new Hash(ByteString.copyFromUtf8("avlnawluiv")), 12
+//                )
+//            ),
+//            Arrays.asList(
+//                new Output(
+//                    new Hash(ByteString.copyFromUtf8("sfsdsfd")), 12
+//                ),
+//                new Output(
+//                    new Hash(ByteString.copyFromUtf8("fsdfsdf")), 444
+//                ),
+//                new Output(
+//                    new Hash(ByteString.copyFromUtf8("sdafds")), 11
+//                ),
+//                new Output(
+//                    new Hash(ByteString.copyFromUtf8("asfdsaf")), 12
+//                )
+//            ),
+//            Arrays.asList(
+//                new Signature(
+//                    BigInteger.valueOf(12345),
+//                    BigInteger.valueOf(54321),
+//                    new PublicKey(
+//                        new Consensus().getCurve().getDomain().getG().multiply(BigInteger.valueOf(833838))
+//                    )
+//                )
+//            )
+//        );
+//
+//        Dialog dialog = new ValidationWindow(
+//            transaction,
+//            application.getState().getTransactionValidator()
+//        );
+//
+//        dialog.showAndWait();
     }
 
     public static void main(String[] args) {

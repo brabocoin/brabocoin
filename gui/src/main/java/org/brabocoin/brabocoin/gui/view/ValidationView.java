@@ -123,7 +123,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.block = block;
         this.validator = validator;
 
-        blockDetailView = new BlockDetailView(blockchain, block);
+        blockDetailView = new BlockDetailView(blockchain, block, null);
         this.setDetailNode(blockDetailView);
 
         BraboControlInitializer.initialize(this);

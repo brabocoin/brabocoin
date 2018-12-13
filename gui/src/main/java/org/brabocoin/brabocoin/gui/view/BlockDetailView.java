@@ -2,8 +2,11 @@ package org.brabocoin.brabocoin.gui.view;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -12,10 +15,14 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.time.Instant;
@@ -35,8 +42,10 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         "yyyy-MM-dd HH:mm:ss");
 
     private final @NotNull Blockchain blockchain;
+    @Nullable private BlockValidator validator;
 
     @FXML private Label titleLabel;
+    @FXML private Button buttonValidate;
     @FXML private TextField hashField;
 
     @FXML private TextField blockHeightField;
@@ -53,12 +62,13 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
 
     public BlockDetailView(@NotNull Blockchain blockchain) {
-        this(blockchain, null);
+        this(blockchain, null, null);
     }
 
-    public BlockDetailView(@NotNull Blockchain blockchain, Block block) {
+    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator) {
         super();
         this.blockchain = blockchain;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
 
@@ -73,6 +83,9 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private void loadBlock(@NotNull Block block) {
 
         titleLabel.setText("Block #" + block.getBlockHeight());
+        if (validator == null) {
+            buttonValidate.setVisible(false);
+        }
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
 
         blockHeightField.setText(String.valueOf(block.getBlockHeight()));
@@ -117,6 +130,19 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     }
 
     public void setBlock(Block value) {
+        if (value != null) {
+            validator = new Consensus().getGenesisBlock().getHash().equals(value.getHash()) ? null : validator;
+        }
         block.setValue(value);
+    }
+
+    @FXML protected void validate(ActionEvent event) {
+        Dialog dialog = new ValidationWindow(
+            blockchain,
+            getBlock(),
+            validator
+        );
+
+        dialog.showAndWait();
     }
 }
