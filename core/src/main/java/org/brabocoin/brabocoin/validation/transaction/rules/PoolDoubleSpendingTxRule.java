@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
@@ -10,6 +11,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * Double spending of an output in the transaction pool rejects the transaction.
  */
+@ValidationRule(name="No double spending with transaction pool", description = "The transaction should not spend an output that was already spent by another transaction in the pool.")
 public class PoolDoubleSpendingTxRule extends TransactionRule {
 
     private TransactionPool transactionPool;

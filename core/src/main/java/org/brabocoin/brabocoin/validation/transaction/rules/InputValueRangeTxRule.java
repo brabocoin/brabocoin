@@ -4,6 +4,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 /**
@@ -12,7 +13,8 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * The amount of the referenced output of the input must be positive,
  * and the sum of these amounts must be smaller than the max transaction range decided by consensus.
  */
-public class InputValueTxRange extends TransactionRule {
+@ValidationRule(name="Legal input value", description = "The sum of all inputs is within the allowed range, and does not overflow.")
+public class InputValueRangeTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
 

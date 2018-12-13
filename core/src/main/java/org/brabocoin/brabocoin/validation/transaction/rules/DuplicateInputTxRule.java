@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Set;
  * <p>
  * Transactions can not contain duplicate inputs.
  */
+@ValidationRule(name="No duplicate inputs", description = "The transaction does not contain duplicate inputs.")
 public class DuplicateInputTxRule extends TransactionRule {
 
     public boolean isValid() {
