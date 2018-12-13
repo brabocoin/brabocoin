@@ -19,9 +19,7 @@ import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
-import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.controlsfx.control.Notifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,6 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     private final @NotNull Miner miner;
     private final @NotNull Blockchain blockchain;
-    private final @NotNull BlockProcessor blockProcessor;
     private final @NotNull NodeEnvironment nodeEnvironment;
 
     private final @NotNull TaskManager taskManager;
@@ -52,13 +49,11 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     @FXML private TextField bestHashField;
 
     public MinerView(@NotNull Miner miner, @NotNull Blockchain blockchain,
-                     @NotNull BlockProcessor blockProcessor,
                      @NotNull NodeEnvironment nodeEnvironment,
                      @NotNull TaskManager taskManager) {
         super();
         this.miner = miner;
         this.blockchain = blockchain;
-        this.blockProcessor = blockProcessor;
         this.nodeEnvironment = nodeEnvironment;
         this.taskManager = taskManager;
 
@@ -147,14 +142,11 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 .showConfirm();
 
             try {
-                ValidationStatus status = blockProcessor.processNewBlock(block);
-                if (status == ValidationStatus.VALID) {
-                    nodeEnvironment.announceBlockRequest(block);
+                nodeEnvironment.processNewlyMinedBlock(block);
 
-                    // Continue mining if setting is enabled
-                    if (continueMining.isSelected()) {
-                        autoMine();
-                    }
+                // Continue mining if setting is enabled
+                if (continueMining.isSelected()) {
+                    autoMine();
                 }
             }
             catch (DatabaseException e) {
