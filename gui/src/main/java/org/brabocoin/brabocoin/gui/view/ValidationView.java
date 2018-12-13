@@ -20,6 +20,7 @@ import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,10 +36,11 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     private final Map<Class, TreeItem<String>> ruleTreeItemMap;
     private final Validator validator;
+    private TransactionDetailView transactionDetailView;
+    private BlockDetailView blockDetailView;
     private Transaction transaction;
     private Block block;
 
-    private BlockDetailView blockDetailView;
 
     @FXML
     public TreeView<String> ruleView;
@@ -47,11 +49,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         TreeItem<String> root = new TreeItem<>();
         ruleView.setShowRoot(false);
 
+        RuleList ruleList;
         if (isForBlock()) {
-            RuleList ruleList = BlockValidator.INCOMING_BLOCK;
-
-            addRules(root, ruleList);
+            ruleList = BlockValidator.INCOMING_BLOCK;
+        } else {
+            ruleList = TransactionValidator.ALL;
         }
+        addRules(root, ruleList);
         ruleView.setRoot(root);
     }
 
@@ -97,13 +101,16 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         }
     }
 
-    public ValidationView(@NotNull Blockchain blockchain, @NotNull Transaction transaction, @NotNull
+    public ValidationView(@NotNull Transaction transaction, @NotNull
         Validator<Transaction> validator) {
         super();
 
         ruleTreeItemMap = new HashMap<>();
         this.transaction = transaction;
         this.validator = validator;
+
+        transactionDetailView = new TransactionDetailView(transaction);
+        this.setDetailNode(transactionDetailView);
 
         BraboControlInitializer.initialize(this);
     }
@@ -133,14 +140,18 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         ValidationView me = this;
 
         Task task = new Task<Void>() {
-            @Override public Void call() {
+            @Override
+            public Void call() {
                 // Run validator
                 if (isForBlock()) {
-                    BlockValidator validator = (BlockValidator) me.validator;
+                    BlockValidator validator = (BlockValidator)me.validator;
                     validator.addListener(me);
                     validator.checkIncomingBlockValid(block);
-                } else {
-                    // TODO: implement
+                }
+                else {
+                    TransactionValidator validator = (TransactionValidator)me.validator;
+                    validator.addListener(me);
+                    validator.checkTransactionValid(transaction);
                 }
 
                 return null;

@@ -25,12 +25,9 @@ public class ValidationWindow extends BraboDialog {
     public ValidationWindow(Blockchain blockchain, Block block,
                             Validator<Block> validator) throws IOException {
         super();
-
         setTitle("Block Validation");
 
         masterDetailPane = new ValidationView(blockchain, block, validator);
-        this.getDialogPane().setContent(masterDetailPane);
-
         setProperties();
     }
 
@@ -40,14 +37,18 @@ public class ValidationWindow extends BraboDialog {
      * @param transaction
      *     The transaction to create a validation window for
      */
-    public ValidationWindow(Transaction transaction) throws IOException {
+    public ValidationWindow(Transaction transaction, Validator<Transaction> validator) throws IOException {
         super();
-
         setTitle("Transaction Validation");
+
+        masterDetailPane = new ValidationView(transaction, validator);
         setProperties();
+
     }
 
     private void setProperties() {
+        this.getDialogPane().setContent(masterDetailPane);
+
         setResizable(true);
 
         // Remove header

@@ -44,7 +44,7 @@ public class TransactionValidator implements Validator<Transaction> {
     private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
-    private static final RuleList ALL = new RuleList(
+    public static final RuleList ALL = new RuleList(
         DuplicatePoolTxRule.class,
         MaxSizeTxRule.class,
         CoinbaseCreationTxRule.class,
@@ -209,6 +209,24 @@ public class TransactionValidator implements Validator<Transaction> {
         ruleBook.addListener(this);
 
         return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction, currentUTXO)));
+    }
+
+    /**
+     * Add a listener to validation events.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(@NotNull ValidationListener listener) {
+        this.validationListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to validation events.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(@NotNull ValidationListener listener) {
+        this.validationListeners.remove(listener);
     }
 
     @Override
