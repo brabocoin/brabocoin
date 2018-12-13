@@ -88,7 +88,7 @@ public class Consensus {
     private static final @NotNull Block GENESIS_BLOCK = new Block(
         new Hash(ByteString.EMPTY),
         new Hash(ByteString.EMPTY),
-        TARGET_VALUE,
+        new Hash(ByteString.EMPTY),
         BigInteger.ZERO,
         0,
         Collections.emptyList(),
