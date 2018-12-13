@@ -860,6 +860,21 @@ public class NodeEnvironment {
         }
     }
 
+    /**
+     * Process the newly mined block and announce the block to all peers, if valid.
+     *
+     * @param block
+     *     The newly mined block.
+     * @throws DatabaseException
+     *     If the block could not be processed.
+     */
+    public synchronized void processNewlyMinedBlock(@NotNull Block block) throws DatabaseException {
+        ValidationStatus status = blockProcessor.processNewBlock(block);
+        if (status == ValidationStatus.VALID) {
+            announceBlockRequest(block);
+        }
+    }
+
 
     //================================================================================
     // Getters
