@@ -20,6 +20,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.controlsfx.control.Notifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,10 +143,10 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 .showConfirm();
 
             try {
-                nodeEnvironment.processNewlyMinedBlock(block);
+                ValidationStatus status = nodeEnvironment.processNewlyMinedBlock(block);
 
-                // Continue mining if setting is enabled
-                if (continueMining.isSelected()) {
+                // Continue mining if setting is enabled and the mined block was valid
+                if (continueMining.isSelected() && status == ValidationStatus.VALID) {
                     autoMine();
                 }
             }

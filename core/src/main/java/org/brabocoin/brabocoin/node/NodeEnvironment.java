@@ -865,14 +865,17 @@ public class NodeEnvironment {
      *
      * @param block
      *     The newly mined block.
+     * @return The validation status of the processed block.
      * @throws DatabaseException
      *     If the block could not be processed.
      */
-    public synchronized void processNewlyMinedBlock(@NotNull Block block) throws DatabaseException {
+    public synchronized ValidationStatus processNewlyMinedBlock(@NotNull Block block) throws DatabaseException {
         ValidationStatus status = blockProcessor.processNewBlock(block);
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
         }
+
+        return status;
     }
 
 
