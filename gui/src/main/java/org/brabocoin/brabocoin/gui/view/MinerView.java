@@ -1,6 +1,5 @@
 package org.brabocoin.brabocoin.gui.view;
 
-import com.google.protobuf.ByteString;
 import javafx.animation.AnimationTimer;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -21,6 +20,7 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.control.Notifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +36,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private final @NotNull Miner miner;
     private final @NotNull Blockchain blockchain;
     private final @NotNull NodeEnvironment nodeEnvironment;
+    private final @NotNull Wallet wallet;
 
     private final @NotNull TaskManager taskManager;
     private AnimationTimer timer;
@@ -49,12 +50,13 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     @FXML private TextField targetValueField;
     @FXML private TextField bestHashField;
 
-    public MinerView(@NotNull Miner miner, @NotNull Blockchain blockchain,
+    public MinerView(@NotNull Miner miner, @NotNull Blockchain blockchain, @NotNull Wallet wallet,
                      @NotNull NodeEnvironment nodeEnvironment,
                      @NotNull TaskManager taskManager) {
         super();
         this.miner = miner;
         this.blockchain = blockchain;
+        this.wallet = wallet;
         this.nodeEnvironment = nodeEnvironment;
         this.taskManager = taskManager;
 
@@ -119,7 +121,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
                 return miner.mineNewBlock(
                     blockchain.getMainChain().getTopBlock(),
-                    new Hash(ByteString.copyFromUtf8("address"))
+                    wallet.getMiningAddress()
                 );
             }
 
