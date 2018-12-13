@@ -143,13 +143,11 @@ public class DeploymentState implements State {
         Wallet wallet;
         File walletFile = Paths.get(
             config.dataDirectory(),
-            Integer.toString(config.networkId()),
             config.walletStoreDirectory(),
             config.walletFile()
         ).toFile();
         File txHistoryFile = Paths.get(
             config.dataDirectory(),
-            Integer.toString(config.networkId()),
             config.walletStoreDirectory(),
             config.transactionHistoryFile()
         ).toFile();
@@ -225,7 +223,11 @@ public class DeploymentState implements State {
     }
 
     protected KeyValueStore createWalletUTXOStorage() {
-        return new LevelDB(new File(config.walletStoreDirectory(), config.databaseDirectory()));
+        return new LevelDB(Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.databaseDirectory()
+        ).toFile());
     }
 
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
