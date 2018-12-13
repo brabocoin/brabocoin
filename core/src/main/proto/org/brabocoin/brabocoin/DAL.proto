@@ -48,3 +48,23 @@ message TransactionUndo {
 message BlockUndo {
     repeated TransactionUndo transactionUndos = 1;
 }
+
+message ConfirmedTransaction {
+    Transaction transaction = 1;
+    int32 blockHeight = 2;
+}
+
+message ConfirmedTransactionMapEntry {
+    Hash key = 1;
+    ConfirmedTransaction value = 2;
+}
+
+message TransactionMapEntry {
+    Hash key = 1;
+    Transaction value = 2;
+}
+
+message TransactionHistory {
+    repeated ConfirmedTransactionMapEntry confirmedTransactions = 1;
+    repeated TransactionMapEntry unconfirmedTransactions = 2;
+}

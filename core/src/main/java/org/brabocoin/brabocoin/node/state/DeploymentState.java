@@ -2,14 +2,21 @@ package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
+import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
+import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.dal.LevelDB;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
+import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
@@ -18,12 +25,22 @@ import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.wallet.PassphraseSupplier;
+import org.brabocoin.brabocoin.wallet.TransactionHistory;
+import org.brabocoin.brabocoin.wallet.Wallet;
+import org.brabocoin.brabocoin.wallet.WalletIO;
+import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
+import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -36,11 +53,15 @@ public class DeploymentState implements State {
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
+    protected final @NotNull Wallet wallet;
+    protected final @NotNull WalletIO walletIO;
     protected final @NotNull KeyValueStore blockStorage;
     protected final @NotNull KeyValueStore utxoStorage;
+    protected final @NotNull KeyValueStore walletUTXOStorage;
     protected final @NotNull BlockDatabase blockDatabase;
     protected final @NotNull ChainUTXODatabase chainUTXODatabase;
     protected final @NotNull UTXODatabase poolUTXODatabase;
+    protected final @NotNull UTXODatabase walletUTXODatabase;
     protected final @NotNull Blockchain blockchain;
     protected final @NotNull TransactionPool transactionPool;
     protected final @NotNull BlockProcessor blockProcessor;
@@ -53,7 +74,8 @@ public class DeploymentState implements State {
     protected final @NotNull NodeEnvironment environment;
     protected final @NotNull Node node;
 
-    public DeploymentState(@NotNull BraboConfig config) throws DatabaseException {
+    public DeploymentState(@NotNull BraboConfig config, @NotNull
+                           PassphraseSupplier passphraseSupplier) throws DatabaseException {
         this.config = config;
 
         unsecureRandom = createUnsecureRandom();
@@ -62,12 +84,16 @@ public class DeploymentState implements State {
 
         signer = createSigner();
 
+
         blockStorage = createBlockStorage();
         utxoStorage = createUtxoStorage();
+        walletUTXOStorage = createWalletUTXOStorage();
 
         blockDatabase = createBlockDatabase();
         chainUTXODatabase = createChainUTXODatabase();
         poolUTXODatabase = createPoolUTXODatabase();
+        walletUTXODatabase = createWalletUTXODatabase();
+
 
         blockchain = createBlockchain();
 
@@ -85,9 +111,85 @@ public class DeploymentState implements State {
 
         miner = createMiner();
 
+        try {
+            walletIO = createWalletIO();
+        }
+        catch (CipherException e) {
+            throw new StateInitializationException("Could not create wallet I/O object.", e);
+        }
+
+        try {
+            wallet = createWallet(passphraseSupplier);
+        }
+        catch (CipherException | DestructionException | IOException e) {
+            throw new StateInitializationException("Could not create wallet.", e);
+        }
         environment = createEnvironment();
 
         node = createNode();
+    }
+
+    private WalletIO createWalletIO() throws CipherException {
+        return new WalletIO(
+            new BouncyCastleAES()
+        );
+    }
+
+    private Wallet createWallet(PassphraseSupplier passphraseSupplier) throws CipherException, IOException, DestructionException {
+        Cipher privateKeyCipher = new BouncyCastleAES();
+        KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
+
+        Destructible<char[]> passphrase;
+        Wallet wallet;
+        File walletFile = Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.walletFile()
+        ).toFile();
+        File txHistoryFile = Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.transactionHistoryFile()
+        ).toFile();
+        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
+        if (walletFile.exists()) {
+            // Read wallet
+            passphrase = passphraseSupplier.supplyPassphrase(false);
+
+            wallet = walletIO.read(
+                walletFile,
+                txHistoryFile,
+                passphrase,
+                consensus,
+                signer,
+                keyGenerator,
+                privateKeyCipher,
+                walletUTXODatabase,
+                watchUTXOSet,
+                blockchain
+            );
+        } else {
+            // Create new wallet
+            passphrase = passphraseSupplier.supplyPassphrase(true);
+            wallet = new Wallet(
+                Collections.emptyList(),
+                new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
+                consensus,
+                signer,
+                keyGenerator,
+                privateKeyCipher,
+                walletUTXODatabase,
+                watchUTXOSet,
+                blockchain
+            );
+
+            wallet.generatePlainKeyPair();
+
+            walletIO.write(wallet, walletFile, txHistoryFile, passphrase);
+        }
+
+        passphrase.destruct();
+        return wallet;
     }
 
     protected Random createUnsecureRandom() {
@@ -120,6 +222,14 @@ public class DeploymentState implements State {
         ).toFile());
     }
 
+    protected KeyValueStore createWalletUTXOStorage() {
+        return new LevelDB(Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.databaseDirectory()
+        ).toFile());
+    }
+
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
         return new BlockDatabase(
             blockStorage,
@@ -138,6 +248,10 @@ public class DeploymentState implements State {
 
     protected UTXODatabase createPoolUTXODatabase() throws DatabaseException {
         return new UTXODatabase(new HashMapDB());
+    }
+
+    protected UTXODatabase createWalletUTXODatabase() throws DatabaseException {
+        return new UTXODatabase(walletUTXOStorage);
     }
 
     protected Blockchain createBlockchain() throws DatabaseException {
@@ -226,6 +340,12 @@ public class DeploymentState implements State {
 
     @NotNull
     @Override
+    public KeyValueStore getWalletUTXOStorage() {
+        return walletUTXOStorage;
+    }
+
+    @NotNull
+    @Override
     public BlockDatabase getBlockDatabase() {
         return blockDatabase;
     }
@@ -240,6 +360,12 @@ public class DeploymentState implements State {
     @Override
     public UTXODatabase getPoolUTXODatabase() {
         return poolUTXODatabase;
+    }
+
+    @NotNull
+    @Override
+    public UTXODatabase getWalletUTXODatabase() {
+        return walletUTXODatabase;
     }
 
     @NotNull
@@ -306,5 +432,15 @@ public class DeploymentState implements State {
     @Override
     public Node getNode() {
         return node;
+    }
+
+    @Override
+    public @NotNull Wallet getWallet() {
+        return wallet;
+    }
+
+    @Override
+    public @NotNull WalletIO getWalletIO() {
+        return walletIO;
     }
 }

@@ -63,6 +63,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public String walletStoreDirectory() {
+        return delegator.walletStoreDirectory();
+    }
+
+    @Override
     public int maxBlockFileSize() {
         return delegator.maxBlockFileSize();
     }
@@ -85,5 +90,15 @@ public class MockBraboConfig implements BraboConfig {
     @Override
     public int servicePort() {
         return delegator.servicePort();
+    }
+
+    @Override
+    public String walletFile() {
+        return delegator.walletFile();
+    }
+
+    @Override
+    public String transactionHistoryFile() {
+        return delegator.transactionHistoryFile();
     }
 }
