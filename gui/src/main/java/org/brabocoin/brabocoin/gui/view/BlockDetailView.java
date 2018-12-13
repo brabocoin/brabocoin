@@ -12,8 +12,6 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.gui.control.Chip;
-import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -39,7 +37,6 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private final @NotNull Blockchain blockchain;
 
     @FXML private Label titleLabel;
-    @FXML private Chip forkChip;
     @FXML private TextField hashField;
 
     @FXML private TextField blockHeightField;
@@ -78,12 +75,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         titleLabel.setText("Block #" + block.getBlockHeight());
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
 
-        forkChip.setText("Main chain");
-        forkChip.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
-        forkChip.getStyleClass().removeAll("red", "green");
-        forkChip.getStyleClass().add("green");
         blockHeightField.setText(String.valueOf(block.getBlockHeight()));
-
 
         nonceField.setText(block.getNonce().toString(16));
         targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), 32));
@@ -102,7 +94,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
             double sizeKiloBytes = sizeBytes / 1000.0;
             sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
         }
-        catch (DatabaseException e) {
+        catch (DatabaseException | NullPointerException e) {
             // ignore
         }
 
@@ -111,7 +103,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
             .sum();
-        outputTotalField.setText(String.valueOf(totalOutput) + " BRC");
+        outputTotalField.setText(totalOutput + " BRC");
 
         loadBlockTransactions(block);
     }

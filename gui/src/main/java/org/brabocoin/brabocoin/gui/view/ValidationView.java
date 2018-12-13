@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TreeItem;
@@ -56,7 +58,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private void addRules(TreeItem<String> node, RuleList ruleList) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
-            ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.SQUARE));
+            ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
             if (annotation instanceof ValidationRule) {
@@ -98,6 +100,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     public ValidationView(@NotNull Blockchain blockchain, @NotNull Transaction transaction, @NotNull
         Validator<Transaction> validator) {
         super();
+
         ruleTreeItemMap = new HashMap<>();
         this.transaction = transaction;
         this.validator = validator;
@@ -108,6 +111,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
                           @NotNull Validator<Block> validator) {
         super();
+
         ruleTreeItemMap = new HashMap<>();
         this.block = block;
         this.validator = validator;
@@ -126,30 +130,44 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     public void initialize(URL location, ResourceBundle resources) {
         loadRules();
 
-        // Run validator
-        if (isForBlock()) {
-            BlockValidator validator = (BlockValidator) this.validator;
-            validator.addListener(this);
-            validator.checkIncomingBlockValid(block);
-        } else {
-            // TODO: implement
-        }
+        ValidationView me = this;
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                // Run validator
+                if (isForBlock()) {
+                    BlockValidator validator = (BlockValidator) me.validator;
+                    validator.addListener(me);
+                    validator.checkIncomingBlockValid(block);
+                } else {
+                    // TODO: implement
+                }
+
+                return null;
+            }
+        };
+
+        new Thread(task).run();
     }
 
     @Override
     public void onRuleValidation(Rule rule, RuleBookResult result) {
-        TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
+        Platform.runLater(() -> {
+            TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
 
-        if (treeItem == null) {
-            // TODO: HELP!
-            return;
-        }
+            if (treeItem == null) {
+                // TODO: HELP!
+                return;
+            }
 
-        if (result.isPassed()) {
-            treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
-        }
-        else {
-            treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS));
-        }
+            if (result.isPassed()) {
+                treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+            }
+            else {
+                treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS));
+            }
+
+            ruleView.refresh();
+        });
     }
 }
