@@ -4,6 +4,7 @@ import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Objects;
@@ -15,6 +16,7 @@ import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
  * <p>
  * Reject if the spent coinbase it not mature enough.
  */
+@ValidationRule(name="Coinbase maturity check", description = "All coinbase transactions defined by this transaction's inputs have a depth larger than the coinbase maturity depth defined in consensus.")
 public class CoinbaseMaturityTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

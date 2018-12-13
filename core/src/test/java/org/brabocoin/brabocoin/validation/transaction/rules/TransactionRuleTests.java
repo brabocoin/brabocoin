@@ -495,7 +495,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -530,7 +530,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -574,7 +574,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -636,7 +636,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -670,7 +670,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -713,7 +713,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -746,7 +746,7 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-                Collections.singletonList(InputValueTxRange.class)
+                Collections.singletonList(InputValueRangeTxRule.class)
         ));
 
         FactMap facts = new FactMap();

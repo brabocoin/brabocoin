@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 
-@ValidationRule(name="Non contextual transaction validation", composite = true)
+@ValidationRule(name="Non-contextual transaction validation", composite = true)
 public class NonContextualTransactionCheckBlkRule extends BlockRule {
 
     private TransactionValidator transactionValidator;
