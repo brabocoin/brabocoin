@@ -33,7 +33,7 @@ import java.util.ResourceBundle;
 
 /**
  * Block detail view.
- *
+ * <p>
  * Side pane that shows all block contents.
  */
 public class BlockDetailView extends VBox implements BraboControl, Initializable {
@@ -42,7 +42,9 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         "yyyy-MM-dd HH:mm:ss");
 
     private final @NotNull Blockchain blockchain;
+    private boolean hasActions;
     @Nullable private BlockValidator validator;
+
 
     @FXML private Label titleLabel;
     @FXML private Button buttonValidate;
@@ -72,7 +74,13 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
         BraboControlInitializer.initialize(this);
 
-        this.block.addListener((obs, old, val) -> { if (val != null) loadBlock(val); });
+        hasActions = validator != null;
+
+        this.block.addListener((obs, old, val) -> {
+            if (val != null) {
+                loadBlock(val);
+            }
+        });
         setBlock(block);
     }
 
@@ -83,9 +91,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private void loadBlock(@NotNull Block block) {
 
         titleLabel.setText("Block #" + block.getBlockHeight());
-        if (validator == null) {
-            buttonValidate.setVisible(false);
-        }
+        buttonValidate.setVisible(hasActions);
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
 
         blockHeightField.setText(String.valueOf(block.getBlockHeight()));
@@ -93,7 +99,10 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         nonceField.setText(block.getNonce().toString(16));
         targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), 32));
         merkleRootField.setText(ByteUtil.toHexString(block.getMerkleRoot().getValue(), 32));
-        previousBlockHashField.setText(ByteUtil.toHexString(block.getPreviousBlockHash().getValue(), 32));
+        previousBlockHashField.setText(ByteUtil.toHexString(
+            block.getPreviousBlockHash().getValue(),
+            32
+        ));
 
         long timestamp = 0;
         try {
@@ -102,7 +111,8 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
             Instant instant = Instant.ofEpochSecond(timestamp);
             LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
             timestampField.setText(DATE_FORMATTER.format(time));
-            numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo().getTransactionCount()));
+            numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo()
+                .getTransactionCount()));
             int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
             double sizeKiloBytes = sizeBytes / 1000.0;
             sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
@@ -131,12 +141,13 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     public void setBlock(Block value) {
         if (value != null) {
-            validator = new Consensus().getGenesisBlock().getHash().equals(value.getHash()) ? null : validator;
+            hasActions = !new Consensus().getGenesisBlock().getHash().equals(value.getHash());
         }
         block.setValue(value);
     }
 
-    @FXML protected void validate(ActionEvent event) {
+    @FXML
+    protected void validate(ActionEvent event) {
         Dialog dialog = new ValidationWindow(
             blockchain,
             getBlock(),
