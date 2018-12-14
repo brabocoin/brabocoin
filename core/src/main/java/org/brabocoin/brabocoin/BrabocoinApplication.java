@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 /**
  * Main Brabocoin application that runs the full node.
@@ -79,7 +81,12 @@ public class BrabocoinApplication {
 
         if (arguments.getLogLevel() != null) {
             Logger rootLogger = Logger.getLogger("org.brabocoin.brabocoin");
-            rootLogger.addHandler(new ConsoleHandler());
+            rootLogger.addHandler(
+                new StreamHandler(
+                    System.out,
+                    new SimpleFormatter()
+                )
+            );
             switch (arguments.getLogLevel().toLowerCase()) {
                 case "all":
                     rootLogger.setLevel(Level.ALL);
