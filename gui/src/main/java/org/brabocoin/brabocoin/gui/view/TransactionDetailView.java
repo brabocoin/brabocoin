@@ -14,8 +14,8 @@ import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
-import org.brabocoin.brabocoin.model.Signature;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
