@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
-import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

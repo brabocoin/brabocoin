@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
-import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 

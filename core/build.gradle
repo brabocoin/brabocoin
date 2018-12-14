@@ -20,6 +20,7 @@ dependencies {
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
     compile("com.beust:jcommander:1.71")
+    compile('org.awaitility:awaitility:3.1.2')
 
     implementation('com.github.BAData:protobuf-converter:1.1.5')
 }
@@ -66,4 +67,7 @@ jar {
 
 shadowJar {
     classifier = 'headless'
+    dependencies {
+        exclude(dependency('org.bouncycastle:bcprov-jdk15on'))
+    }
 }

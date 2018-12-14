@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.util.Base58Check;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.logging.Logger;
 
 
@@ -22,12 +23,17 @@ public class PublicKey {
     /**
      * Prefix of the generated Base58check address (0x00, or 1 encoded in Base58).
      */
-    private static final ByteString ADDRESS_PREFIX = ByteString.copyFrom(new byte[] { 0x00 });
+    private static final ByteString ADDRESS_PREFIX = ByteString.copyFrom(new byte[] {0x00});
 
     /**
      * The point on the elliptic curve corresponding to the public key.
      */
     private final @NotNull ECPoint point;
+
+    /**
+     * Cached hash
+     */
+    private Hash hash;
 
     /**
      * Construct a public key from compressed form, on the provided elliptic curve.
@@ -44,6 +50,19 @@ public class PublicKey {
     public static @NotNull PublicKey fromCompressed(@NotNull ByteString compressed,
                                                     @NotNull EllipticCurve curve) throws IllegalArgumentException {
         return new PublicKey(curve.decodePoint(compressed));
+    }
+
+    /**
+     * Computes the address the public key corresponds to.
+     * <p>
+     * The address is a human-readable format that is derived from the hash of the public key.
+     *
+     * @param hash
+     *     The hash of the public key.
+     * @return The address corresponding to the public key.
+     */
+    public static @NotNull String getBase58AddressFromHash(@NotNull Hash hash) {
+        return Base58Check.encode(ADDRESS_PREFIX.concat(hash.getValue()));
     }
 
     /**
@@ -80,7 +99,11 @@ public class PublicKey {
      * @return The hash of the public key.
      */
     public @NotNull Hash getHash() {
-        return Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
+        if (hash == null) {
+            hash = Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
+        }
+
+        return hash;
     }
 
     /**
@@ -90,7 +113,24 @@ public class PublicKey {
      *
      * @return The address corresponding to the public key.
      */
-    public @NotNull String getAddress() {
-        return Base58Check.encode(ADDRESS_PREFIX.concat(getHash().getValue()));
+    public @NotNull String getBase58Address() {
+        return getBase58AddressFromHash(getHash());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PublicKey publicKey = (PublicKey)o;
+        return Objects.equals(point, publicKey.point);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(point);
     }
 }

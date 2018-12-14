@@ -2,12 +2,13 @@ package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
 import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.DSA;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.math.ec.ECPoint;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Signature;
+import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +33,6 @@ public class Signer {
     private final @NotNull EllipticCurve curve;
 
     /**
-     * Actual signer implementation.
-     */
-    private final @NotNull ECDSASigner signer;
-
-    /**
      * Create a new signing using the given elliptic curve.
      *
      * @param curve
@@ -44,7 +40,6 @@ public class Signer {
      */
     public Signer(@NotNull EllipticCurve curve) {
         this.curve = curve;
-        this.signer = new ECDSASigner();
     }
 
     /**
@@ -75,6 +70,7 @@ public class Signer {
         CipherParameters parameters = new ECPrivateKeyParameters(privateKey, curve.getDomain());
 
         LOGGER.fine("Initializing crypto library signer.");
+        DSA signer = new ECDSASigner();
         signer.init(true, parameters);
 
         LOGGER.fine("Generating crypto library signature.");
@@ -126,6 +122,7 @@ public class Signer {
         CipherParameters parameters = new ECPublicKeyParameters(publicKeyPoint, curve.getDomain());
 
         LOGGER.fine("Initializing crypto library signer.");
+        DSA signer = new ECDSASigner();
         signer.init(false, parameters);
 
         LOGGER.fine("Verifying crypto library signature.");

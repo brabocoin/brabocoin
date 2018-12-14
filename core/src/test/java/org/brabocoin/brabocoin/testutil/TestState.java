@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -18,7 +19,7 @@ import java.util.HashSet;
 public class TestState extends DeploymentState {
 
     public TestState(@NotNull BraboConfig config) throws DatabaseException {
-        super(config);
+        super(config, (c) -> new Destructible<>("testpassphrase"::toCharArray));
     }
 
     @Override
@@ -28,6 +29,11 @@ public class TestState extends DeploymentState {
 
     @Override
     protected KeyValueStore createUtxoStorage() {
+        return new HashMapDB();
+    }
+
+    @Override
+    protected KeyValueStore createWalletUTXOStorage() {
         return new HashMapDB();
     }
 

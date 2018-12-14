@@ -61,4 +61,20 @@ public interface ReadonlyUTXOSet {
     @Nullable UnspentOutputInfo findUnspentOutputInfo(@NotNull Hash transactionHash,
                                                       int outputIndex) throws DatabaseException;
 
+    /**
+     * Add a UTXO set listener.
+     *
+     * @param listener
+     *     The listener to add.
+     */
+    void addListener(@NotNull UTXOSetListener listener);
+
+    /**
+     * Remove a UTXO set listener.
+     *
+     * @param listener
+     *     The listener to remove.
+     */
+    void removeListener(@NotNull UTXOSetListener listener);
+
 }

@@ -24,6 +24,8 @@ public interface BraboConfig {
 
     String utxoStoreDirectory();
 
+    String walletStoreDirectory();
+
     /**
      * Maximum file size of the block storage files in bytes.
      *
@@ -58,4 +60,18 @@ public interface BraboConfig {
      * @return The port number.
      */
     int servicePort();
+
+    /**
+     * File in which the wallet is stored.
+     *
+     * @return The wallet file path.
+     */
+    String walletFile();
+
+    /**
+     * File in which the wallet transaction history is stored.
+     *
+     * @return The transaction history file path.
+     */
+    String transactionHistoryFile();
 }
