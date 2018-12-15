@@ -162,8 +162,8 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public synchronized ValidationStatus processNewBlock(
-        @NotNull Block block) throws DatabaseException {
+    public synchronized ValidationStatus processNewBlock(@NotNull Block block)
+        throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
@@ -195,6 +195,9 @@ public class BlockProcessor {
         updateMainChain(topCandidates);
 
         LOGGER.info("New block is added to the blockchain.");
+
+        listeners.forEach(l -> l.onValidBlockProcessed(block));
+
         return ValidationStatus.VALID;
     }
 

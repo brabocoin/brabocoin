@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
@@ -18,6 +19,7 @@ import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.processor.BlockProcessorListener;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.wallet.Wallet;
@@ -31,7 +33,7 @@ import java.util.ResourceBundle;
 /**
  * Miner view.
  */
-public class MinerView extends BorderPane implements BraboControl, Initializable {
+public class MinerView extends BorderPane implements BraboControl, Initializable, BlockProcessorListener {
 
     private final @NotNull Miner miner;
     private final @NotNull Blockchain blockchain;
@@ -42,6 +44,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private AnimationTimer timer;
 
     private @Nullable Task<Block> miningTask;
+    private @Nullable IndexedBlock parentBlock;
 
     @FXML private CheckBox continueMining;
 
@@ -119,8 +122,10 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             protected Block call() {
                 updateTitle("Mining new block...");
 
+                parentBlock = blockchain.getMainChain().getTopBlock();
+
                 return miner.mineNewBlock(
-                    blockchain.getMainChain().getTopBlock(),
+                    parentBlock,
                     wallet.getMiningAddress()
                 );
             }
@@ -177,6 +182,20 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private void stop() {
         if (miningTask != null) {
             miningTask.cancel();
+        }
+    }
+
+    @Override
+    public void onValidBlockProcessed(@NotNull Block block) {
+        if (miningTask == null || parentBlock == null || !miningTask.isRunning() || !continueMining.isSelected()) {
+            return;
+        }
+
+        // When auto-mining, check if the current top block is changed and restart mining if so
+        // TODO: when other options as auto-mining are added, check which task is actually running.
+        if (!blockchain.getMainChain().getTopBlock().getHash().equals(parentBlock.getHash())) {
+            stop();
+            autoMine();
         }
     }
 }
