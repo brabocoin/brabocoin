@@ -19,7 +19,7 @@ import java.util.HashSet;
 public class TestState extends DeploymentState {
 
     public TestState(@NotNull BraboConfig config) throws DatabaseException {
-        super(config, (c) -> new Destructible<>("testpassphrase"::toCharArray));
+        super(config, (creation, creator) -> creator.apply(new Destructible<>("testpassphrase"::toCharArray)));
     }
 
     @Override
