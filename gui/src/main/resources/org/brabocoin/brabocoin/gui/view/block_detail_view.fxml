@@ -10,7 +10,6 @@
 <?import org.brabocoin.brabocoin.gui.control.Chip?>
 <?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <fx:root type="javafx.scene.layout.VBox"
-         xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.BlockDetailView">
     <fx:define>
