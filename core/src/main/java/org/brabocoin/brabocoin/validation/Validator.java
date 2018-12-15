@@ -4,10 +4,24 @@ import org.brabocoin.brabocoin.validation.rule.RuleBookPipe;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+
 public interface Validator<T> extends ValidationListener {
+    ReentrantLock lock = new ReentrantLock();
+    List<RuleBookPipe> ruleBookPipes = new ArrayList<>();
     ValidationResult run(@NotNull T t, @NotNull RuleList ruleList);
 
-    void addRuleBookPipe(RuleBookPipe pipe);
+    default void addRuleBookPipe(RuleBookPipe pipe) {
+        ruleBookPipes.add(pipe);
+    }
 
-    void removeRuleBookPIpe(RuleBookPipe pipe);
+    default void removeRuleBookPipe(RuleBookPipe pipe) {
+        ruleBookPipes.remove(pipe);
+    }
+
+    default ReentrantLock getLock() {
+        return lock;
+    }
 }

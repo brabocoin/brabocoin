@@ -122,6 +122,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         }
 
 
+
         long totalOutput = block.getTransactions().stream()
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
@@ -141,7 +142,8 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     public void setBlock(Block value) {
         if (value != null) {
-            hasActions = !new Consensus().getGenesisBlock().getHash().equals(value.getHash());
+            hasActions = !new Consensus().getGenesisBlock().getHash().equals(value.getHash())
+                && validator != null;
         }
         block.setValue(value);
     }

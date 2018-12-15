@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
                                                                 ValidationListener, RuleBookPipe {
@@ -63,23 +64,22 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         RuleList ruleList;
         if (isForBlock()) {
             ruleList = BlockValidator.INCOMING_BLOCK;
-        } else {
+        }
+        else {
             ruleList = TransactionValidator.ALL;
         }
         addRules(root, ruleList);
         ruleView.setRoot(root);
     }
 
+    private boolean isSkippedRuleClass(Class rule) {
+        return (isForBlock() && skippedBlockRules.getRules().contains(rule)) ||
+            (!isForBlock() && skippedTransactionRules.getRules().contains(rule));
+    }
+
     private void addRules(TreeItem<String> node, RuleList ruleList) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
-
-            if ((isForBlock() && skippedBlockRules.getRules().contains(rule)) ||
-                (!isForBlock() && skippedTransactionRules.getRules().contains(rule))
-            ) {
-                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
-                continue;
-            }
             ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
@@ -87,7 +87,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ValidationRule validationRule = (ValidationRule)annotation;
                 ruleTreeItem.setValue(validationRule.name());
 
-                if (validationRule.composite()) {
+                if (isSkippedRuleClass(rule)) {
+                    ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+                }
+                else if (validationRule.composite()) {
                     RuleList composite = null;
                     for (Field field : rule.getDeclaredFields()) {
                         field.setAccessible(true);
@@ -109,6 +112,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                     addRules(ruleTreeItem, composite);
                     ruleTreeItem.setExpanded(true);
                 }
+
             }
             else {
                 ruleTreeItem.setValue("[Could not determine annotation type]");
@@ -157,28 +161,24 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
         ValidationView me = this;
 
-        Task task = new Task<Void>() {
-            @Override
-            public Void call() {
-                // Run validator
-                if (isForBlock()) {
-                    BlockValidator validator = (BlockValidator)me.validator;
-                    validator.addListener(me);
-                    validator.addRuleBookPipe(me);
-                    validator.checkIncomingBlockValid(block);
-                }
-                else {
-                    TransactionValidator validator = (TransactionValidator)me.validator;
-                    validator.addListener(me);
-                    validator.addRuleBookPipe(me);
-                    validator.checkTransactionValid(transaction);
-                }
+        validator.getLock().lock();
 
-                return null;
+        validator.addListener(this);
+        validator.addRuleBookPipe(this);
+
+        Platform.runLater(() -> {
+            // Run validator
+            if (isForBlock()) {
+                BlockValidator validator = (BlockValidator)me.validator;
+                validator.checkIncomingBlockValid(block);
             }
-        };
-
-        new Thread(task).run();
+            else {
+                TransactionValidator validator = (TransactionValidator)me.validator;
+                validator.checkTransactionValid(transaction);
+            }
+            validator.removeRuleBookPipe(this);
+            validator.removeListener(this);
+        });
     }
 
     @Override
@@ -188,6 +188,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
             if (treeItem == null) {
                 // TODO: HELP!
+                return;
+            }
+
+            if (isSkippedRuleClass(rule.getClass())) {
                 return;
             }
 

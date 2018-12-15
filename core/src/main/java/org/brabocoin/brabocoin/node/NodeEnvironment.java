@@ -205,6 +205,10 @@ public class NodeEnvironment {
      *     The port of the Client
      */
     public synchronized void addClientPeer(InetAddress address, int port) {
+        if (getPeers().stream().anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
+            return;
+        }
+
         Peer clientPeer;
         try {
             clientPeer = new Peer(address, port);

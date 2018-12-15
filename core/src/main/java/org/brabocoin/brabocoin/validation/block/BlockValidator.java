@@ -8,7 +8,6 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.CorrectTargetValueBlkRule;
@@ -33,24 +32,18 @@ import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
-import org.brabocoin.brabocoin.validation.rule.RuleBookPipe;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * Validates blocks.
  */
 public class BlockValidator implements Validator<Block> {
-
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
-    private final List<ValidationListener> validationListeners;
-    private final List<RuleBookPipe> ruleBookPipes;
 
     public static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
@@ -101,8 +94,6 @@ public class BlockValidator implements Validator<Block> {
         this.utxoSet = state.getChainUTXODatabase();
         this.signer = state.getSigner();
         this.config = state.getConfig();
-        validationListeners = new ArrayList<>();
-        ruleBookPipes = new ArrayList<>();
     }
 
     private FactMap createFactMap(@NotNull Block block) {
@@ -118,24 +109,6 @@ public class BlockValidator implements Validator<Block> {
         facts.put("config", config);
 
         return facts;
-    }
-
-    /**
-     * Add a listener to validation events.
-     *
-     * @param listener The listener to add.
-     */
-    public void addListener(@NotNull ValidationListener listener) {
-        this.validationListeners.add(listener);
-    }
-
-    /**
-     * Remove a listener to validation events.
-     *
-     * @param listener The listener to remove.
-     */
-    public void removeListener(@NotNull ValidationListener listener) {
-        this.validationListeners.remove(listener);
     }
 
     public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
@@ -157,6 +130,7 @@ public class BlockValidator implements Validator<Block> {
 
     @Override
     public BlockValidationResult run(@NotNull Block block, @NotNull RuleList ruleList) {
+        lock.lock();
         if (block.getHash() == consensus.getGenesisBlock().getHash()) {
             return BlockValidationResult.passed();
         }
@@ -166,16 +140,8 @@ public class BlockValidator implements Validator<Block> {
         ruleBook.addListener(this);
         ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
-        return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
-    }
-
-    @Override
-    public void addRuleBookPipe(RuleBookPipe pipe) {
-        ruleBookPipes.add(pipe);
-    }
-
-    @Override
-    public void removeRuleBookPIpe(RuleBookPipe pipe) {
-        ruleBookPipes.remove(pipe);
+        BlockValidationResult result = BlockValidationResult.from(ruleBook.run(createFactMap(block)));
+        lock.unlock();
+        return result;
     }
 }

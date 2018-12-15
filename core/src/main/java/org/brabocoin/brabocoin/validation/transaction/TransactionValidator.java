@@ -9,7 +9,6 @@ import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
@@ -31,17 +30,12 @@ import org.brabocoin.brabocoin.validation.transaction.rules.SufficientInputTxRul
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * Validation rules for transactions.
  */
 public class TransactionValidator implements Validator<Transaction> {
-
-
-    private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
     public static final RuleList ALL = new RuleList(
@@ -111,7 +105,6 @@ public class TransactionValidator implements Validator<Transaction> {
         this.poolUTXODatabase = state.getPoolUTXODatabase();
         this.signer = state.getSigner();
         this.compositeUTXO = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
-        validationListeners = new ArrayList<>();
     }
 
     private FactMap createFactMap(@NotNull Transaction transaction, ReadonlyUTXOSet utxoSet) {
@@ -209,24 +202,6 @@ public class TransactionValidator implements Validator<Transaction> {
         ruleBook.addListener(this);
 
         return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction, currentUTXO)));
-    }
-
-    /**
-     * Add a listener to validation events.
-     *
-     * @param listener The listener to add.
-     */
-    public void addListener(@NotNull ValidationListener listener) {
-        this.validationListeners.add(listener);
-    }
-
-    /**
-     * Remove a listener to validation events.
-     *
-     * @param listener The listener to remove.
-     */
-    public void removeListener(@NotNull ValidationListener listener) {
-        this.validationListeners.remove(listener);
     }
 
     @Override
