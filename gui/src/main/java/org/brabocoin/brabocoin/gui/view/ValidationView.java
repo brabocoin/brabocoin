@@ -17,7 +17,10 @@ import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
 import org.brabocoin.brabocoin.validation.rule.Rule;
+import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleBookPipe;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -27,12 +30,13 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
 public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
-                                                                ValidationListener {
+                                                                ValidationListener, RuleBookPipe {
 
     private final Map<Class, TreeItem<String>> ruleTreeItemMap;
     private final Validator validator;
@@ -41,6 +45,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private Transaction transaction;
     private Block block;
 
+    private static final RuleList skippedBlockRules = new RuleList(
+        DuplicateStorageBlkRule.class
+    );
+
+    private static final RuleList skippedTransactionRules = new RuleList(
+        Collections.emptyList()
+    );
 
     @FXML
     public TreeView<String> ruleView;
@@ -62,6 +73,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private void addRules(TreeItem<String> node, RuleList ruleList) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
+
+            if ((isForBlock() && skippedBlockRules.getRules().contains(rule)) ||
+                (!isForBlock() && skippedTransactionRules.getRules().contains(rule))
+            ) {
+                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+                continue;
+            }
             ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
@@ -146,11 +164,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 if (isForBlock()) {
                     BlockValidator validator = (BlockValidator)me.validator;
                     validator.addListener(me);
+                    validator.addRuleBookPipe(me);
                     validator.checkIncomingBlockValid(block);
                 }
                 else {
                     TransactionValidator validator = (TransactionValidator)me.validator;
                     validator.addListener(me);
+                    validator.addRuleBookPipe(me);
                     validator.checkTransactionValid(transaction);
                 }
 
@@ -180,5 +200,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
             ruleView.refresh();
         });
+    }
+
+    @Override
+    public void apply(RuleBook rulebook) {
+        rulebook.setFailEarly(false);
     }
 }

@@ -24,6 +24,7 @@ public class RuleBook {
     private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
     private final RuleList ruleList;
+    private boolean failEarly = true;
 
     public RuleBook(RuleList ruleList) {
         this.ruleList = ruleList;
@@ -31,9 +32,21 @@ public class RuleBook {
     }
 
     /**
+     * Sets the fail early property.
+     * This stops the rule list validation after one fail.
+     *
+     * @param failEarly
+     *     True for fail early.
+     */
+    public void setFailEarly(boolean failEarly) {
+        this.failEarly = failEarly;
+    }
+
+    /**
      * Add a listener to validation events.
      *
-     * @param listener The listener to add.
+     * @param listener
+     *     The listener to add.
      */
     public void addListener(@NotNull ValidationListener listener) {
         this.validationListeners.add(listener);
@@ -42,7 +55,8 @@ public class RuleBook {
     /**
      * Remove a listener to validation events.
      *
-     * @param listener The listener to remove.
+     * @param listener
+     *     The listener to remove.
      */
     public void removeListener(@NotNull ValidationListener listener) {
         this.validationListeners.remove(listener);
@@ -68,12 +82,14 @@ public class RuleBook {
                 validationListeners.forEach(l -> l.onRuleValidation(
                     rule, result
                 ));
-                return result;
+                if (failEarly) {
+                    return result;
+                }
+            } else {
+                validationListeners.forEach(l -> l.onRuleValidation(
+                    rule, RuleBookResult.passed()
+                ));
             }
-
-            validationListeners.forEach(l -> l.onRuleValidation(
-                rule, RuleBookResult.passed()
-            ));
         }
 
         return RuleBookResult.passed();

@@ -33,6 +33,7 @@ import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleBookPipe;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -49,6 +50,7 @@ public class BlockValidator implements Validator<Block> {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
     private final List<ValidationListener> validationListeners;
+    private final List<RuleBookPipe> ruleBookPipes;
 
     public static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
@@ -100,6 +102,7 @@ public class BlockValidator implements Validator<Block> {
         this.signer = state.getSigner();
         this.config = state.getConfig();
         validationListeners = new ArrayList<>();
+        ruleBookPipes = new ArrayList<>();
     }
 
     private FactMap createFactMap(@NotNull Block block) {
@@ -161,7 +164,18 @@ public class BlockValidator implements Validator<Block> {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
+        ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
         return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
+    }
+
+    @Override
+    public void addRuleBookPipe(RuleBookPipe pipe) {
+        ruleBookPipes.add(pipe);
+    }
+
+    @Override
+    public void removeRuleBookPIpe(RuleBookPipe pipe) {
+        ruleBookPipes.remove(pipe);
     }
 }
