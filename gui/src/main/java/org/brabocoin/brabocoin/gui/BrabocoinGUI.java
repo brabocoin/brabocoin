@@ -64,68 +64,6 @@ public class BrabocoinGUI extends Application {
                 Platform.exit();
             }
         });
-
-        /**
-         * TODO: Remove me!
-         */
-//        Block block = new Block(
-//            new Hash(ByteString.copyFromUtf8("prev")),
-//            new Hash(ByteString.copyFromUtf8("merkle")),
-//            new Hash(ByteString.copyFromUtf8("target")),
-//            BigInteger.valueOf(1234),
-//            10,
-//            Collections.emptyList(),
-//            1
-//        );
-//        Dialog dialog = new ValidationWindow(application.getState().getBlockchain(), block,
-//            application.getState().getBlockValidator());
-//        dialog.showAndWait();
-//        Transaction transaction = new Transaction(
-//            Arrays.asList(
-//                new Input(
-//                    new Hash(ByteString.copyFromUtf8("we;oirjewri")), 5
-//                ),
-//                new Input(
-//                    new Hash(ByteString.copyFromUtf8("sd;lfkhdsalfj")), 4
-//                ),
-//                new Input(
-//                    new Hash(ByteString.copyFromUtf8("afdasfafd")), 6
-//                ),
-//                new Input(
-//                    new Hash(ByteString.copyFromUtf8("avlnawluiv")), 12
-//                )
-//            ),
-//            Arrays.asList(
-//                new Output(
-//                    new Hash(ByteString.copyFromUtf8("sfsdsfd")), 12
-//                ),
-//                new Output(
-//                    new Hash(ByteString.copyFromUtf8("fsdfsdf")), 444
-//                ),
-//                new Output(
-//                    new Hash(ByteString.copyFromUtf8("sdafds")), 11
-//                ),
-//                new Output(
-//                    new Hash(ByteString.copyFromUtf8("asfdsaf")), 12
-//                )
-//            ),
-//            Arrays.asList(
-//                new Signature(
-//                    BigInteger.valueOf(12345),
-//                    BigInteger.valueOf(54321),
-//                    new PublicKey(
-//                        new Consensus().getCurve().getDomain().getG().multiply(BigInteger.valueOf(833838))
-//                    )
-//                )
-//            )
-//        );
-//
-//        Dialog dialog = new ValidationWindow(
-//            transaction,
-//            application.getState().getTransactionValidator()
-//        );
-//
-//        dialog.showAndWait();
     }
 
     public static void main(String[] args) {

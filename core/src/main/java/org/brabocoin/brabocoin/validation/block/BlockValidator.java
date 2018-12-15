@@ -130,7 +130,6 @@ public class BlockValidator implements Validator<Block> {
 
     @Override
     public BlockValidationResult run(@NotNull Block block, @NotNull RuleList ruleList) {
-        lock.lock();
         if (block.getHash() == consensus.getGenesisBlock().getHash()) {
             return BlockValidationResult.passed();
         }
@@ -140,8 +139,6 @@ public class BlockValidator implements Validator<Block> {
         ruleBook.addListener(this);
         ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
-        BlockValidationResult result = BlockValidationResult.from(ruleBook.run(createFactMap(block)));
-        lock.unlock();
-        return result;
+        return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
     }
 }

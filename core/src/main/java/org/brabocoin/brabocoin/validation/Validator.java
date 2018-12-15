@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public interface Validator<T> extends ValidationListener {
-    ReentrantLock lock = new ReentrantLock();
     List<RuleBookPipe> ruleBookPipes = new ArrayList<>();
     ValidationResult run(@NotNull T t, @NotNull RuleList ruleList);
 
@@ -19,9 +18,5 @@ public interface Validator<T> extends ValidationListener {
 
     default void removeRuleBookPipe(RuleBookPipe pipe) {
         ruleBookPipes.remove(pipe);
-    }
-
-    default ReentrantLock getLock() {
-        return lock;
     }
 }

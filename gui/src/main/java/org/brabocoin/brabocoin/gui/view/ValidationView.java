@@ -160,24 +160,22 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         loadRules();
 
         ValidationView me = this;
-
-        validator.getLock().lock();
-
-        validator.addListener(this);
-        validator.addRuleBookPipe(this);
-
         Platform.runLater(() -> {
-            // Run validator
-            if (isForBlock()) {
-                BlockValidator validator = (BlockValidator)me.validator;
-                validator.checkIncomingBlockValid(block);
+            synchronized (validator) {
+                validator.addListener(this);
+                validator.addRuleBookPipe(this);
+                // Run validator
+                if (isForBlock()) {
+                    BlockValidator validator = (BlockValidator)me.validator;
+                    validator.checkIncomingBlockValid(block);
+                }
+                else {
+                    TransactionValidator validator = (TransactionValidator)me.validator;
+                    validator.checkTransactionValid(transaction);
+                }
+                validator.removeRuleBookPipe(this);
+                validator.removeListener(this);
             }
-            else {
-                TransactionValidator validator = (TransactionValidator)me.validator;
-                validator.checkTransactionValid(transaction);
-            }
-            validator.removeRuleBookPipe(this);
-            validator.removeListener(this);
         });
     }
 
