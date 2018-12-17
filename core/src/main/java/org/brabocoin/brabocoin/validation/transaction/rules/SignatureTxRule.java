@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.Signature;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 import java.util.Objects;
@@ -15,6 +16,7 @@ import java.util.stream.IntStream;
  * <p>
  * All signatures of the input must be valid.
  */
+@ValidationRule(name="Valid signatures", description = "All signatures of the transaction are valid.")
 public class SignatureTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

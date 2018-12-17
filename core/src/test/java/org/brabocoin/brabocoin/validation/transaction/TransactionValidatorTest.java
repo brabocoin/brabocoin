@@ -50,7 +50,7 @@ class TransactionValidatorTest {
                 Collections.emptyList()
         );
 
-        RuleBookResult result = state.getTransactionValidator().checkTransactionValid(transaction);
+        RuleBookResult result = state.getTransactionValidator().validate(transaction, TransactionValidator.ALL, true);
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
@@ -72,7 +72,7 @@ class TransactionValidatorTest {
             )
         );
 
-        RuleBookResult result = state.getTransactionValidator().checkTransactionValid(transaction);
+        RuleBookResult result = state.getTransactionValidator().validate(transaction, TransactionValidator.ALL, true);
 
         assertFalse(result.isPassed());
         assertEquals(ValidInputUTXOTxRule.class, result.getFailMarker().getFailedRule());

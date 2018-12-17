@@ -3,12 +3,10 @@ package org.brabocoin.brabocoin.model.crypto;
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.crypto.PublicKey;
-import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.model.proto.Secp256k1PublicKeyByteStringConverter;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a public and private key pair

@@ -10,6 +10,8 @@ import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
+import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
+import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -51,7 +53,6 @@ import java.util.stream.Collectors;
  * Represents a node environment.
  */
 public class NodeEnvironment {
-
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
     /*
@@ -70,10 +71,12 @@ public class NodeEnvironment {
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
     private Queue<Runnable> messageQueue;
+    private final List<BlockReceivedListener> blockListeners;
+    private final List<TransactionReceivedListener> transactionListeners;
+
     /*
      * Processors
      */
-
     private BlockProcessor blockProcessor;
     private PeerProcessor peerProcessor;
     private TransactionProcessor transactionProcessor;
@@ -95,6 +98,8 @@ public class NodeEnvironment {
         this.transactionPool = state.getTransactionPool();
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
+        blockListeners = new ArrayList<>();
+        transactionListeners = new ArrayList<>();
     }
 
     /**
@@ -205,6 +210,10 @@ public class NodeEnvironment {
      *     The port of the Client
      */
     public synchronized void addClientPeer(InetAddress address, int port) {
+        if (getPeers().stream().anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
+            return;
+        }
+
         Peer clientPeer;
         try {
             clientPeer = new Peer(address, port);
@@ -259,6 +268,10 @@ public class NodeEnvironment {
      *     Whether or not to propagate the message to peers.
      */
     private void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
+        if (propagate) {
+            blockListeners.forEach(l -> l.receivedBlock(block));
+        }
+
         try {
             LOGGER.info("Received new block from peer.");
             ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
@@ -1042,4 +1055,19 @@ public class NodeEnvironment {
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 
+    public void addBlockListener(BlockReceivedListener blockReceivedListener) {
+        this.blockListeners.add(blockReceivedListener);
+    }
+
+    public void removeBlockListener(BlockReceivedListener blockReceivedListener) {
+        this.blockListeners.remove(blockReceivedListener);
+    }
+
+    public void addTransactionListener(TransactionReceivedListener transactionReceivedListener) {
+        this.transactionListeners.add(transactionReceivedListener);
+    }
+
+    public void removeTransactionListener(TransactionReceivedListener transactionReceivedListener) {
+        this.transactionListeners.remove(transactionReceivedListener);
+    }
 }

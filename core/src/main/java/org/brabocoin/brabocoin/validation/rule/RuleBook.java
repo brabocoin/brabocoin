@@ -1,8 +1,12 @@
 package org.brabocoin.brabocoin.validation.rule;
 
+import org.brabocoin.brabocoin.validation.ValidationListener;
+import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
+import org.brabocoin.brabocoin.validation.annotation.IgnoredFact;
 import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.fact.UninitializedFact;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -17,15 +21,38 @@ import java.util.stream.Collectors;
 
 public class RuleBook {
 
+    private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
-
     private final RuleList ruleList;
+    private FactMap facts;
 
     public RuleBook(RuleList ruleList) {
         this.ruleList = ruleList;
+        validationListeners = new ArrayList<>();
+    }
+
+    /**
+     * Add a listener to validation events.
+     *
+     * @param listener
+     *     The listener to add.
+     */
+    public void addListener(@NotNull ValidationListener listener) {
+        this.validationListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener to validation events.
+     *
+     * @param listener
+     *     The listener to remove.
+     */
+    public void removeListener(@NotNull ValidationListener listener) {
+        this.validationListeners.remove(listener);
     }
 
     public RuleBookResult run(FactMap facts) {
+        this.facts = facts;
         for (Rule rule : getInstantiatedRules(facts)) {
             boolean passedRule = true;
 
@@ -41,7 +68,15 @@ public class RuleBook {
 
             if (!passedRule) {
                 RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass(), getChild(rule));
-                return RuleBookResult.failed(marker);
+                RuleBookResult result = RuleBookResult.failed(marker);
+                validationListeners.forEach(l -> l.onRuleValidation(
+                    rule, result, this
+                ));
+                return result;
+            } else {
+                validationListeners.forEach(l -> l.onRuleValidation(
+                    rule, RuleBookResult.passed(), this
+                ));
             }
         }
 
@@ -68,8 +103,22 @@ public class RuleBook {
                 field.setAccessible(true);
                 boolean hasChildRuleFailMarkerFlag =
                     field.getAnnotation(CompositeRuleFailMarker.class) != null;
-                if (hasChildRuleFailMarkerFlag) {
+                boolean isIgnored =
+                    field.getAnnotation(IgnoredFact.class) != null;
+                if (hasChildRuleFailMarkerFlag || isIgnored) {
                     continue;
+                }
+
+                boolean isCompositeRuleList =
+                    field.getAnnotation(CompositeRuleList.class) != null;
+                if (isCompositeRuleList) {
+                    Object o = field.get(rule);
+                    if (o instanceof RuleList) {
+                        continue;
+                    }
+
+                    throw new IllegalStateException(
+                        "CompositeRuleList flag found on a non RuleList object.");
                 }
 
                 Object fieldValue = facts.entrySet().stream()
@@ -143,5 +192,9 @@ public class RuleBook {
         }
 
         return failMarker;
+    }
+
+    public FactMap getFacts() {
+        return facts;
     }
 }

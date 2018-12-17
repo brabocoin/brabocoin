@@ -12,6 +12,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.NotificationManager;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
@@ -75,7 +76,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
         // Initialize menu view mapping
-        currentStateView = new CurrentStateView(state.getBlockchain());
+        currentStateView = new CurrentStateView(state.getBlockchain(), state.getBlockValidator());
         minerView = new MinerView(
             state.getMiner(),
             state.getBlockchain(),
@@ -94,5 +95,10 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
         // Set initial view
         viewContainer.setCenter(currentStateView);
+
+        // Create notification manager
+        NotificationManager manager = new NotificationManager(state);
+        state.getEnvironment().addBlockListener(manager);
+        state.getEnvironment().addTransactionListener(manager);
     }
 }

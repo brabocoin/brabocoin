@@ -11,12 +11,14 @@ import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.chain.IndexedChain;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +44,13 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private TableColumn<IndexedBlock, Double> sizeColumn;
 
     private final @NotNull Blockchain blockchain;
+    private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
-    public CurrentStateView(@NotNull Blockchain blockchain) {
+    public CurrentStateView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
         super();
         this.blockchain = blockchain;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
     }
@@ -55,7 +59,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        blockDetailView = new BlockDetailView(blockchain);
+        blockDetailView = new BlockDetailView(blockchain, null, validator);
         masterDetailPane.setDetailNode(blockDetailView);
 
         loadMainChain();
@@ -91,7 +95,15 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
 
         blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
-            blockDetailView.setBlock(indexedBlock);
+            if (indexedBlock == null) {
+                return;
+            }
+            try {
+                blockDetailView.setBlock(blockchain.getBlock(indexedBlock));
+            }
+            catch (DatabaseException e) {
+                // ignore
+            }
             masterDetailPane.setShowDetailNode(true);
         });
     }

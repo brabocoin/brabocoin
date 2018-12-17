@@ -5,7 +5,6 @@ import com.google.common.collect.Sets;
 import javafx.application.Platform;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
-import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.config.BraboConfigProvider;

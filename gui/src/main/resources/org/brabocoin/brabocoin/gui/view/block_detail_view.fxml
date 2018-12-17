@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.Double?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.HBox?>
-<?import org.brabocoin.brabocoin.gui.control.Chip?>
-<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -21,7 +20,7 @@
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Label fx:id="titleLabel" styleClass="side-pane-title"/>
-            <Chip fx:id="forkChip"/>
+            <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>

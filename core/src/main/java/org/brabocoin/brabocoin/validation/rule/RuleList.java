@@ -1,11 +1,13 @@
 package org.brabocoin.brabocoin.validation.rule;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-public class RuleList {
+public class RuleList implements Iterable<Class<? extends Rule>> {
 
     private final List<Class<? extends Rule>> rules;
 
@@ -17,7 +19,24 @@ public class RuleList {
         this.rules = Arrays.asList(rules);
     }
 
+    public RuleList(RuleList... ruleLists) {
+        rules = new ArrayList<>();
+        for (RuleList list : ruleLists) {
+            rules.addAll(list.getRules());
+        }
+    }
+
     public List<Class<? extends Rule>> getRules() {
-        return Collections.unmodifiableList(rules);
+        return new ArrayList<>(rules);
+    }
+
+    public Class[] toArray() {
+        return rules.toArray(new Class[rules.size()]);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Class<? extends Rule>> iterator() {
+        return rules.iterator();
     }
 }
