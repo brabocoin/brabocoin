@@ -80,7 +80,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         else {
             ruleList = transactionRules;
         }
-        addRules(root, ruleList);
+        addRules(root, ruleList, false);
         ruleView.setRoot(root);
     }
 
@@ -89,10 +89,14 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             (!isForBlock() && skippedTransactionRules.getRules().contains(rule));
     }
 
-    private void addRules(TreeItem<String> node, RuleList ruleList) {
+    private void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
-            ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+            if (ignored) {
+                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+            } else {
+                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+            }
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
             if (annotation instanceof ValidationRule) {
@@ -131,15 +135,17 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                             txItem.setValue("Coinbase");
                             txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
                             txItem.setExpanded(false);
+                            addRules(txItem, composite, true);
                         }
                         else {
                             txItem.setValue("Transaction " + i);
                             txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
                             txItem.setExpanded(true);
+
+                            addRules(txItem, composite, false);
                         }
 
                         ruleTreeItem.getChildren().add(txItem);
-                        addRules(txItem, composite);
                     }
 
                     ruleTreeItem.setExpanded(true);
