@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TreeItem;
@@ -34,7 +33,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
                                                                 ValidationListener, RuleBookPipe {
@@ -112,7 +110,6 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                     addRules(ruleTreeItem, composite);
                     ruleTreeItem.setExpanded(true);
                 }
-
             }
             else {
                 ruleTreeItem.setValue("[Could not determine annotation type]");
@@ -181,31 +178,33 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     @Override
     public void onRuleValidation(Rule rule, RuleBookResult result) {
-        Platform.runLater(() -> {
-            TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
+        TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
 
-            if (treeItem == null) {
-                // TODO: HELP!
-                return;
-            }
+        if (treeItem == null) {
+            // TODO: HELP!
+            return;
+        }
 
-            if (isSkippedRuleClass(rule.getClass())) {
-                return;
-            }
+        if (isSkippedRuleClass(rule.getClass())) {
+            return;
+        }
 
-            if (result.isPassed()) {
-                treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
-            }
-            else {
-                treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS));
-            }
+        if (result.isPassed()) {
+            Platform.runLater(() -> treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK)));
+        }
+        else {
+            ruleBook.setFailEarly(true);
+            Platform.runLater(() -> treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS)));
+        }
 
-            ruleView.refresh();
-        });
+        Platform.runLater(() -> ruleView.refresh());
     }
+
+    private RuleBook ruleBook;
 
     @Override
     public void apply(RuleBook rulebook) {
+        this.ruleBook = rulebook;
         rulebook.setFailEarly(false);
     }
 }
