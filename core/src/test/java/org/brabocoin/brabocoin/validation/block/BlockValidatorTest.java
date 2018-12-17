@@ -77,8 +77,8 @@ class BlockValidatorTest {
                 transactionList,
             state.getConfig().networkId());
 
-        BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
-                block
+        BlockValidationResult result = state.getBlockValidator().validate(
+                block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.ORPHAN, result.getStatus());
@@ -114,8 +114,8 @@ class BlockValidatorTest {
                 transactionList,
             state.getConfig().networkId());
 
-        BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
-                block
+        BlockValidationResult result = state.getBlockValidator().validate(
+            block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.INVALID, result.getStatus());
@@ -153,8 +153,8 @@ class BlockValidatorTest {
                 transactionList,
             state.getConfig().networkId());
 
-        BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
-                block
+        BlockValidationResult result = state.getBlockValidator().validate(
+            block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.INVALID, result.getStatus());
@@ -193,8 +193,8 @@ class BlockValidatorTest {
                 transactionList,
                 state.getConfig().networkId());
 
-        BlockValidationResult result = state.getBlockValidator().checkIncomingBlockValid(
-                block
+        BlockValidationResult result = state.getBlockValidator().validate(
+            block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.VALID, result.getStatus());

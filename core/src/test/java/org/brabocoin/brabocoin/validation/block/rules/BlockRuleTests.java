@@ -169,17 +169,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
@@ -264,17 +255,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
@@ -300,7 +282,7 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             0,
             Collections.singletonList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0)
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L), 0)
             ),
             0
         );
@@ -410,8 +392,8 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             0,
             Arrays.asList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0),
-                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),0)
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L), 0),
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L), 0)
             ),
             0
         );
@@ -505,7 +487,7 @@ class BlockRuleTests {
 
     @Test
     void LegalTransactionFeesBlkRuleSuccess() throws DatabaseException {
-        Transaction cb = Transaction.coinbase(new Output(Simulation.randomHash(), 10L),1);
+        Transaction cb = Transaction.coinbase(new Output(Simulation.randomHash(), 10L), 1);
         Block coinbase = new Block(
             consensus.getGenesisBlock().getHash(),
             Simulation.randomHash(),
@@ -518,7 +500,7 @@ class BlockRuleTests {
             0
         );
 
-        Transaction cb2 = Transaction.coinbase(new Output(Simulation.randomHash(), 20L),2);
+        Transaction cb2 = Transaction.coinbase(new Output(Simulation.randomHash(), 20L), 2);
         Block coinbase2 = new Block(
             coinbase.getHash(),
             Simulation.randomHash(),
@@ -538,7 +520,7 @@ class BlockRuleTests {
             Simulation.randomBigInteger(),
             1,
             Arrays.asList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), 10L),1),
+                Transaction.coinbase(new Output(Simulation.randomHash(), 10L), 1),
                 new Transaction(
                     Arrays.asList(
                         new Input(
@@ -569,17 +551,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
@@ -1180,17 +1153,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
@@ -1505,17 +1469,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
@@ -1578,17 +1533,8 @@ class BlockRuleTests {
                     this
                 ) {
                     @Override
-                    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-                        return BlockValidationResult.passed();
-                    }
-
-                    @Override
-                    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
+                    public BlockValidationResult validate(@NotNull Block block,
+                                                          @NotNull RuleList ruleList) {
                         return BlockValidationResult.passed();
                     }
                 };
