@@ -11,7 +11,6 @@
 <?import org.controlsfx.control.textfield.CustomTextField?>
 <?import javafx.scene.control.Label?>
 <fx:root type="javafx.scene.control.ToolBar"
-         xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.control.TextAreaFinder"
          style="-fx-background-insets: 0, 0 0 1 0;">
