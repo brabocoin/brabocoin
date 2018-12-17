@@ -199,9 +199,7 @@ class BlockValidatorTest {
 
         assertEquals(ValidationStatus.VALID, result.getStatus());
 
-        result = state.getBlockValidator().checkConnectBlockValid(
-                block
-        );
+        result = state.getBlockValidator().validate(block, BlockValidator.CONNECT_TO_CHAIN);
 
         assertEquals(ValidationStatus.VALID, result.getStatus());
     }

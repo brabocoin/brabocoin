@@ -53,7 +53,7 @@ public class TransactionValidator implements Validator<Transaction> {
         SignatureTxRule.class
     );
 
-    private static final RuleList AFTER_ORPHAN = new RuleList(
+    public static final RuleList AFTER_ORPHAN = new RuleList(
         PoolDoubleSpendingTxRule.class,
         ValidInputUTXOTxRule.class,
         CoinbaseMaturityTxRule.class,
@@ -69,7 +69,7 @@ public class TransactionValidator implements Validator<Transaction> {
         OutputValueTxRule.class
     );
 
-    private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
+    public static final RuleList BLOCK_CONTEXTUAL = new RuleList(
         ValidInputUTXOTxRule.class,
         CoinbaseMaturityTxRule.class,
         InputValueRangeTxRule.class,
@@ -77,7 +77,7 @@ public class TransactionValidator implements Validator<Transaction> {
         SignatureTxRule.class
     );
 
-    private static final RuleList ORPHAN = new RuleList(
+    public static final RuleList ORPHAN = new RuleList(
         ValidInputUTXOTxRule.class
     );
 
@@ -88,8 +88,6 @@ public class TransactionValidator implements Validator<Transaction> {
     private UTXODatabase poolUTXODatabase;
     private ReadonlyUTXOSet compositeUTXO;
     private Signer signer;
-
-    private ReadonlyUTXOSet currentUTXO;
 
     /**
      * Construct transaction validator.
@@ -119,94 +117,17 @@ public class TransactionValidator implements Validator<Transaction> {
         return facts;
     }
 
-    /**
-     * Checks whether a transaction is valid using all known transaction rules.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-        currentUTXO = compositeUTXO;
-        return run(transaction, ALL);
-    }
-
-    /**
-     * Checks whether a transaction is valid after the transaction is no longer orphan.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionPostOrphan(
-        @NotNull Transaction transaction) {
-        currentUTXO = compositeUTXO;
-        return run(transaction, AFTER_ORPHAN);
-    }
-
-    /**
-     * Check whether a transaction is orphan.
-     *
-     * @param transaction
-     *     The transaction to check.
-     * @return Whether the transaction is orphan.
-     */
-    public TransactionValidationResult checkTransactionOrphan(@NotNull Transaction transaction) {
-        currentUTXO = compositeUTXO;
-        return run(transaction, ORPHAN);
-    }
-
-    /**
-     * Check whether a transaction is independent.
-     *
-     * @param transaction
-     *     The transaction to check.
-     * @return Whether the transaction is independent.
-     */
-    public TransactionValidationResult checkTransactionIndependent(
-        @NotNull Transaction transaction) {
-        currentUTXO = chainUTXODatabase;
-        return run(transaction, ORPHAN);
-    }
-
-    /**
-     * Perform a non-contextual check whether a transaction is valid in a block.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionBlockNonContextual(
-        @NotNull Transaction transaction) {
-        currentUTXO = chainUTXODatabase;
-        return run(transaction, BLOCK_NONCONTEXTUAL);
-    }
-
-    /**
-     * Perform a contextual check whether a transaction is valid in a block.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionBlockContextual(
-        @NotNull Transaction transaction) {
-        currentUTXO = chainUTXODatabase;
-        return run(transaction, BLOCK_CONTEXTUAL);
-    }
-
-    @Override
-    public TransactionValidationResult run(@NotNull Transaction transaction, @NotNull RuleList ruleList) {
+    public TransactionValidationResult validate(@NotNull Transaction transaction, @NotNull RuleList ruleList, boolean useCompositeUTXO) {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
-        ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
-        return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction, currentUTXO)));
+        return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction,
+            useCompositeUTXO ? compositeUTXO : chainUTXODatabase)));
     }
 
     @Override
-    public void onRuleValidation(Rule rule, RuleBookResult result) {
-        validationListeners.forEach(l -> l.onRuleValidation(rule, result));
+    public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
+        validationListeners.forEach(l -> l.onRuleValidation(rule, result, ruleBook));
     }
 }

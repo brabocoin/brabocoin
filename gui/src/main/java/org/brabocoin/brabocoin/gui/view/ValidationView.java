@@ -15,13 +15,16 @@ import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
+import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
+import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
-import org.brabocoin.brabocoin.validation.rule.RuleBookPipe;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
+import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +32,19 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
-                                                                ValidationListener, RuleBookPipe {
+                                                                ValidationListener {
 
-    private final Map<Class, TreeItem<String>> ruleTreeItemMap;
+    private final Map<Class, List<TreeItem<String>>> ruleTreeItemMap;
+    private final Map<TreeItem, Transaction> transactionItemMap;
     private final Validator validator;
     private TransactionDetailView transactionDetailView;
     private BlockDetailView blockDetailView;
@@ -45,12 +52,19 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private Block block;
 
     private static final RuleList skippedBlockRules = new RuleList(
-        DuplicateStorageBlkRule.class
+        DuplicateStorageBlkRule.class,
+        UniqueUnspentCoinbaseBlkRule.class
     );
 
     private static final RuleList skippedTransactionRules = new RuleList(
         Collections.emptyList()
     );
+
+    private static final RuleList blockRules = new RuleList(
+        BlockValidator.INCOMING_BLOCK,
+        BlockValidator.CONNECT_TO_CHAIN
+    );
+    private static final RuleList transactionRules = TransactionValidator.ALL;
 
     @FXML
     public TreeView<String> ruleView;
@@ -61,10 +75,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
         RuleList ruleList;
         if (isForBlock()) {
-            ruleList = BlockValidator.INCOMING_BLOCK;
+            ruleList = blockRules;
         }
         else {
-            ruleList = TransactionValidator.ALL;
+            ruleList = transactionRules;
         }
         addRules(root, ruleList);
         ruleView.setRoot(root);
@@ -107,7 +121,27 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                         continue;
                     }
 
-                    addRules(ruleTreeItem, composite);
+                    List<Transaction> transactions = block.getTransactions();
+                    for (int i = 0; i < transactions.size(); i++) {
+                        Transaction tx = transactions.get(i);
+                        TreeItem<String> txItem = new TreeItem<>();
+                        transactionItemMap.put(txItem, tx);
+
+                        if (tx.isCoinbase()) {
+                            txItem.setValue("Coinbase");
+                            txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+                            txItem.setExpanded(false);
+                        }
+                        else {
+                            txItem.setValue("Transaction " + i);
+                            txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+                            txItem.setExpanded(true);
+                        }
+
+                        ruleTreeItem.getChildren().add(txItem);
+                        addRules(txItem, composite);
+                    }
+
                     ruleTreeItem.setExpanded(true);
                 }
             }
@@ -115,7 +149,14 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ruleTreeItem.setValue("[Could not determine annotation type]");
             }
 
-            ruleTreeItemMap.put(rule, ruleTreeItem);
+            if (ruleTreeItemMap.containsKey(rule)) {
+                ruleTreeItemMap.get(rule).add(ruleTreeItem);
+            }
+            else {
+                ruleTreeItemMap.put(rule, new ArrayList<TreeItem<String>>() {{
+                    add(ruleTreeItem);
+                }});
+            }
             node.getChildren().add(ruleTreeItem);
         }
     }
@@ -125,6 +166,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         super();
 
         ruleTreeItemMap = new HashMap<>();
+        transactionItemMap = new HashMap<>();
         this.transaction = transaction;
         this.validator = validator;
 
@@ -139,6 +181,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         super();
 
         ruleTreeItemMap = new HashMap<>();
+        transactionItemMap = new HashMap<>();
         this.block = block;
         this.validator = validator;
 
@@ -160,51 +203,88 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         Platform.runLater(() -> {
             synchronized (validator) {
                 validator.addListener(this);
-                validator.addRuleBookPipe(this);
                 // Run validator
                 if (isForBlock()) {
                     BlockValidator validator = (BlockValidator)me.validator;
-                    validator.checkIncomingBlockValid(block);
+
+                    List<Class<? extends Rule>> rules = blockRules.getRules();
+                    rules.removeAll(skippedBlockRules.getRules());
+                    validator.validate(block, new RuleList(rules));
                 }
                 else {
                     TransactionValidator validator = (TransactionValidator)me.validator;
-                    validator.checkTransactionValid(transaction);
+
+                    List<Class<? extends Rule>> rules = transactionRules.getRules();
+                    rules.removeAll(skippedTransactionRules.getRules());
+                    validator.validate(transaction, new RuleList(rules), true);
                 }
-                validator.removeRuleBookPipe(this);
                 validator.removeListener(this);
             }
         });
     }
 
     @Override
-    public void onRuleValidation(Rule rule, RuleBookResult result) {
-        TreeItem<String> treeItem = ruleTreeItemMap.get(rule.getClass());
+    public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
+        List<TreeItem<String>> treeItems = ruleTreeItemMap.get(rule.getClass());
 
-        if (treeItem == null) {
-            // TODO: HELP!
-            return;
+        TreeItem<String> item;
+        if (rule instanceof TransactionRule) {
+            if (isForBlock()) {
+                FactMap map = ruleBook.getFacts();
+                Transaction tx = (Transaction)map.get("transaction");
+
+                List<TreeItem<String>> treeItemParents = treeItems.stream().map(
+                    TreeItem::getParent
+                ).collect(Collectors.toList());
+
+                TreeItem<String> parent = treeItemParents.stream()
+                    .filter(t -> transactionItemMap.get(t).getHash().equals(tx.getHash()))
+                    .findFirst()
+                    .orElse(null);
+
+                item = treeItems.stream()
+                    .filter(t -> t.getParent().equals(parent))
+                    .findFirst()
+                    .orElse(null);
+
+            }
+            else {
+                if (treeItems.size() != 1) {
+                    throw new IllegalStateException(
+                        "Found not exactly one rule tree items for transactions");
+                }
+
+                item = treeItems.get(0);
+            }
         }
+        else if (rule instanceof BlockRule) {
+            if (treeItems.size() != 1) {
+                throw new IllegalStateException("Found not exactly one rule tree items for blocks");
+            }
 
-        if (isSkippedRuleClass(rule.getClass())) {
-            return;
+            item = treeItems.get(0);
+        }
+        else {
+            throw new IllegalStateException("Rule of invalid type");
         }
 
         if (result.isPassed()) {
-            Platform.runLater(() -> treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK)));
+            Platform.runLater(() -> {
+                item.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+
+                if (item.getParent()
+                    .getChildren()
+                    .stream()
+                    .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
+                        .equals(BraboGlyph.Icon.CHECK))) {
+                    item.getParent().setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+                }
+            });
         }
         else {
-            ruleBook.setFailEarly(true);
-            Platform.runLater(() -> treeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS)));
+            Platform.runLater(() -> item.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS)));
         }
 
         Platform.runLater(() -> ruleView.refresh());
-    }
-
-    private RuleBook ruleBook;
-
-    @Override
-    public void apply(RuleBook rulebook) {
-        this.ruleBook = rulebook;
-        rulebook.setFailEarly(false);
     }
 }

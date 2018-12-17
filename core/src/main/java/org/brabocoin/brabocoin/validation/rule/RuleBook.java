@@ -24,22 +24,11 @@ public class RuleBook {
     private final List<ValidationListener> validationListeners;
     private static final Logger LOGGER = Logger.getLogger(RuleBook.class.getName());
     private final RuleList ruleList;
-    private boolean failEarly = true;
+    private FactMap facts;
 
     public RuleBook(RuleList ruleList) {
         this.ruleList = ruleList;
         validationListeners = new ArrayList<>();
-    }
-
-    /**
-     * Sets the fail early property.
-     * This stops the rule list validation after one fail.
-     *
-     * @param failEarly
-     *     True for fail early.
-     */
-    public void setFailEarly(boolean failEarly) {
-        this.failEarly = failEarly;
     }
 
     /**
@@ -63,6 +52,7 @@ public class RuleBook {
     }
 
     public RuleBookResult run(FactMap facts) {
+        this.facts = facts;
         for (Rule rule : getInstantiatedRules(facts)) {
             boolean passedRule = true;
 
@@ -80,14 +70,12 @@ public class RuleBook {
                 RuleBookFailMarker marker = new RuleBookFailMarker(rule.getClass(), getChild(rule));
                 RuleBookResult result = RuleBookResult.failed(marker);
                 validationListeners.forEach(l -> l.onRuleValidation(
-                    rule, result
+                    rule, result, this
                 ));
-                if (failEarly) {
-                    return result;
-                }
+                return result;
             } else {
                 validationListeners.forEach(l -> l.onRuleValidation(
-                    rule, RuleBookResult.passed()
+                    rule, RuleBookResult.passed(), this
                 ));
             }
         }
@@ -204,5 +192,9 @@ public class RuleBook {
         }
 
         return failMarker;
+    }
+
+    public FactMap getFacts() {
+        return facts;
     }
 }

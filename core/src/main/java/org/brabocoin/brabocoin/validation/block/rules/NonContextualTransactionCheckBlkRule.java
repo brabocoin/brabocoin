@@ -25,7 +25,7 @@ public class NonContextualTransactionCheckBlkRule extends BlockRule {
     public boolean isValid() {
         for (Transaction t : block.getTransactions()) {
             TransactionValidationResult result =
-                transactionValidator.checkTransactionBlockNonContextual(t);
+                transactionValidator.validate(t, compositeRuleList, false);
 
             if (!result.isPassed()) {
                 childFailMarker = result.getFailMarker();

@@ -43,6 +43,7 @@ import java.util.logging.Logger;
  * Validates blocks.
  */
 public class BlockValidator implements Validator<Block> {
+
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 
     public static final RuleList INCOMING_BLOCK = new RuleList(
@@ -64,14 +65,14 @@ public class BlockValidator implements Validator<Block> {
         ValidCoinbaseBlockHeightBlkRule.class
     );
 
-    private static final RuleList AFTER_ORPHAN = new RuleList(
+    public static final RuleList AFTER_ORPHAN = new RuleList(
         KnownParentBlkRule.class,
         ValidParentBlkRule.class,
         ValidBlockHeightBlkRule.class,
         ValidCoinbaseBlockHeightBlkRule.class
     );
 
-    private static final RuleList CONNECT_TO_CHAIN = new RuleList(
+    public static final RuleList CONNECT_TO_CHAIN = new RuleList(
         UniqueUnspentCoinbaseBlkRule.class,
         ContextualTransactionCheckBlkRule.class,
         LegalTransactionFeesBlkRule.class,
@@ -111,25 +112,7 @@ public class BlockValidator implements Validator<Block> {
         return facts;
     }
 
-    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
-        return run(block, INCOMING_BLOCK);
-    }
-
-    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
-        return run(block, AFTER_ORPHAN);
-    }
-
-    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-        return run(block, CONNECT_TO_CHAIN);
-    }
-
-    @Override
-    public void onRuleValidation(Rule rule, RuleBookResult result) {
-        validationListeners.forEach(l -> l.onRuleValidation(rule, result));
-    }
-
-    @Override
-    public BlockValidationResult run(@NotNull Block block, @NotNull RuleList ruleList) {
+    public BlockValidationResult validate(@NotNull Block block, @NotNull RuleList ruleList) {
         if (block.getHash() == consensus.getGenesisBlock().getHash()) {
             return BlockValidationResult.passed();
         }
@@ -137,8 +120,12 @@ public class BlockValidator implements Validator<Block> {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
-        ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
         return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
+    }
+
+    @Override
+    public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
+        validationListeners.forEach(l -> l.onRuleValidation(rule, result, ruleBook));
     }
 }
