@@ -200,6 +200,7 @@ public class TransactionValidator implements Validator<Transaction> {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
+        ruleBookPipes.forEach(r -> r.apply(ruleBook));
 
         return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction, currentUTXO)));
     }
