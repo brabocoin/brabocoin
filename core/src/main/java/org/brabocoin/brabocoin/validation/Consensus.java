@@ -46,7 +46,7 @@ public class Consensus {
      */
     private static final Hash TARGET_VALUE = new Hash(
         ByteString.copyFrom(
-            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
+            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(67)).toByteArray()
         )
     );
 
