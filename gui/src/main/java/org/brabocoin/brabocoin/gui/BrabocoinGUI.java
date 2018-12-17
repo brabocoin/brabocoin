@@ -109,6 +109,11 @@ public class BrabocoinGUI extends Application {
                     stage.setTitle("Brabocoin " + VERSION);
                     stage.setScene(scene);
 
+                    stage.setOnCloseRequest(t -> {
+                        Platform.exit();
+                        System.exit(0);
+                    });
+
                     mainStage.set(stage);
                     latch.countDown();
                 });
