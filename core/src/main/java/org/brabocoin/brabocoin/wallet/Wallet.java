@@ -42,7 +42,8 @@ import java.util.stream.Collectors;
 /**
  * The wallet data structure.
  */
-public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainListener, BlockProcessorListener {
+public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainListener,
+                               BlockProcessorListener {
 
     private static final Logger LOGGER = Logger.getLogger(Wallet.class.getName());
 
@@ -232,7 +233,22 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
             privateKeys.add(privateKey);
         }
 
-        for (PrivateKey privateKey : privateKeys) {
+        for (int i = 0; i < privateKeys.size(); i++) {
+            PrivateKey privateKey = privateKeys.get(i);
+
+            boolean hasDuplicate = false;
+            for (int j = 0; j < i; j++) {
+                if (privateKeys.get(j).equals(privateKey)) {
+                    signatures.add(signatures.get(j));
+                    hasDuplicate = true;
+                    break;
+                }
+            }
+
+            if (hasDuplicate) {
+                continue;
+            }
+            
             Destructible<BigInteger> privateKeyValue = privateKey.getKey();
             signatures.add(
                 signer.signMessage(
