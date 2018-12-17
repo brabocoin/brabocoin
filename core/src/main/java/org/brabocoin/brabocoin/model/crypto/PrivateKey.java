@@ -48,6 +48,12 @@ public class PrivateKey implements ProtoModel<PrivateKey> {
     private final Cipher cipher;
 
     /**
+     * Private key prefix for writing to disk.
+     */
+    private final static byte[] PRIVATE_KEY_PREFIX = ByteString.copyFromUtf8("PRVKEY")
+        .toByteArray();
+
+    /**
      * The temporary storage when an encrypted {@link PrivateKey} is unlocked.
      */
     private Destructible<byte[]> unlockedValue;
