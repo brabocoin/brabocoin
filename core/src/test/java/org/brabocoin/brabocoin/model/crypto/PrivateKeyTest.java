@@ -57,6 +57,31 @@ class PrivateKeyTest {
     }
 
     @Test
+    void encryptedGetUnlockedWrongPassphraseRandomized() throws CipherException, DestructionException {
+        Destructible<BigInteger> superSecretKey = new Destructible<>(Simulation::randomBigInteger);
+        Destructible<char[]> superSecretPassword = new Destructible<>(
+                "IkWilNietInRAMBlijven!"::toCharArray
+        );
+
+        PrivateKey encrypted = PrivateKey.encrypted(
+                superSecretKey, superSecretPassword, new BouncyCastleAES()
+        );
+
+        assertTrue(superSecretKey.isDestroyed());
+        assertNull(superSecretKey.getReference().get());
+
+        assertTrue(superSecretPassword.isDestroyed());
+        assertNull(superSecretPassword.getReference().get());
+
+        for (int i = 0; i < 1000; i++) {
+            int finalI = i;
+            assertThrows(CipherException.class, () -> encrypted.unlock(new Destructible<>(
+                ("NietKloppendWachtwoord:(" + finalI)::toCharArray
+            )));
+        }
+    }
+
+    @Test
     void encryptedGetUnlock() throws CipherException, DestructionException {
         BigInteger bladiebla = Simulation.randomBigInteger();
 
