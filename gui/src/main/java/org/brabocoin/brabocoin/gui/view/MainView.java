@@ -48,6 +48,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     private CurrentStateView currentStateView;
     private MinerView minerView;
 
+    private @NotNull NotificationManager notificationManager;
+
     /**
      * Create the main view.
      *
@@ -97,8 +99,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         viewContainer.setCenter(currentStateView);
 
         // Create notification manager
-        NotificationManager manager = new NotificationManager(state);
-        state.getEnvironment().addBlockListener(manager);
-        state.getEnvironment().addTransactionListener(manager);
+        notificationManager = new NotificationManager(state);
     }
 }
