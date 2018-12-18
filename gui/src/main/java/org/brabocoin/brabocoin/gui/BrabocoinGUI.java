@@ -96,7 +96,12 @@ public class BrabocoinGUI extends Application {
         UnlockDialog<Wallet> dialog = new UnlockDialog<>(creation, creator);
 
         dialog.setTitle("Brabocoin " + VERSION);
-        dialog.setHeaderText("Unlock your wallet");
+        if (creation) {
+            dialog.setHeaderText("Create a password to encrypt your wallet");
+        }
+        else {
+            dialog.setHeaderText("Unlock your wallet");
+        }
 
         ((Stage)dialog.getDialogPane().getScene().getWindow()).getIcons()
             .addAll(ICONS.stream()
