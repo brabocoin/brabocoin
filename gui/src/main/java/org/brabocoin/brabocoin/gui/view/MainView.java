@@ -82,7 +82,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         minerView = new MinerView(
             state.getMiner(),
             state.getBlockchain(),
-            state.getBlockProcessor(),
+            state.getWallet(),
             state.getNode().getEnvironment(),
             taskManager
         );
