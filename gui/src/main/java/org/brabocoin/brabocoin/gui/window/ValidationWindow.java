@@ -67,5 +67,4 @@ public class ValidationWindow extends BraboDialog {
 
         masterDetailPane.setDividerPosition(SLIDER_POSITION);
     }
-
 }

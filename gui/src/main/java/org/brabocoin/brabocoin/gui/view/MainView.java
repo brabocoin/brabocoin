@@ -38,6 +38,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @FXML private ToggleGroup toggleGroupMainNav;
     @FXML private ToggleButton stateToggleButton;
     @FXML private ToggleButton miningToggleButton;
+    @FXML private ToggleButton walletToggleButton;
 
     @FXML private StatusBar statusBar;
     @FXML private LogPane logPane;
@@ -47,6 +48,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     private Map<Toggle, Node> toggleToViewMap;
     private CurrentStateView currentStateView;
     private MinerView minerView;
+    private WalletView walletView;
 
     /**
      * Create the main view.
@@ -85,9 +87,14 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             taskManager
         );
 
+        walletView = new WalletView(
+            state.getWallet()
+        );
+
         toggleToViewMap = new HashMap<>();
         toggleToViewMap.put(stateToggleButton, currentStateView);
         toggleToViewMap.put(miningToggleButton, minerView);
+        toggleToViewMap.put(walletToggleButton, walletView);
 
         toggleGroupMainNav.selectedToggleProperty().addListener((obs, old, selected) -> {
             viewContainer.setCenter(toggleToViewMap.get(selected));

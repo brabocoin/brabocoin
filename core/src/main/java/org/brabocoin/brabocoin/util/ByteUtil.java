@@ -90,4 +90,19 @@ public final class ByteUtil {
 
         return DatatypeConverter.printHexBinary(byteString.toByteArray());
     }
+
+    /**
+     * Parses a string in hexadecimal representation to ByteString.
+     *
+     * @param hexString
+     *     The string to format
+     * @return Bytestring object
+     */
+    public static ByteString fromHexString(String hexString) {
+        if (hexString == null) {
+            return ByteString.EMPTY;
+        }
+
+        return ByteString.copyFrom(DatatypeConverter.parseHexBinary(hexString));
+    }
 }
