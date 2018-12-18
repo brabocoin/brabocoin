@@ -9,6 +9,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.BlockchainListener;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -32,7 +33,7 @@ import java.util.ResourceBundle;
 /**
  * View for the current state.
  */
-public class CurrentStateView extends TabPane implements BraboControl, Initializable {
+public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -63,6 +64,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         masterDetailPane.setDetailNode(blockDetailView);
 
         loadMainChain();
+        blockchain.addListener(this);
     }
 
     private void loadTable() {
@@ -108,13 +110,24 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         });
     }
 
-    @FXML
     private void loadMainChain() {
         observableBlocks.clear();
 
         IndexedChain chain = blockchain.getMainChain();
         for (int i = chain.getHeight(); i >= 0; i--) {
             observableBlocks.add(chain.getBlockAtHeight(i));
+        }
+    }
+
+    @Override
+    public void onTopBlockConnected(@NotNull IndexedBlock block) {
+        observableBlocks.add(0, block);
+    }
+
+    @Override
+    public void onTopBlockDisconnected(@NotNull IndexedBlock block) {
+        if (block.getHash().equals(observableBlocks.get(0).getHash())) {
+            observableBlocks.remove(0);
         }
     }
 }

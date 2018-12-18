@@ -20,11 +20,6 @@
         <MasterDetailPane fx:id="masterDetailPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
                 <VBox>
-                    <ToolBar VBox.vgrow="NEVER">
-                        <Button text="Refresh" onAction="#loadMainChain"/>
-                        <Pane HBox.hgrow="ALWAYS"/>
-                        <CheckBox disable="true" text="Show forks"/>
-                    </ToolBar>
                     <TableView fx:id="blockchainTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="heightColumn" sortable="false" text="Height"/>
