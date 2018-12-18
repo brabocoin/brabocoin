@@ -114,12 +114,12 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
     }
 
     /**
-     * Get the ByteString of this transaction without signature.
+     * Get the hashed transaction data that is to be signed.
      *
-     * @return ByteString of this transaction without signature.
+     * @return The hashed transaction data that is to be signed.
      */
     public @NotNull ByteString getSignableTransactionData() {
-        return getRawData();
+        return Hashing.digestSHA256(Hashing.digestSHA256(getRawData())).getValue();
     }
 
     public @NotNull Transaction sign(List<Signature> signatures) {

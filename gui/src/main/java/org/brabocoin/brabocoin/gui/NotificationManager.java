@@ -16,8 +16,10 @@ public class NotificationManager implements BlockReceivedListener, TransactionRe
     private final State state;
 
     public NotificationManager(State state) {
-
         this.state = state;
+
+        state.getEnvironment().addBlockListener(this);
+        state.getEnvironment().addTransactionListener(this);
     }
 
     @Override

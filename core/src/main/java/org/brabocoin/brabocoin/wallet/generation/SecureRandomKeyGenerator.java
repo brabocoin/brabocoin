@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.wallet.generation;
 
-import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.util.Destructible;
 
 import java.math.BigInteger;
@@ -12,19 +12,17 @@ public class SecureRandomKeyGenerator implements KeyGenerator {
     private SecureRandom random = new SecureRandom();
 
     @Override
-    public Destructible<BigInteger> generateKey(BigInteger maxValue) throws DestructionException {
-        Destructible<byte[]> randomBytes =
-            new Destructible<>(() -> new byte[maxValue.toByteArray().length]);
-        random.nextBytes(randomBytes.getReference().get());
-
-        Destructible<BigInteger> randomBigInteger = new Destructible<>(() ->
-            new BigInteger(
-                Objects.requireNonNull(randomBytes.getReference().get())
-            ).mod(maxValue)
+    public Destructible<BigInteger> generateKey(BigInteger maxValue) {
+        Destructible<BigInteger> generatedKey;
+        do {
+            generatedKey = new Destructible<>(() -> new BigInteger(maxValue.bitLength(), random));
+        }
+        while (!BigIntegerUtil.isInRangeExclusive(
+            Objects.requireNonNull(generatedKey.getReference().get()),
+            BigInteger.ZERO,
+            maxValue)
         );
 
-        randomBytes.destruct();
-
-        return randomBigInteger;
+        return generatedKey;
     }
 }

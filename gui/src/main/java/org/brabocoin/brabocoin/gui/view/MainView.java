@@ -50,6 +50,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     private MinerView minerView;
     private WalletView walletView;
 
+    private @NotNull NotificationManager notificationManager;
+
     /**
      * Create the main view.
      *
@@ -82,7 +84,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         minerView = new MinerView(
             state.getMiner(),
             state.getBlockchain(),
-            state.getBlockProcessor(),
+            state.getWallet(),
             state.getNode().getEnvironment(),
             taskManager
         );
@@ -104,8 +106,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         viewContainer.setCenter(currentStateView);
 
         // Create notification manager
-        NotificationManager manager = new NotificationManager(state);
-        state.getEnvironment().addBlockListener(manager);
-        state.getEnvironment().addTransactionListener(manager);
+        notificationManager = new NotificationManager(state);
     }
 }

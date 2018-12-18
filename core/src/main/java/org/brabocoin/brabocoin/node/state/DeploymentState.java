@@ -25,11 +25,9 @@ import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
-import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.brabocoin.brabocoin.wallet.PassphraseSupplier;
 import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.brabocoin.brabocoin.wallet.WalletIO;
@@ -74,8 +72,7 @@ public class DeploymentState implements State {
     protected final @NotNull NodeEnvironment environment;
     protected final @NotNull Node node;
 
-    public DeploymentState(@NotNull BraboConfig config, @NotNull
-                           PassphraseSupplier passphraseSupplier) throws DatabaseException {
+    public DeploymentState(@NotNull BraboConfig config, @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
         this.config = config;
 
         unsecureRandom = createUnsecureRandom();
@@ -119,7 +116,7 @@ public class DeploymentState implements State {
         }
 
         try {
-            wallet = createWallet(passphraseSupplier);
+            wallet = createWallet(walletUnlocker);
         }
         catch (CipherException | DestructionException | IOException e) {
             throw new StateInitializationException("Could not create wallet.", e);
@@ -135,12 +132,11 @@ public class DeploymentState implements State {
         );
     }
 
-    private Wallet createWallet(PassphraseSupplier passphraseSupplier) throws CipherException, IOException, DestructionException {
+    private Wallet createWallet(Unlocker<Wallet> walletUnlocker) throws CipherException, IOException, DestructionException {
         Cipher privateKeyCipher = new BouncyCastleAES();
         KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
 
-        Destructible<char[]> passphrase;
-        Wallet wallet;
+        Wallet created;
         File walletFile = Paths.get(
             config.dataDirectory(),
             config.walletStoreDirectory(),
@@ -154,42 +150,68 @@ public class DeploymentState implements State {
         ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
         if (walletFile.exists()) {
             // Read wallet
-            passphrase = passphraseSupplier.supplyPassphrase(false);
+            created = walletUnlocker.unlock(false, passphrase -> {
+                Wallet wallet;
+                try {
+                    wallet = walletIO.read(
+                        walletFile,
+                        txHistoryFile,
+                        passphrase,
+                        consensus,
+                        signer,
+                        keyGenerator,
+                        privateKeyCipher,
+                        walletUTXODatabase,
+                        watchUTXOSet,
+                        blockchain
+                    );
 
-            wallet = walletIO.read(
-                walletFile,
-                txHistoryFile,
-                passphrase,
-                consensus,
-                signer,
-                keyGenerator,
-                privateKeyCipher,
-                walletUTXODatabase,
-                watchUTXOSet,
-                blockchain
-            );
+                    passphrase.destruct();
+                }
+                catch (CipherException e) {
+                    // Unlock failed because of bad password
+                    return null;
+                }
+                catch (IOException | DestructionException e) {
+                    throw new StateInitializationException("Could not create wallet.", e);
+                }
+
+                return wallet;
+            });
+
         } else {
             // Create new wallet
-            passphrase = passphraseSupplier.supplyPassphrase(true);
-            wallet = new Wallet(
-                Collections.emptyList(),
-                new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-                consensus,
-                signer,
-                keyGenerator,
-                privateKeyCipher,
-                walletUTXODatabase,
-                watchUTXOSet,
-                blockchain
-            );
+            created = walletUnlocker.unlock(true, passphrase -> {
+                Wallet wallet = new Wallet(
+                    Collections.emptyList(),
+                    new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
+                    consensus,
+                    signer,
+                    keyGenerator,
+                    privateKeyCipher,
+                    walletUTXODatabase,
+                    watchUTXOSet,
+                    blockchain
+                );
 
-            wallet.generatePlainKeyPair();
+                try {
+                    wallet.generatePlainKeyPair();
+                    walletIO.write(wallet, walletFile, txHistoryFile, passphrase);
+                    passphrase.destruct();
+                }
+                catch (DestructionException | CipherException | IOException e) {
+                    throw new StateInitializationException("Could not create wallet.", e);
+                }
 
-            walletIO.write(wallet, walletFile, txHistoryFile, passphrase);
+                return wallet;
+            });
         }
 
-        passphrase.destruct();
-        return wallet;
+        if (created == null) {
+            throw new StateInitializationException("Could not create wallet.");
+        }
+
+        return created;
     }
 
     protected Random createUnsecureRandom() {

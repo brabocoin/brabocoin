@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -116,6 +117,50 @@ class WalletTest {
         KeyPair lockedKeyPair = result.getLockedKeyPair();
         lockedKeyPair.getPrivateKey().unlock(new Destructible<>("superSecret"::toCharArray));
 
+
+        result = wallet.signTransaction(utx);
+
+        assertEquals(TransactionSigningStatus.SIGNED, result.getStatus());
+        assertNotNull(result.getTransaction());
+    }
+
+    @Test
+    void signTransactionValidEncryptedDuplicateInput() throws DatabaseException, DestructionException,
+                                                CipherException {
+        State state = new TestState(defaultConfig);
+
+        Wallet wallet = state.getWallet();
+
+        KeyPair encrypted = wallet.generateEncryptedKeyPair(
+            new Destructible<>("superSecret"::toCharArray)
+        );
+
+        Transaction coinbaseTx = Transaction.coinbase(new Output(
+            encrypted.getPublicKey().getHash(), state.getConsensus().getBlockReward()
+        ), 1);
+
+        Transaction coinbaseTx2 = Transaction.coinbase(new Output(
+            encrypted.getPublicKey().getHash(), state.getConsensus().getBlockReward()
+        ), 2);
+
+        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
+        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx2, 2);
+
+        UnsignedTransaction utx = new UnsignedTransaction(
+            Arrays.asList(
+                new Input(coinbaseTx.getHash(), 0),
+                new Input(coinbaseTx2.getHash(), 0)
+            ),
+            Collections.emptyList()
+        );
+
+        TransactionSigningResult result = wallet.signTransaction(utx);
+
+        assertEquals(TransactionSigningStatus.PRIVATE_KEY_LOCKED, result.getStatus());
+        assertNull(result.getTransaction());
+
+        KeyPair lockedKeyPair = result.getLockedKeyPair();
+        lockedKeyPair.getPrivateKey().unlock(new Destructible<>("superSecret"::toCharArray));
 
         result = wallet.signTransaction(utx);
 
