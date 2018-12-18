@@ -87,6 +87,10 @@
     -fx-background-color: derive(-fx-accent, 25%);
 }
 
+.label.error {
+    -fx-text-fill: -fx-accent;
+}
+
 .progress-bar {
     -fx-indeterminate-bar-flip: false;
 }
