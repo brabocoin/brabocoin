@@ -11,10 +11,6 @@ public class EditableTableOutputEntry {
 
     private SimpleObjectProperty<Hash> address;
 
-    public SimpleLongProperty amountProperty() {
-        return amount;
-    }
-
     private SimpleLongProperty amount;
 
     public EditableTableOutputEntry(Output output, int index) {
@@ -26,6 +22,7 @@ public class EditableTableOutputEntry {
     public int getIndex() {
         return index.get();
     }
+
     public void setIndex(int index) {
         this.index.set(index);
     }

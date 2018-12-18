@@ -27,6 +27,7 @@ public class ValidationWindow extends BraboDialog {
     public ValidationWindow(Blockchain blockchain, Block block,
                             Validator<Block> validator) {
         super();
+
         setTitle("Block Validation");
 
         masterDetailPane = new ValidationView(blockchain, block, validator);

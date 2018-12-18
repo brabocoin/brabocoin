@@ -11,14 +11,14 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 public class TransactionCreationWindow extends BraboDialog<Transaction> {
 
     private static final double WIDTH = 500;
-    private static final double HEIGHT = 300;
+    private static final double HEIGHT = 500;
     private final Wallet wallet;
 
     private VBox transactionCreationView;
 
     public TransactionCreationWindow(Wallet wallet) {
         this.wallet = wallet;
-        this.transactionCreationView = new TransactionCreationView();
+        this.transactionCreationView = new TransactionCreationView(wallet);
 
         setTitle("Transaction creation");
 
