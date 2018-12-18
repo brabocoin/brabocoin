@@ -10,6 +10,8 @@
 <?import javafx.scene.layout.GridPane?>
 <?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <?import java.lang.Double?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Pane?>
 <fx:root type="javafx.scene.layout.BorderPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.MinerView">
@@ -35,42 +37,45 @@
         </ToolBar>
     </top>
     <center>
-        <GridPane vgap="$vgap" hgap="$hgap">
-            <Label text="Time" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-            <TextField fx:id="timeField"
-                       editable="false"
-                       disable="true"
-                       styleClass="label-like"
-                       GridPane.rowIndex="0"
-                       GridPane.columnIndex="1"
-                       GridPane.hgrow="ALWAYS"/>
+        <VBox fx:id="container" spacing="10">
+            <GridPane vgap="$vgap" hgap="$hgap">
+                <Label text="Time" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                <TextField fx:id="timeField"
+                           editable="false"
+                           disable="true"
+                           styleClass="label-like"
+                           GridPane.rowIndex="0"
+                           GridPane.columnIndex="1"
+                           GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Iterations" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-            <TextField fx:id="iterationsField"
-                       editable="false"
-                       disable="true"
-                       styleClass="label-like"
-                       GridPane.rowIndex="1"
-                       GridPane.columnIndex="1"
-                       GridPane.hgrow="ALWAYS"/>
+                <Label text="Iterations" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                <TextField fx:id="iterationsField"
+                           editable="false"
+                           disable="true"
+                           styleClass="label-like"
+                           GridPane.rowIndex="1"
+                           GridPane.columnIndex="1"
+                           GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-            <TextField fx:id="targetValueField"
-                       editable="false"
-                       disable="true"
-                       styleClass="label-like,hash"
-                       GridPane.rowIndex="2"
-                       GridPane.columnIndex="1"
-                       GridPane.hgrow="ALWAYS"/>
+                <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                <TextField fx:id="targetValueField"
+                           editable="false"
+                           disable="true"
+                           styleClass="label-like,hash"
+                           GridPane.rowIndex="2"
+                           GridPane.columnIndex="1"
+                           GridPane.hgrow="ALWAYS"/>
 
-            <Label text="Best hash" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-            <TextField fx:id="bestHashField"
-                       editable="false"
-                       disable="true"
-                       styleClass="label-like,hash"
-                       GridPane.rowIndex="3"
-                       GridPane.columnIndex="1"
-                       GridPane.hgrow="ALWAYS"/>
-        </GridPane>
+                <Label text="Best hash" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                <TextField fx:id="bestHashField"
+                           editable="false"
+                           disable="true"
+                           styleClass="label-like,hash"
+                           GridPane.rowIndex="3"
+                           GridPane.columnIndex="1"
+                           GridPane.hgrow="ALWAYS"/>
+            </GridPane>
+            <Pane fx:id="blockDetailContainer"></Pane>
+        </VBox>
     </center>
 </fx:root>

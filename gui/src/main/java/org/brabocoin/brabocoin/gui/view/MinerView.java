@@ -7,6 +7,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -45,6 +46,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     private @Nullable Task<Block> miningTask;
     private @Nullable IndexedBlock parentBlock;
+
+    @FXML private Pane blockDetailContainer;
 
     @FXML private CheckBox continueMining;
 
@@ -111,6 +114,17 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         }
     }
 
+    private void showCurrentBlock() {
+        MiningBlock block = miner.getMiningBlock();
+
+        if (block == null) {
+            return;
+        }
+
+        BlockDetailView blockDetailView = new BlockDetailView(blockchain, block, null);
+        blockDetailContainer.getChildren().setAll(blockDetailView);
+    }
+
     @FXML
     private void autoMine() {
         if (miningTask != null && !miningTask.isDone()) {
@@ -166,6 +180,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             switch (state) {
                 case RUNNING:
                     timer.start();
+                    showCurrentBlock();
                     break;
 
                 case FAILED:
