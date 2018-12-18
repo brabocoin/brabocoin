@@ -14,6 +14,7 @@ import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
+import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
@@ -54,22 +55,9 @@ class TransactionProcessorTest {
                         this
                 ) {
                     @Override
-                    public TransactionValidationResult checkTransactionBlockContextual(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionBlockNonContextual(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
+                    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                                @NotNull RuleList ruleList,
+                                                                boolean useCompositeUTXO) {
                         return TransactionValidationResult.passed();
                     }
                 };
@@ -168,17 +156,20 @@ class TransactionProcessorTest {
                         this
                 ) {
                     @Override
-                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-                        if (hash.equals(transaction.getHash())) {
+                    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                                @NotNull RuleList ruleList,
+                                                                boolean useCompositeUTXO) {
+                        if (ruleList == TransactionValidator.ALL) {
+                            if (hash.equals(transaction.getHash())) {
+                                return TransactionValidationResult.passed();
+                            } else {
+                                return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            }
+                        } else if (ruleList == TransactionValidator.AFTER_ORPHAN){
                             return TransactionValidationResult.passed();
                         } else {
-                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            return super.validate(transaction, ruleList, useCompositeUTXO);
                         }
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
                     }
                 };
             }
@@ -212,17 +203,20 @@ class TransactionProcessorTest {
                     this
                 ) {
                     @Override
-                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-                        if (hash.equals(transaction.getHash())) {
+                    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                                @NotNull RuleList ruleList,
+                                                                boolean useCompositeUTXO) {
+                        if (ruleList == TransactionValidator.ALL) {
+                            if (hash.equals(transaction.getHash())) {
+                                return TransactionValidationResult.passed();
+                            } else {
+                                return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            }
+                        } else if (ruleList == TransactionValidator.AFTER_ORPHAN){
                             return TransactionValidationResult.passed();
                         } else {
-                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            return super.validate(transaction, ruleList, useCompositeUTXO);
                         }
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
                     }
                 };
             }
@@ -264,17 +258,20 @@ class TransactionProcessorTest {
                     this
                 ) {
                     @Override
-                    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-                        if (hash.equals(transaction.getHash())) {
+                    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                                @NotNull RuleList ruleList,
+                                                                boolean useCompositeUTXO) {
+                        if (ruleList == TransactionValidator.ALL) {
+                            if (hash.equals(transaction.getHash())) {
+                                return TransactionValidationResult.passed();
+                            } else {
+                                return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            }
+                        } else if (ruleList == TransactionValidator.AFTER_ORPHAN){
                             return TransactionValidationResult.passed();
                         } else {
-                            return TransactionValidationResult.failed(new RuleBookFailMarker(ValidInputUTXOTxRule.class));
+                            return super.validate(transaction, ruleList, useCompositeUTXO);
                         }
-                    }
-
-                    @Override
-                    public TransactionValidationResult checkTransactionPostOrphan(@NotNull Transaction transaction) {
-                        return TransactionValidationResult.passed();
                     }
                 };
             }

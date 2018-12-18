@@ -235,7 +235,9 @@ public class PeerProcessor {
      *     The peer to add.
      */
     public synchronized void addPeer(Peer peer) {
-        peers.add(peer);
+        if (filterPeer(peer)) {
+            peers.add(peer);
+        }
     }
 
     /**

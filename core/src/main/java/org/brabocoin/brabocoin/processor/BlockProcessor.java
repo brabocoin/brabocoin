@@ -167,7 +167,7 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        BlockValidationResult result = blockValidator.checkIncomingBlockValid(block);
+        BlockValidationResult result = blockValidator.validate(block, BlockValidator.INCOMING_BLOCK);
         ValidationStatus status = result.getStatus();
 
         if (status == ValidationStatus.INVALID) {
@@ -236,7 +236,7 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.checkPostOrphanBlockValid(descendant)
+                ValidationStatus status = blockValidator.validate(descendant, BlockValidator.AFTER_ORPHAN)
                     .getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
@@ -462,7 +462,7 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-        if (!blockValidator.checkConnectBlockValid(block).isPassed()) {
+        if (!blockValidator.validate(block, BlockValidator.CONNECT_TO_CHAIN).isPassed()) {
             return false;
         }
 

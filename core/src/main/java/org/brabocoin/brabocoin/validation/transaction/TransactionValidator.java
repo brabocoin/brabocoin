@@ -9,15 +9,18 @@ import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseCreationTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.CoinbaseMaturityTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicateInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
-import org.brabocoin.brabocoin.validation.transaction.rules.InputValueTxRange;
+import org.brabocoin.brabocoin.validation.transaction.rules.InputValueRangeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
@@ -32,11 +35,10 @@ import java.util.logging.Logger;
 /**
  * Validation rules for transactions.
  */
-public class TransactionValidator {
-
+public class TransactionValidator implements Validator<Transaction> {
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
-    private static final RuleList ALL = new RuleList(
+    public static final RuleList ALL = new RuleList(
         DuplicatePoolTxRule.class,
         MaxSizeTxRule.class,
         CoinbaseCreationTxRule.class,
@@ -46,36 +48,36 @@ public class TransactionValidator {
         ValidInputUTXOTxRule.class,
         CoinbaseMaturityTxRule.class,
         OutputValueTxRule.class,
-        InputValueTxRange.class,
+        InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
         SignatureTxRule.class
     );
 
-    private static final RuleList AFTER_ORPHAN = new RuleList(
+    public static final RuleList AFTER_ORPHAN = new RuleList(
         PoolDoubleSpendingTxRule.class,
         ValidInputUTXOTxRule.class,
         CoinbaseMaturityTxRule.class,
         OutputValueTxRule.class,
-        InputValueTxRange.class,
+        InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
         SignatureTxRule.class
     );
 
-    private static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
+    public static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
         SignatureCountTxRule.class,
         InputOutputNotEmptyTxRule.class,
         OutputValueTxRule.class
     );
 
-    private static final RuleList BLOCK_CONTEXTUAL = new RuleList(
+    public static final RuleList BLOCK_CONTEXTUAL = new RuleList(
         ValidInputUTXOTxRule.class,
         CoinbaseMaturityTxRule.class,
-        InputValueTxRange.class,
+        InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
         SignatureTxRule.class
     );
 
-    private static final RuleList ORPHAN = new RuleList(
+    public static final RuleList ORPHAN = new RuleList(
         ValidInputUTXOTxRule.class
     );
 
@@ -115,91 +117,17 @@ public class TransactionValidator {
         return facts;
     }
 
-    /**
-     * Checks whether a transaction is valid using all known transaction rules.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionValid(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ALL).run(createFactMap(
-            transaction,
-            compositeUTXO
-        )));
+    public TransactionValidationResult validate(@NotNull Transaction transaction, @NotNull RuleList ruleList, boolean useCompositeUTXO) {
+        RuleBook ruleBook = new RuleBook(ruleList);
+
+        ruleBook.addListener(this);
+
+        return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction,
+            useCompositeUTXO ? compositeUTXO : chainUTXODatabase)));
     }
 
-    /**
-     * Checks whether a transaction is valid after the transaction is no longer orphan.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionPostOrphan(
-        @NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(
-            transaction,
-            compositeUTXO
-        )));
-    }
-
-    /**
-     * Check whether a transaction is orphan.
-     *
-     * @param transaction
-     *     The transaction to check.
-     * @return Whether the transaction is orphan.
-     */
-    public TransactionValidationResult checkTransactionOrphan(@NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(
-            transaction,
-            compositeUTXO
-        )));
-    }
-
-    /**
-     * Check whether a transaction is independent.
-     *
-     * @param transaction
-     *     The transaction to check.
-     * @return Whether the transaction is independent.
-     */
-    public TransactionValidationResult checkTransactionIndependent(
-        @NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(ORPHAN).run(createFactMap(
-            transaction,
-            chainUTXODatabase
-        )));
-    }
-
-    /**
-     * Perform a non-contextual check whether a transaction is valid in a block.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionBlockNonContextual(
-        @NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_NONCONTEXTUAL).run(createFactMap(
-            transaction,
-            chainUTXODatabase
-        )));
-    }
-
-    /**
-     * Perform a contextual check whether a transaction is valid in a block.
-     *
-     * @param transaction
-     *     The transaction.
-     * @return Whether the transaction is valid.
-     */
-    public TransactionValidationResult checkTransactionBlockContextual(
-        @NotNull Transaction transaction) {
-        return TransactionValidationResult.from(new RuleBook(BLOCK_CONTEXTUAL).run(createFactMap(
-            transaction,
-            chainUTXODatabase
-        )));
+    @Override
+    public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
+        validationListeners.forEach(l -> l.onRuleValidation(rule, result, ruleBook));
     }
 }

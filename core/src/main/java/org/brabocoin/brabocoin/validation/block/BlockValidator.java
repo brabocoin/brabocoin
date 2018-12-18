@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.CorrectTargetValueBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateInputBlkRule;
@@ -29,7 +30,9 @@ import org.brabocoin.brabocoin.validation.block.rules.ValidMerkleRootBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidNetworkIdBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidParentBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
+import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +42,11 @@ import java.util.logging.Logger;
 /**
  * Validates blocks.
  */
-public class BlockValidator {
+public class BlockValidator implements Validator<Block> {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 
-    private static final RuleList INCOMING_BLOCK = new RuleList(
+    public static final RuleList INCOMING_BLOCK = new RuleList(
         MaxNonceBlkRule.class,
         MaxSizeBlkRule.class,
         ValidNetworkIdBlkRule.class,
@@ -62,14 +65,14 @@ public class BlockValidator {
         ValidCoinbaseBlockHeightBlkRule.class
     );
 
-    private static final RuleList AFTER_ORPHAN = new RuleList(
+    public static final RuleList AFTER_ORPHAN = new RuleList(
         KnownParentBlkRule.class,
         ValidParentBlkRule.class,
         ValidBlockHeightBlkRule.class,
         ValidCoinbaseBlockHeightBlkRule.class
     );
 
-    private static final RuleList CONNECT_TO_CHAIN = new RuleList(
+    public static final RuleList CONNECT_TO_CHAIN = new RuleList(
         UniqueUnspentCoinbaseBlkRule.class,
         ContextualTransactionCheckBlkRule.class,
         LegalTransactionFeesBlkRule.class,
@@ -109,24 +112,20 @@ public class BlockValidator {
         return facts;
     }
 
-    public BlockValidationResult checkIncomingBlockValid(@NotNull Block block) {
+    public BlockValidationResult validate(@NotNull Block block, @NotNull RuleList ruleList) {
         if (block.getHash() == consensus.getGenesisBlock().getHash()) {
             return BlockValidationResult.passed();
         }
-        return BlockValidationResult.from(new RuleBook(INCOMING_BLOCK).run(createFactMap(block)));
+
+        RuleBook ruleBook = new RuleBook(ruleList);
+
+        ruleBook.addListener(this);
+
+        return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
     }
 
-    public BlockValidationResult checkPostOrphanBlockValid(@NotNull Block block) {
-        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
-            return BlockValidationResult.passed();
-        }
-        return BlockValidationResult.from(new RuleBook(AFTER_ORPHAN).run(createFactMap(block)));
-    }
-
-    public BlockValidationResult checkConnectBlockValid(@NotNull Block block) {
-        if (block.getHash() == consensus.getGenesisBlock().getHash()) {
-            return BlockValidationResult.passed();
-        }
-        return BlockValidationResult.from(new RuleBook(CONNECT_TO_CHAIN).run(createFactMap(block)));
+    @Override
+    public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
+        validationListeners.forEach(l -> l.onRuleValidation(rule, result, ruleBook));
     }
 }

@@ -11,6 +11,8 @@ public class RuleBookResult {
     @Nullable
     protected final RuleBookFailMarker failedRule;
 
+    Object validatedObject;
+
     /**
      * Creates a failed rule book result for a given failed rule.
      */
@@ -55,5 +57,13 @@ public class RuleBookResult {
     @Override
     public String toString() {
         return passed ? "Passed" : MessageFormat.format("Failed, marker: {0}", failedRule);
+    }
+
+    Object getValidatedObject() {
+        return validatedObject;
+    }
+
+    void setValidatedObject(Object object) {
+        this.validatedObject = object;
     }
 }

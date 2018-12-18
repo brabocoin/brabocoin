@@ -2,8 +2,11 @@ package org.brabocoin.brabocoin.gui.view;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -12,12 +15,14 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.gui.control.Chip;
-import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
+import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.time.Instant;
@@ -28,7 +33,7 @@ import java.util.ResourceBundle;
 
 /**
  * Block detail view.
- *
+ * <p>
  * Side pane that shows all block contents.
  */
 public class BlockDetailView extends VBox implements BraboControl, Initializable {
@@ -37,9 +42,12 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         "yyyy-MM-dd HH:mm:ss");
 
     private final @NotNull Blockchain blockchain;
+    private boolean hasActions;
+    @Nullable private BlockValidator validator;
+
 
     @FXML private Label titleLabel;
-    @FXML private Chip forkChip;
+    @FXML private Button buttonValidate;
     @FXML private TextField hashField;
 
     @FXML private TextField blockHeightField;
@@ -53,19 +61,26 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     @FXML private TextField outputTotalField;
     @FXML private TextField sizeField;
 
-    private final ObjectProperty<IndexedBlock> block = new SimpleObjectProperty<>();
+    private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
 
     public BlockDetailView(@NotNull Blockchain blockchain) {
-        this(blockchain, null);
+        this(blockchain, null, null);
     }
 
-    public BlockDetailView(@NotNull Blockchain blockchain, IndexedBlock block) {
+    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator) {
         super();
         this.blockchain = blockchain;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
 
-        this.block.addListener((obs, old, val) -> { if (val != null) loadBlock(val); });
+        hasActions = validator != null;
+
+        this.block.addListener((obs, old, val) -> {
+            if (val != null) {
+                loadBlock(val);
+            }
+        });
         setBlock(block);
     }
 
@@ -73,58 +88,46 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     public void initialize(URL location, ResourceBundle resources) {
     }
 
-    private void loadBlock(@NotNull IndexedBlock indexedBlock) {
-        Block block;
+    private void loadBlock(@NotNull Block block) {
+
+        titleLabel.setText("Block #" + block.getBlockHeight());
+        buttonValidate.setVisible(hasActions);
+        hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
+
+        blockHeightField.setText(String.valueOf(block.getBlockHeight()));
+
+        nonceField.setText(block.getNonce().toString(16));
+        targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), 32));
+        merkleRootField.setText(ByteUtil.toHexString(block.getMerkleRoot().getValue(), 32));
+        previousBlockHashField.setText(ByteUtil.toHexString(
+            block.getPreviousBlockHash().getValue(),
+            32
+        ));
+
+        long timestamp = 0;
         try {
-            block = blockchain.getBlock(indexedBlock.getHash());
+            IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getHash());
+            timestamp = indexedBlock.getBlockInfo().getTimeReceived();
+            Instant instant = Instant.ofEpochSecond(timestamp);
+            LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+            timestampField.setText(DATE_FORMATTER.format(time));
+            numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo()
+                .getTransactionCount()));
+            int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
+            double sizeKiloBytes = sizeBytes / 1000.0;
+            sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
         }
-        catch (DatabaseException e) {
-            return;
-        }
-
-        if (block == null) {
-            return;
-        }
-
-        titleLabel.setText("Block #" + indexedBlock.getBlockInfo().getBlockHeight());
-        hashField.setText(ByteUtil.toHexString(indexedBlock.getHash().getValue(), 32));
-
-        if (blockchain.getMainChain().contains(indexedBlock)) {
-            forkChip.setText("Main chain");
-            forkChip.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
-            forkChip.getStyleClass().removeAll("red", "green");
-            forkChip.getStyleClass().add("green");
-        }
-        else {
-            forkChip.setText("Fork");
-            forkChip.setGraphic(new BraboGlyph(BraboGlyph.Icon.CODE_BRANCH));
-            forkChip.getStyleClass().removeAll("red", "green");
-            forkChip.getStyleClass().add("red");
+        catch (DatabaseException | NullPointerException e) {
+            // ignore
         }
 
-        blockHeightField.setText(String.valueOf(indexedBlock.getBlockInfo().getBlockHeight()));
 
-        long timestamp = indexedBlock.getBlockInfo().getTimeReceived();
-        Instant instant = Instant.ofEpochSecond(timestamp);
-        LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-        timestampField.setText(DATE_FORMATTER.format(time));
-        nonceField.setText(indexedBlock.getBlockInfo().getNonce().toString(16));
-        targetValueField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getTargetValue().getValue(), 32));
-        merkleRootField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getMerkleRoot().getValue(), 32));
-        previousBlockHashField.setText(ByteUtil.toHexString(indexedBlock.getBlockInfo().getPreviousBlockHash().getValue(), 32));
-
-        numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo().getTransactionCount()));
-
-        int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
-        double sizeKiloBytes = sizeBytes / 1000.0;
-        sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
 
         long totalOutput = block.getTransactions().stream()
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
             .sum();
-        outputTotalField.setText(String.valueOf(totalOutput) + " BRC");
+        outputTotalField.setText(totalOutput + " BRC");
 
         loadBlockTransactions(block);
     }
@@ -133,11 +136,26 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     }
 
-    public IndexedBlock getBlock() {
+    public Block getBlock() {
         return block.get();
     }
 
-    public void setBlock(IndexedBlock value) {
+    public void setBlock(Block value) {
+        if (value != null) {
+            hasActions = !new Consensus().getGenesisBlock().getHash().equals(value.getHash())
+                && validator != null;
+        }
         block.setValue(value);
+    }
+
+    @FXML
+    protected void validate(ActionEvent event) {
+        Dialog dialog = new ValidationWindow(
+            blockchain,
+            getBlock(),
+            validator
+        );
+
+        dialog.showAndWait();
     }
 }

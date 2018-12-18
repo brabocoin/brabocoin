@@ -96,7 +96,7 @@ public class TransactionProcessor {
     private @NotNull List<Transaction> removeValidOrphans(@NotNull Hash hash) {
         return transactionPool.removeValidOrphansFromParent(hash, t -> {
             try {
-                ValidationStatus status = transactionValidator.checkTransactionOrphan(t)
+                ValidationStatus status = transactionValidator.validate(t, TransactionValidator.ORPHAN, true)
                     .getStatus();
 
                 if (status != ValidationStatus.ORPHAN) {
@@ -113,7 +113,7 @@ public class TransactionProcessor {
     private ValidationStatus processTransaction(
         @NotNull Transaction transaction) throws DatabaseException {
         TransactionValidationResult result =
-            transactionValidator.checkTransactionValid(transaction);
+            transactionValidator.validate(transaction, TransactionValidator.ALL, true);
 
         processTransactionWithoutValidation(transaction, result);
 
@@ -122,8 +122,8 @@ public class TransactionProcessor {
 
     private ValidationStatus processDeorphanatedTransaction(
         @NotNull Transaction transaction) throws DatabaseException {
-        TransactionValidationResult result = transactionValidator.checkTransactionPostOrphan(
-            transaction);
+        TransactionValidationResult result = transactionValidator.validate(
+            transaction, TransactionValidator.AFTER_ORPHAN, true);
 
         processTransactionWithoutValidation(transaction, result);
 
@@ -155,7 +155,7 @@ public class TransactionProcessor {
                 + " pool UTXO.");
         utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        if (transactionValidator.checkTransactionIndependent(transaction).isPassed()) {
+        if (transactionValidator.validate(transaction, TransactionValidator.ORPHAN, false).isPassed()) {
             LOGGER.info("New transaction is added as independent.");
             transactionPool.addIndependentTransaction(transaction);
         }
@@ -205,7 +205,7 @@ public class TransactionProcessor {
             Hash hash = transaction.getHash();
             transactionPool.promoteDependentToIndependentFromParent(
                 hash,
-                t -> transactionValidator.checkTransactionIndependent(t).isPassed()
+                t -> transactionValidator.validate(t, TransactionValidator.ORPHAN, false).isPassed()
             );
         }
 

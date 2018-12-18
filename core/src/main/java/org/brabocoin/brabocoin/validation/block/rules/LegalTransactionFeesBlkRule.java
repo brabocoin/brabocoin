@@ -3,9 +3,11 @@ package org.brabocoin.brabocoin.validation.block.rules;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
 
+@ValidationRule(name="Legal transaction fees sum", description = "The sum of all transaction fees is within the allowed range, and does not overflow.")
 public class LegalTransactionFeesBlkRule extends BlockRule {
 
     private ReadonlyUTXOSet utxoSet;

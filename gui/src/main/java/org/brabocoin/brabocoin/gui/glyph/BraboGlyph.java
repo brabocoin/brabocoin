@@ -90,7 +90,7 @@ public class BraboGlyph extends Glyph {
         ARROW_UP(Font.FONT_AWESOME, '\uf062'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
         BROADCAST_TOWER(Font.FONT_AWESOME, '\uf519'),
-        CHECK(Font.FONT_AWESOME, '\uf00c'),
+        CHECK(Font.FONT_AWESOME, '\uf058'),
         CODE_BRANCH(Font.FONT_AWESOME, '\uf126'),
         DATABASE(Font.FONT_AWESOME, '\uf1c0'),
         LEVEL_DOWN_ALT(Font.FONT_AWESOME, '\uf3be'),
@@ -102,7 +102,10 @@ public class BraboGlyph extends Glyph {
         STOP(Font.FONT_AWESOME, '\uf04d'),
         TASKS(Font.FONT_AWESOME, '\uf0ae'),
         TIMES(Font.FONT_AWESOME, '\uf00d'),
-        WALLET(Font.FONT_AWESOME, '\uf555');
+        WALLET(Font.FONT_AWESOME, '\uf555'),
+        CIRCLE(Font.FONT_AWESOME, '\uf111'),
+        CROSS(Font.FONT_AWESOME, '\uf057'),
+        CIRCLEMINUS(Font.FONT_AWESOME, '\uf056');
 
         private final @NotNull Font font;
         private final char ch;

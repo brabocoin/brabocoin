@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.Double?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns="http://javafx.com/javafx/8.0.172-ea"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.TransactionDetailView">
+    <fx:define>
+        <Double fx:id="vgap" fx:value="15"/>
+        <Double fx:id="hgap" fx:value="15"/>
+    </fx:define>
+
+    <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
+        <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+            <Label fx:id="titleLabel" styleClass="side-pane-title"/>
+        </HBox>
+
+        <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+    </GridPane>
+
+    <TitledPane text="Inputs">
+        <TableView fx:id="inputTableView">
+            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+        </TableView>
+    </TitledPane>
+
+    <TitledPane text="Outputs">
+        <TableView fx:id="outputTableView">
+            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+        </TableView>
+    </TitledPane>
+
+    <TitledPane text="Signatures">
+        <TableView fx:id="signatureTableView">
+            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+        </TableView>
+    </TitledPane>
+</fx:root>

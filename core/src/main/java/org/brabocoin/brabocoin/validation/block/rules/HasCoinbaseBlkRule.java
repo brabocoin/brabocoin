@@ -1,8 +1,10 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
+@ValidationRule(name="First transaction coinbase", description = "The first transaction in the block is a coinbase transaction.")
 public class HasCoinbaseBlkRule extends BlockRule {
 
     @Override
