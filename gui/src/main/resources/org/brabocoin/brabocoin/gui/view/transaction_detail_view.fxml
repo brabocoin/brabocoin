@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -19,7 +19,7 @@
     </fx:define>
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
-        <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+        <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Label fx:id="titleLabel" styleClass="side-pane-title"/>
         </HBox>
 
@@ -27,21 +27,34 @@
         <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 
-    <TitledPane text="Inputs">
-        <TableView fx:id="inputTableView">
-            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
-        </TableView>
-    </TitledPane>
+    <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">
+        <VBox spacing="12" style="-fx-padding: 0.8em;">
+            <TitledPane text="Inputs" collapsible="false">
+                <TableView fx:id="inputTableView" fixedCellSize="24">
+                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <placeholder>
+                        <Label text="No inputs found"/>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
 
-    <TitledPane text="Outputs">
-        <TableView fx:id="outputTableView">
-            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
-        </TableView>
-    </TitledPane>
+            <TitledPane text="Outputs" collapsible="false">
+                <TableView fx:id="outputTableView" fixedCellSize="24">
+                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <placeholder>
+                        <Label text="No outputs found"/>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
 
-    <TitledPane text="Signatures">
-        <TableView fx:id="signatureTableView">
-            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
-        </TableView>
-    </TitledPane>
+            <TitledPane text="Signatures" collapsible="false">
+                <TableView fx:id="signatureTableView" fixedCellSize="24">
+                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <placeholder>
+                        <Label text="No signatures found"/>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
+        </VBox>
+    </ScrollPane>
 </fx:root>

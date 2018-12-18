@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -18,17 +19,22 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -40,21 +46,24 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss");
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     private final @NotNull Blockchain blockchain;
     private boolean hasActions;
     @Nullable private BlockValidator validator;
 
+    @FXML private VBox transactionsPane;
 
     @FXML private Label titleLabel;
     @FXML private Button buttonValidate;
     @FXML private TextField hashField;
 
+    @FXML private TextField networkIdField;
+    @FXML private TextField previousBlockHashField;
+    @FXML private TextField merkleRootField;
+    @FXML private TextField targetValueField;
     @FXML private TextField blockHeightField;
     @FXML private TextField nonceField;
-    @FXML private TextField targetValueField;
-    @FXML private TextField merkleRootField;
-    @FXML private TextField previousBlockHashField;
 
     @FXML private TextField timestampField;
     @FXML private TextField numTransactionsField;
@@ -94,9 +103,10 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         buttonValidate.setVisible(hasActions);
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
 
+        networkIdField.setText(String.valueOf(block.getNetworkId()));
         blockHeightField.setText(String.valueOf(block.getBlockHeight()));
 
-        nonceField.setText(block.getNonce().toString(16));
+        nonceField.setText(block.getNonce().toString(16).toUpperCase());
         targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), 32));
         merkleRootField.setText(ByteUtil.toHexString(block.getMerkleRoot().getValue(), 32));
         previousBlockHashField.setText(ByteUtil.toHexString(
@@ -127,13 +137,31 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
             .sum();
-        outputTotalField.setText(totalOutput + " BRC");
+        BigDecimal roundedOutput = BigDecimal.valueOf(totalOutput)
+            .divide(BigDecimal.valueOf(Consensus.COIN), 2, RoundingMode.UNNECESSARY);
+        outputTotalField.setText(DECIMAL_FORMAT.format(roundedOutput) + " BRC");
 
         loadBlockTransactions(block);
     }
 
     private void loadBlockTransactions(@NotNull Block block) {
+        transactionsPane.getChildren().clear();
 
+        List<Transaction> transactions = block.getTransactions();
+        for (int i = 0; i < transactions.size(); i++) {
+            Transaction tx = transactions.get(i);
+
+            TransactionDetailView detailView = new TransactionDetailView(tx);
+            detailView.setShowHeader(false);
+
+            TitledPane pane = new TitledPane(
+                i == 0 ? "Coinbase transaction" : ("Transaction " + i),
+                detailView
+            );
+            pane.setExpanded(false);
+
+            transactionsPane.getChildren().add(pane);
+        }
     }
 
     public Block getBlock() {

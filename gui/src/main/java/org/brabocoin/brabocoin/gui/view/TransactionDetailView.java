@@ -1,6 +1,9 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -9,6 +12,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
@@ -31,11 +35,14 @@ import java.util.ResourceBundle;
 public class TransactionDetailView extends VBox implements BraboControl, Initializable {
 
     private final ObjectProperty<Transaction> transaction = new SimpleObjectProperty<>();
+    private final BooleanProperty showHeader = new SimpleBooleanProperty(true);
+
     @FXML private TableView<TableSignatureEntry> signatureTableView;
     @FXML private TableView<TableOutputEntry> outputTableView;
     @FXML private TableView<TableInputEntry> inputTableView;
     @FXML private TextField hashField;
     @FXML private Label titleLabel;
+    @FXML private HBox header;
 
     public TransactionDetailView(Transaction transaction) {
         super();
@@ -90,6 +97,15 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Bind table heights to fit row content
+        fitTableRowContent(inputTableView, 4);
+        fitTableRowContent(outputTableView, 4);
+        fitTableRowContent(signatureTableView, 4);
+
+        // Bind show header property
+        header.managedProperty().bind(showHeader);
+        header.visibleProperty().bind(showHeader);
+
         TableColumn<TableInputEntry, Integer> inputIndex = new TableColumn<>("Index");
         inputIndex.setCellValueFactory(new PropertyValueFactory<>("index"));
 
@@ -138,12 +154,30 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         );
     }
 
+    private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
+        tableView.prefHeightProperty().bind(tableView.fixedCellSizeProperty().multiply(Bindings.size(tableView.getItems()).add(1.01)));
+        tableView.minHeightProperty().bind(Bindings.max(tableView.prefHeightProperty(), tableView.fixedCellSizeProperty().multiply(minRowsVisible + 1.01)));
+        tableView.maxHeightProperty().bind(tableView.prefHeightProperty());
+    }
+
     public Transaction getTransaction() {
         return transaction.get();
     }
 
     public void setTransaction(Transaction value) {
         transaction.setValue(value);
+    }
+
+    public void setShowHeader(boolean value) {
+        showHeader.set(value);
+    }
+
+    public boolean isShowHeader() {
+        return showHeader.get();
+    }
+
+    public BooleanProperty showHeaderProperty() {
+        return showHeader;
     }
 
     public class TableInputEntry extends Input {

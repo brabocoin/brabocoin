@@ -64,7 +64,7 @@ public class Consensus {
     /**
      * The amount of brabocents that equals one brabocoin.
      */
-    private static final long COIN = 100L;
+    public static final long COIN = 100;
 
     /**
      * The block reward value.
@@ -109,10 +109,6 @@ public class Consensus {
                 .getBlockHeight()).thenComparing(Comparator.comparing(IndexedBlock::getHash)
                 .reversed()))
             .orElse(null);
-    }
-
-    public long getCoin() {
-        return COIN;
     }
 
     /**
