@@ -11,7 +11,7 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 public class TransactionCreationWindow extends BraboDialog<Transaction> {
 
     private static final double WIDTH = 500;
-    private static final double HEIGHT = 500;
+    private static final double HEIGHT = 700;
     private final Wallet wallet;
 
     private VBox transactionCreationView;

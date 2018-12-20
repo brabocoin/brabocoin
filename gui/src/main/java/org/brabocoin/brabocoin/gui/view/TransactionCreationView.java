@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.gui.view;
 
 import com.google.protobuf.ByteString;
+import javafx.animation.FadeTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -10,6 +11,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 import javafx.util.converter.LongStringConverter;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -41,6 +43,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     @FXML public Button buttonFindInputs;
     @FXML public Button buttonRemoveOutput;
     @FXML public Button buttonRemoveInput;
+    @FXML public Button buttonSignTransaction;
+    @FXML public TableView signatureTableView;
+    @FXML public VBox inputOutputVBox;
 
     public TransactionCreationView(Wallet wallet) {
         super();
@@ -184,6 +189,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 new Hash(ByteString.EMPTY), 0
             ), outputTableView.getItems().size())
         );
+        updateIndices(outputTableView);
     }
 
     @FXML
@@ -191,6 +197,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         outputTableView.getItems().remove(
             outputTableView.getSelectionModel().getSelectedItem()
         );
+        updateIndices(outputTableView);
     }
 
     @FXML
@@ -205,6 +212,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 0L
             )
         );
+        updateIndices(inputTableView);
     }
 
     @FXML
@@ -212,10 +220,36 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         inputTableView.getItems().remove(
             inputTableView.getSelectionModel().getSelectedItem()
         );
+        updateIndices(inputTableView);
     }
 
     @FXML
     private void findInputs(ActionEvent event) {
 
+    }
+
+    @FXML
+    private void signTransaction(ActionEvent event) {
+        FadeTransition fade = new FadeTransition();
+        fade.setDuration(Duration.millis(100));
+        fade.setFromValue(1);
+        fade.setToValue(0.1);
+        fade.setCycleCount(2);
+        fade.setAutoReverse(true);
+        fade.setNode(inputOutputVBox);
+        fade.play();
+
+
+    }
+
+    private <S> void updateIndices(TableView<S> table) {
+        for (int i = 0; i < table.getItems().size(); i++) {
+            S item = table.getItems().get(i);
+            if (item instanceof EditableTableInputEntry) {
+                ((EditableTableInputEntry)item).setIndex(i);
+            } else if (item instanceof EditableTableOutputEntry) {
+                ((EditableTableOutputEntry)item).setIndex(i);
+            }
+        }
     }
 }

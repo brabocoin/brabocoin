@@ -1,5 +1,7 @@
 .action-table {
+    -fx-pref-height: 200px;
     -fx-padding: 5px 0 5px 0;
+    -fx-min-height: 100px;
 }
 
 .table-action-box {
@@ -8,4 +10,12 @@
 
 .column-fixed {
     -fx-text-fill: derive(-fx-text-base-color, 95%);
+}
+
+#input-output-box {
+    -fx-border-width: 2px;
+    -fx-border-color: #aaaaaa;
+    -fx-border-radius: 2px;
+    -fx-border-style: solid;
+    -fx-padding: 10px;
 }

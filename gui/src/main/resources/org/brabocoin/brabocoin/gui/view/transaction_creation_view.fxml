@@ -10,31 +10,46 @@
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.TransactionCreationView">
-    <VBox styleClass="action-table">
-        <TitledPane text="Inputs">
-            <TableView fx:id="inputTableView">
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-            </TableView>
-        </TitledPane>
+    <VBox VBox.vgrow="ALWAYS">
+        <VBox fx:id="inputOutputVBox" id="input-output-box" VBox.vgrow="ALWAYS">
+            <VBox styleClass="action-table" VBox.vgrow="ALWAYS">
+                <TitledPane text="Inputs">
+                    <TableView fx:id="inputTableView">
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                        </columnResizePolicy>
+                    </TableView>
+                </TitledPane>
+                <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
+                    <Button fx:id="buttonFindInputs" text="Find" onAction="#findInputs"/>
+                    <Button fx:id="buttonAddInput" text="+" onAction="#addInput"/>
+                    <Button fx:id="buttonRemoveInput" text="-" onAction="#removeInput"/>
+                </HBox>
+            </VBox>
+            <VBox styleClass="action-table" VBox.vgrow="ALWAYS">
+                <TitledPane text="Outputs" >
+                    <TableView fx:id="outputTableView">
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                        </columnResizePolicy>
+                    </TableView>
+                </TitledPane>
+                <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
+                    <Button fx:id="buttonAddOutput" text="+" onAction="#addOutput"/>
+                    <Button fx:id="buttonRemoveOutput" text="-" onAction="#removeOutput"/>
+                </HBox>
+            </VBox>
+        </VBox>
+
         <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
-            <Button fx:id="buttonFindInputs" text="Find" onAction="#findInputs"/>
-            <Button fx:id="buttonAddInput" text="+" onAction="#addInput"/>
-            <Button fx:id="buttonRemoveInput" text="-" onAction="#removeInput"/>
+            <Button fx:id="buttonSignTransaction" text="Sign" onAction="#signTransaction"/>
         </HBox>
     </VBox>
-    <VBox styleClass="action-table">
-        <TitledPane text="Outputs">
-            <TableView fx:id="outputTableView">
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-            </TableView>
-        </TitledPane>
-        <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
-            <Button fx:id="buttonAddOutput" text="+" onAction="#addOutput"/>
-            <Button fx:id="buttonRemoveOutput" text="-" onAction="#removeOutput"/>
-        </HBox>
-    </VBox>
+    <TitledPane text="Signatures" styleClass="action-table" VBox.vgrow="ALWAYS">
+        <TableView fx:id="signatureTableView">
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+    </TitledPane>
 </fx:root>

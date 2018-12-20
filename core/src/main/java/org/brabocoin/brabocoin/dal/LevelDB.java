@@ -128,6 +128,9 @@ public class LevelDB implements KeyValueStore {
         LOGGER.fine("LevelDB iterator constructor.");
         return new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();
+            {
+                iterator.seekToFirst();
+            }
 
             @Override
             public boolean hasNext() {
