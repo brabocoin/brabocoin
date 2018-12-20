@@ -65,4 +65,11 @@ public class EditableTableInputEntry {
     public void setAmount(long amount) {
         this.amount.set(amount);
     }
+
+    public Input toInput() {
+        return new Input(
+            address.get(),
+            referencedOutputIndex.get()
+        );
+    }
 }

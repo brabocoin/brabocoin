@@ -42,4 +42,11 @@ public class EditableTableOutputEntry {
     public void setAmount(long amount) {
         this.amount.set(amount);
     }
+
+    public Output toOutput() {
+        return new Output(
+            address.get(),
+            amount.get()
+        );
+    }
 }

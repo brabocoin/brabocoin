@@ -7,7 +7,6 @@ import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.math.ec.ECPoint;
-import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ public class Signer {
      *     The message that is signed.
      * @return Whether the signature is valid.
      */
-    public synchronized boolean verifySignature(@NotNull Signature signature, @NotNull Hash publicKeyHash,
+    public synchronized boolean verifySignature(@NotNull Signature signature, @NotNull org.brabocoin.brabocoin.model.Hash publicKeyHash,
                                    @NotNull ByteString message) {
         LOGGER.fine("Verifying a signature.");
 

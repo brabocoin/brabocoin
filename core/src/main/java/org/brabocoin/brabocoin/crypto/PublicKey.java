@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
 import org.bouncycastle.math.ec.ECPoint;
-import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.util.Base58Check;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public class PublicKey {
     /**
      * Cached hash
      */
-    private Hash hash;
+    private org.brabocoin.brabocoin.model.Hash hash;
 
     /**
      * Construct a public key from compressed form, on the provided elliptic curve.
@@ -61,7 +60,7 @@ public class PublicKey {
      *     The hash of the public key.
      * @return The address corresponding to the public key.
      */
-    public static @NotNull String getBase58AddressFromHash(@NotNull Hash hash) {
+    public static @NotNull String getBase58AddressFromHash(@NotNull org.brabocoin.brabocoin.model.Hash hash) {
         return Base58Check.encode(ADDRESS_PREFIX.concat(hash.getValue()));
     }
 
@@ -98,7 +97,7 @@ public class PublicKey {
      *
      * @return The hash of the public key.
      */
-    public @NotNull Hash getHash() {
+    public @NotNull org.brabocoin.brabocoin.model.Hash getHash() {
         if (hash == null) {
             hash = Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
         }

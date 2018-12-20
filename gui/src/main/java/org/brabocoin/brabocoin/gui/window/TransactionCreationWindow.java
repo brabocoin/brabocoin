@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 
 public class TransactionCreationWindow extends BraboDialog<Transaction> {
 
-    private static final double WIDTH = 500;
+    private static final double WIDTH = 600;
     private static final double HEIGHT = 700;
     private final Wallet wallet;
 
@@ -35,6 +35,8 @@ public class TransactionCreationWindow extends BraboDialog<Transaction> {
         Node closeButton = this.getDialogPane().lookupButton(ButtonType.CLOSE);
         closeButton.managedProperty().bind(closeButton.visibleProperty());
         closeButton.setVisible(false);
+
+
 
         this.getDialogPane().setPrefWidth(WIDTH);
         this.getDialogPane().setPrefHeight(HEIGHT);
