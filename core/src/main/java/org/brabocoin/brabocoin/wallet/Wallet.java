@@ -84,6 +84,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     private final @NotNull Blockchain blockchain;
 
+    private final @NotNull ReadonlyUTXOSet watchedUtxoSet;
+
     /**
      * Cached mining address.
      */
@@ -114,9 +116,10 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
         this.privateKeyCipher = privateKeyCipher;
         this.utxoSet = utxoSet;
         this.blockchain = blockchain;
+        this.watchedUtxoSet = watchedUtxoSet;
 
         // Add listeners
-        watchedUtxoSet.addListener(this);
+        this.watchedUtxoSet.addListener(this);
         this.blockchain.addListener(this);
     }
 
@@ -350,8 +353,14 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     @Override
     public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
-        // Set the UTXO as spent in the wallet UTXO set as well
         try {
+            // First check if the output still exists in the composite set,
+            // as the output may be removed in only one of them.
+            if (watchedUtxoSet.isUnspent(transactionHash, outputIndex)) {
+                return;
+            }
+
+            // Set the UTXO as spent in the wallet UTXO set as well.
             utxoSet.setOutputSpent(transactionHash, outputIndex);
         }
         catch (DatabaseException e) {
