@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import java.lang.Double?>
+
+<fx:root type="javafx.scene.control.TitledPane" collapsible="false" text="Block header" xmlns:fx="http://javafx.com/fxml"
+         fx:controller="org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane">
+    <fx:define>
+        <Double fx:id="vgap" fx:value="15"/>
+        <Double fx:id="hgap" fx:value="15"/>
+    </fx:define>
+
+    <GridPane vgap="$vgap" hgap="$hgap">
+        <Label text="Network ID" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="networkIdField" editable="false" styleClass="label-like" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+        <Label text="Previous block hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="previousBlockHashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+        <Label text="Merkle root" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="merkleRootField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+        <Label text="Target value" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="targetValueField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+        <Label text="Block height" GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="blockHeightField" editable="false" styleClass="label-like" GridPane.rowIndex="4" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+        <Label text="Nonce" GridPane.rowIndex="5" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <TextField fx:id="nonceField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="5" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+    </GridPane>
+</fx:root>
