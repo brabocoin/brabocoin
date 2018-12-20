@@ -9,17 +9,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Uses multiple UTXO sets which are used as fallback (in order).
  */
-public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
+public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet, UTXOSetListener {
+
+    private static final Logger LOGGER = Logger.getLogger(CompositeReadonlyUTXOSet.class.getName());
 
     private final @NotNull List<ReadonlyUTXOSet> utxoSets;
+    private final @NotNull Set<UTXOSetListener> listeners;
 
     public CompositeReadonlyUTXOSet(@NotNull List<ReadonlyUTXOSet> utxoSets) {
         this.utxoSets = new ArrayList<>(utxoSets);
+        this.listeners = new HashSet<>();
+
+        this.utxoSets.forEach(set -> set.addListener(this));
     }
 
     public CompositeReadonlyUTXOSet(ReadonlyUTXOSet... utxoSets) {
@@ -75,12 +85,32 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet {
     }
 
     @Override
+    public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
+                                @NotNull UnspentOutputInfo info) {
+        listeners.forEach(l -> l.onOutputUnspent(transactionHash, outputIndex, info));
+    }
+
+    @Override
+    public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
+        // Check if output is actually spent in all sets in the composite set
+        try {
+            if (!this.isUnspent(transactionHash, outputIndex)) {
+                listeners.forEach(l -> l.onOutputSpent(transactionHash, outputIndex));
+            }
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Could not read UTXO database.", e);
+            throw new RuntimeException("Could not read UTXO database.", e);
+        }
+    }
+
+    @Override
     public void addListener(@NotNull UTXOSetListener listener) {
-        utxoSets.forEach(s -> s.addListener(listener));
+        listeners.add(listener);
     }
 
     @Override
     public void removeListener(@NotNull UTXOSetListener listener) {
-        utxoSets.forEach(s -> s.removeListener(listener));
+        listeners.remove(listener);
     }
 }
