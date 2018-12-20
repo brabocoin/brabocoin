@@ -8,20 +8,20 @@ import javafx.scene.control.TabPane;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
-import org.brabocoin.brabocoin.wallet.Wallet;
+import org.brabocoin.brabocoin.node.state.State;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class WalletView extends TabPane implements BraboControl, Initializable {
 
-    private final Wallet wallet;
+    private final State state;
 
     @FXML public Button buttonCreateTransaction;
 
-    public WalletView(Wallet wallet) {
+    public WalletView(State state) {
         super();
-        this.wallet = wallet;
+        this.state = state;
 
         BraboControlInitializer.initialize(this);
     }
@@ -33,6 +33,10 @@ public class WalletView extends TabPane implements BraboControl, Initializable {
 
     @FXML
     private void createTransaction(ActionEvent event) {
-        new TransactionCreationWindow(wallet).showAndWait();
+        new TransactionCreationWindow(
+            state.getWallet(),
+            state.getBlockchain(),
+            state.getConsensus()
+        ).showAndWait();
     }
 }

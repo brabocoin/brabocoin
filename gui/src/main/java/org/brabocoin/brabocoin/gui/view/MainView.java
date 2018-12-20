@@ -55,7 +55,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     /**
      * Create the main view.
      *
-     * @param state The application state.
+     * @param state
+     *     The application state.
      */
     public MainView(@NotNull State state) {
         super();
@@ -89,9 +90,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             taskManager
         );
 
-        walletView = new WalletView(
-            state.getWallet()
-        );
+        walletView = new WalletView(state);
 
         toggleToViewMap = new HashMap<>();
         toggleToViewMap.put(stateToggleButton, currentStateView);

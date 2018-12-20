@@ -320,9 +320,18 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 break;
             }
 
+            // Prevent coinbase maturity failure
             if (info.getValue().isCoinbase() && blockchain.getMainChain()
                 .getHeight() - consensus.getCoinbaseMaturityDepth() < info.getValue()
                 .getBlockHeight()) {
+                continue;
+            }
+
+            // Prevent duplicates
+            if (inputTableView.getItems().stream().anyMatch(
+                i -> i.getReferencedTransaction().equals(info.getKey().getReferencedTransaction()) &&
+                    i.getReferencedOutputIndex() == info.getKey().getReferencedOutputIndex()
+            )) {
                 continue;
             }
 
