@@ -45,8 +45,8 @@ public class BlockHeaderPane extends TitledPane implements BraboControl {
         blockHeightField.setText(String.valueOf(block.getBlockHeight()));
 
         nonceField.setText(block.getNonce().toString(Constants.HEX).toUpperCase());
-        targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), 32));
-        merkleRootField.setText(ByteUtil.toHexString(block.getMerkleRoot().getValue(), 32));
+        targetValueField.setText(ByteUtil.toHexString(block.getTargetValue().getValue(), Constants.BLOCK_HASH_SIZE));
+        merkleRootField.setText(ByteUtil.toHexString(block.getMerkleRoot().getValue(), Constants.BLOCK_HASH_SIZE));
         previousBlockHashField.setText(ByteUtil.toHexString(
             block.getPreviousBlockHash().getValue(),
             Constants.BLOCK_HASH_SIZE
