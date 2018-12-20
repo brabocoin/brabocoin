@@ -1,7 +1,5 @@
 package org.brabocoin.brabocoin.gui.window;
 
-import javafx.scene.Node;
-import javafx.scene.control.ButtonType;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.TransactionCreationView;
@@ -29,14 +27,6 @@ public class TransactionCreationWindow extends BraboDialog<Transaction> {
         // Remove header
         setHeaderText(null);
         setGraphic(null);
-
-        // Add close button
-        this.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        Node closeButton = this.getDialogPane().lookupButton(ButtonType.CLOSE);
-        closeButton.managedProperty().bind(closeButton.visibleProperty());
-        closeButton.setVisible(false);
-
-
 
         this.getDialogPane().setPrefWidth(WIDTH);
         this.getDialogPane().setPrefHeight(HEIGHT);

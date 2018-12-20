@@ -73,6 +73,8 @@ public class NodeEnvironment {
     private Queue<Runnable> messageQueue;
     private final List<BlockReceivedListener> blockListeners;
     private final List<TransactionReceivedListener> transactionListeners;
+    private final int maxSequentialOrphanBlocks;
+    private int sequentialOrphanBlockCount = 0;
 
     /*
      * Processors
@@ -98,6 +100,7 @@ public class NodeEnvironment {
         this.transactionPool = state.getTransactionPool();
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
+        this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
     }
@@ -279,13 +282,24 @@ public class NodeEnvironment {
                 Level.FINEST,
                 () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus)
             );
+
+            if (processedBlockStatus == ValidationStatus.VALID) {
+                sequentialOrphanBlockCount = 0;
+            }
+
             switch (processedBlockStatus) {
                 case ORPHAN:
-                    messageQueue.add(() -> getBlocksRequest(
-                        Collections.singletonList(block.getPreviousBlockHash()),
-                        peers,
-                        false
-                    ));
+                    sequentialOrphanBlockCount++;
+                    if (sequentialOrphanBlockCount > maxSequentialOrphanBlocks) {
+                        sequentialOrphanBlockCount = 0;
+                        messageQueue.add(this::updateBlockchain);
+                    } else {
+                        messageQueue.add(() -> getBlocksRequest(
+                            Collections.singletonList(block.getPreviousBlockHash()),
+                            peers,
+                            false
+                        ));
+                    }
                     // Fall-through intended
                 case VALID:
                     if (propagate) {

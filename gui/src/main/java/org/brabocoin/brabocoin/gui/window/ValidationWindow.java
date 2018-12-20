@@ -44,7 +44,6 @@ public class ValidationWindow extends BraboDialog {
 
         masterDetailPane = new ValidationView(transaction, validator);
         setProperties();
-
     }
 
     private void setProperties() {

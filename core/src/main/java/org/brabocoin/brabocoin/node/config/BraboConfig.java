@@ -74,4 +74,6 @@ public interface BraboConfig {
      * @return The transaction history file path.
      */
     String transactionHistoryFile();
+
+    int maxSequentialOrphanBlocks();
 }

@@ -113,10 +113,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         });
         refOutputIndex.setEditable(true);
 
-        TableColumn<EditableTableInputEntry, org.brabocoin.brabocoin.model.Hash> inputAddress = new TableColumn<>(
+        TableColumn<EditableTableInputEntry, Hash> inputAddress = new TableColumn<>(
             "Address");
         inputAddress.setCellValueFactory(new PropertyValueFactory<>("address"));
-        inputAddress.setCellFactory(l -> new TextFieldTableCell<>(new Base58StringConverter()));
+        inputAddress.setCellFactory(l -> new TextFieldTableCell<>(new HashStringConverter()));
         inputAddress.setEditable(false);
         inputAddress.getStyleClass().add("column-fixed");
 
@@ -140,7 +140,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         outputIndex.setMinWidth(INDEX_COLUMN_WIDTH);
         outputIndex.setMaxWidth(INDEX_COLUMN_WIDTH);
 
-        TableColumn<EditableTableOutputEntry, org.brabocoin.brabocoin.model.Hash> address = new TableColumn<>("Address");
+        TableColumn<EditableTableOutputEntry, Hash> address = new TableColumn<>("Address");
         address.setCellValueFactory(new PropertyValueFactory<>("address"));
         address.setCellFactory(EditCell.forTableColumn(new Base58StringConverter()));
         address.setOnEditCommit(event -> commitEdit(
