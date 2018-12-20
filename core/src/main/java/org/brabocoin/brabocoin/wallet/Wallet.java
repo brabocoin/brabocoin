@@ -353,14 +353,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     @Override
     public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
+        // Set the UTXO as spent in the wallet UTXO set as well.
         try {
-            // First check if the output still exists in the composite set,
-            // as the output may be removed in only one of them.
-            if (watchedUtxoSet.isUnspent(transactionHash, outputIndex)) {
-                return;
-            }
-
-            // Set the UTXO as spent in the wallet UTXO set as well.
             utxoSet.setOutputSpent(transactionHash, outputIndex);
         }
         catch (DatabaseException e) {
