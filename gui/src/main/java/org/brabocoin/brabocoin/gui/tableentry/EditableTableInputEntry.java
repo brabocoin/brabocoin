@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.tableentry;
 
+import com.google.protobuf.ByteString;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -23,6 +24,14 @@ public class EditableTableInputEntry {
         this.referencedOutputIndex = new SimpleIntegerProperty(input.getReferencedOutputIndex());
         this.address = new SimpleObjectProperty<>(address);
         this.amount = new SimpleLongProperty(amount);
+        this.index = new SimpleIntegerProperty(index);
+    }
+
+    public EditableTableInputEntry(Input input, int index) {
+        this.referencedTransaction = new SimpleObjectProperty<>(input.getReferencedTransaction());
+        this.referencedOutputIndex = new SimpleIntegerProperty(input.getReferencedOutputIndex());
+        this.address = new SimpleObjectProperty<>(new Hash(ByteString.EMPTY));
+        this.amount = new SimpleLongProperty(0);
         this.index = new SimpleIntegerProperty(index);
     }
 

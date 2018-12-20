@@ -42,6 +42,7 @@
         </VBox>
 
         <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
+            <Button fx:id="buttonCreateChange" text="Create change" onAction="#createChange"/>
             <Button fx:id="buttonSignTransaction" text="Sign" onAction="#signTransaction"/>
         </HBox>
     </VBox>

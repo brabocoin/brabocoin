@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
-import java.nio.ByteBuffer;
 
 /**
  * Utility class for raw byte data structures.
@@ -53,7 +52,7 @@ public final class ByteUtil {
      * @return The integer representation of the value.
      */
     public static int toInt(@NotNull ByteString value) {
-        return ByteBuffer.wrap(value.toByteArray()).getInt();
+        return Ints.fromByteArray(value.toByteArray());
     }
 
     /**
