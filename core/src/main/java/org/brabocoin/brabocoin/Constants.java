@@ -16,6 +16,8 @@ public final class Constants {
 
     public static final int BLOCK_HASH_SIZE = 32;
 
+    public static final int TRANSACTION_HASH_SIZE = 32;
+
     /**
      * PBKDF2
      */

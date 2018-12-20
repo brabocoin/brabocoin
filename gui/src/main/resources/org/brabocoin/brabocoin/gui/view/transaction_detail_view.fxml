@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -20,7 +21,7 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label fx:id="titleLabel" styleClass="side-pane-title"/>
+            <Label text="Transaction" styleClass="side-pane-title"/>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
@@ -31,7 +32,11 @@
         <VBox spacing="12" style="-fx-padding: 0.8em;">
             <TitledPane text="Inputs" collapsible="false">
                 <TableView fx:id="inputTableView" fixedCellSize="24">
-                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <columns>
+                        <TableColumn fx:id="inputIndexColumn" sortable="false" text="Index"/>
+                        <TableColumn fx:id="inputReferencedTxColumn" sortable="false" text="Referenced transaction hash"/>
+                        <TableColumn fx:id="inputReferencedOutputColumn" sortable="false" text="Output index"/>
+                    </columns>
                     <placeholder>
                         <Label text="No inputs found"/>
                     </placeholder>
@@ -40,7 +45,11 @@
 
             <TitledPane text="Outputs" collapsible="false">
                 <TableView fx:id="outputTableView" fixedCellSize="24">
-                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <columns>
+                        <TableColumn fx:id="outputIndexColumn" sortable="false" text="Index"/>
+                        <TableColumn fx:id="outputAddressColumn" sortable="false" text="Address"/>
+                        <TableColumn fx:id="outputAmountColumn" sortable="false" text="Amount"/>
+                    </columns>
                     <placeholder>
                         <Label text="No outputs found"/>
                     </placeholder>
@@ -49,7 +58,12 @@
 
             <TitledPane text="Signatures" collapsible="false">
                 <TableView fx:id="signatureTableView" fixedCellSize="24">
-                    <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                    <columns>
+                        <TableColumn fx:id="sigIndexColumn" sortable="false" text="Index"/>
+                        <TableColumn fx:id="sigRColumn" sortable="false" text="R"/>
+                        <TableColumn fx:id="sigSColumn" sortable="false" text="S"/>
+                        <TableColumn fx:id="sigPubKeyColumn" sortable="false" text="Public key"/>
+                    </columns>
                     <placeholder>
                         <Label text="No signatures found"/>
                     </placeholder>
