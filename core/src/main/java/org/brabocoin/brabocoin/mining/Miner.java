@@ -135,7 +135,7 @@ public class Miner {
                     try {
                         return TransactionUtil.computeFee(t, utxoSet);
                     }
-                    catch (DatabaseException e) {
+                    catch (DatabaseException | IllegalStateException e) {
                         return 0;
                     }
                 })
