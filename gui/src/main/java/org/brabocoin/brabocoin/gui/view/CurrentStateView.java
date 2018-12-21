@@ -9,6 +9,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.BlockchainListener;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -92,7 +93,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             Hash hash = features.getValue().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
         });
-        hashColumn.setCellFactory(col -> new HashTableCell<>());
+        hashColumn.setCellFactory(col -> new HashTableCell<>(Constants.BLOCK_HASH_SIZE));
 
         sizeColumn.setCellValueFactory(features -> {
             int sizeBytes = features.getValue().getBlockInfo().getSizeInFile();

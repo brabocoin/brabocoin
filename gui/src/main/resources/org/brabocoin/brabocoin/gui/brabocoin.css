@@ -54,6 +54,12 @@
     -fx-font-size: 2em;
 }
 
+.side-pane-title-graphic {
+    -fx-pref-height: 2em;
+    -fx-max-height: 2em;
+    -fx-max-width: 2em;
+}
+
 .text-input.label-like {
     -fx-text-fill: -fx-text-background-color;
     -fx-highlight-text-fill: white;
@@ -93,4 +99,12 @@
 
 .progress-bar {
     -fx-indeterminate-bar-flip: false;
+}
+
+.progress-indicator.no-percentage:determinate {
+    -fx-padding: 0 0 -16 0;
+}
+
+.progress-indicator.no-percentage:determinate .percentage {
+    -fx-fill: null;
 }

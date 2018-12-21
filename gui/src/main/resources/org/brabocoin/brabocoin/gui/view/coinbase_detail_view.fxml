@@ -14,7 +14,7 @@
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
-         fx:controller="org.brabocoin.brabocoin.gui.view.TransactionDetailView">
+         fx:controller="org.brabocoin.brabocoin.gui.view.CoinbaseDetailView">
     <fx:define>
         <Double fx:id="vgap" fx:value="15"/>
         <Double fx:id="hgap" fx:value="15"/>
@@ -22,7 +22,7 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label text="Transaction" styleClass="side-pane-title"/>
+            <Label text="Coinbase transaction" styleClass="side-pane-title"/>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
@@ -31,19 +31,6 @@
 
     <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">
         <VBox spacing="12" style="-fx-padding: 0.8em;">
-            <TitledPane text="Inputs" collapsible="false">
-                <TableView fx:id="inputTableView" fixedCellSize="24">
-                    <columns>
-                        <TableColumn fx:id="inputIndexColumn" sortable="false" text="Index"/>
-                        <TableColumn fx:id="inputReferencedTxColumn" sortable="false" text="Referenced transaction hash"/>
-                        <TableColumn fx:id="inputReferencedOutputColumn" sortable="false" text="Output index"/>
-                    </columns>
-                    <placeholder>
-                        <Label text="No inputs found"/>
-                    </placeholder>
-                </TableView>
-            </TitledPane>
-
             <TitledPane text="Outputs" collapsible="false">
                 <TableView fx:id="outputTableView" fixedCellSize="24">
                     <columns>
@@ -53,20 +40,6 @@
                     </columns>
                     <placeholder>
                         <Label text="No outputs found"/>
-                    </placeholder>
-                </TableView>
-            </TitledPane>
-
-            <TitledPane text="Signatures" collapsible="false">
-                <TableView fx:id="signatureTableView" fixedCellSize="24">
-                    <columns>
-                        <TableColumn fx:id="sigIndexColumn" sortable="false" text="Index"/>
-                        <TableColumn fx:id="sigRColumn" sortable="false" text="R"/>
-                        <TableColumn fx:id="sigSColumn" sortable="false" text="S"/>
-                        <TableColumn fx:id="sigPubKeyColumn" sortable="false" text="Public key"/>
-                    </columns>
-                    <placeholder>
-                        <Label text="No signatures found"/>
                     </placeholder>
                 </TableView>
             </TitledPane>

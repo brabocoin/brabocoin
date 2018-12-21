@@ -1,19 +1,16 @@
 package org.brabocoin.brabocoin.gui.control.table;
 
 import javafx.scene.control.TableCell;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.util.ByteUtil;
 
 /**
  * Table cell that formats a hash to to a hexadecimal string.
  */
-public class HashTableCell<T> extends TableCell<T, Hash> {
+public class AddressTableCell<T> extends TableCell<T, Hash> {
 
-    private final int size;
-
-    public HashTableCell(int size) {
+    public AddressTableCell() {
         super();
-        this.size = size;
         getStyleClass().add("hash");
     }
 
@@ -23,7 +20,7 @@ public class HashTableCell<T> extends TableCell<T, Hash> {
             setText(null);
         }
         else {
-            setText(ByteUtil.toHexString(item.getValue(), size));
+            setText(PublicKey.getBase58AddressFromHash(item));
         }
     }
 
