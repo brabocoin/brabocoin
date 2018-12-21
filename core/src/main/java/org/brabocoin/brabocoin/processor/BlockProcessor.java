@@ -171,6 +171,9 @@ public class BlockProcessor {
         ValidationStatus status = result.getStatus();
 
         if (status == ValidationStatus.INVALID) {
+            // Add to the recent rejects
+            blockchain.addRejected(block);
+
             LOGGER.log(
                 Level.INFO,
                 MessageFormat.format("New block is invalid, rulebook result: {0}", result)

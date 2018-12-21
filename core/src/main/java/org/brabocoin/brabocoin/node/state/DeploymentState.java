@@ -277,7 +277,13 @@ public class DeploymentState implements State {
     }
 
     protected Blockchain createBlockchain() throws DatabaseException {
-        return new Blockchain(blockDatabase, consensus, config.maxOrphanBlocks(), unsecureRandom);
+        return new Blockchain(
+            blockDatabase,
+            consensus,
+            config.maxOrphanBlocks(),
+            config.maxRecentRejectBlocks(),
+            unsecureRandom
+        );
     }
 
     protected TransactionPool createTransactionPool() {
