@@ -41,12 +41,14 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
 
         transactionsPane.getChildren().clear();
 
-        // Show coinbase
-        CoinbaseDetailView coinbaseView = new CoinbaseDetailView(block.getCoinbaseTransaction());
-        coinbaseView.setShowHeader(false);
-        TitledPane coinbasePane = new TitledPane("Coinbase transaction", coinbaseView);
-        coinbasePane.setExpanded(false);
-        transactionsPane.getChildren().add(coinbasePane);
+        // Show coinbase (if available)
+        if (block.getCoinbaseTransaction() != null) {
+            CoinbaseDetailView coinbaseView = new CoinbaseDetailView(block.getCoinbaseTransaction());
+            coinbaseView.setShowHeader(false);
+            TitledPane coinbasePane = new TitledPane("Coinbase transaction", coinbaseView);
+            coinbasePane.setExpanded(false);
+            transactionsPane.getChildren().add(coinbasePane);
+        }
 
         List<Transaction> transactions = block.getTransactions();
         for (int i = 1; i < transactions.size(); i++) {

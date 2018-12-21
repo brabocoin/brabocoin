@@ -1,0 +1,120 @@
+package org.brabocoin.brabocoin.gui.view.block;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
+import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.gui.BraboControl;
+import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ProtoConverter;
+import org.brabocoin.brabocoin.validation.Consensus;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Pane displaying the block header.
+ */
+public class BlockDetailsPane extends TitledPane implements BraboControl {
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
+        "yyyy-MM-dd HH:mm:ss");
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
+
+    private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
+
+    private Blockchain blockchain;
+
+    @FXML private Label timestampLabel;
+
+    @FXML private TextField timestampField;
+    @FXML private TextField numTransactionsField;
+    @FXML private TextField outputTotalField;
+    @FXML private TextField sizeField;
+
+    public BlockDetailsPane() {
+        super();
+        BraboControlInitializer.initialize(this);
+
+        block.addListener((obs, old, val) -> {
+            if (val != null) loadBlock();
+        });
+    }
+
+    private void loadBlock() {
+        Block block = this.block.get();
+
+        if (block == null) {
+            return;
+        }
+
+        numTransactionsField.setText(String.valueOf(block.getTransactions().size()));
+
+        long totalOutput = block.getTransactions().stream()
+            .flatMap(t -> t.getOutputs().stream())
+            .mapToLong(Output::getAmount)
+            .sum();
+        BigDecimal roundedOutput = BigDecimal.valueOf(totalOutput)
+            .divide(BigDecimal.valueOf(Consensus.COIN), 2, RoundingMode.UNNECESSARY);
+        outputTotalField.setText(DECIMAL_FORMAT.format(roundedOutput) + " BRC");
+
+        IndexedBlock indexedBlock = null;
+        try {
+            indexedBlock = blockchain.getIndexedBlock(block.getHash());
+        }
+        catch (DatabaseException ignore) {
+
+        }
+
+        // If indexed block is available, use cached value
+        int sizeBytes;
+        if (indexedBlock != null) {
+            sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
+        }
+        else {
+            sizeBytes = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class).size();
+        }
+        double sizeKiloBytes = sizeBytes / 1000.0;
+        sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
+
+        // Show timestamp if indexed block is available
+        if (indexedBlock != null) {
+            long timestamp = indexedBlock.getBlockInfo().getTimeReceived();
+            Instant instant = Instant.ofEpochSecond(timestamp);
+            LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+            timestampField.setManaged(true);
+            timestampField.setVisible(true);
+            timestampLabel.setManaged(true);
+            timestampLabel.setVisible(true);
+            timestampField.setText(DATE_FORMATTER.format(time));
+        }
+        else {
+            timestampField.setManaged(false);
+            timestampField.setVisible(false);
+            timestampLabel.setManaged(false);
+            timestampLabel.setVisible(false);
+        }
+    }
+
+    public void setBlock(Block value) {
+        block.set(value);
+    }
+
+    public void setBlockchain(Blockchain blockchain) {
+        this.blockchain = blockchain;
+    }
+}

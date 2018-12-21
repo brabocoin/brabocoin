@@ -12,29 +12,20 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URL;
-import java.text.DecimalFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 /**
@@ -44,25 +35,17 @@ import java.util.ResourceBundle;
  */
 public class BlockDetailView extends VBox implements BraboControl, Initializable {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
-        "yyyy-MM-dd HH:mm:ss");
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
-
     private final @NotNull Blockchain blockchain;
     private boolean hasActions;
     @Nullable private BlockValidator validator;
 
     @FXML private BlockHeaderPane blockHeaderPane;
+    @FXML private BlockDetailsPane blockDetailsPane;
     @FXML private BlockTransactionsPane blockTransactionsPane;
 
     @FXML private Label titleLabel;
     @FXML private Button buttonValidate;
     @FXML private TextField hashField;
-
-    @FXML private TextField timestampField;
-    @FXML private TextField numTransactionsField;
-    @FXML private TextField outputTotalField;
-    @FXML private TextField sizeField;
 
     private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
 
@@ -89,6 +72,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        blockDetailsPane.setBlockchain(blockchain);
     }
 
     private void loadBlock(@NotNull Block block) {
@@ -98,33 +82,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), Constants.BLOCK_HASH_SIZE));
 
         blockHeaderPane.setBlock(block);
-
-        long timestamp = 0;
-        try {
-            IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getHash());
-            timestamp = indexedBlock.getBlockInfo().getTimeReceived();
-            Instant instant = Instant.ofEpochSecond(timestamp);
-            LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-            timestampField.setText(DATE_FORMATTER.format(time));
-            numTransactionsField.setText(String.valueOf(indexedBlock.getBlockInfo()
-                .getTransactionCount()));
-            int sizeBytes = indexedBlock.getBlockInfo().getSizeInFile();
-            double sizeKiloBytes = sizeBytes / 1000.0;
-            sizeField.setText(String.format("%.3f kB", sizeKiloBytes));
-        }
-        catch (DatabaseException | NullPointerException e) {
-            // ignore
-        }
-
-
-
-        long totalOutput = block.getTransactions().stream()
-            .flatMap(t -> t.getOutputs().stream())
-            .mapToLong(Output::getAmount)
-            .sum();
-        BigDecimal roundedOutput = BigDecimal.valueOf(totalOutput)
-            .divide(BigDecimal.valueOf(Consensus.COIN), 2, RoundingMode.UNNECESSARY);
-        outputTotalField.setText(DECIMAL_FORMAT.format(roundedOutput) + " BRC");
+        blockDetailsPane.setBlock(block);
 
         blockTransactionsPane.setBlock(block);
     }

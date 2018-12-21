@@ -3,15 +3,21 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
-<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
-<?import java.lang.Double?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.Pane?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane?>
+<?import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane?>
+<?import java.lang.Double?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane?>
 <fx:root type="javafx.scene.layout.BorderPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.MinerView">
@@ -37,45 +43,55 @@
         </ToolBar>
     </top>
     <center>
-        <VBox fx:id="container" spacing="10">
-            <GridPane vgap="$vgap" hgap="$hgap">
-                <Label text="Time" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                <TextField fx:id="timeField"
-                           editable="false"
-                           disable="true"
-                           styleClass="label-like"
-                           GridPane.rowIndex="0"
-                           GridPane.columnIndex="1"
-                           GridPane.hgrow="ALWAYS"/>
+        <VBox fx:id="container" managed="false" visible="false">
+            <HBox spacing="10" alignment="CENTER_LEFT" VBox.vgrow="NEVER" style="-fx-padding: 1em;">
+                <ProgressIndicator fx:id="miningProgressIndicator" styleClass="side-pane-title-graphic,no-percentage"/>
+                <Label fx:id="titleLabel" styleClass="side-pane-title"/>
+            </HBox>
+            <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true">
+                <VBox style="-fx-padding: 0.8em;">
+                    <TitledPane collapsible="false" text="Mining details">
+                        <GridPane vgap="$vgap" hgap="$hgap">
+                            <Label text="Time" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                            <TextField fx:id="timeField"
+                                       editable="false"
+                                       disable="true"
+                                       styleClass="label-like"
+                                       GridPane.rowIndex="0"
+                                       GridPane.columnIndex="1"
+                                       GridPane.hgrow="ALWAYS"/>
 
-                <Label text="Iterations" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                <TextField fx:id="iterationsField"
-                           editable="false"
-                           disable="true"
-                           styleClass="label-like"
-                           GridPane.rowIndex="1"
-                           GridPane.columnIndex="1"
-                           GridPane.hgrow="ALWAYS"/>
+                            <Label text="Iterations" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                            <TextField fx:id="iterationsField"
+                                       editable="false"
+                                       disable="true"
+                                       styleClass="label-like"
+                                       GridPane.rowIndex="1"
+                                       GridPane.columnIndex="1"
+                                       GridPane.hgrow="ALWAYS"/>
 
-                <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                <TextField fx:id="targetValueField"
-                           editable="false"
-                           disable="true"
-                           styleClass="label-like,hash"
-                           GridPane.rowIndex="2"
-                           GridPane.columnIndex="1"
-                           GridPane.hgrow="ALWAYS"/>
+                            <Label text="Target value" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                            <TextField fx:id="targetValueField"
+                                       editable="false"
+                                       styleClass="label-like,hash"
+                                       GridPane.rowIndex="2"
+                                       GridPane.columnIndex="1"
+                                       GridPane.hgrow="ALWAYS"/>
 
-                <Label text="Best hash" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                <TextField fx:id="bestHashField"
-                           editable="false"
-                           disable="true"
-                           styleClass="label-like,hash"
-                           GridPane.rowIndex="3"
-                           GridPane.columnIndex="1"
-                           GridPane.hgrow="ALWAYS"/>
-            </GridPane>
-            <Pane fx:id="blockDetailContainer"></Pane>
+                            <Label text="Best hash" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+                            <TextField fx:id="bestHashField"
+                                       editable="false"
+                                       styleClass="label-like,hash"
+                                       GridPane.rowIndex="3"
+                                       GridPane.columnIndex="1"
+                                       GridPane.hgrow="ALWAYS"/>
+                        </GridPane>
+                    </TitledPane>
+                    <BlockHeaderPane fx:id="blockHeaderPane"/>
+                    <BlockDetailsPane fx:id="blockDetailsPane"/>
+                    <BlockTransactionsPane fx:id="blockTransactionsPane"/>
+                </VBox>
+            </ScrollPane>
         </VBox>
     </center>
 </fx:root>

@@ -11,6 +11,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane?>
+<?import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.BlockDetailView">
@@ -32,21 +33,7 @@
     <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">
         <VBox>
             <BlockHeaderPane fx:id="blockHeaderPane"/>
-            <TitledPane collapsible="false" text="Block details">
-                <GridPane vgap="$vgap" hgap="$hgap">
-                    <Label text="Time received" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                    <TextField fx:id="timestampField" editable="false" styleClass="label-like" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-
-                    <Label text="Number of transactions" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                    <TextField fx:id="numTransactionsField" editable="false" styleClass="label-like" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-
-                    <Label text="Output total" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                    <TextField fx:id="outputTotalField" editable="false" styleClass="label-like" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-
-                    <Label text="Size" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-                    <TextField fx:id="sizeField" editable="false" styleClass="label-like" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-                </GridPane>
-            </TitledPane>
+            <BlockDetailsPane fx:id="blockDetailsPane"/>
             <BlockTransactionsPane fx:id="blockTransactionsPane"/>
         </VBox>
     </ScrollPane>

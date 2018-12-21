@@ -5,9 +5,12 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.IndexRange;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -15,6 +18,9 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
+import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane;
+import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane;
+import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.mining.MiningBlock;
 import org.brabocoin.brabocoin.model.Block;
@@ -47,9 +53,16 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private @Nullable Task<Block> miningTask;
     private @Nullable IndexedBlock parentBlock;
 
-    @FXML private Pane blockDetailContainer;
+    @FXML private VBox container;
 
     @FXML private CheckBox continueMining;
+
+    @FXML private ProgressIndicator miningProgressIndicator;
+    @FXML private Label titleLabel;
+
+    @FXML private BlockHeaderPane blockHeaderPane;
+    @FXML private BlockDetailsPane blockDetailsPane;
+    @FXML private BlockTransactionsPane blockTransactionsPane;
 
     @FXML private TextField timeField;
     @FXML private TextField iterationsField;
@@ -71,6 +84,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        blockDetailsPane.setBlockchain(blockchain);
+
         timer = new AnimationTimer() {
             private long startTime;
 
@@ -96,21 +111,27 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         MiningBlock block = miner.getMiningBlock();
 
         if (block != null) {
+            IndexRange targetSelection = targetValueField.getSelection();
             targetValueField.setText(ByteUtil.toHexString(
                 block.getTargetValue().getValue(),
                 Constants.BLOCK_HASH_SIZE
             ));
+            targetValueField.selectRange(targetSelection.getStart(), targetSelection.getEnd());
 
             iterationsField.setText(String.format("%,d", block.getIterations()));
 
             Hash bestHash = block.getBestHash();
 
             if (bestHash != null) {
+                IndexRange hashSelection = bestHashField.getSelection();
                 bestHashField.setText(ByteUtil.toHexString(
                     block.getBestHash().getValue(),
                     Constants.BLOCK_HASH_SIZE
                 ));
+                bestHashField.selectRange(hashSelection.getStart(), hashSelection.getEnd());
             }
+
+            blockHeaderPane.setNonce(block.getNonce());
         }
     }
 
@@ -121,8 +142,14 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             return;
         }
 
-        BlockDetailView blockDetailView = new BlockDetailView(blockchain, block, null);
-        blockDetailContainer.getChildren().setAll(blockDetailView);
+        titleLabel.setText("Mining block #" + block.getBlockHeight());
+
+        blockHeaderPane.setBlock(block);
+        blockDetailsPane.setBlock(block);
+        blockTransactionsPane.setBlock(block);
+
+        container.setManaged(true);
+        container.setVisible(true);
     }
 
     @FXML
@@ -180,17 +207,24 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             switch (state) {
                 case RUNNING:
                     timer.start();
-                    showCurrentBlock();
+                    break;
+
+                case SUCCEEDED:
+                    miningProgressIndicator.setProgress(1);
+                    timer.stop();
                     break;
 
                 case FAILED:
-                case SUCCEEDED:
                 case CANCELLED:
+                    miningProgressIndicator.setProgress(0);
                     timer.stop();
             }
         });
 
         taskManager.runTask(miningTask);
+
+        miningProgressIndicator.setProgress(-1);
+        showCurrentBlock();
     }
 
     @FXML
