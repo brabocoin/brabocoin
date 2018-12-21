@@ -14,6 +14,7 @@ brabo:
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions
   maxOrphanBlocks: 100                # Max number of orphan blocks
+  maxRecentRejectBlocks: 0            # Max number of recently rejected blocks
   servicePort: 56129                  # Port on which the application listens for messages
   walletFile: wallet.dat              # Wallet file
   transactionHistoryFile: txhist.dat  # Wallet transaction history file

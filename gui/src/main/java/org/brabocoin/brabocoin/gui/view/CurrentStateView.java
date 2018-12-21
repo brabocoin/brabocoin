@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -34,6 +35,8 @@ import java.util.ResourceBundle;
  * View for the current state.
  */
 public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
+
+    @FXML private Tab recentRejectTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -65,6 +68,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
         loadMainChain();
         blockchain.addListener(this);
+
+        recentRejectTab.setContent(new RecentRejectView(blockchain, validator));
     }
 
     private void loadTable() {

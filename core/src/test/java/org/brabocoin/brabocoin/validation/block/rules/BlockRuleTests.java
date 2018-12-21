@@ -215,7 +215,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, 0, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -437,7 +437,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, 0, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -475,7 +475,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, 0, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -996,7 +996,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, 0, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -1034,7 +1034,7 @@ class BlockRuleTests {
             new File(defaultConfig.blockStoreDirectory()),
             defaultConfig.maxBlockFileSize()
         );
-        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, new Random());
+        Blockchain blockchain = new Blockchain(blockDatabase, consensus, 100, 0, new Random());
 
         FactMap facts = new FactMap();
         facts.put("block", block);

@@ -62,7 +62,7 @@ class BlockchainTest {
     void setUp() throws DatabaseException {
         consensus = new Consensus();
         database = new BlockDatabase(new HashMapDB(), new File(config.blockStoreDirectory()), config.maxBlockFileSize());
-        blockchain = new Blockchain(database, consensus, 100, new Random());
+        blockchain = new Blockchain(database, consensus, 100, 0, new Random());
     }
 
     @AfterEach
@@ -144,7 +144,7 @@ class BlockchainTest {
 
     @Test
     void addOrphanSizeLimit() throws DatabaseException {
-        blockchain = new Blockchain(database, consensus, 2, new Random());
+        blockchain = new Blockchain(database, consensus, 2, 0, new Random());
 
         List<Block> notified = new ArrayList<>();
         BlockchainListener listener = new BlockchainListener() {

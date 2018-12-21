@@ -43,4 +43,13 @@ public interface BlockchainListener {
     default void onOrphanRemoved(@NotNull Block block) {
 
     }
+
+    /**
+     * Called when a block is added as recently rejected.
+     *
+     * @param block The block that was added as recent reject.
+     */
+    default void onRecentRejectAdded(@NotNull Block block) {
+
+    }
 }
