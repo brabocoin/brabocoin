@@ -38,7 +38,7 @@ public class UnlockDialog<T> extends BraboDialog<T> {
     private Label messageLabel;
 
     public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker) {
-        super();
+        super(false);
         this.unlocker = unlocker;
 
         // Add buttons

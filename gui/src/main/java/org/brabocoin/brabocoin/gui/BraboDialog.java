@@ -11,7 +11,13 @@ import java.util.stream.Collectors;
 public class BraboDialog<T> extends Dialog<T> {
 
     public BraboDialog() {
-        setDialogPane(new BraboDialogPane());
+        this(true);
+    }
+
+    public BraboDialog(Boolean removeDialogButtons) {
+        if (removeDialogButtons) {
+            setDialogPane(new BraboDialogPane());
+        }
 
         // Add base stylesheet
         this.getDialogPane()
