@@ -7,6 +7,7 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.view.CoinbaseDetailView;
 import org.brabocoin.brabocoin.gui.view.TransactionDetailView;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -40,17 +41,21 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
 
         transactionsPane.getChildren().clear();
 
+        // Show coinbase
+        CoinbaseDetailView coinbaseView = new CoinbaseDetailView(block.getCoinbaseTransaction());
+        coinbaseView.setShowHeader(false);
+        TitledPane coinbasePane = new TitledPane("Coinbase transaction", coinbaseView);
+        coinbasePane.setExpanded(false);
+        transactionsPane.getChildren().add(coinbasePane);
+
         List<Transaction> transactions = block.getTransactions();
-        for (int i = 0; i < transactions.size(); i++) {
+        for (int i = 1; i < transactions.size(); i++) {
             Transaction tx = transactions.get(i);
 
             TransactionDetailView detailView = new TransactionDetailView(tx);
             detailView.setShowHeader(false);
 
-            TitledPane pane = new TitledPane(
-                i == 0 ? "Coinbase transaction" : ("Transaction " + i),
-                detailView
-            );
+            TitledPane pane = new TitledPane("Transaction " + i, detailView);
             pane.setExpanded(false);
 
             transactionsPane.getChildren().add(pane);

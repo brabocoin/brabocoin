@@ -10,6 +10,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -94,7 +95,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
         titleLabel.setText("Block #" + block.getBlockHeight());
         buttonValidate.setVisible(hasActions);
-        hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), 32));
+        hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), Constants.BLOCK_HASH_SIZE));
 
         blockHeaderPane.setBlock(block);
 
