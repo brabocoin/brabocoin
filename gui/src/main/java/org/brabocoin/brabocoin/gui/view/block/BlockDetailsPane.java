@@ -4,13 +4,13 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -40,10 +40,10 @@ public class BlockDetailsPane extends TitledPane implements BraboControl {
 
     @FXML private Label timestampLabel;
 
-    @FXML private TextField timestampField;
-    @FXML private TextField numTransactionsField;
-    @FXML private TextField outputTotalField;
-    @FXML private TextField sizeField;
+    @FXML private SelectableLabel timestampField;
+    @FXML private SelectableLabel numTransactionsField;
+    @FXML private SelectableLabel outputTotalField;
+    @FXML private SelectableLabel sizeField;
 
     public BlockDetailsPane() {
         super();

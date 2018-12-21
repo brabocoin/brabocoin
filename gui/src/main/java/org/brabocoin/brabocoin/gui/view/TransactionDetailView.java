@@ -9,7 +9,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -17,6 +16,7 @@ import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BigIntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
@@ -60,7 +60,7 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     @FXML private TableColumn<Signature, BigInteger> sigSColumn;
     @FXML private TableColumn<Signature, PublicKey> sigPubKeyColumn;
 
-    @FXML private TextField hashField;
+    @FXML private SelectableLabel hashField;
     @FXML private HBox header;
 
     public TransactionDetailView(Transaction transaction) {

@@ -10,10 +10,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.Double?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
-         fx:controller="org.brabocoin.brabocoin.gui.view.TransactionDetailView">
+         fx:controller="org.brabocoin.brabocoin.gui.view.CoinbaseDetailView">
     <fx:define>
         <Double fx:id="vgap" fx:value="15"/>
         <Double fx:id="hgap" fx:value="15"/>
@@ -25,7 +26,7 @@
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="hashField" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 
     <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">

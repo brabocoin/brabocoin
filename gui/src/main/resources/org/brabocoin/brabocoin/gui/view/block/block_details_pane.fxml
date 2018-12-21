@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import java.lang.Double?>
 
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <fx:root type="javafx.scene.control.TitledPane" collapsible="false" text="Block details" xmlns:fx="http://javafx.com/fxml"
          fx:controller="org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane">
     <fx:define>
@@ -15,15 +16,15 @@
 
     <GridPane vgap="$vgap" hgap="$hgap">
         <Label fx:id="timestampLabel" text="Time received" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="timestampField" editable="false" styleClass="label-like" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="timestampField" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
         <Label text="Number of transactions" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="numTransactionsField" editable="false" styleClass="label-like" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="numTransactionsField" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
         <Label text="Output total" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="outputTotalField" editable="false" styleClass="label-like" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="outputTotalField" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
         <Label text="Size" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="sizeField" editable="false" styleClass="label-like" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="sizeField" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 </fx:root>

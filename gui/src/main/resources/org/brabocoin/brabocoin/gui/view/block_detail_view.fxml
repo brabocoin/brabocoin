@@ -12,6 +12,7 @@
 <?import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.BlockDetailView">
@@ -27,7 +28,7 @@
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
-        <TextField fx:id="hashField" editable="false" styleClass="label-like,hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        <SelectableLabel fx:id="hashField" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 
     <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">

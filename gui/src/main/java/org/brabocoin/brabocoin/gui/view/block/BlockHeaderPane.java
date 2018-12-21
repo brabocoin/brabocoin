@@ -4,11 +4,11 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.util.ByteUtil;
 
@@ -26,12 +26,12 @@ public class BlockHeaderPane extends TitledPane implements BraboControl {
      */
     private final ObjectProperty<BigInteger> nonce = new SimpleObjectProperty<>();
 
-    @FXML private TextField networkIdField;
-    @FXML private TextField previousBlockHashField;
-    @FXML private TextField merkleRootField;
-    @FXML private TextField targetValueField;
-    @FXML private TextField blockHeightField;
-    @FXML private TextField nonceField;
+    @FXML private SelectableLabel networkIdField;
+    @FXML private SelectableLabel previousBlockHashField;
+    @FXML private SelectableLabel merkleRootField;
+    @FXML private SelectableLabel targetValueField;
+    @FXML private SelectableLabel blockHeightField;
+    @FXML private SelectableLabel nonceField;
 
     public BlockHeaderPane() {
         super();
