@@ -19,6 +19,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.LegalTransactionFeesBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
@@ -55,7 +56,8 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private static final RuleList skippedBlockRules = new RuleList(
         DuplicateStorageBlkRule.class,
         UniqueUnspentCoinbaseBlkRule.class,
-        ContextualTransactionCheckBlkRule.class
+        ContextualTransactionCheckBlkRule.class,
+        LegalTransactionFeesBlkRule.class
     );
 
     private static final RuleList skippedTransactionRules = new RuleList(
