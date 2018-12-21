@@ -50,6 +50,7 @@ public class TransactionValidator implements Validator<Transaction> {
         OutputValueTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
+        SignatureCountTxRule.class,
         SignatureTxRule.class
     );
 
