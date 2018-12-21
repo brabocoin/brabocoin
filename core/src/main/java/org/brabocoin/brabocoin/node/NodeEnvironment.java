@@ -408,6 +408,10 @@ public class NodeEnvironment {
      *     Whether or not to propagate the message to peers.
      */
     private synchronized void onReceiveTransaction(Transaction transaction, boolean propagate) {
+        if (propagate) {
+            transactionListeners.forEach(l -> l.receivedTransaction(transaction));
+        }
+
         try {
             ProcessedTransactionResult result = transactionProcessor.processNewTransaction(
                 transaction
