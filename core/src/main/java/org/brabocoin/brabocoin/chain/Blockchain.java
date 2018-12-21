@@ -306,6 +306,8 @@ public class Blockchain {
      */
     public synchronized void addRejected(@NotNull Block block) {
         recentRejects.add(block);
+
+        listeners.forEach(l -> l.onRecentRejectAdded(block));
     }
 
     /**
