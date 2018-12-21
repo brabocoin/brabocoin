@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -1045,7 +1046,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
             Collections.emptyList(),
@@ -1108,7 +1109,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
             Collections.emptyList(),
@@ -1171,7 +1172,7 @@ class TransactionRuleTests {
         BigInteger privateKey = BigInteger.TEN;
         PublicKey publicKey = CURVE.getPublicKeyFromPrivateKey(privateKey);
 
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         Transaction coinbase = new Transaction(
             Collections.emptyList(),

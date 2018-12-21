@@ -89,7 +89,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
     /**
      * Cached mining address.
      */
-    private @Nullable org.brabocoin.brabocoin.model.Hash miningAddress;
+    private @Nullable Hash miningAddress;
 
     /**
      * Create a wallet for a given public to private key map.
@@ -161,7 +161,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
      *     The address to find.
      * @return Whether this wallet has the key pair corresponding to this address.
      */
-    public boolean hasAddress(@NotNull org.brabocoin.brabocoin.model.Hash address) {
+    public boolean hasAddress(@NotNull Hash address) {
         return keyPairs.stream().anyMatch(p -> p.getPublicKey().getHash().equals(address));
     }
 
@@ -330,7 +330,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
     }
 
     @Override
-    public void onOutputUnspent(@NotNull org.brabocoin.brabocoin.model.Hash transactionHash, int outputIndex,
+    public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                 @NotNull UnspentOutputInfo info) {
         // Filter UTXO from addresses in this wallet and add to the wallet UTXO
         if (!hasAddress(info.getAddress())) {
@@ -433,7 +433,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
      *
      * @return The address used for mining.
      */
-    public @NotNull org.brabocoin.brabocoin.model.Hash getMiningAddress() {
+    public @NotNull Hash getMiningAddress() {
         if (miningAddress == null) {
             miningAddress = this.keyPairs.stream()
                 .filter(keyPair -> !keyPair.getPrivateKey().isEncrypted())

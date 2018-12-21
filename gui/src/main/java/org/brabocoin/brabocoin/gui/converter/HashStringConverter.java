@@ -1,9 +1,10 @@
 package org.brabocoin.brabocoin.gui.converter;
 
+import javafx.util.StringConverter;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.util.ByteUtil;
 
-public class HashStringConverter extends javafx.util.StringConverter<Hash> {
+public class HashStringConverter extends StringConverter<Hash> {
 
     @Override
     public String toString(Hash object) {

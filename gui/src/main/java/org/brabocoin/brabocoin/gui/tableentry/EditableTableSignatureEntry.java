@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.gui.tableentry;
 import com.google.protobuf.ByteString;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import org.brabocoin.brabocoin.crypto.EllipticCurve;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 
@@ -67,5 +69,16 @@ public class EditableTableSignatureEntry {
 
     public void setIndex(int index) {
         this.index.set(index);
+    }
+
+    public Signature toSignature(EllipticCurve curve) {
+        return new Signature(
+            getR(),
+            getS(),
+            PublicKey.fromCompressed(
+                getPublicKey().getValue(),
+                curve
+            )
+        );
     }
 }

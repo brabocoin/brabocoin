@@ -8,8 +8,6 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.controlsfx.control.MasterDetailPane;
 
-import java.io.IOException;
-
 public class ValidationWindow extends BraboDialog {
 
     private static final double WIDTH = 800.0;
@@ -38,7 +36,7 @@ public class ValidationWindow extends BraboDialog {
      * @param transaction
      *     The transaction to create a validation window for
      */
-    public ValidationWindow(Transaction transaction, Validator<Transaction> validator) throws IOException {
+    public ValidationWindow(Transaction transaction, Validator<Transaction> validator) {
         super();
         setTitle("Transaction Validation");
 

@@ -5,6 +5,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
@@ -14,27 +15,19 @@
         <VBox fx:id="inputOutputVBox" id="input-output-box" VBox.vgrow="ALWAYS">
             <VBox styleClass="action-table" VBox.vgrow="ALWAYS">
                 <TitledPane text="Outputs" collapsible="false">
-                    <TableView fx:id="outputTableView">
-                        <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                        </columnResizePolicy>
-                    </TableView>
+                    <TableView fx:id="outputTableView"/>
                 </TitledPane>
                 <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
+                    <Button fx:id="buttonFindInputs" text="Find" onAction="#findInputs"/>
                     <Button fx:id="buttonAddOutput" text="+" onAction="#addOutput"/>
                     <Button fx:id="buttonRemoveOutput" text="-" onAction="#removeOutput"/>
                 </HBox>
             </VBox>
             <VBox styleClass="action-table" VBox.vgrow="ALWAYS">
                 <TitledPane text="Inputs" collapsible="false">
-                    <TableView fx:id="inputTableView">
-                        <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                        </columnResizePolicy>
-                    </TableView>
+                    <TableView fx:id="inputTableView"/>
                 </TitledPane>
                 <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
-                    <Button fx:id="buttonFindInputs" text="Find" onAction="#findInputs"/>
                     <Button fx:id="buttonAddInput" text="+" onAction="#addInput"/>
                     <Button fx:id="buttonRemoveInput" text="-" onAction="#removeInput"/>
                 </HBox>
@@ -62,6 +55,8 @@
     <Separator styleClass="action-table-padding"/>
     <HBox styleClass="table-action-box,action-table-padding" alignment="CENTER_RIGHT">
         <Button fx:id="buttonCopyJSON" text="Copy to JSON format" onAction="#copyJSON"/>
+        <Pane HBox.hgrow="ALWAYS"/>
+        <Button fx:id="buttonValidate" text="Validate" onAction="#validateTransaction"/>
         <Button fx:id="buttonSendTransaction" text="Send" onAction="#sendTransaction"/>
     </HBox>
 </fx:root>

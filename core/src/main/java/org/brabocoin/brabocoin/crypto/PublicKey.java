@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.crypto;
 
 import com.google.protobuf.ByteString;
 import org.bouncycastle.math.ec.ECPoint;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.util.Base58Check;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class PublicKey {
     /**
      * Cached hash
      */
-    private org.brabocoin.brabocoin.model.Hash hash;
+    private Hash hash;
 
     /**
      * Construct a public key from compressed form, on the provided elliptic curve.
@@ -60,8 +61,20 @@ public class PublicKey {
      *     The hash of the public key.
      * @return The address corresponding to the public key.
      */
-    public static @NotNull String getBase58AddressFromHash(@NotNull org.brabocoin.brabocoin.model.Hash hash) {
+    public static @NotNull String getBase58AddressFromHash(@NotNull Hash hash) {
         return Base58Check.encode(ADDRESS_PREFIX.concat(hash.getValue()));
+    }
+
+    /**
+     * Computes the hash from the base58 address, removing the address prefix.
+     *
+     * @param base58
+     *     Base58 representation of the address hash.
+     * @return The address hash.
+     */
+    public static @NotNull Hash getHashFromBase58Address(@NotNull String base58) {
+        ByteString decoded = Base58Check.decode(base58);
+        return new Hash(decoded.substring(ADDRESS_PREFIX.size(), decoded.size()));
     }
 
     /**
@@ -97,7 +110,7 @@ public class PublicKey {
      *
      * @return The hash of the public key.
      */
-    public @NotNull org.brabocoin.brabocoin.model.Hash getHash() {
+    public @NotNull Hash getHash() {
         if (hash == null) {
             hash = Hashing.digestRIPEMD160(Hashing.digestSHA256(toCompressed()));
         }

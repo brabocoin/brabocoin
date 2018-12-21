@@ -1,11 +1,10 @@
 package org.brabocoin.brabocoin.gui.window;
 
 import javafx.scene.layout.VBox;
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.TransactionCreationView;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.Wallet;
 
 public class TransactionCreationWindow extends BraboDialog<Transaction> {
@@ -16,9 +15,9 @@ public class TransactionCreationWindow extends BraboDialog<Transaction> {
 
     private VBox transactionCreationView;
 
-    public TransactionCreationWindow(Wallet wallet, Blockchain blockchain, Consensus consensus) {
-        this.wallet = wallet;
-        this.transactionCreationView = new TransactionCreationView(wallet, blockchain, consensus);
+    public TransactionCreationWindow(State state) {
+        this.wallet = state.getWallet();
+        this.transactionCreationView = new TransactionCreationView(state);
 
         setTitle("Transaction creation");
 

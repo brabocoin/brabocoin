@@ -34,15 +34,15 @@ public class Simulation {
     private static EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     public static List<Block> randomBlockChainGenerator(int length) {
-        return randomBlockChainGenerator(length, new org.brabocoin.brabocoin.model.Hash(ByteUtil.toByteString(0)), 0);
+        return randomBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
     }
 
-    public static List<Block> randomBlockChainGenerator(int length, org.brabocoin.brabocoin.model.Hash previousHash,
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
                                                         int startBlockHeight) {
         return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5);
     }
 
-    public static List<Block> randomBlockChainGenerator(int length, org.brabocoin.brabocoin.model.Hash previousHash,
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
                                                         int startBlockHeight, int inputs,
                                                         int outputs) {
         List<Block> list = new ArrayList<>();
@@ -57,10 +57,10 @@ public class Simulation {
     }
 
     public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length) {
-        return randomIndexedBlockChainGenerator(length, new org.brabocoin.brabocoin.model.Hash(ByteUtil.toByteString(0)), 0);
+        return randomIndexedBlockChainGenerator(length, new Hash(ByteUtil.toByteString(0)), 0);
     }
 
-    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length, org.brabocoin.brabocoin.model.Hash previousHash,
+    public static List<IndexedBlock> randomIndexedBlockChainGenerator(int length, Hash previousHash,
                                                                       int startBlockHeight) {
         List<IndexedBlock> list = new ArrayList<>();
         long creationTime = new Date().getTime();
@@ -95,7 +95,7 @@ public class Simulation {
         return list;
     }
 
-    public static Block randomBlock(org.brabocoin.brabocoin.model.Hash previousHash, int blockHeight, int transactionInputBound,
+    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound,
                                     int transactionOutputBound, int transactionsBound) {
         return new Block(
             previousHash,
@@ -165,8 +165,8 @@ public class Simulation {
         return new Output(randomHash(), RANDOM.nextInt(1000));
     }
 
-    public static org.brabocoin.brabocoin.model.Hash randomHash() {
-        return new org.brabocoin.brabocoin.model.Hash(randomByteString());
+    public static Hash randomHash() {
+        return new Hash(randomByteString());
     }
 
     public static ByteString randomByteString() {

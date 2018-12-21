@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -59,8 +60,8 @@ public class NodeTest {
 
         mockConsensus = new Consensus() {
             @Override
-            public @NotNull org.brabocoin.brabocoin.model.Hash getTargetValue() {
-                return new org.brabocoin.brabocoin.model.Hash(ByteString.copyFrom(
+            public @NotNull Hash getTargetValue() {
+                return new Hash(ByteString.copyFrom(
                     BigInteger.valueOf(2).pow(255).toByteArray()
                 ));
             }
@@ -123,7 +124,7 @@ public class NodeTest {
             .getGenesisBlock(), Simulation.randomHash());
         stateA.getBlockProcessor().processNewBlock(newBlock);
 
-        org.brabocoin.brabocoin.model.Hash newBlockHash = newBlock.getHash();
+        Hash newBlockHash = newBlock.getHash();
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
@@ -208,7 +209,7 @@ public class NodeTest {
         Block newBlock = minerA.mineNewBlock(stateA.getBlockchain()
             .getMainChain()
             .getGenesisBlock(), Simulation.randomHash());
-        org.brabocoin.brabocoin.model.Hash newBlockHash = newBlock.getHash();
+        Hash newBlockHash = newBlock.getHash();
         stateA.getBlockProcessor().processNewBlock(newBlock);
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
@@ -323,7 +324,7 @@ public class NodeTest {
         IndexedBlock previousBlock = stateA.getBlockchain()
             .getMainChain()
             .getGenesisBlock();
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
@@ -453,7 +454,7 @@ public class NodeTest {
         IndexedBlock previousBlock = stateA.getBlockchain()
             .getMainChain()
             .getGenesisBlock();
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
@@ -613,7 +614,7 @@ public class NodeTest {
         IndexedBlock previousBlock = stateA.getBlockchain()
             .getMainChain()
             .getGenesisBlock();
-        org.brabocoin.brabocoin.model.Hash coinbaseOutputAddress = publicKey.getHash();
+        Hash coinbaseOutputAddress = publicKey.getHash();
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
@@ -1241,7 +1242,7 @@ public class NodeTest {
         }
 
         // Create 30 transactions spending the 1-st to 30-th block coinbase
-        List<org.brabocoin.brabocoin.model.Hash> transactionHashes = new ArrayList<>();
+        List<Hash> transactionHashes = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
             for (int j = 1; j <= 3; j++) {

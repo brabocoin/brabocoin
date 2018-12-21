@@ -1,11 +1,11 @@
 package org.brabocoin.brabocoin.gui.converter;
 
 import com.google.protobuf.ByteString;
+import javafx.util.StringConverter;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.util.Base58Check;
 
-public class Base58StringConverter extends javafx.util.StringConverter<Hash> {
+public class Base58StringConverter extends StringConverter<Hash> {
 
     @Override
     public String toString(Hash object) {
@@ -18,9 +18,9 @@ public class Base58StringConverter extends javafx.util.StringConverter<Hash> {
     @Override
     public Hash fromString(String string) {
         try {
-            return new Hash(Base58Check.decode(string));
+            return PublicKey.getHashFromBase58Address(string);
         } catch (IllegalArgumentException e) {
-            return new Hash(ByteString.EMPTY);
+            return null;
         }
     }
 }

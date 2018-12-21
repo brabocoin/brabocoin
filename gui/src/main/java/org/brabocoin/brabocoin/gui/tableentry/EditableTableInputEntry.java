@@ -77,7 +77,7 @@ public class EditableTableInputEntry {
 
     public Input toInput() {
         return new Input(
-            address.get(),
+            referencedTransaction.get(),
             referencedOutputIndex.get()
         );
     }

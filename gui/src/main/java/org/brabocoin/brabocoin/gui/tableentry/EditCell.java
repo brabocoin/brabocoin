@@ -1,8 +1,6 @@
 package org.brabocoin.brabocoin.gui.tableentry;
 
-import javafx.event.ActionEvent;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
@@ -111,14 +109,8 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
         updateItem();
     }
 
-    private TextField getTextField() {
+    protected TextField getTextField() {
         final TextField textField = new TextField(getItemText());
-        textField.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                System.out.println("hi");
-            }
-        });
         // Use onAction here rather than onKeyReleased (with check for Enter),
         textField.setOnAction(event -> {
             if (getConverter() == null) {

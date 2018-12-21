@@ -33,10 +33,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable {
 
     @FXML
     private void createTransaction(ActionEvent event) {
-        new TransactionCreationWindow(
-            state.getWallet(),
-            state.getBlockchain(),
-            state.getConsensus()
-        ).showAndWait();
+        new TransactionCreationWindow(state).showAndWait();
     }
 }
