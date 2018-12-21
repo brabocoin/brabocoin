@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.gui.view;
 
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -148,8 +149,10 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         blockDetailsPane.setBlock(block);
         blockTransactionsPane.setBlock(block);
 
-        container.setManaged(true);
-        container.setVisible(true);
+        Platform.runLater(() -> {
+            container.setManaged(true);
+            container.setVisible(true);
+        });
     }
 
     @FXML
@@ -206,6 +209,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         miningTask.stateProperty().addListener((obs, old, state) -> {
             switch (state) {
                 case RUNNING:
+                    showCurrentBlock();
+                    miningProgressIndicator.setProgress(-1);
                     timer.start();
                     break;
 
@@ -222,9 +227,6 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         });
 
         taskManager.runTask(miningTask);
-
-        miningProgressIndicator.setProgress(-1);
-        showCurrentBlock();
     }
 
     @FXML
