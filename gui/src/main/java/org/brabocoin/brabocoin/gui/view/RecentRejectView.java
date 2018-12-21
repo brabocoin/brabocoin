@@ -9,7 +9,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.BlockchainListener;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
@@ -54,13 +53,6 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
 
         loadRejects();
         blockchain.addListener(this);
-
-        try {
-            blockchain.addRejected(blockchain.getBlock(blockchain.getMainChain().getTopBlock()));
-        }
-        catch (DatabaseException e) {
-            e.printStackTrace();
-        }
     }
 
     private void loadTable() {
