@@ -54,6 +54,14 @@ class Base58CheckTest {
             arguments(
                 ByteString.copyFrom(Hex.decode("0536e88308aeeec46d7f92d0a823610ec4185b1a94")),
                 "36hLx7HjsVLK49RH1A5ExAnd8R4ML8yEmT"
+            ),
+            arguments(
+                ByteString.copyFrom(Hex.decode("00f54a5851e9372b87810a8e60cdd2e7cfd80b6e31")),
+                "1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs"
+            ),
+            arguments(
+                ByteString.copyFrom(Hex.decode("00F0BA1542EF325DBE958125396AF256FAA48FF76A")),
+                "1Nwr6KMa8aMmuaDSQkb3tuaFUn1MjJEx9q"
             )
         );
     }
