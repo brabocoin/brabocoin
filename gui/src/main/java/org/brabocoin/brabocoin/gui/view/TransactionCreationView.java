@@ -467,9 +467,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             return;
         }
 
-        this.environment.addMessageQueueEvent(
-            (environment) -> environment.announceTransactionRequest(transaction)
-        );
+        ValidationStatus status = this.environment.processNewlyCreatedTransaction(transaction);
+
+        // TODO: What if status is not valid?
     }
 
 

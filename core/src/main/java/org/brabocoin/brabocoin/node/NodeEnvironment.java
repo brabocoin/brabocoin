@@ -913,6 +913,23 @@ public class NodeEnvironment {
         return status;
     }
 
+    public synchronized ValidationStatus processNewlyCreatedTransaction(
+        @NotNull Transaction transaction) {
+        ValidationStatus status;
+        try {
+            status = transactionProcessor.processNewTransaction(transaction).getStatus();
+        }
+        catch (DatabaseException e) {
+            status = ValidationStatus.INVALID;
+        }
+
+        if (status == ValidationStatus.VALID) {
+            messageQueue.add(() -> announceTransactionRequest(transaction));
+        }
+
+        return status;
+    }
+
 
     //================================================================================
     // Getters
