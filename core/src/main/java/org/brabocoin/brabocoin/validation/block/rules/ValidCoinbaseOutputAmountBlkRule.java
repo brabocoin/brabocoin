@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
-import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
+import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
 
 import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
 
@@ -20,7 +20,7 @@ public class ValidCoinbaseOutputAmountBlkRule extends BlockRule {
             long feeSum = block.getTransactions()
                 .stream()
                 .skip(1)
-                .map(rethrowFunction(t -> TransactionRuleUtil.computeFee(t, utxoSet)))
+                .map(rethrowFunction(t -> TransactionUtil.computeFee(t, utxoSet)))
                 .mapToLong(l -> l)
                 .sum();
 
