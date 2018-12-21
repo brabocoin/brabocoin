@@ -18,7 +18,7 @@
                     <TableView fx:id="outputTableView"/>
                 </TitledPane>
                 <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
-                    <Button fx:id="buttonFindInputs" text="Find" onAction="#findInputs"/>
+                    <Button fx:id="buttonFindInputs" text="Find inputs" onAction="#findInputs"/>
                     <Button fx:id="buttonAddOutput" text="+" onAction="#addOutput"/>
                     <Button fx:id="buttonRemoveOutput" text="-" onAction="#removeOutput"/>
                 </HBox>

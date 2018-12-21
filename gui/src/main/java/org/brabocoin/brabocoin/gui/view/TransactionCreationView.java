@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -44,10 +45,13 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.TransactionSigningResult;
 import org.brabocoin.brabocoin.wallet.TransactionSigningStatus;
@@ -70,6 +74,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private final Blockchain blockchain;
     private final Consensus consensus;
     private final TransactionValidator transactionValidator;
+    private final NodeEnvironment environment;
     @FXML public TableView<EditableTableInputEntry> inputTableView;
     @FXML public TableView<EditableTableOutputEntry> outputTableView;
     @FXML public TableView<EditableTableSignatureEntry> signatureTableView;
@@ -93,6 +98,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         this.blockchain = state.getBlockchain();
         this.consensus = state.getConsensus();
         this.transactionValidator = state.getTransactionValidator();
+        this.environment = state.getEnvironment();
 
         // Add custom stylesheet
         this.getStylesheets()
@@ -173,7 +179,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
         TableColumn<EditableTableOutputEntry, Hash> address = new TableColumn<>("Address");
         address.setCellValueFactory(new PropertyValueFactory<>("address"));
-        address.setCellFactory(EditCell.forTableColumn(new Base58StringConverter()));
+        address.setCellFactory(ValidatedEditCell.forTableColumn(new Base58StringConverter()));
         address.setOnEditCommit(event -> commitEdit(
             event, EditableTableOutputEntry::setAddress, outputTableView
         ));
@@ -435,7 +441,35 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @FXML
     private void sendTransaction(ActionEvent event) {
+        Transaction transaction = buildTransaction();
+        TransactionValidationResult validationResult = transactionValidator.validate(
+            transaction,
+            TransactionValidator.ALL,
+            true
+        );
 
+        Alert alert = new Alert(
+            validationResult.getStatus() == ValidationStatus.VALID
+                ? Alert.AlertType.CONFIRMATION
+                : Alert.AlertType.WARNING
+        );
+        alert.setTitle("Send transaction");
+        alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
+        alert.setContentText("Are you sure you want the transaction to your peers?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (!result.isPresent()) {
+            return;
+        }
+
+        if (result.get() != ButtonType.OK) {
+            return;
+        }
+
+        this.environment.addMessageQueueEvent(
+            (environment) -> environment.announceTransactionRequest(transaction)
+        );
     }
 
 

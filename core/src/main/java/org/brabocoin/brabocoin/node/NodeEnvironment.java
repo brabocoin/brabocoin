@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
  * Represents a node environment.
  */
 public class NodeEnvironment {
+
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
     /*
@@ -213,7 +214,8 @@ public class NodeEnvironment {
      *     The port of the Client
      */
     public synchronized void addClientPeer(InetAddress address, int port) {
-        if (getPeers().stream().anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
+        if (getPeers().stream()
+            .anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
             return;
         }
 
@@ -293,7 +295,8 @@ public class NodeEnvironment {
                     if (sequentialOrphanBlockCount > maxSequentialOrphanBlocks) {
                         sequentialOrphanBlockCount = 0;
                         messageQueue.add(this::updateBlockchain);
-                    } else {
+                    }
+                    else {
                         messageQueue.add(() -> getBlocksRequest(
                             Collections.singletonList(block.getPreviousBlockHash()),
                             peers,
@@ -896,7 +899,8 @@ public class NodeEnvironment {
      * @throws DatabaseException
      *     If the block could not be processed.
      */
-    public synchronized ValidationStatus processNewlyMinedBlock(@NotNull Block block) throws DatabaseException {
+    public synchronized ValidationStatus processNewlyMinedBlock(
+        @NotNull Block block) throws DatabaseException {
         ValidationStatus status = blockProcessor.processNewBlock(block);
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
@@ -1101,5 +1105,9 @@ public class NodeEnvironment {
 
     public void removeTransactionListener(TransactionReceivedListener transactionReceivedListener) {
         this.transactionListeners.remove(transactionReceivedListener);
+    }
+
+    public void addMessageQueueEvent(Consumer<NodeEnvironment> event) {
+        this.messageQueue.add(() -> event.accept(this));
     }
 }

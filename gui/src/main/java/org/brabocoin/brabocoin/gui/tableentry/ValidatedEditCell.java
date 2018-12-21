@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class ValidatedEditCell<S, T> extends EditCell<S, T> {
+
     private final Function<T, Boolean> validator;
 
     private Boolean invalid = false;
@@ -51,11 +52,17 @@ public class ValidatedEditCell<S, T> extends EditCell<S, T> {
     protected TextField getTextField() {
         TextField superField = super.getTextField();
 
+        String defaultStyle = superField.getStyle();
+
         superField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (invalid && !newValue) {
+                superField.setStyle("-fx-text-inner-color: red;");
                 superField.requestFocus();
             }
         });
+
+        superField.textProperty()
+            .addListener((observable, oldValue, newValue) -> superField.setStyle(defaultStyle));
 
         return superField;
     }
