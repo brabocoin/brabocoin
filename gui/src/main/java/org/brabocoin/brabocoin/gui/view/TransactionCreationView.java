@@ -65,9 +65,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TransactionCreationView extends VBox implements BraboControl, Initializable {
+
+    private static final Logger LOGGER = Logger.getLogger(TransactionCreationView.class.getName());
 
     public static final double INDEX_COLUMN_WIDTH = 60.0;
     private final Wallet wallet;
@@ -468,6 +471,23 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         }
 
         ValidationStatus status = this.environment.processNewlyCreatedTransaction(transaction);
+
+        if (status == ValidationStatus.VALID) {
+            transaction.getInputs()
+                .forEach(i -> {
+                    try {
+                        wallet.getUtxoSet()
+                            .setOutputSpent(
+                                i.getReferencedTransaction(),
+                                i.getReferencedOutputIndex()
+                            );
+                    }
+                    catch (DatabaseException e) {
+                        LOGGER.severe("Could not set output to spent.");
+                        throw new RuntimeException("Set output to spent failed.");
+                    }
+                });
+        }
 
         // TODO: What if status is not valid?
     }
