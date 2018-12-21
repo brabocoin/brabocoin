@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.BlockchainListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
@@ -67,7 +68,7 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
             Hash hash = features.getValue().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
         });
-        hashColumn.setCellFactory(col -> new HashTableCell<>());
+        hashColumn.setCellFactory(col -> new HashTableCell<>(Constants.BLOCK_HASH_SIZE));
 
         blocksTable.getSelectionModel().selectedItemProperty().addListener((obs, old, block) -> {
             if (block == null) {
