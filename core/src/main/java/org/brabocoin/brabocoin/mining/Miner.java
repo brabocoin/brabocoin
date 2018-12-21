@@ -3,7 +3,9 @@ package org.brabocoin.brabocoin.mining;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Output;
@@ -11,6 +13,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +39,7 @@ public class Miner {
     private final @NotNull TransactionPool transactionPool;
     private final @NotNull Consensus consensus;
     private final @NotNull Random random;
+    private final ReadonlyUTXOSet utxoSet;
     private final int networkId;
 
     /**
@@ -56,10 +60,11 @@ public class Miner {
      *     A random instance, used to find a random starting nonce.
      */
     public Miner(@NotNull TransactionPool transactionPool, @NotNull Consensus consensus,
-                 @NotNull Random random, int networkId) {
+                 @NotNull Random random, @NotNull ReadonlyUTXOSet utxoSet, int networkId) {
         this.transactionPool = transactionPool;
         this.consensus = consensus;
         this.random = random;
+        this.utxoSet = utxoSet;
         this.networkId = networkId;
     }
 
@@ -124,8 +129,17 @@ public class Miner {
     private @NotNull Transaction createCoinbase(Hash coinbaseAddress,
                                                 List<Transaction> transactions,
                                                 int blockHeight) {
-        // TODO: do this better
-        long amount = consensus.getBlockReward();
+        long amount = consensus.getBlockReward() +
+            transactions.stream()
+                .mapToLong(t -> {
+                    try {
+                        return TransactionUtil.computeFee(t, utxoSet);
+                    }
+                    catch (DatabaseException e) {
+                        return 0;
+                    }
+                })
+                .sum();
 
         return Transaction.coinbase(new Output(coinbaseAddress, amount), blockHeight);
     }

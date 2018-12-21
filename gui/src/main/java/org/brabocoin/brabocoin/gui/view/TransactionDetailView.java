@@ -12,6 +12,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.tableentry.TableInputEntry;
+import org.brabocoin.brabocoin.gui.tableentry.TableOutputEntry;
+import org.brabocoin.brabocoin.gui.tableentry.TableSignatureEntry;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -146,60 +149,5 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         transaction.setValue(value);
     }
 
-    public class TableInputEntry extends Input {
-        private int index;
-        public TableInputEntry(Input input, int index) {
-            super(input.getReferencedTransaction(), input.getReferencedOutputIndex());
-            this.index = index;
-        }
 
-        public int getIndex() {
-            return index;
-        }
-
-        public String getReferencedTransactionHash() {
-            return ByteUtil.toHexString(this.getReferencedTransaction().getValue(), 32);
-        }
-    }
-
-    public class TableOutputEntry extends Output {
-        private int index;
-        public TableOutputEntry(Output output, int index) {
-            super(output.getAddress(), output.getAmount());
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getAddressHash() {
-            return ByteUtil.toHexString(this.getAddress().getValue(), 32);
-        }
-    }
-
-
-    public class TableSignatureEntry extends Signature {
-        private int index;
-        public TableSignatureEntry(Signature signature, int index) {
-            super(signature.getR(), signature.getS(), signature.getPublicKey());
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getRInHex() {
-            return getR().toString(16);
-        }
-
-        public String getSInHex() {
-            return getS().toString(16);
-        }
-
-        public String getPublicKeyPoint() {
-            return ByteUtil.toHexString(getPublicKey().toCompressed());
-        }
-    }
 }

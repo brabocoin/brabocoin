@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.AbstractMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -129,14 +130,22 @@ public class LevelDB implements KeyValueStore {
         return new Iterator<Map.Entry<ByteString, ByteString>>() {
             DBIterator iterator = database.iterator();
 
+            {
+                iterator.seekToFirst();
+            }
+
             @Override
             public boolean hasNext() {
                 return iterator.hasNext();
             }
 
             @Override
-            public Map.Entry next() {
-                return iterator.next();
+            public Map.Entry<ByteString, ByteString> next() {
+                Map.Entry<byte[], byte[]> entry = iterator.next();
+                return new AbstractMap.SimpleEntry<>(
+                    ByteString.copyFrom(entry.getKey()),
+                    ByteString.copyFrom(entry.getValue())
+                );
             }
         };
     }

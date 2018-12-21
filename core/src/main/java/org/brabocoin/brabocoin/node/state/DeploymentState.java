@@ -72,7 +72,8 @@ public class DeploymentState implements State {
     protected final @NotNull NodeEnvironment environment;
     protected final @NotNull Node node;
 
-    public DeploymentState(@NotNull BraboConfig config, @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
+    public DeploymentState(@NotNull BraboConfig config,
+                           @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
         this.config = config;
 
         unsecureRandom = createUnsecureRandom();
@@ -132,7 +133,8 @@ public class DeploymentState implements State {
         );
     }
 
-    private Wallet createWallet(Unlocker<Wallet> walletUnlocker) throws CipherException, IOException, DestructionException {
+    private Wallet createWallet(
+        Unlocker<Wallet> walletUnlocker) throws CipherException, IOException, DestructionException {
         Cipher privateKeyCipher = new BouncyCastleAES();
         KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
 
@@ -147,7 +149,10 @@ public class DeploymentState implements State {
             config.walletStoreDirectory(),
             config.transactionHistoryFile()
         ).toFile();
-        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
+        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(
+            chainUTXODatabase,
+            poolUTXODatabase
+        );
         if (walletFile.exists()) {
             // Read wallet
             created = walletUnlocker.unlock(false, passphrase -> {
@@ -179,7 +184,8 @@ public class DeploymentState implements State {
                 return wallet;
             });
 
-        } else {
+        }
+        else {
             // Create new wallet
             created = walletUnlocker.unlock(true, passphrase -> {
                 Wallet wallet = new Wallet(
@@ -319,7 +325,13 @@ public class DeploymentState implements State {
     }
 
     protected Miner createMiner() {
-        return new Miner(transactionPool, consensus, unsecureRandom, config.networkId());
+        return new Miner(
+            transactionPool,
+            consensus,
+            unsecureRandom,
+            new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase),
+            config.networkId()
+        );
     }
 
     protected NodeEnvironment createEnvironment() {

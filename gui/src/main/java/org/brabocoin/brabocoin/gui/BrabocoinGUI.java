@@ -44,7 +44,7 @@ public class BrabocoinGUI extends Application {
         .getImplementationVersion() != null ? BrabocoinGUI.class.getPackage()
         .getImplementationVersion() : "[development version]";
 
-    private static final List<String> ICONS = Arrays.asList(
+    public static final List<String> ICONS = Arrays.asList(
         "icon/16.png",
         "icon/24.png",
         "icon/32.png",
@@ -192,13 +192,6 @@ public class BrabocoinGUI extends Application {
             else {
                 dialog.setHeaderText("Unlock your wallet");
             }
-
-            ((Stage)dialog.getDialogPane().getScene().getWindow()).getIcons()
-                .addAll(ICONS.stream()
-                    .map(path -> new Image(BrabocoinGUI.class.getResourceAsStream(path)))
-                    .collect(Collectors.toList()));
-
-            dialog.getDialogPane().getScene().getStylesheets().add(getClass().getResource("brabocoin.css").toExternalForm());
 
             wallet.set(dialog.showAndWait());
             latch.countDown();

@@ -256,7 +256,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
             if (hasDuplicate) {
                 continue;
             }
-            
+
             Destructible<BigInteger> privateKeyValue = privateKey.getKey();
             signatures.add(
                 signer.signMessage(
@@ -447,5 +447,9 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     public @NotNull TransactionHistory getTransactionHistory() {
         return transactionHistory;
+    }
+
+    public UTXODatabase getUtxoSet() {
+        return utxoSet;
     }
 }

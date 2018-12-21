@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
  * Represents a node environment.
  */
 public class NodeEnvironment {
+
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
     /*
@@ -73,6 +74,8 @@ public class NodeEnvironment {
     private Queue<Runnable> messageQueue;
     private final List<BlockReceivedListener> blockListeners;
     private final List<TransactionReceivedListener> transactionListeners;
+    private final int maxSequentialOrphanBlocks;
+    private int sequentialOrphanBlockCount = 0;
 
     /*
      * Processors
@@ -98,6 +101,7 @@ public class NodeEnvironment {
         this.transactionPool = state.getTransactionPool();
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
+        this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
     }
@@ -210,7 +214,8 @@ public class NodeEnvironment {
      *     The port of the Client
      */
     public synchronized void addClientPeer(InetAddress address, int port) {
-        if (getPeers().stream().anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
+        if (getPeers().stream()
+            .anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
             return;
         }
 
@@ -279,13 +284,25 @@ public class NodeEnvironment {
                 Level.FINEST,
                 () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus)
             );
+
+            if (processedBlockStatus == ValidationStatus.VALID) {
+                sequentialOrphanBlockCount = 0;
+            }
+
             switch (processedBlockStatus) {
                 case ORPHAN:
-                    messageQueue.add(() -> getBlocksRequest(
-                        Collections.singletonList(block.getPreviousBlockHash()),
-                        peers,
-                        false
-                    ));
+                    sequentialOrphanBlockCount++;
+                    if (sequentialOrphanBlockCount > maxSequentialOrphanBlocks) {
+                        sequentialOrphanBlockCount = 0;
+                        messageQueue.add(this::updateBlockchain);
+                    }
+                    else {
+                        messageQueue.add(() -> getBlocksRequest(
+                            Collections.singletonList(block.getPreviousBlockHash()),
+                            peers,
+                            false
+                        ));
+                    }
                     // Fall-through intended
                 case VALID:
                     if (propagate) {
@@ -391,6 +408,10 @@ public class NodeEnvironment {
      *     Whether or not to propagate the message to peers.
      */
     private synchronized void onReceiveTransaction(Transaction transaction, boolean propagate) {
+        if (propagate) {
+            transactionListeners.forEach(l -> l.receivedTransaction(transaction));
+        }
+
         try {
             ProcessedTransactionResult result = transactionProcessor.processNewTransaction(
                 transaction
@@ -882,10 +903,28 @@ public class NodeEnvironment {
      * @throws DatabaseException
      *     If the block could not be processed.
      */
-    public synchronized ValidationStatus processNewlyMinedBlock(@NotNull Block block) throws DatabaseException {
+    public synchronized ValidationStatus processNewlyMinedBlock(
+        @NotNull Block block) throws DatabaseException {
         ValidationStatus status = blockProcessor.processNewBlock(block);
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
+        }
+
+        return status;
+    }
+
+    public synchronized ValidationStatus processNewlyCreatedTransaction(
+        @NotNull Transaction transaction) {
+        ValidationStatus status;
+        try {
+            status = transactionProcessor.processNewTransaction(transaction).getStatus();
+        }
+        catch (DatabaseException e) {
+            status = ValidationStatus.INVALID;
+        }
+
+        if (status == ValidationStatus.VALID) {
+            messageQueue.add(() -> announceTransactionRequest(transaction));
         }
 
         return status;
@@ -1087,5 +1126,9 @@ public class NodeEnvironment {
 
     public void removeTransactionListener(TransactionReceivedListener transactionReceivedListener) {
         this.transactionListeners.remove(transactionReceivedListener);
+    }
+
+    public void addMessageQueueEvent(Consumer<NodeEnvironment> event) {
+        this.messageQueue.add(() -> event.accept(this));
     }
 }

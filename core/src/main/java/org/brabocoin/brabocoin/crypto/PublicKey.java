@@ -66,6 +66,18 @@ public class PublicKey {
     }
 
     /**
+     * Computes the hash from the base58 address, removing the address prefix.
+     *
+     * @param base58
+     *     Base58 representation of the address hash.
+     * @return The address hash.
+     */
+    public static @NotNull Hash getHashFromBase58Address(@NotNull String base58) {
+        ByteString decoded = Base58Check.decode(base58);
+        return new Hash(decoded.substring(ADDRESS_PREFIX.size(), decoded.size()));
+    }
+
+    /**
      * Construct a public key from a point on an elliptic curve.
      *
      * @param point
@@ -132,5 +144,10 @@ public class PublicKey {
     @Override
     public int hashCode() {
         return Objects.hash(point);
+    }
+
+    @Override
+    public String toString() {
+        return this.getBase58Address();
     }
 }

@@ -101,4 +101,9 @@ public class MockBraboConfig implements BraboConfig {
     public String transactionHistoryFile() {
         return delegator.transactionHistoryFile();
     }
+
+    @Override
+    public int maxSequentialOrphanBlocks() {
+        return delegator.maxSequentialOrphanBlocks();
+    }
 }

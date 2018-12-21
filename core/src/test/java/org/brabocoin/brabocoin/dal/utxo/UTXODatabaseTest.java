@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Test {@link org.brabocoin.brabocoin.dal.UTXODatabase}.
+ * Test {@link UTXODatabase}.
  */
 public class UTXODatabaseTest {
 

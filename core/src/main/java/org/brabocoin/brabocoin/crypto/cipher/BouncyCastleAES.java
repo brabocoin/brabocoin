@@ -11,6 +11,7 @@ import org.brabocoin.brabocoin.util.CryptoUtil;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
@@ -115,7 +116,7 @@ public final class BouncyCastleAES extends KeyCipher {
                 Constants.PBKDF_ITERATIONS,
                 keyLength);
 
-        javax.crypto.SecretKey pbeKey;
+        SecretKey pbeKey;
         try {
             pbeKey = secretKeyFactory.generateSecret(pbeKeySpec);
         } catch (InvalidKeySpecException e) {

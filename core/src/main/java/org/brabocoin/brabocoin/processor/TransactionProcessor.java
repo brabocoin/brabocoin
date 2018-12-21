@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 
 /**
- * Processes transactions to and from the {@link org.brabocoin.brabocoin.dal.TransactionPool}.
+ * Processes transactions to and from the {@link TransactionPool}.
  */
 public class TransactionProcessor {
 

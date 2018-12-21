@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
@@ -20,8 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.AbstractMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +37,8 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 /**
  * Provides the functionality of storing the unspent transaction outputs (UTXO) set.
  */
-public class UTXODatabase implements ReadonlyUTXOSet {
+public class UTXODatabase implements ReadonlyUTXOSet, Iterable<Map.Entry<Input,
+    UnspentOutputInfo>> {
 
     private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");
@@ -86,7 +91,7 @@ public class UTXODatabase implements ReadonlyUTXOSet {
         return has;
     }
 
-    private synchronized ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
+    private ByteString getOutputKey(@NotNull Hash transactionHash, int outputIndex) {
         ByteString outputKey = KEY_PREFIX_OUTPUT
             .concat(transactionHash.getValue())
             .concat(ByteUtil.toByteString(outputIndex));
@@ -95,6 +100,17 @@ public class UTXODatabase implements ReadonlyUTXOSet {
             () -> MessageFormat.format("Output key: {0}", toHexString(outputKey))
         );
         return outputKey;
+    }
+
+    private Input fromOutputKey(ByteString outputKey) {
+        ByteString nonPrefixed = outputKey.substring(KEY_PREFIX_OUTPUT.size(), outputKey.size());
+        return new Input(
+            new Hash(nonPrefixed.substring(0, Constants.TRANSACTION_HASH_SIZE)),
+            ByteUtil.toInt(nonPrefixed.substring(
+                Constants.TRANSACTION_HASH_SIZE,
+                nonPrefixed.size()
+            ))
+        );
     }
 
     @Override
@@ -287,5 +303,36 @@ public class UTXODatabase implements ReadonlyUTXOSet {
     @Override
     public void removeListener(@NotNull UTXOSetListener listener) {
         this.listeners.remove(listener);
+    }
+
+    @Override
+    public Iterator<Map.Entry<Input, UnspentOutputInfo>> iterator() {
+        return new Iterator<Map.Entry<Input, UnspentOutputInfo>>() {
+            Iterator<Map.Entry<ByteString, ByteString>> storageIterator = storage.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return storageIterator.hasNext();
+            }
+
+            @Override
+            public Map.Entry<Input, UnspentOutputInfo> next() {
+                Map.Entry<ByteString, ByteString> value = storageIterator.next();
+
+                try {
+                    return new AbstractMap.SimpleEntry<>(
+                        fromOutputKey(value.getKey()),
+                        parseProtoValue(
+                            value.getValue(),
+                            UnspentOutputInfo.Builder.class,
+                            BrabocoinStorageProtos.UnspentOutputInfo.parser()
+                        )
+                    );
+                }
+                catch (DatabaseException e) {
+                    return null;
+                }
+            }
+        };
     }
 }

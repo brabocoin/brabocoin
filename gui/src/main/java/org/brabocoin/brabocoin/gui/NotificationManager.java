@@ -30,7 +30,8 @@ public class NotificationManager implements BlockReceivedListener, TransactionRe
             .action(new Action(
                 "Validate",
                 (a) -> {
-                    new ValidationWindow(state.getBlockchain(),
+                    new ValidationWindow(
+                        state.getBlockchain(),
                         block,
                         state.getBlockValidator()
                     ).show();
@@ -43,6 +44,19 @@ public class NotificationManager implements BlockReceivedListener, TransactionRe
 
     @Override
     public void receivedTransaction(Transaction transaction) {
-
+        Platform.runLater(() -> Notifications.create()
+            .title("New transaction received!")
+            .action(new Action(
+                "Validate",
+                (a) -> {
+                    new ValidationWindow(
+                        transaction,
+                        state.getTransactionValidator()
+                    ).show();
+                    a.consume();
+                }
+            ))
+            .hideAfter(Duration.seconds(8))
+            .showInformation());
     }
 }
