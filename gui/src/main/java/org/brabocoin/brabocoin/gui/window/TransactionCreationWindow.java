@@ -17,7 +17,7 @@ public class TransactionCreationWindow extends BraboDialog<Transaction> {
 
     public TransactionCreationWindow(State state) {
         this.wallet = state.getWallet();
-        this.transactionCreationView = new TransactionCreationView(state);
+        this.transactionCreationView = new TransactionCreationView(state, this);
 
         setTitle("Transaction creation");
 

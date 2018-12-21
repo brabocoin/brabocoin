@@ -37,6 +37,7 @@ import org.brabocoin.brabocoin.gui.tableentry.EditableTableInputEntry;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableOutputEntry;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableSignatureEntry;
 import org.brabocoin.brabocoin.gui.tableentry.ValidatedEditCell;
+import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
@@ -78,6 +79,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private final Consensus consensus;
     private final TransactionValidator transactionValidator;
     private final NodeEnvironment environment;
+    private final TransactionCreationWindow transactionCreationWindow;
     @FXML public TableView<EditableTableInputEntry> inputTableView;
     @FXML public TableView<EditableTableOutputEntry> outputTableView;
     @FXML public TableView<EditableTableSignatureEntry> signatureTableView;
@@ -95,13 +97,15 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     @FXML public Button buttonCreateChange;
     @FXML public Button buttonValidate;
 
-    public TransactionCreationView(State state) {
+    public TransactionCreationView(State state,
+                                   TransactionCreationWindow transactionCreationWindow) {
         super();
         this.wallet = state.getWallet();
         this.blockchain = state.getBlockchain();
         this.consensus = state.getConsensus();
         this.transactionValidator = state.getTransactionValidator();
         this.environment = state.getEnvironment();
+        this.transactionCreationWindow = transactionCreationWindow;
 
         // Add custom stylesheet
         this.getStylesheets()
@@ -487,6 +491,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                         throw new RuntimeException("Set output to spent failed.");
                     }
                 });
+
+            transactionCreationWindow.close();
         }
 
         // TODO: What if status is not valid?
@@ -595,6 +601,4 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
         alert.showAndWait();
     }
-
-
 }
