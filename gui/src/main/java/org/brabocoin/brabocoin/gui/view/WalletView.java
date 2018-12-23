@@ -115,7 +115,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         alert.setTitle("Key pair generation");
         alert.setHeaderText("Choose key pair generation method");
         alert.setContentText(
-            "Do you want to create a plain key pair or encrypt it with a new password.");
+            "Do you want to create a plain key pair or encrypt it with a new password?");
 
         ButtonType buttonPlain = new ButtonType("Plain");
         ButtonType buttonEncrypted = new ButtonType("Encrypted");
