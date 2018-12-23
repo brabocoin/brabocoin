@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -24,7 +26,7 @@ import tornadofx.SmartResize;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class WalletView extends TabPane implements BraboControl, Initializable {
+public class WalletView extends TabPane implements BraboControl, Initializable, KeyPairListener {
 
     private final State state;
 
@@ -37,6 +39,8 @@ public class WalletView extends TabPane implements BraboControl, Initializable {
     public WalletView(State state) {
         super();
         this.state = state;
+
+        this.state.getWallet().addKeyPairListener(this);
 
         BraboControlInitializer.initialize(this);
     }
@@ -65,7 +69,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable {
             indexColumn, encryptedColumn, publicKeyColumn
         );
 
-//        keyPairObservableList.addListener();
+        keyPairObservableList.addListener();
 
         keyPairsTableView.setItems(keyPairObservableList);
     }
@@ -73,5 +77,10 @@ public class WalletView extends TabPane implements BraboControl, Initializable {
     @FXML
     private void createTransaction(ActionEvent event) {
         new TransactionCreationWindow(state).showAndWait();
+    }
+
+    @Override
+    public void onKeyPairGenerated(KeyPair keyPair) {
+
     }
 }
