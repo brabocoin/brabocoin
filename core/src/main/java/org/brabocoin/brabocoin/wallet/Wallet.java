@@ -304,7 +304,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
     /**
      * Generates and adds an encrypted key pair to the wallet.
      *
-     * @param passphrase
+     * @param passphrasee
      *     The passphrase to encrypt the private key with
      * @return Key pair that was generated.
      */

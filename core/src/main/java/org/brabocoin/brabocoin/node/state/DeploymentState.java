@@ -133,22 +133,30 @@ public class DeploymentState implements State {
         );
     }
 
+    public File getWalletFile() {
+        return Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.walletFile()
+        ).toFile();
+    }
+
+    public File getTxHistoryFile() {
+        return Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.transactionHistoryFile()
+        ).toFile();
+    }
+
     private Wallet createWallet(
         Unlocker<Wallet> walletUnlocker) throws CipherException, IOException, DestructionException {
         Cipher privateKeyCipher = new BouncyCastleAES();
         KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
 
         Wallet created;
-        File walletFile = Paths.get(
-            config.dataDirectory(),
-            config.walletStoreDirectory(),
-            config.walletFile()
-        ).toFile();
-        File txHistoryFile = Paths.get(
-            config.dataDirectory(),
-            config.walletStoreDirectory(),
-            config.transactionHistoryFile()
-        ).toFile();
+        File walletFile = getWalletFile();
+        File txHistoryFile = getTxHistoryFile();
         ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(
             chainUTXODatabase,
             poolUTXODatabase

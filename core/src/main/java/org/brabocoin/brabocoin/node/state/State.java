@@ -22,6 +22,8 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author Sten Wessel
  */
@@ -72,4 +74,8 @@ public interface State {
     @NotNull Wallet getWallet();
 
     @NotNull WalletIO getWalletIO();
+
+    @NotNull File getWalletFile();
+
+    @NotNull File getTxHistoryFile();
 }

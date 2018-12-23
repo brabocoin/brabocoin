@@ -24,6 +24,10 @@ public class TableKeyPairEntry {
         this.encrypted = new SimpleBooleanProperty(keyPair.getPrivateKey().isEncrypted());
     }
 
+    public TableKeyPairEntry(KeyPair keyPair) {
+        this(keyPair, 0);
+    }
+
     public PrivateKey getPrivateKey() {
         return privateKey.get();
     }
@@ -38,5 +42,9 @@ public class TableKeyPairEntry {
 
     public boolean getEncrypted() {
         return encrypted.get();
+    }
+
+    public void setIndex(int index) {
+        this.index.set(index);
     }
 }
