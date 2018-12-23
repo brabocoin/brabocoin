@@ -19,12 +19,14 @@ import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanIconTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PublicKeyTableCell;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
@@ -36,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 public class WalletView extends TabPane implements BraboControl, Initializable, KeyPairListener {
@@ -77,21 +80,19 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
             BraboGlyph.Icon.LOCK, BraboGlyph.Icon.UNLOCK
         ));
 
-        TableColumn<TableKeyPairEntry, PublicKey> publicKeyColumn = new TableColumn<>(
-            "Public Key");
-        publicKeyColumn.setCellValueFactory(new PropertyValueFactory<>("publicKey"));
-        publicKeyColumn.setCellFactory(col -> new PublicKeyTableCell<>());
+        TableColumn<TableKeyPairEntry, Hash> addressColumn = new TableColumn<>(
+            "Address");
+        addressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
+        addressColumn.setCellFactory(col -> new AddressTableCell<>());
 
         keyPairsTableView.getColumns().addAll(
-            indexColumn, encryptedColumn, publicKeyColumn
+            indexColumn, encryptedColumn, addressColumn
         );
 
-        keyPairObservableList.addListener((ListChangeListener<TableKeyPairEntry>)c -> {
-                if (c.next()) {
-                    c.getAddedSubList()
-                        .forEach(k -> k.setIndex(keyPairObservableList.size()));
-                }
-            }
+        keyPairObservableList.addListener((ListChangeListener<TableKeyPairEntry>)c ->
+            IntStream.range(0, keyPairObservableList.size()).forEach(
+                i -> keyPairObservableList.get(i).setIndex(i)
+            )
         );
 
         keyPairsTableView.setItems(keyPairObservableList);

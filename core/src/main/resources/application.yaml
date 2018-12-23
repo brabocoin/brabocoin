@@ -1,5 +1,5 @@
 brabo:
-  networkId: 2                        # The network on which blocks are accepted
+  networkId: 1                        # The network on which blocks are accepted
   loopInterval: 500                   # The interval in the main node loop, in milliseconds
   targetPeerCount: 25                 # Target of number of peers at which we stop discovering new peers
   handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
