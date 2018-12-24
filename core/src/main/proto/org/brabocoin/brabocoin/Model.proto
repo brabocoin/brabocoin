@@ -59,8 +59,7 @@ message Block {
 }
 
 message HandshakeRequest {
-    int32 servicePort = 1;
-    int32 networkId = 2;
+    int32 networkId = 1;
 }
 
 message HandshakeResponse {
