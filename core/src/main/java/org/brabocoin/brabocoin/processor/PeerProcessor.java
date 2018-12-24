@@ -237,6 +237,9 @@ public class PeerProcessor {
     public synchronized void addPeer(Peer peer) {
         if (filterPeer(peer)) {
             peers.add(peer);
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Added client peer {0}.", peer));
+        } else {
+            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Client peer {0} was a local peer.", peer));
         }
     }
 
