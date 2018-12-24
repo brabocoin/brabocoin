@@ -1,22 +1,13 @@
 package org.brabocoin.brabocoin.node;
 
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
-import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,43 +59,9 @@ public class Peer {
      *     Thrown when the socket is malformed.
      */
     public Peer(String socket) throws MalformedSocketException {
-        this.socket = NetworkUtil.getSocketFromString(socket);
+        this.socket = getSocketFromString(socket);
         setupStubs();
     }
-
-    private static ClientInterceptor createClientCallInterceptor() {
-        return new ClientInterceptor() {
-            @Override
-            public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-                MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-                return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(
-                    method,
-                    callOptions
-                )) {
-                    @Override
-                    public void start(Listener<RespT> responseListener, Metadata headers) {
-                        super.start(createCallListener(responseListener), headers);
-                    }
-                };
-            }
-        };
-    }
-
-    private static <RespT> SimpleForwardingClientCallListener<RespT> createCallListener(
-        ClientCall.Listener<RespT> forwarder) {
-        return new SimpleForwardingClientCallListener<RespT>(forwarder) {
-            @Override
-            public void onHeaders(Metadata headers) {
-                super.onHeaders(headers);
-            }
-
-            @Override
-            public void onMessage(RespT message) {
-                super.onMessage(message);
-            }
-        };
-    }
-
 
     /**
      * Check whether this peer is a connection to the local machine.
@@ -133,7 +90,6 @@ public class Peer {
         try {
             this.channel = ManagedChannelBuilder
                 .forAddress(socket.getHostString(), socket.getPort())
-                .intercept(createClientCallInterceptor())
                 .usePlaintext()
                 .build();
         }
@@ -164,6 +120,54 @@ public class Peer {
      */
     public boolean isRunning() {
         return !channel.isShutdown() && !channel.isTerminated();
+    }
+
+    /**
+     * Tries to parse a InetSocketAddress from a {ip}:{port} string.
+     *
+     * @param socket
+     *     Socket in string format
+     * @return Instantiated InetSocketAddress
+     * @throws MalformedSocketException
+     *     When the socket string has an invalid format.
+     */
+    private InetSocketAddress getSocketFromString(String socket) throws MalformedSocketException {
+        LOGGER.fine("Getting socket from string.");
+        LOGGER.log(Level.FINEST, () -> MessageFormat.format("String: {0}", socket));
+        if (!socket.contains(":")) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
+            throw new MalformedSocketException(
+                "Socket representation does not contain a colon separator.");
+        }
+
+        String[] socketSplit = socket.split(":");
+        if (socketSplit.length != 2) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse, invalid amount of colons.");
+            throw new MalformedSocketException(
+                "Socket representation does not contain a single separator.");
+        }
+
+        int socketPort;
+        try {
+            socketPort = Integer.parseInt(socketSplit[1]);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
+            throw new MalformedSocketException("Socket port section is not an integer.");
+        }
+
+        InetSocketAddress socketAddress;
+        try {
+            socketAddress = new InetSocketAddress(socketSplit[0], socketPort);
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Socket failed to parse: {0}", e.getMessage());
+            throw new MalformedSocketException(e.getMessage());
+        }
+
+
+        LOGGER.fine("Socket created.");
+        return socketAddress;
     }
 
     /**

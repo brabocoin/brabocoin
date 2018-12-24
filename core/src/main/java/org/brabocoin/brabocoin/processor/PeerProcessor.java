@@ -185,8 +185,7 @@ public class PeerProcessor {
                 .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
-                        new HandshakeRequest(config.networkId()),
-                        BrabocoinProtos.HandshakeRequest.class
+                        new HandshakeRequest(config.servicePort(), config.networkId()), BrabocoinProtos.HandshakeRequest.class
                     )
                 );
         }

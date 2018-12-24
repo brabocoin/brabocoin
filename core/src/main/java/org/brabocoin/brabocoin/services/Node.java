@@ -1,24 +1,14 @@
 package org.brabocoin.brabocoin.services;
 
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
-import io.grpc.ForwardingServerCallListener;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerCall;
-import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
@@ -52,9 +42,8 @@ import java.util.stream.Collectors;
 public class Node {
 
     private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
-
     private static final AtomicReference<ServerCall<?, ?>> serverCallCapture =
-        new AtomicReference<>();
+        new AtomicReference<ServerCall<?, ?>>();
 
     /**
      * The network id of this node
@@ -66,7 +55,6 @@ public class Node {
      */
     private final Server server;
     @NotNull private NodeEnvironment environment;
-
 
     /**
      * Captures the request attributes. Useful for testing ServerCalls.
@@ -80,23 +68,9 @@ public class Node {
                 ServerCall<ReqT, RespT> call,
                 Metadata requestHeaders,
                 ServerCallHandler<ReqT, RespT> next) {
+
                 serverCallCapture.set(call);
-                return createCallListener(next.startCall(call, requestHeaders));
-            }
-        };
-    }
-
-    private static <ReqT> ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> createCallListener(
-        Listener<ReqT> listener) {
-        return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listener) {
-            @Override
-            public void onComplete() {
-                super.onComplete();
-            }
-
-            @Override
-            public void onMessage(ReqT message) {
-                super.onMessage(message);
+                return next.startCall(call, requestHeaders);
             }
         };
     }
@@ -215,7 +189,12 @@ public class Node {
             }
 
             // Add the client as a valid peer.
-            environment.addClientPeer(serverCallCapture.get().getAuthority());
+            InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
+                .getAttributes()
+                .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            if (clientAddress != null) {
+                environment.addClientPeer(clientAddress.getAddress(), request.getServicePort());
+            }
         }
 
         @Override

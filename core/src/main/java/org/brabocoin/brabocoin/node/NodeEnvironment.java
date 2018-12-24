@@ -29,7 +29,6 @@ import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -209,31 +208,20 @@ public class NodeEnvironment {
      * Attempts to add the client peer to the list of peers.
      * Used when a client handshakes with this node's service.
      *
-     * @param socket
-     *     The socket string representation of the client peer.
+     * @param address
+     *     The address of the client.
+     * @param port
+     *     The port of the Client
      */
-    public synchronized void addClientPeer(String socket) {
-        InetSocketAddress socketAddress;
-        try {
-            socketAddress = NetworkUtil.getSocketFromString(socket);
-        }
-        catch (MalformedSocketException e) {
-            LOGGER.log(
-                Level.WARNING,
-                MessageFormat.format("Could not parse client peer address: {0}", socket)
-            );
-            return;
-        }
-
+    public synchronized void addClientPeer(InetAddress address, int port) {
         if (getPeers().stream()
-            .anyMatch(p -> p.getAddress()
-                .equals(socketAddress.getAddress()) && p.getPort() == socketAddress.getPort())) {
+            .anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
             return;
         }
 
         Peer clientPeer;
         try {
-            clientPeer = new Peer(socketAddress);
+            clientPeer = new Peer(address, port);
         }
         catch (MalformedSocketException e) {
             LOGGER.log(Level.WARNING, "Could not add client peer: {0}", e.getMessage());
