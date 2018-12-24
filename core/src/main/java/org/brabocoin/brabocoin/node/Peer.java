@@ -1,20 +1,30 @@
 package org.brabocoin.brabocoin.node;
 
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.ForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * A representation of an peer in the network.
  */
-public class Peer {
+public class Peer implements NetworkMessageListener {
 
     private static final Logger LOGGER = Logger.getLogger(Peer.class.getName());
     /**
@@ -25,6 +35,9 @@ public class Peer {
     private ManagedChannel channel;
     private NodeGrpc.NodeBlockingStub blockingStub;
     private NodeGrpc.NodeStub asyncStub;
+    private PeerMessageInterceptor interceptor;
+
+    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
 
     /**
      * Creates a peer from an address and port.
@@ -63,6 +76,7 @@ public class Peer {
         setupStubs();
     }
 
+
     /**
      * Check whether this peer is a connection to the local machine.
      *
@@ -87,9 +101,12 @@ public class Peer {
      */
     private void setupStubs() throws MalformedSocketException {
         LOGGER.log(Level.FINE, "Setting up a new peer: {0}", toSocketString());
+        this.interceptor = new PeerMessageInterceptor(this);
+        this.interceptor.addNetworkMessageListener(this);
         try {
             this.channel = ManagedChannelBuilder
                 .forAddress(socket.getHostString(), socket.getPort())
+                .intercept(interceptor.createClientCallInterceptor())
                 .usePlaintext()
                 .build();
         }
@@ -103,6 +120,19 @@ public class Peer {
 
 
         Runtime.getRuntime().addShutdownHook(new Thread(channel::shutdown));
+    }
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
+    }
+
+    @Override
+    public void onSendMessage(NetworkMessage message) {
+        networkMessageListeners.forEach(l -> l.onSendMessage(message));
     }
 
     /**

@@ -4,6 +4,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.ForwardingServerCallListener;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.Server;
@@ -19,6 +20,8 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.BlockHeight;
 import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
+import org.brabocoin.brabocoin.node.NetworkMessage;
+import org.brabocoin.brabocoin.node.NetworkMessageListener;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,8 +46,9 @@ import java.util.stream.Collectors;
 public class Node {
 
     private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
-    private static final AtomicReference<ServerCall<?, ?>> serverCallCapture =
-        new AtomicReference<ServerCall<?, ?>>();
+    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
+    private final AtomicReference<ServerCall<?, ?>> serverCallCapture =
+        new AtomicReference<>();
 
     /**
      * The network id of this node
@@ -60,7 +65,7 @@ public class Node {
      * Captures the request attributes. Useful for testing ServerCalls.
      * {@link ServerCall#getAttributes()}
      */
-    private static ServerInterceptor recordServerCallInterceptor(
+    private ServerInterceptor recordServerCallInterceptor(
         final AtomicReference<ServerCall<?, ?>> serverCallCapture) {
         return new ServerInterceptor() {
             @Override
@@ -68,9 +73,44 @@ public class Node {
                 ServerCall<ReqT, RespT> call,
                 Metadata requestHeaders,
                 ServerCallHandler<ReqT, RespT> next) {
-
                 serverCallCapture.set(call);
-                return next.startCall(call, requestHeaders);
+                return createCallListener(next.startCall(call, requestHeaders));
+            }
+        };
+    }
+
+    private <ReqT> ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> createCallListener(
+        ServerCall.Listener<ReqT> listener) {
+        return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listener) {
+            @Override
+            public void onComplete() {
+                super.onComplete();
+            }
+
+            @Override
+            public void onMessage(ReqT message) {
+                networkMessageListeners.forEach(l -> {
+                    InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
+                        .getAttributes()
+                        .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+                    List<Peer> peers = null;
+                    if (clientAddress != null) {
+                        peers = environment.findClientPeers(clientAddress.getAddress());
+                    }
+                    Peer peer = null;
+                    if (peers != null && peers.size() == 1) {
+                        peer = peers.get(0);
+                    }
+
+                    l.onReceivedMessage(
+                        new NetworkMessage(
+                            peer,
+                            message.toString(),
+                            serverCallCapture.get().getMethodDescriptor()
+                        )
+                    );
+                });
+                super.onMessage(message);
             }
         };
     }
@@ -86,6 +126,8 @@ public class Node {
             .build();
         this.environment = environment;
         this.networkId = networkId;
+
+        networkMessageListeners.add(this.environment);
     }
 
     public void start() throws IOException {
@@ -401,5 +443,13 @@ public class Node {
 
     public @NotNull NodeEnvironment getEnvironment() {
         return environment;
+    }
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
     }
 }

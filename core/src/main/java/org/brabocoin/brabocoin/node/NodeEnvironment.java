@@ -4,6 +4,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.stub.StreamObserver;
+import javafx.collections.SetChangeListener;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 /**
  * Represents a node environment.
  */
-public class NodeEnvironment {
+public class NodeEnvironment implements NetworkMessageListener, SetChangeListener<Peer> {
 
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
@@ -76,6 +77,8 @@ public class NodeEnvironment {
     private final List<TransactionReceivedListener> transactionListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
+    private List<NetworkMessage> receivedMessages;
+    private List<NetworkMessage> sentMessages;
 
     /*
      * Processors
@@ -104,6 +107,8 @@ public class NodeEnvironment {
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
+        receivedMessages = new ArrayList<>();
+        sentMessages = new ArrayList<>();
     }
 
     /**
@@ -117,6 +122,9 @@ public class NodeEnvironment {
      * </ol>
      */
     public void setup() {
+        // Add listener
+        this.peerProcessor.addPeerSetChangedListeners(this);
+
         LOGGER.info("Setting up the node environment.");
         peerProcessor.bootstrap();
         LOGGER.info("Environment setup done.");
@@ -257,6 +265,15 @@ public class NodeEnvironment {
         LOGGER.info("Message propagated to all peers.");
     }
 
+    @Override
+    public void onReceivedMessage(NetworkMessage message) {
+        receivedMessages.add(message);
+    }
+
+    @Override
+    public void onSendMessage(NetworkMessage message) {
+        sentMessages.add(message);
+    }
 
     //================================================================================
     // Callbacks
@@ -1130,5 +1147,15 @@ public class NodeEnvironment {
 
     public void addMessageQueueEvent(Consumer<NodeEnvironment> event) {
         this.messageQueue.add(() -> event.accept(this));
+    }
+
+    @Override
+    public void onChanged(Change<? extends Peer> change) {
+        if (change.wasAdded()) {
+            change.getElementAdded().addNetworkMessageListener(this);
+        }
+        else {
+            change.getElementRemoved().removeNetworkMessageListeners(this);
+        }
     }
 }

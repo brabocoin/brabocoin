@@ -1,6 +1,9 @@
 package org.brabocoin.brabocoin.processor;
 
 import io.grpc.StatusRuntimeException;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.messages.HandshakeRequest;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
@@ -29,7 +32,7 @@ import java.util.stream.Collectors;
 public class PeerProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
-    private volatile Set<Peer> peers;
+    private volatile ObservableSet<Peer> peers;
     private BraboConfig config;
 
     /**
@@ -41,7 +44,7 @@ public class PeerProcessor {
      *     Config to use for this processor.
      */
     public PeerProcessor(Set<Peer> peers, BraboConfig config) {
-        this.peers = peers;
+        this.peers = FXCollections.observableSet(peers);
         this.config = config;
     }
 
@@ -252,6 +255,14 @@ public class PeerProcessor {
             p.shutdown();
         }
 
-        peers = new HashSet<>();
+        peers.clear();
+    }
+
+    public void addPeerSetChangedListeners(SetChangeListener<Peer> listener) {
+        peers.addListener(listener);
+    }
+
+    public void removePeerSetChangedListeners(SetChangeListener<Peer> listener) {
+        peers.removeListener(listener);
     }
 }
