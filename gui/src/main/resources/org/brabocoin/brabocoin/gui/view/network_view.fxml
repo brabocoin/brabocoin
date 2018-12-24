@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.controlsfx.control.MasterDetailPane?>
+<fx:root type="javafx.scene.control.TabPane"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.NetworkView">
+    <Tab closable="false" text="Peers" disable="true"/>
+    <Tab closable="false" text="Messages">
+        <VBox>
+            <TitledPane text="Incoming messages" collapsible="false">
+                <MasterDetailPane fx:id="incomingMasterPane" dividerPosition="0.65" showDetailNode="false">
+                    <masterNode>
+                        <TableView fx:id="incomingMessagesTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="incomingPeerColumn" sortable="false" text="Peer"/>
+                                <TableColumn fx:id="incomingMethod" sortable="false" text="Method"/>
+                                <TableColumn fx:id="incomingTimeReceived" sortable="false" text="Time received"/>
+                                <TableColumn fx:id="incomingSizeColumn" sortable="false" text="Size (kB)"/>
+                            </columns>
+                            <placeholder>
+                                <VBox alignment="CENTER" spacing="5">
+                                    <ProgressIndicator maxHeight="20"/>
+                                    <Label text="Waiting for message to be received..."/>
+                                </VBox>
+                            </placeholder>
+                        </TableView>
+                    </masterNode>
+                </MasterDetailPane>
+            </TitledPane>
+            <TitledPane text="Outgoing messages" collapsible="false">
+                <MasterDetailPane fx:id="outgoingMasterPane" dividerPosition="0.65" showDetailNode="false">
+                    <masterNode>
+                        <TableView fx:id="outgoingMessagesTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="outgoingPeerColumn" sortable="false" text="Peer"/>
+                                <TableColumn fx:id="outgoingMethod" sortable="false" text="Method"/>
+                                <TableColumn fx:id="outgoingTimeSent" sortable="false" text="Time sent"/>
+                                <TableColumn fx:id="outgoingSizeColumn" sortable="false" text="Size (kB)"/>
+                            </columns>
+                            <placeholder>
+                                <VBox alignment="CENTER" spacing="5">
+                                    <ProgressIndicator maxHeight="20"/>
+                                    <Label text="Waiting for messages to be sent..."/>
+                                </VBox>
+                            </placeholder>
+                        </TableView>
+                    </masterNode>
+                </MasterDetailPane>
+            </TitledPane>
+        </VBox>
+    </Tab>
+</fx:root>

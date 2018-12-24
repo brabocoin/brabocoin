@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.node;
 
+import com.google.protobuf.Message;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -8,7 +9,6 @@ import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.ServerCall;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +52,12 @@ public class PeerMessageInterceptor {
             public void onMessage(RespT message) {
                 networkMessageListeners.forEach(
                     l -> l.onSendMessage(
-                        new NetworkMessage(peer, message.toString(), clientCallCaptureMethod.get())
-                    )
-                );
+                        new NetworkMessage(
+                            peer,
+                            ((Message)message),
+                            clientCallCaptureMethod.get()
+                        )
+                    ));
                 super.onMessage(message);
             }
         };

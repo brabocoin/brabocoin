@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.VBox?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.NetworkMessageDetailView">
+    <TitledPane text="JSON data" collapsible="false" VBox.vgrow="ALWAYS">
+        <TextArea fx:id="jsonTextArea" VBox.vgrow="ALWAYS" editable="false"/>
+    </TitledPane>
+</fx:root>

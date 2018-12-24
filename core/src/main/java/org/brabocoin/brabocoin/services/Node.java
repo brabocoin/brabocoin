@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.ForwardingServerCallListener;
@@ -14,6 +15,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.stub.StreamObserver;
+import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -93,19 +95,18 @@ public class Node {
                     InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
                         .getAttributes()
                         .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-                    List<Peer> peers = null;
-                    if (clientAddress != null) {
-                        peers = environment.findClientPeers(clientAddress.getAddress());
-                    }
                     Peer peer = null;
-                    if (peers != null && peers.size() == 1) {
-                        peer = peers.get(0);
+                    try {
+                        peer = new Peer(clientAddress);
+                    }
+                    catch (MalformedSocketException e) {
+                        // ignore
                     }
 
                     l.onReceivedMessage(
                         new NetworkMessage(
                             peer,
-                            message.toString(),
+                            ((Message)message),
                             serverCallCapture.get().getMethodDescriptor()
                         )
                     );

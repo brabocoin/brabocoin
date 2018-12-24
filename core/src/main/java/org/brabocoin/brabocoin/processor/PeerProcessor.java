@@ -98,7 +98,7 @@ public class PeerProcessor {
      * @return True if the peer passes the filter.
      */
     protected synchronized boolean filterPeer(Peer peer) {
-        return !peer.isLocal();
+        return !peer.isLocal() && !peer.getAddress().isMulticastAddress();
     }
 
     /**

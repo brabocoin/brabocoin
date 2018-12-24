@@ -4,7 +4,10 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.stub.StreamObserver;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
+import javafx.collections.transformation.SortedList;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
@@ -75,14 +78,15 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
     private Queue<Runnable> messageQueue;
     private final List<BlockReceivedListener> blockListeners;
     private final List<TransactionReceivedListener> transactionListeners;
+    private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
-    private List<NetworkMessage> receivedMessages;
-    private List<NetworkMessage> sentMessages;
-
+    private ObservableList<NetworkMessage> receivedMessages;
+    private ObservableList<NetworkMessage> sentMessages;
     /*
      * Processors
      */
+
     private BlockProcessor blockProcessor;
     private PeerProcessor peerProcessor;
     private TransactionProcessor transactionProcessor;
@@ -107,8 +111,9 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
-        receivedMessages = new ArrayList<>();
-        sentMessages = new ArrayList<>();
+        networkMessageListeners = new ArrayList<>();
+        receivedMessages = FXCollections.observableArrayList();
+        sentMessages = FXCollections.observableArrayList();
     }
 
     /**
@@ -265,14 +270,39 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
         LOGGER.info("Message propagated to all peers.");
     }
 
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
+    }
+
+    public List<NetworkMessage> getReceivedMessages() {
+        return new SortedList<>(
+            receivedMessages,
+            NetworkMessage::compareTo
+        );
+    }
+
+    public List<NetworkMessage> getSentMessages() {
+        return new SortedList<>(
+            sentMessages,
+            NetworkMessage::compareTo
+        );
+    }
+
     @Override
     public void onReceivedMessage(NetworkMessage message) {
         receivedMessages.add(message);
+        networkMessageListeners.forEach(l -> l.onReceivedMessage(message));
     }
 
     @Override
     public void onSendMessage(NetworkMessage message) {
         sentMessages.add(message);
+        networkMessageListeners.forEach(l -> l.onSendMessage(message));
     }
 
     //================================================================================
@@ -1152,7 +1182,11 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
     @Override
     public void onChanged(Change<? extends Peer> change) {
         if (change.wasAdded()) {
-            change.getElementAdded().addNetworkMessageListener(this);
+            Peer addedPeer = change.getElementAdded();
+            addedPeer.addNetworkMessageListener(this);
+            this.receivedMessages.addAll(addedPeer.getMessageQueue());
+            addedPeer.getMessageQueue()
+                .forEach(m -> networkMessageListeners.forEach(l -> l.onSendMessage(m)));
         }
         else {
             change.getElementRemoved().removeNetworkMessageListeners(this);

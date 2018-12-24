@@ -1,23 +1,19 @@
 package org.brabocoin.brabocoin.node;
 
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,8 +33,9 @@ public class Peer implements NetworkMessageListener {
     private NodeGrpc.NodeStub asyncStub;
     private PeerMessageInterceptor interceptor;
 
-    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
+    private Queue<NetworkMessage> messageQueue = new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
 
+    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
     /**
      * Creates a peer from an address and port.
      *
@@ -83,7 +80,13 @@ public class Peer implements NetworkMessageListener {
      * @return Whether this peer is the local machine.
      */
     public boolean isLocal() {
-        return socket.getAddress().isAnyLocalAddress() || socket.getAddress().isLoopbackAddress();
+        try {
+            return socket.getAddress().isAnyLocalAddress() || socket.getAddress().isLoopbackAddress() ||
+                InetAddress.getLocalHost().equals(this.getAddress());
+        }
+        catch (UnknownHostException e) {
+            return false;
+        }
     }
 
     /**
@@ -132,7 +135,12 @@ public class Peer implements NetworkMessageListener {
 
     @Override
     public void onSendMessage(NetworkMessage message) {
+        messageQueue.add(message);
         networkMessageListeners.forEach(l -> l.onSendMessage(message));
+    }
+
+    public Queue<NetworkMessage> getMessageQueue() {
+        return messageQueue;
     }
 
     /**
@@ -234,7 +242,7 @@ public class Peer implements NetworkMessageListener {
      * @return Socket string in {ip}:{port} format.
      */
     public String toSocketString() {
-        return String.format("%s:%d", socket.getHostString(), socket.getPort());
+        return String.format("%s:%d", socket.getHostName(), socket.getPort());
     }
 
     @Override
