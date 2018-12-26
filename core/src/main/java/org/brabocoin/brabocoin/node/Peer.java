@@ -33,9 +33,11 @@ public class Peer implements NetworkMessageListener {
     private NodeGrpc.NodeStub asyncStub;
     private PeerMessageInterceptor interceptor;
 
-    private Queue<NetworkMessage> messageQueue = new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
+    private Queue<NetworkMessage> messageQueue =
+        new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
 
     private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
+
     /**
      * Creates a peer from an address and port.
      *
@@ -81,7 +83,8 @@ public class Peer implements NetworkMessageListener {
      */
     public boolean isLocal() {
         try {
-            return socket.getAddress().isAnyLocalAddress() || socket.getAddress().isLoopbackAddress() ||
+            return socket.getAddress().isAnyLocalAddress() || socket.getAddress()
+                .isLoopbackAddress() ||
                 InetAddress.getLocalHost().equals(this.getAddress());
         }
         catch (UnknownHostException e) {
@@ -134,9 +137,11 @@ public class Peer implements NetworkMessageListener {
     }
 
     @Override
-    public void onSendMessage(NetworkMessage message) {
-        messageQueue.add(message);
-        networkMessageListeners.forEach(l -> l.onSendMessage(message));
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            messageQueue.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
     }
 
     public Queue<NetworkMessage> getMessageQueue() {

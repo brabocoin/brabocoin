@@ -4,10 +4,6 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.stub.StreamObserver;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.SetChangeListener;
-import javafx.collections.transformation.SortedList;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
@@ -15,6 +11,7 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
+import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -35,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -56,7 +54,7 @@ import java.util.stream.Collectors;
 /**
  * Represents a node environment.
  */
-public class NodeEnvironment implements NetworkMessageListener, SetChangeListener<Peer> {
+public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedListener {
 
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
@@ -81,12 +79,11 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
     private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
-    private ObservableList<NetworkMessage> receivedMessages;
-    private ObservableList<NetworkMessage> sentMessages;
+    private List<NetworkMessage> receivedMessages;
+
     /*
      * Processors
      */
-
     private BlockProcessor blockProcessor;
     private PeerProcessor peerProcessor;
     private TransactionProcessor transactionProcessor;
@@ -112,8 +109,9 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        receivedMessages = FXCollections.observableArrayList();
-        sentMessages = FXCollections.observableArrayList();
+        receivedMessages = new ArrayList<>();
+
+        peerProcessor.addPeerSetChangedListener(this);
     }
 
     /**
@@ -127,9 +125,6 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
      * </ol>
      */
     public void setup() {
-        // Add listener
-        this.peerProcessor.addPeerSetChangedListeners(this);
-
         LOGGER.info("Setting up the node environment.");
         peerProcessor.bootstrap();
         LOGGER.info("Environment setup done.");
@@ -279,30 +274,41 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
         networkMessageListeners.remove(listener);
     }
 
-    public List<NetworkMessage> getReceivedMessages() {
-        return new SortedList<>(
-            receivedMessages,
-            NetworkMessage::compareTo
-        );
+    public Iterable<NetworkMessage> getReceivedMessages() {
+        return receivedMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
     }
 
-    public List<NetworkMessage> getSentMessages() {
-        return new SortedList<>(
-            sentMessages,
-            NetworkMessage::compareTo
-        );
+    public Iterable<NetworkMessage> getSentMessages() {
+        return peerProcessor.copyPeers().stream()
+            .map(Peer::getMessageQueue)
+            .flatMap(Collection::stream)
+            .sorted(NetworkMessage::compareTo)::iterator;
     }
 
     @Override
-    public void onReceivedMessage(NetworkMessage message) {
-        receivedMessages.add(message);
-        networkMessageListeners.forEach(l -> l.onReceivedMessage(message));
+    public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            receivedMessages.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onIncomingMessage(message, isUpdate));
     }
 
     @Override
-    public void onSendMessage(NetworkMessage message) {
-        sentMessages.add(message);
-        networkMessageListeners.forEach(l -> l.onSendMessage(message));
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
+    }
+
+    @Override
+    public void onPeerAdded(Peer peer) {
+        peer.getMessageQueue().forEach(
+            message -> networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, false))
+        );
+        peer.addNetworkMessageListener(this);
+    }
+
+    @Override
+    public void onPeerRemoved(Peer peer) {
+        peer.removeNetworkMessageListeners(this);
     }
 
     //================================================================================
@@ -1177,19 +1183,5 @@ public class NodeEnvironment implements NetworkMessageListener, SetChangeListene
 
     public void addMessageQueueEvent(Consumer<NodeEnvironment> event) {
         this.messageQueue.add(() -> event.accept(this));
-    }
-
-    @Override
-    public void onChanged(Change<? extends Peer> change) {
-        if (change.wasAdded()) {
-            Peer addedPeer = change.getElementAdded();
-            addedPeer.addNetworkMessageListener(this);
-            this.receivedMessages.addAll(addedPeer.getMessageQueue());
-            addedPeer.getMessageQueue()
-                .forEach(m -> networkMessageListeners.forEach(l -> l.onSendMessage(m)));
-        }
-        else {
-            change.getElementRemoved().removeNetworkMessageListeners(this);
-        }
     }
 }

@@ -12,13 +12,9 @@ import io.grpc.MethodDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class PeerMessageInterceptor {
 
-
-    private final AtomicReference<MethodDescriptor<?, ?>> clientCallCaptureMethod =
-        new AtomicReference<>();
     private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
     private final Peer peer;
 
@@ -31,14 +27,26 @@ public class PeerMessageInterceptor {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
                 MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-                clientCallCaptureMethod.set(method);
-                return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(
-                    method,
-                    callOptions
-                )) {
+                NetworkMessage networkMessage = new NetworkMessage(peer);
+                networkMessage.setMethodDescriptor(method);
+                return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+                    next.newCall(method, callOptions)
+                ) {
                     @Override
                     public void start(Listener<RespT> responseListener, Metadata headers) {
-                        super.start(createCallListener(responseListener), headers);
+                        super.start(createCallListener(responseListener, networkMessage), headers);
+                    }
+
+                    @Override
+                    public void sendMessage(ReqT message) {
+                        super.sendMessage(message);
+                        networkMessage.setRequestTime();
+                        networkMessage.setRequestMessage((Message)message);
+                        networkMessageListeners.forEach(
+                            l -> l.onOutgoingMessage(
+                                networkMessage,
+                                false
+                            ));
                     }
                 };
             }
@@ -46,19 +54,18 @@ public class PeerMessageInterceptor {
     }
 
     private <RespT> ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT> createCallListener(
-        ClientCall.Listener<RespT> forwarder) {
+        ClientCall.Listener<RespT> forwarder, NetworkMessage networkMessage) {
         return new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(forwarder) {
             @Override
             public void onMessage(RespT message) {
-                networkMessageListeners.forEach(
-                    l -> l.onSendMessage(
-                        new NetworkMessage(
-                            peer,
-                            ((Message)message),
-                            clientCallCaptureMethod.get()
-                        )
-                    ));
                 super.onMessage(message);
+                networkMessage.setResponseTime();
+                networkMessage.setResponseMessage((Message)message);
+                networkMessageListeners.forEach(
+                    l -> l.onOutgoingMessage(
+                        networkMessage,
+                        true
+                    ));
             }
         };
     }

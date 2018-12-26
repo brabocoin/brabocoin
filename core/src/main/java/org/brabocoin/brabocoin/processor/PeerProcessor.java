@@ -2,9 +2,8 @@ package org.brabocoin.brabocoin.processor;
 
 import io.grpc.StatusRuntimeException;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableSet;
-import javafx.collections.SetChangeListener;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
+import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.model.messages.HandshakeRequest;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.Peer;
@@ -32,8 +31,10 @@ import java.util.stream.Collectors;
 public class PeerProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
-    private volatile ObservableSet<Peer> peers;
+    private volatile Set<Peer> peers;
     private BraboConfig config;
+
+    private List<PeerSetChangedListener> peerSetChangedListeners = new ArrayList<>();
 
     /**
      * Create a new peer processor for a referenced set of peers and a config file.
@@ -135,7 +136,7 @@ public class PeerProcessor {
                 "Adding handshake peer to peer list, as handshake was successful."
             );
             // We got a response from the current handshake peer, register this peer as valid
-            peers.add(handshakePeer);
+            addPeer(handshakePeer);
 
             // Add the discovered peers to the list of handshake peers
             for (final String peerSocket : response.getPeers()) {
@@ -169,6 +170,8 @@ public class PeerProcessor {
             Peer peer = peerIterator.next();
             HandshakeResponse response = handshake(peer);
             if (response == null) {
+                peer.shutdown();
+                peerSetChangedListeners.forEach(l -> l.onPeerRemoved(peer));
                 peerIterator.remove();
             }
         }
@@ -240,6 +243,7 @@ public class PeerProcessor {
     public synchronized void addPeer(Peer peer) {
         if (filterPeer(peer)) {
             peers.add(peer);
+            peerSetChangedListeners.forEach(l -> l.onPeerAdded(peer));
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Added client peer {0}.", peer));
         } else {
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Client peer {0} was a local peer.", peer));
@@ -258,11 +262,11 @@ public class PeerProcessor {
         peers.clear();
     }
 
-    public void addPeerSetChangedListeners(SetChangeListener<Peer> listener) {
-        peers.addListener(listener);
+    public void addPeerSetChangedListener(PeerSetChangedListener listener) {
+        peerSetChangedListeners.add(listener);
     }
 
-    public void removePeerSetChangedListeners(SetChangeListener<Peer> listener) {
-        peers.removeListener(listener);
+    public void removePeerSetChangedListener(PeerSetChangedListener listener) {
+        peerSetChangedListeners.remove(listener);
     }
 }

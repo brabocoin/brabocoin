@@ -2,9 +2,9 @@ package org.brabocoin.brabocoin.node;
 
 public interface NetworkMessageListener {
 
-    default void onReceivedMessage(NetworkMessage message) {
+    default void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
     }
 
-    default void onSendMessage(NetworkMessage message) {
+    default void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
     }
 }

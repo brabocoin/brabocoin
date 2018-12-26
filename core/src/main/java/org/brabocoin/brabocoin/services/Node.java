@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.ForwardingServerCall;
 import io.grpc.ForwardingServerCallListener;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
@@ -67,8 +68,7 @@ public class Node {
      * Captures the request attributes. Useful for testing ServerCalls.
      * {@link ServerCall#getAttributes()}
      */
-    private ServerInterceptor recordServerCallInterceptor(
-        final AtomicReference<ServerCall<?, ?>> serverCallCapture) {
+    private ServerInterceptor recordServerCallInterceptor() {
         return new ServerInterceptor() {
             @Override
             public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
@@ -76,13 +76,39 @@ public class Node {
                 Metadata requestHeaders,
                 ServerCallHandler<ReqT, RespT> next) {
                 serverCallCapture.set(call);
-                return createCallListener(next.startCall(call, requestHeaders));
+                InetSocketAddress clientAddress = (InetSocketAddress)call.getAttributes()
+                    .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+                Peer peer = null;
+                try {
+                    peer = new Peer(clientAddress);
+                }
+                catch (MalformedSocketException e) {
+                    // ignore
+                }
+                NetworkMessage networkMessage = new NetworkMessage(peer);
+                networkMessage.setMethodDescriptor(call.getMethodDescriptor());
+                return createCallListener(next.startCall(
+                    new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
+                        @Override
+                        public void sendMessage(RespT message) {
+                            super.sendMessage(message);
+                            networkMessage.setResponseTime();
+                            networkMessage.setResponseMessage((Message)message);
+                            networkMessageListeners.forEach(l ->
+                                l.onIncomingMessage(
+                                    networkMessage,
+                                    true
+                                ));
+                        }
+                    }, requestHeaders),networkMessage);
             }
         };
     }
 
+
     private <ReqT> ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> createCallListener(
-        ServerCall.Listener<ReqT> listener) {
+        ServerCall.Listener<ReqT> listener,
+        NetworkMessage networkMessage) {
         return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listener) {
             @Override
             public void onComplete() {
@@ -91,27 +117,14 @@ public class Node {
 
             @Override
             public void onMessage(ReqT message) {
-                networkMessageListeners.forEach(l -> {
-                    InetSocketAddress clientAddress = (InetSocketAddress)serverCallCapture.get()
-                        .getAttributes()
-                        .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-                    Peer peer = null;
-                    try {
-                        peer = new Peer(clientAddress);
-                    }
-                    catch (MalformedSocketException e) {
-                        // ignore
-                    }
-
-                    l.onReceivedMessage(
-                        new NetworkMessage(
-                            peer,
-                            ((Message)message),
-                            serverCallCapture.get().getMethodDescriptor()
-                        )
-                    );
-                });
                 super.onMessage(message);
+                networkMessage.setRequestTime();
+                networkMessage.setRequestMessage((Message)message);
+                networkMessageListeners.forEach(l ->
+                    l.onIncomingMessage(
+                        networkMessage,
+                        false
+                    ));
             }
         };
     }
@@ -121,7 +134,7 @@ public class Node {
             .addService(
                 ServerInterceptors.intercept(
                     new NodeService(),
-                    recordServerCallInterceptor(serverCallCapture)
+                    recordServerCallInterceptor()
                 )
             )
             .build();

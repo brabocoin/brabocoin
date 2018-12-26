@@ -8,36 +8,63 @@ import java.time.LocalDateTime;
 
 public class NetworkMessage implements Comparable<NetworkMessage> {
 
-    private final LocalDateTime time;
     private final Peer peer;
-    private final Message message;
-    private final MethodDescriptor<?, ?> methodDescriptor;
+    private Message requestMessage;
+    private Message responseMessage;
+    private MethodDescriptor<?, ?> methodDescriptor;
+    private LocalDateTime requestTime;
+    private LocalDateTime responseTime;
 
-    public NetworkMessage(Peer peer, Message message, MethodDescriptor<?, ?> methodDescriptor) {
+    public NetworkMessage(Peer peer) {
         this.peer = peer;
-        this.message = message;
-        this.methodDescriptor = methodDescriptor;
-        this.time = LocalDateTime.now();
     }
 
     public Peer getPeer() {
         return peer;
     }
 
-    public Message getMessage() {
-        return message;
+    public Message getRequestMessage() {
+        return requestMessage;
     }
 
     public MethodDescriptor<?, ?> getMethodDescriptor() {
         return methodDescriptor;
     }
 
-    public LocalDateTime getTime() {
-        return time;
+    public LocalDateTime getRequestTime() {
+        return requestTime;
     }
 
     @Override
     public int compareTo(@NotNull NetworkMessage o) {
-        return o.getTime().compareTo(this.getTime());
+        return o.getRequestTime().compareTo(this.getRequestTime());
+    }
+
+    public void setRequestMessage(Message requestMessage) {
+        this.requestMessage = requestMessage;
+    }
+
+    public void setMethodDescriptor(MethodDescriptor<?, ?> methodDescriptor) {
+        this.methodDescriptor = methodDescriptor;
+    }
+
+    public void setRequestTime() {
+        this.requestTime = LocalDateTime.now();
+    }
+
+    public void setResponseTime() {
+        this.responseTime = LocalDateTime.now();
+    }
+
+    public LocalDateTime getResponseTime() {
+        return responseTime;
+    }
+
+    public Message getResponseMessage() {
+        return responseMessage;
+    }
+
+    public void setResponseMessage(Message responseMessage) {
+        this.responseMessage = responseMessage;
     }
 }

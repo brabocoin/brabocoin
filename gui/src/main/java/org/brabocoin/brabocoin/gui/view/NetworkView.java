@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
@@ -67,8 +68,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
 
         state.getEnvironment().addNetworkMessageListener(this);
-        incomingMessages.setAll(state.getEnvironment().getReceivedMessages());
-        outgoingMessages.setAll(state.getEnvironment().getSentMessages());
+        incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
+        outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment().getSentMessages()));
 
         incomingMessageDetailView = new NetworkMessageDetailView();
         incomingMasterPane.setDetailNode(incomingMessageDetailView);
@@ -79,7 +80,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, LocalDateTime> f) {
-        return new ReadOnlyObjectWrapper<>(f.getValue().getTime());
+        return new ReadOnlyObjectWrapper<>(f.getValue().getRequestTime());
     }
 
     private static ObservableValue<Peer> readOnlyPeerFeature(
@@ -95,7 +96,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private static ObservableValue<Double> readOnlyMessageSizeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, Double> f) {
         return new ReadOnlyObjectWrapper<>(f.getValue()
-            .getMessage()
+            .getRequestMessage()
             .getSerializedSize() / KILO_BYTES);
     }
 
@@ -145,12 +146,16 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     }
 
     @Override
-    public void onReceivedMessage(NetworkMessage message) {
-        incomingMessages.setAll(state.getEnvironment().getReceivedMessages());
+    public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
+        incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
+
+        incomingMessagesTable.refresh();
     }
 
     @Override
-    public void onSendMessage(NetworkMessage message) {
-        outgoingMessages.setAll(state.getEnvironment().getSentMessages());
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment().getSentMessages()));
+
+        outgoingMessagesTable.refresh();
     }
 }

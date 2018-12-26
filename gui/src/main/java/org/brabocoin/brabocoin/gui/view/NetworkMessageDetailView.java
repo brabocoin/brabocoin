@@ -17,7 +17,8 @@ import java.util.ResourceBundle;
 
 public class NetworkMessageDetailView extends VBox implements BraboControl, Initializable {
 
-    @FXML private TextArea jsonTextArea;
+    @FXML public TextArea jsonTextAreaRequest;
+    @FXML public TextArea jsonTextAreaResponse;
     private final ObjectProperty<NetworkMessage> networkMessage = new SimpleObjectProperty<>();
 
     public NetworkMessageDetailView() {
@@ -39,8 +40,12 @@ public class NetworkMessageDetailView extends VBox implements BraboControl, Init
 
     private void loadNetworkMessage(NetworkMessage message) {
         try {
-            jsonTextArea.setText(
-                JsonFormat.printer().print(message.getMessage()));
+            jsonTextAreaRequest.setText(
+                message.getRequestMessage() != null ?
+                    JsonFormat.printer().print(message.getRequestMessage()) : "");
+            jsonTextAreaResponse.setText(
+                message.getResponseMessage() != null ?
+                    JsonFormat.printer().print(message.getResponseMessage()) : "");
         }
         catch (InvalidProtocolBufferException e) {
             // ignore

@@ -6,7 +6,10 @@
 <fx:root type="javafx.scene.layout.VBox"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkMessageDetailView">
-    <TitledPane text="JSON data" collapsible="false" VBox.vgrow="ALWAYS">
-        <TextArea fx:id="jsonTextArea" VBox.vgrow="ALWAYS" editable="false"/>
+    <TitledPane text="Request JSON data" collapsible="false" VBox.vgrow="ALWAYS">
+        <TextArea fx:id="jsonTextAreaRequest" VBox.vgrow="ALWAYS" editable="false"/>
+    </TitledPane>
+    <TitledPane text="Response JSON data" collapsible="false" VBox.vgrow="ALWAYS">
+        <TextArea fx:id="jsonTextAreaResponse" VBox.vgrow="ALWAYS" editable="false"/>
     </TitledPane>
 </fx:root>
