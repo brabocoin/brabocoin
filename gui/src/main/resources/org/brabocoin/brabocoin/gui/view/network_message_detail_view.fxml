@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.VBox?>
-<fx:root type="javafx.scene.layout.VBox"
+<fx:root type="javafx.scene.control.SplitPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkMessageDetailView">
-    <TitledPane text="Request JSON data" collapsible="false" VBox.vgrow="ALWAYS">
-        <VBox fx:id="requestArtifactVBox">
-            <!-- Dynamically loaded -->
-        </VBox>
+    <TitledPane text="Request JSON data" collapsible="false">
+        <ScrollPane>
+            <VBox fx:id="requestArtifactPane">
+                <!-- Dynamically loaded -->
+            </VBox>
+        </ScrollPane>
     </TitledPane>
-    <TitledPane fx:id="responseTitledPane" text="Response JSON data" collapsible="false" VBox.vgrow="ALWAYS">
-        <VBox fx:id="responseArtifactVBox">
-            <!-- Dynamically loaded -->
-        </VBox>
+    <TitledPane text="Response JSON data" collapsible="false">
+        <ScrollPane>
+            <VBox fx:id="responseArtifactPane">
+                <!-- Dynamically loaded -->
+            </VBox>
+        </ScrollPane>
     </TitledPane>
 </fx:root>

@@ -300,10 +300,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
 
     @Override
     public void onPeerAdded(Peer peer) {
-        peer.getMessageQueue().forEach(
-            message -> networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, false))
-        );
         peer.addNetworkMessageListener(this);
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(null, false));
     }
 
     @Override
@@ -976,9 +974,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
             status = ValidationStatus.INVALID;
         }
 
-        if (status == ValidationStatus.VALID) {
-            messageQueue.add(() -> announceTransactionRequest(transaction));
-        }
+        messageQueue.add(() -> announceTransactionRequest(transaction));
 
         return status;
     }

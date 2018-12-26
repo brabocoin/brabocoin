@@ -138,7 +138,7 @@ public class Peer implements NetworkMessageListener {
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
-        if (!isUpdate) {
+        if (!isUpdate && !messageQueue.contains(message)) {
             messageQueue.add(message);
         }
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));

@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -28,6 +29,8 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 public class NetworkView extends TabPane implements BraboControl, Initializable,
                                                     NetworkMessageListener {
@@ -95,7 +98,16 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     private static ObservableValue<Double> readOnlyMessageSizeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, Double> f) {
-        return new ReadOnlyObjectWrapper<>(0.0);
+        return new ReadOnlyObjectWrapper<>(
+            StreamSupport.stream(
+                Spliterators
+                    .spliteratorUnknownSize(Iterators.concat(
+                        f.getValue().getRequestMessages().iterator(),
+                        f.getValue().getResponseMessages().iterator()
+                    ), 0),
+                false
+            ).mapToLong(l -> l.getMessage().getSerializedSize()).sum() / KILO_BYTES
+        );
     }
 
     private void loadTable() {

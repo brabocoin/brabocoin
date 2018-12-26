@@ -6,6 +6,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Orientation;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
@@ -18,11 +20,12 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-public class NetworkMessageDetailView extends VBox implements BraboControl, Initializable {
+public class NetworkMessageDetailView extends SplitPane implements BraboControl, Initializable {
 
+    private static final double DIVIDER_POSITION = 0.5;
     private final ObjectProperty<NetworkMessage> networkMessage = new SimpleObjectProperty<>();
-    @FXML public VBox responseArtifactVBox;
-    @FXML public VBox requestArtifactVBox;
+    @FXML public VBox responseArtifactPane;
+    @FXML public VBox requestArtifactPane;
 
     public NetworkMessageDetailView() {
         super();
@@ -38,14 +41,15 @@ public class NetworkMessageDetailView extends VBox implements BraboControl, Init
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
+        this.setDividerPositions(DIVIDER_POSITION);
+        this.setOrientation(Orientation.VERTICAL);
     }
 
     private void loadNetworkMessage(NetworkMessage message) {
         List<MessageArtifact> requestMessages = message.getRequestMessages();
-        addArtifacts(requestMessages, requestArtifactVBox);
+        addArtifacts(requestMessages, requestArtifactPane);
         List<MessageArtifact> responseMessages = message.getResponseMessages();
-        addArtifacts(responseMessages, responseArtifactVBox);
+        addArtifacts(responseMessages, responseArtifactPane);
     }
 
     private void addArtifacts(List<MessageArtifact> artifacts, VBox destinationBox) {
@@ -57,7 +61,8 @@ public class NetworkMessageDetailView extends VBox implements BraboControl, Init
 
                 destinationBox.getChildren().add(artifactPane);
             }
-        } else if (artifacts.size() == 1) {
+        }
+        else if (artifacts.size() == 1) {
             destinationBox.getChildren().add(
                 createMessageArtifactTextArea(artifacts.get(0))
             );
@@ -85,6 +90,8 @@ public class NetworkMessageDetailView extends VBox implements BraboControl, Init
         }
         TextArea content = new TextArea(json);
         content.setEditable(false);
+
+        content.autosize();
 
         return content;
     }

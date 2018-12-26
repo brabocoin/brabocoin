@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -15,11 +16,11 @@
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkView">
     <Tab closable="false" text="Peers" disable="true"/>
     <Tab closable="false" text="Messages">
-        <VBox>
+        <SplitPane dividerPositions="0.5" orientation="VERTICAL">
             <TitledPane text="Incoming messages" collapsible="false">
                 <MasterDetailPane fx:id="incomingMasterPane" dividerPosition="0.65" showDetailNode="false">
                     <masterNode>
-                        <TableView fx:id="incomingMessagesTable" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="incomingMessagesTable">
                             <columns>
                                 <TableColumn fx:id="incomingPeerColumn" sortable="false" text="Peer"/>
                                 <TableColumn fx:id="incomingMethod" sortable="false" text="Method"/>
@@ -39,7 +40,7 @@
             <TitledPane text="Outgoing messages" collapsible="false">
                 <MasterDetailPane fx:id="outgoingMasterPane" dividerPosition="0.65" showDetailNode="false">
                     <masterNode>
-                        <TableView fx:id="outgoingMessagesTable" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="outgoingMessagesTable">
                             <columns>
                                 <TableColumn fx:id="outgoingPeerColumn" sortable="false" text="Peer"/>
                                 <TableColumn fx:id="outgoingMethod" sortable="false" text="Method"/>
@@ -56,6 +57,6 @@
                     </masterNode>
                 </MasterDetailPane>
             </TitledPane>
-        </VBox>
+        </SplitPane>
     </Tab>
 </fx:root>
