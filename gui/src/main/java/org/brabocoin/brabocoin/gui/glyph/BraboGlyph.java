@@ -105,7 +105,9 @@ public class BraboGlyph extends Glyph {
         WALLET(Font.FONT_AWESOME, '\uf555'),
         CIRCLE(Font.FONT_AWESOME, '\uf111'),
         CROSS(Font.FONT_AWESOME, '\uf057'),
-        CIRCLEMINUS(Font.FONT_AWESOME, '\uf056');
+        CIRCLEMINUS(Font.FONT_AWESOME, '\uf056'),
+        LOCK(Font.FONT_AWESOME, '\uf023'),
+        UNLOCK(Font.FONT_AWESOME, '\uf3c1');
 
         private final @NotNull Font font;
         private final char ch;

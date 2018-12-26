@@ -92,6 +92,11 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
     private @Nullable Hash miningAddress;
 
     /**
+     * Key pair generated listeners
+     */
+    private List<KeyPairListener> keyPairListeners = new ArrayList<>();
+
+    /**
      * Create a wallet for a given public to private key map.
      *
      * @param keyPairs
@@ -291,13 +296,15 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
         keyPairs.add(keyPair);
 
+        keyPairListeners.forEach(l -> l.onKeyPairGenerated(keyPair));
+
         return keyPair;
     }
 
     /**
      * Generates and adds an encrypted key pair to the wallet.
      *
-     * @param passphrase
+     * @param passphrasee
      *     The passphrase to encrypt the private key with
      * @return Key pair that was generated.
      */
@@ -320,6 +327,8 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
         keyPairs.add(keyPair);
 
         randomBigInteger.destruct();
+
+        keyPairListeners.forEach(l -> l.onKeyPairGenerated(keyPair));
 
         return keyPair;
     }
@@ -435,11 +444,7 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
      */
     public @NotNull Hash getMiningAddress() {
         if (miningAddress == null) {
-            miningAddress = this.keyPairs.stream()
-                .filter(keyPair -> !keyPair.getPrivateKey().isEncrypted())
-                .findFirst()
-                .map(keyPair -> keyPair.getPublicKey().getHash())
-                .orElseThrow(() -> new IllegalStateException("No mining address could be found."));
+            miningAddress = this.keyPairs.get(keyPairs.size() - 1).getPublicKey().getHash();
         }
 
         return miningAddress;
@@ -451,5 +456,13 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
 
     public UTXODatabase getUtxoSet() {
         return utxoSet;
+    }
+
+    public void addKeyPairListener(KeyPairListener keyPairListener) {
+        keyPairListeners.add(keyPairListener);
+    }
+
+    public void removeKeyPairListener(KeyPairListener keyPairListener) {
+        keyPairListeners.remove(keyPairListener);
     }
 }
