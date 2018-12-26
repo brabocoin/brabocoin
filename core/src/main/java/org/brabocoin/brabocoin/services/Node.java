@@ -23,6 +23,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.BlockHeight;
 import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
+import org.brabocoin.brabocoin.node.MessageArtifact;
 import org.brabocoin.brabocoin.node.NetworkMessage;
 import org.brabocoin.brabocoin.node.NetworkMessageListener;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
@@ -92,8 +93,9 @@ public class Node {
                         @Override
                         public void sendMessage(RespT message) {
                             super.sendMessage(message);
-                            networkMessage.setResponseTime();
-                            networkMessage.setResponseMessage((Message)message);
+                            networkMessage.addResponseMessage(
+                                new MessageArtifact((Message)message)
+                            );
                             networkMessageListeners.forEach(l ->
                                 l.onIncomingMessage(
                                     networkMessage,
@@ -118,8 +120,9 @@ public class Node {
             @Override
             public void onMessage(ReqT message) {
                 super.onMessage(message);
-                networkMessage.setRequestTime();
-                networkMessage.setRequestMessage((Message)message);
+                networkMessage.addRequestMessage(
+                    new MessageArtifact((Message)message)
+                );
                 networkMessageListeners.forEach(l ->
                     l.onIncomingMessage(
                         networkMessage,

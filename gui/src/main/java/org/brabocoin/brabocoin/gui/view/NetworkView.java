@@ -80,7 +80,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, LocalDateTime> f) {
-        return new ReadOnlyObjectWrapper<>(f.getValue().getRequestTime());
+        return new ReadOnlyObjectWrapper<>(f.getValue().getRequestMessages().get(0).getTime());
     }
 
     private static ObservableValue<Peer> readOnlyPeerFeature(
@@ -95,9 +95,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     private static ObservableValue<Double> readOnlyMessageSizeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, Double> f) {
-        return new ReadOnlyObjectWrapper<>(f.getValue()
-            .getRequestMessage()
-            .getSerializedSize() / KILO_BYTES);
+        return new ReadOnlyObjectWrapper<>(0.0);
     }
 
     private void loadTable() {

@@ -7,19 +7,22 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.node.MessageArtifact;
 import org.brabocoin.brabocoin.node.NetworkMessage;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class NetworkMessageDetailView extends VBox implements BraboControl, Initializable {
 
-    @FXML public TextArea jsonTextAreaRequest;
-    @FXML public TextArea jsonTextAreaResponse;
     private final ObjectProperty<NetworkMessage> networkMessage = new SimpleObjectProperty<>();
+    @FXML public VBox responseArtifactVBox;
+    @FXML public VBox requestArtifactVBox;
 
     public NetworkMessageDetailView() {
         super();
@@ -39,17 +42,51 @@ public class NetworkMessageDetailView extends VBox implements BraboControl, Init
     }
 
     private void loadNetworkMessage(NetworkMessage message) {
+        List<MessageArtifact> requestMessages = message.getRequestMessages();
+        addArtifacts(requestMessages, requestArtifactVBox);
+        List<MessageArtifact> responseMessages = message.getResponseMessages();
+        addArtifacts(responseMessages, responseArtifactVBox);
+    }
+
+    private void addArtifacts(List<MessageArtifact> artifacts, VBox destinationBox) {
+        destinationBox.getChildren().clear();
+        if (artifacts.size() > 1) {
+            for (int i = 0; i < artifacts.size(); i++) {
+                MessageArtifact artifact = artifacts.get(i);
+                TitledPane artifactPane = createMessageArtifactTitledPane(artifact, i);
+
+                destinationBox.getChildren().add(artifactPane);
+            }
+        } else if (artifacts.size() == 1) {
+            destinationBox.getChildren().add(
+                createMessageArtifactTextArea(artifacts.get(0))
+            );
+        }
+    }
+
+    private TitledPane createMessageArtifactTitledPane(MessageArtifact artifact, int index) {
+        TitledPane titledPane = new TitledPane(
+            "Artifact " + index,
+            createMessageArtifactTextArea(artifact)
+        );
+        titledPane.setCollapsible(true);
+        titledPane.collapsibleProperty().setValue(index == 0);
+
+        return titledPane;
+    }
+
+    private TextArea createMessageArtifactTextArea(MessageArtifact artifact) {
+        String json = "";
         try {
-            jsonTextAreaRequest.setText(
-                message.getRequestMessage() != null ?
-                    JsonFormat.printer().print(message.getRequestMessage()) : "");
-            jsonTextAreaResponse.setText(
-                message.getResponseMessage() != null ?
-                    JsonFormat.printer().print(message.getResponseMessage()) : "");
+            json = JsonFormat.printer().print(artifact.getMessage());
         }
         catch (InvalidProtocolBufferException e) {
-            // ignore
+            // ignored
         }
+        TextArea content = new TextArea(json);
+        content.setEditable(false);
+
+        return content;
     }
 
     public void setNetworkMessage(NetworkMessage networkMessage) {

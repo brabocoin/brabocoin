@@ -40,8 +40,9 @@ public class PeerMessageInterceptor {
                     @Override
                     public void sendMessage(ReqT message) {
                         super.sendMessage(message);
-                        networkMessage.setRequestTime();
-                        networkMessage.setRequestMessage((Message)message);
+                        networkMessage.addRequestMessage(
+                            new MessageArtifact((Message)message)
+                        );
                         networkMessageListeners.forEach(
                             l -> l.onOutgoingMessage(
                                 networkMessage,
@@ -59,8 +60,9 @@ public class PeerMessageInterceptor {
             @Override
             public void onMessage(RespT message) {
                 super.onMessage(message);
-                networkMessage.setResponseTime();
-                networkMessage.setResponseMessage((Message)message);
+                networkMessage.addResponseMessage(
+                    new MessageArtifact((Message)message)
+                );
                 networkMessageListeners.forEach(
                     l -> l.onOutgoingMessage(
                         networkMessage,

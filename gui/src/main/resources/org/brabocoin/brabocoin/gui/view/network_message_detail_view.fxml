@@ -7,9 +7,13 @@
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkMessageDetailView">
     <TitledPane text="Request JSON data" collapsible="false" VBox.vgrow="ALWAYS">
-        <TextArea fx:id="jsonTextAreaRequest" VBox.vgrow="ALWAYS" editable="false"/>
+        <VBox fx:id="requestArtifactVBox">
+            <!-- Dynamically loaded -->
+        </VBox>
     </TitledPane>
-    <TitledPane text="Response JSON data" collapsible="false" VBox.vgrow="ALWAYS">
-        <TextArea fx:id="jsonTextAreaResponse" VBox.vgrow="ALWAYS" editable="false"/>
+    <TitledPane fx:id="responseTitledPane" text="Response JSON data" collapsible="false" VBox.vgrow="ALWAYS">
+        <VBox fx:id="responseArtifactVBox">
+            <!-- Dynamically loaded -->
+        </VBox>
     </TitledPane>
 </fx:root>

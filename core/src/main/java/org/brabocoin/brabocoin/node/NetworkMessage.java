@@ -1,19 +1,17 @@
 package org.brabocoin.brabocoin.node;
 
-import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NetworkMessage implements Comparable<NetworkMessage> {
 
     private final Peer peer;
-    private Message requestMessage;
-    private Message responseMessage;
+    private List<MessageArtifact> requestMessages = new ArrayList<>();
+    private List<MessageArtifact> responseMessages = new ArrayList<>();
     private MethodDescriptor<?, ?> methodDescriptor;
-    private LocalDateTime requestTime;
-    private LocalDateTime responseTime;
 
     public NetworkMessage(Peer peer) {
         this.peer = peer;
@@ -23,48 +21,35 @@ public class NetworkMessage implements Comparable<NetworkMessage> {
         return peer;
     }
 
-    public Message getRequestMessage() {
-        return requestMessage;
-    }
-
     public MethodDescriptor<?, ?> getMethodDescriptor() {
         return methodDescriptor;
     }
 
-    public LocalDateTime getRequestTime() {
-        return requestTime;
-    }
-
     @Override
     public int compareTo(@NotNull NetworkMessage o) {
-        return o.getRequestTime().compareTo(this.getRequestTime());
-    }
-
-    public void setRequestMessage(Message requestMessage) {
-        this.requestMessage = requestMessage;
+        if (o.getRequestMessages().size() <= 0 || this.getRequestMessages().size() <= 0) {
+            return 0;
+        }
+        return o.getRequestMessages().get(0).compareTo(this.getRequestMessages().get(0));
     }
 
     public void setMethodDescriptor(MethodDescriptor<?, ?> methodDescriptor) {
         this.methodDescriptor = methodDescriptor;
     }
 
-    public void setRequestTime() {
-        this.requestTime = LocalDateTime.now();
+    public List<MessageArtifact> getRequestMessages() {
+        return requestMessages;
     }
 
-    public void setResponseTime() {
-        this.responseTime = LocalDateTime.now();
+    public List<MessageArtifact> getResponseMessages() {
+        return responseMessages;
     }
 
-    public LocalDateTime getResponseTime() {
-        return responseTime;
+    public void addRequestMessage(MessageArtifact artifact) {
+        requestMessages.add(artifact);
     }
 
-    public Message getResponseMessage() {
-        return responseMessage;
-    }
-
-    public void setResponseMessage(Message responseMessage) {
-        this.responseMessage = responseMessage;
+    public void addResponseMessage(MessageArtifact artifact) {
+        responseMessages.add(artifact);
     }
 }
