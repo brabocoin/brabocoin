@@ -9,6 +9,7 @@ dependencies {
     compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
     compile('org.fxmisc.cssfx:cssfx:1.0.0')
     compile('no.tornado:tornadofx:1.7.17')
+    compile('com.github.afester.javafx:FranzXaver:0.1')
 
     compile project(':core')
 }
