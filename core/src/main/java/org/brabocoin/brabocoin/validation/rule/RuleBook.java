@@ -61,7 +61,7 @@ public class RuleBook {
                     passedRule = false;
                 }
             }
-            catch (NullPointerException e) {
+            catch (NullPointerException | IllegalStateException e) {
                 LOGGER.log(Level.SEVERE, "Rule failed: {0}", e.getMessage());
                 passedRule = false;
             }
