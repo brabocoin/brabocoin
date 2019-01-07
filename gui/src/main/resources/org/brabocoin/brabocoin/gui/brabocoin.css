@@ -35,6 +35,7 @@
 
     /* Custom Brabocoin definitions */
     -brabo-pane-toolbar-background: -fx-base;
+    -brabo-invalid: red;
 }
 
 * {
@@ -107,4 +108,8 @@
 
 .progress-indicator.no-percentage:determinate .percentage {
     -fx-fill: null;
+}
+
+.text-field.invalid {
+    -fx-text-fill: red !important;
 }

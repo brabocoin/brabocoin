@@ -82,11 +82,12 @@ public final class Base58Check {
      *     When the input data is not a valid {@code Base58check} encoded string.
      */
     public static @NotNull ByteString decode(@NotNull String data) throws IllegalArgumentException {
-        if (data.length() < CHECKSUM_SIZE) {
+        ByteString decoded = fromBase58(data);
+
+        if (decoded.size() < CHECKSUM_SIZE) {
             throw new IllegalArgumentException("Input data is too short.");
         }
 
-        ByteString decoded = fromBase58(data);
         ByteString checksum = decoded.substring(decoded.size() - CHECKSUM_SIZE, decoded.size());
         ByteString value = decoded.substring(0, decoded.size() - CHECKSUM_SIZE);
 
