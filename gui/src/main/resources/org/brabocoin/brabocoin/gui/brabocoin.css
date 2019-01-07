@@ -1,8 +1,9 @@
 .root {
-    -fx-accent: #C81919;
-    -fx-default-button: #D24D51;
-    -fx-focus-color: #C72125;
-    -fx-faint-focus-color: #C7212522;
+    -fx-accent: #256B9C;
+    -fx-default-button: #3F7DA8;
+    -fx-focus-color: #0F5485;
+    -fx-faint-focus-color: #0F548522;
+    -fx-cell-hover-color: #679DC3;
 
     CHART_COLOR_1: #C81919;
     CHART_COLOR_2: #101073;
@@ -31,7 +32,6 @@
     CHART_COLOR_7_TRANS_70: #888888b3;
     CHART_COLOR_8_TRANS_70: #CCCCCCb3;
 
-    -fx-cell-hover-color: #f7d7d8;
 
     /* Custom Brabocoin definitions */
     -brabo-pane-toolbar-background: -fx-base;
