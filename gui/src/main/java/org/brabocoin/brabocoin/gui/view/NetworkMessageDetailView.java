@@ -75,7 +75,7 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
             createMessageArtifactTextArea(artifact)
         );
         titledPane.setCollapsible(true);
-        titledPane.collapsibleProperty().setValue(index == 0);
+        titledPane.setExpanded(false);
 
         return titledPane;
     }

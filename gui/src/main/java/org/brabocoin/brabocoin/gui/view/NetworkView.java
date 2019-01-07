@@ -69,7 +69,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-
         state.getEnvironment().addNetworkMessageListener(this);
         incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
         outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment().getSentMessages()));
