@@ -115,11 +115,9 @@ public class BrabocoinApplication {
 
         if (arguments.getLogLevel() != null) {
             Logger rootLogger = Logger.getLogger("org.brabocoin.brabocoin");
+            ConsoleHandler consoleHandler = new ConsoleHandler();
             rootLogger.addHandler(
-                new StreamHandler(
-                    System.out,
-                    new SimpleFormatter()
-                )
+                consoleHandler
             );
             switch (arguments.getLogLevel().toLowerCase()) {
                 case "all":
@@ -141,6 +139,7 @@ public class BrabocoinApplication {
                     LOGGER.severe("Could not parse config level");
                     Platform.exit();
             }
+            consoleHandler.setLevel(rootLogger.getLevel());
         }
 
         BraboConfig config = getConfig(arguments.getConfig());
