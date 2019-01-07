@@ -462,7 +462,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         );
         alert.setTitle("Send transaction");
         alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
-        alert.setContentText("Are you sure you want the transaction to your peers?");
+        alert.setContentText("Are you sure you want to send the transaction to your peers?");
 
         Optional<ButtonType> result = alert.showAndWait();
 
@@ -494,8 +494,6 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
             transactionCreationWindow.close();
         }
-
-        // TODO: What if status is not valid?
     }
 
 

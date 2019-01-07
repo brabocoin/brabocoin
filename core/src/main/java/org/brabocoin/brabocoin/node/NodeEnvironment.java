@@ -923,9 +923,7 @@ public class NodeEnvironment {
             status = ValidationStatus.INVALID;
         }
 
-        if (status == ValidationStatus.VALID) {
-            messageQueue.add(() -> announceTransactionRequest(transaction));
-        }
+        messageQueue.add(() -> announceTransactionRequest(transaction));
 
         return status;
     }
