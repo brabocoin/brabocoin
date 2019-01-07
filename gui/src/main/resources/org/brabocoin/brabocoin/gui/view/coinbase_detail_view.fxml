@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.Double?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns="http://javafx.com/javafx/8.0.172-ea"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.CoinbaseDetailView">
+    <fx:define>
+        <Double fx:id="vgap" fx:value="15"/>
+        <Double fx:id="hgap" fx:value="15"/>
+    </fx:define>
+
+    <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
+        <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+            <Label text="Coinbase transaction" styleClass="side-pane-title"/>
+        </HBox>
+
+        <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <SelectableLabel fx:id="hashField" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+    </GridPane>
+
+    <ScrollPane VBox.vgrow="ALWAYS" hbarPolicy="NEVER" fitToWidth="true">
+        <VBox spacing="12" style="-fx-padding: 0.8em;">
+            <TitledPane text="Outputs" collapsible="false">
+                <TableView fx:id="outputTableView" fixedCellSize="24">
+                    <columns>
+                        <TableColumn fx:id="outputIndexColumn" sortable="false" text="Index"/>
+                        <TableColumn fx:id="outputAddressColumn" sortable="false" text="Address"/>
+                        <TableColumn fx:id="outputAmountColumn" sortable="false" text="Amount"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No outputs found"/>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
+        </VBox>
+    </ScrollPane>
+</fx:root>

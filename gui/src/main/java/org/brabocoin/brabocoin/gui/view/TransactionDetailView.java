@@ -1,17 +1,28 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.SelectableLabel;
+import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
+import org.brabocoin.brabocoin.gui.control.table.BigIntegerTableCell;
+import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
+import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
+import org.brabocoin.brabocoin.gui.control.table.PublicKeyTableCell;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
@@ -19,8 +30,8 @@ import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -31,11 +42,26 @@ import java.util.ResourceBundle;
 public class TransactionDetailView extends VBox implements BraboControl, Initializable {
 
     private final ObjectProperty<Transaction> transaction = new SimpleObjectProperty<>();
-    @FXML private TableView<TableSignatureEntry> signatureTableView;
-    @FXML private TableView<TableOutputEntry> outputTableView;
-    @FXML private TableView<TableInputEntry> inputTableView;
-    @FXML private TextField hashField;
-    @FXML private Label titleLabel;
+    private final BooleanProperty showHeader = new SimpleBooleanProperty(true);
+
+    @FXML private TableView<Input> inputTableView;
+    @FXML private TableColumn<Input, Integer> inputIndexColumn;
+    @FXML private TableColumn<Input, Hash> inputReferencedTxColumn;
+    @FXML private TableColumn<Input, Integer> inputReferencedOutputColumn;
+
+    @FXML private TableView<Output> outputTableView;
+    @FXML private TableColumn<Output, Integer> outputIndexColumn;
+    @FXML private TableColumn<Output, Hash> outputAddressColumn;
+    @FXML private TableColumn<Output, Integer> outputAmountColumn;
+
+    @FXML private TableView<Signature> signatureTableView;
+    @FXML private TableColumn<Signature, Integer> sigIndexColumn;
+    @FXML private TableColumn<Signature, BigInteger> sigRColumn;
+    @FXML private TableColumn<Signature, BigInteger> sigSColumn;
+    @FXML private TableColumn<Signature, PublicKey> sigPubKeyColumn;
+
+    @FXML private SelectableLabel hashField;
+    @FXML private HBox header;
 
     public TransactionDetailView(Transaction transaction) {
         super();
@@ -51,91 +77,51 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     }
 
     private void loadTransction(@NotNull Transaction transaction) {
-        titleLabel.setText("Transaction");
-        hashField.setText(ByteUtil.toHexString(transaction.getHash().getValue(), 32));
+        hashField.setText(ByteUtil.toHexString(transaction.getHash().getValue(), Constants.TRANSACTION_HASH_SIZE));
 
-        // Remove all rows
-        inputTableView.getItems().clear();
-
-        @NotNull List<Input> inputs = transaction.getInputs();
-
-        for (int i = 0; i < inputs.size(); i++) {
-            Input input = inputs.get(i);
-
-            inputTableView.getItems().add(
-                new TableInputEntry(input, i)
-            );
-        }
-
-        @NotNull List<Output> outputs = transaction.getOutputs();
-
-        for (int i = 0; i < outputs.size(); i++) {
-            Output output = outputs.get(i);
-
-            outputTableView.getItems().add(
-                new TableOutputEntry(output, i)
-            );
-        }
-
-        @NotNull List<Signature> signatures = transaction.getSignatures();
-
-        for (int i = 0; i < signatures.size(); i++) {
-            Signature signature = signatures.get(i);
-
-            signatureTableView.getItems().add(
-                new TableSignatureEntry(signature, i)
-            );
-        }
+        inputTableView.getItems().setAll(transaction.getInputs());
+        outputTableView.getItems().setAll(transaction.getOutputs());
+        signatureTableView.getItems().setAll(transaction.getSignatures());
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        TableColumn<TableInputEntry, Integer> inputIndex = new TableColumn<>("Index");
-        inputIndex.setCellValueFactory(new PropertyValueFactory<>("index"));
+        // Bind table heights to fit row content
+        fitTableRowContent(inputTableView, 3);
+        fitTableRowContent(outputTableView, 3);
+        fitTableRowContent(signatureTableView, 3);
 
-        inputIndex.setMinWidth(50.0);
-        inputIndex.setMaxWidth(50.0);
+        // Bind show header property
+        header.managedProperty().bind(showHeader);
+        header.visibleProperty().bind(showHeader);
 
-        TableColumn<TableInputEntry, String> refTxHash = new TableColumn<>("Referenced Tx Hash");
-        refTxHash.setCellValueFactory(new PropertyValueFactory<>("referencedTransactionHash"));
-        TableColumn<TableInputEntry, Integer> refOutputIndex = new TableColumn<>("Output Index");
-        refOutputIndex.setCellValueFactory(new PropertyValueFactory<>("referencedOutputIndex"));
+        // Input table
+        inputIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
+        inputReferencedTxColumn.setCellValueFactory(new PropertyValueFactory<>("referencedTransaction"));
+        inputReferencedTxColumn.setCellFactory(col -> new HashTableCell<>(Constants.TRANSACTION_HASH_SIZE));
+        inputReferencedOutputColumn.setCellValueFactory(new PropertyValueFactory<>("referencedOutputIndex"));
 
-        inputTableView.getColumns().addAll(
-            inputIndex, refTxHash, refOutputIndex
-        );
+        // Output table
+        outputIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
+        outputAddressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
+        outputAddressColumn.setCellFactory(col -> new AddressTableCell<>());
+        outputAmountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
 
-        TableColumn<TableOutputEntry, Integer> outputIndex = new TableColumn<>("Index");
-        outputIndex.setCellValueFactory(new PropertyValueFactory<>("index"));
+        // Signature table
+        sigIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
 
-        outputIndex.setMinWidth(50.0);
-        outputIndex.setMaxWidth(50.0);
+        sigRColumn.setCellValueFactory(new PropertyValueFactory<>("r"));
+        sigRColumn.setCellFactory(col -> new BigIntegerTableCell<>(Constants.HEX));
+        sigSColumn.setCellValueFactory(new PropertyValueFactory<>("s"));
+        sigSColumn.setCellFactory(col -> new BigIntegerTableCell<>(Constants.HEX));
+        sigPubKeyColumn.setCellValueFactory(new PropertyValueFactory<>("publicKey"));
+        sigPubKeyColumn.setCellFactory(col -> new PublicKeyTableCell<>());
+    }
 
-        TableColumn<TableOutputEntry, String> address = new TableColumn<>("Address");
-        address.setCellValueFactory(new PropertyValueFactory<>("addressHash"));
-        TableColumn<TableOutputEntry, Integer> amount = new TableColumn<>("Amount");
-        amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-
-        outputTableView.getColumns().addAll(
-            outputIndex, address, amount
-        );
-
-        TableColumn<TableSignatureEntry, Integer> signatureIndex = new TableColumn<>("Index");
-        signatureIndex.setCellValueFactory(new PropertyValueFactory<>("index"));
-
-        signatureIndex.setMinWidth(50.0);
-        signatureIndex.setMaxWidth(50.0);
-
-        TableColumn<TableSignatureEntry, String> rValue = new TableColumn<>("R");
-        rValue.setCellValueFactory(new PropertyValueFactory<>("rInHex"));
-        TableColumn<TableSignatureEntry, String> sValue = new TableColumn<>("S");
-        sValue.setCellValueFactory(new PropertyValueFactory<>("sInHex"));
-        TableColumn<TableSignatureEntry, String> pubKey = new TableColumn<>("Public Key");
-        pubKey.setCellValueFactory(new PropertyValueFactory<>("publicKeyPoint"));
-
-        signatureTableView.getColumns().addAll(
-            signatureIndex, rValue, sValue, pubKey
-        );
+    private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
+        tableView.prefHeightProperty().bind(tableView.fixedCellSizeProperty().multiply(Bindings.size(tableView.getItems()).add(1.01)));
+        tableView.minHeightProperty().bind(Bindings.max(tableView.prefHeightProperty(), tableView.fixedCellSizeProperty().multiply(minRowsVisible + 1.01)));
+        tableView.maxHeightProperty().bind(tableView.prefHeightProperty());
     }
 
     public Transaction getTransaction() {
@@ -146,60 +132,15 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         transaction.setValue(value);
     }
 
-    public class TableInputEntry extends Input {
-        private int index;
-        public TableInputEntry(Input input, int index) {
-            super(input.getReferencedTransaction(), input.getReferencedOutputIndex());
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getReferencedTransactionHash() {
-            return ByteUtil.toHexString(this.getReferencedTransaction().getValue(), 32);
-        }
+    public void setShowHeader(boolean value) {
+        showHeader.set(value);
     }
 
-    public class TableOutputEntry extends Output {
-        private int index;
-        public TableOutputEntry(Output output, int index) {
-            super(output.getAddress(), output.getAmount());
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getAddressHash() {
-            return ByteUtil.toHexString(this.getAddress().getValue(), 32);
-        }
+    public boolean isShowHeader() {
+        return showHeader.get();
     }
 
-
-    public class TableSignatureEntry extends Signature {
-        private int index;
-        public TableSignatureEntry(Signature signature, int index) {
-            super(signature.getR(), signature.getS(), signature.getPublicKey());
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getRInHex() {
-            return getR().toString(16);
-        }
-
-        public String getSInHex() {
-            return getS().toString(16);
-        }
-
-        public String getPublicKeyPoint() {
-            return ByteUtil.toHexString(getPublicKey().toCompressed());
-        }
+    public BooleanProperty showHeaderProperty() {
+        return showHeader;
     }
 }

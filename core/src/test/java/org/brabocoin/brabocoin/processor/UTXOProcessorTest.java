@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Test {@link org.brabocoin.brabocoin.processor.UTXOProcessor}.
+ * Test {@link UTXOProcessor}.
  */
 class UTXOProcessorTest {
 

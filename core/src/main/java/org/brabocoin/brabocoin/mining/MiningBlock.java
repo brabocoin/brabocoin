@@ -1,10 +1,12 @@
 package org.brabocoin.brabocoin.mining;
 
 import com.google.protobuf.ByteString;
+import net.badata.protobuf.converter.annotation.ProtoClass;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,7 @@ import java.util.logging.Logger;
 /**
  * A block that can be mined.
  */
+@ProtoClass(BrabocoinProtos.Block.class)
 public class MiningBlock extends Block {
 
     private static final Logger LOGGER = Logger.getLogger(MiningBlock.class.getName());

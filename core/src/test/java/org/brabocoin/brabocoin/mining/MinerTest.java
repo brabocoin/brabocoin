@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.mining;
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -51,7 +52,7 @@ class MinerTest {
                 return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
             }
         };
-        miner = new Miner(transactionPool, consensus, random, defaultConfig.networkId());
+        miner = new Miner(transactionPool, consensus, random, new CompositeReadonlyUTXOSet(), defaultConfig.networkId());
     }
 
     @Test
@@ -246,7 +247,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random(), 0);
+        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -301,7 +302,7 @@ class MinerTest {
             }
         };
 
-        miner = new Miner(transactionPool, consensus, new Random(), 0);
+        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0);
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),

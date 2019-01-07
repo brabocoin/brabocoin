@@ -7,7 +7,7 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 
-public class TransactionRuleUtil {
+public class TransactionUtil {
 
     public static long computeFee(Transaction transaction,
                                   ReadonlyUTXOSet utxoSet) throws DatabaseException {
@@ -22,7 +22,7 @@ public class TransactionRuleUtil {
             unspentOutputInfo = utxoSet.findUnspentOutputInfo(input);
 
             if (unspentOutputInfo == null) {
-                throw new NullPointerException(
+                throw new IllegalStateException(
                     "Could not find unspent output info for referenced output.");
             }
 

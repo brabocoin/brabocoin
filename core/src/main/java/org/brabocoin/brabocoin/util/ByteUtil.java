@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
-import java.nio.ByteBuffer;
 
 /**
  * Utility class for raw byte data structures.
@@ -53,7 +52,7 @@ public final class ByteUtil {
      * @return The integer representation of the value.
      */
     public static int toInt(@NotNull ByteString value) {
-        return ByteBuffer.wrap(value.toByteArray()).getInt();
+        return Ints.fromByteArray(value.toByteArray());
     }
 
     /**
@@ -89,5 +88,20 @@ public final class ByteUtil {
         }
 
         return DatatypeConverter.printHexBinary(byteString.toByteArray());
+    }
+
+    /**
+     * Parses a string in hexadecimal representation to ByteString.
+     *
+     * @param hexString
+     *     The string to format
+     * @return Bytestring object
+     */
+    public static ByteString fromHexString(String hexString) {
+        if (hexString == null) {
+            return ByteString.EMPTY;
+        }
+
+        return ByteString.copyFrom(DatatypeConverter.parseHexBinary(hexString));
     }
 }

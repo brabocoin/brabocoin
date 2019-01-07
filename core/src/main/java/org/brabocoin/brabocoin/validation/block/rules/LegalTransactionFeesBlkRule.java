@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
-import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
+import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
 
 @ValidationRule(name="Legal transaction fees sum", description = "The sum of all transaction fees is within the allowed range, and does not overflow.")
 public class LegalTransactionFeesBlkRule extends BlockRule {
@@ -22,7 +22,7 @@ public class LegalTransactionFeesBlkRule extends BlockRule {
 
             long fee;
             try {
-                fee = TransactionRuleUtil.computeFee(transaction, utxoSet);
+                fee = TransactionUtil.computeFee(transaction, utxoSet);
             }
             catch (DatabaseException e) {
                 e.printStackTrace();

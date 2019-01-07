@@ -1,7 +1,5 @@
 package org.brabocoin.brabocoin.gui.window;
 
-import javafx.scene.Node;
-import javafx.scene.control.ButtonType;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.ValidationView;
@@ -9,8 +7,6 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.controlsfx.control.MasterDetailPane;
-
-import java.io.IOException;
 
 public class ValidationWindow extends BraboDialog {
 
@@ -27,6 +23,7 @@ public class ValidationWindow extends BraboDialog {
     public ValidationWindow(Blockchain blockchain, Block block,
                             Validator<Block> validator) {
         super();
+
         setTitle("Block Validation");
 
         masterDetailPane = new ValidationView(blockchain, block, validator);
@@ -39,13 +36,12 @@ public class ValidationWindow extends BraboDialog {
      * @param transaction
      *     The transaction to create a validation window for
      */
-    public ValidationWindow(Transaction transaction, Validator<Transaction> validator) throws IOException {
+    public ValidationWindow(Transaction transaction, Validator<Transaction> validator) {
         super();
         setTitle("Transaction Validation");
 
         masterDetailPane = new ValidationView(transaction, validator);
         setProperties();
-
     }
 
     private void setProperties() {
@@ -57,15 +53,8 @@ public class ValidationWindow extends BraboDialog {
         setHeaderText(null);
         setGraphic(null);
 
-        // Add close button
-        this.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        Node closeButton = this.getDialogPane().lookupButton(ButtonType.CLOSE);
-        closeButton.managedProperty().bind(closeButton.visibleProperty());
-        closeButton.setVisible(false);
-
         this.getDialogPane().setMinWidth(WIDTH);
 
         masterDetailPane.setDividerPosition(SLIDER_POSITION);
     }
-
 }

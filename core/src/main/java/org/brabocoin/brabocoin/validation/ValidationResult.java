@@ -42,4 +42,9 @@ public abstract class ValidationResult extends RuleBookResult {
         }
         return status;
     }
+
+    @Override
+    public String toString() {
+        return status == ValidationStatus.VALID ? "valid" : "invalid";
+    }
 }

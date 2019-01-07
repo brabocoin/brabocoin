@@ -17,7 +17,9 @@ import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.LegalTransactionFeesBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
@@ -53,7 +55,9 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     private static final RuleList skippedBlockRules = new RuleList(
         DuplicateStorageBlkRule.class,
-        UniqueUnspentCoinbaseBlkRule.class
+        UniqueUnspentCoinbaseBlkRule.class,
+        ContextualTransactionCheckBlkRule.class,
+        LegalTransactionFeesBlkRule.class
     );
 
     private static final RuleList skippedTransactionRules = new RuleList(
@@ -92,9 +96,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
-            if (ignored) {
+            if (ignored || isSkippedRuleClass(rule)) {
                 ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
-            } else {
+            }
+            else {
                 ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
             }
 
@@ -103,7 +108,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ValidationRule validationRule = (ValidationRule)annotation;
                 ruleTreeItem.setValue(validationRule.name());
 
-                if (isSkippedRuleClass(rule)) {
+                if (isSkippedRuleClass(rule) && !validationRule.composite()) {
                     ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
                 }
                 else if (validationRule.composite()) {
@@ -139,10 +144,16 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                         }
                         else {
                             txItem.setValue("Transaction " + i);
-                            txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+                            txItem.setGraphic(
+                                isSkippedRuleClass(rule) ?
+                                    new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS) :
+                                    new BraboGlyph(BraboGlyph.Icon.CIRCLE)
+                            );
                             txItem.setExpanded(true);
 
-                            addRules(txItem, composite, false);
+                            addRules(txItem, composite,
+                                isSkippedRuleClass(rule)
+                            );
                         }
 
                         ruleTreeItem.getChildren().add(txItem);

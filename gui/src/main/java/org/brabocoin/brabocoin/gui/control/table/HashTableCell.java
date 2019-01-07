@@ -7,10 +7,13 @@ import org.brabocoin.brabocoin.util.ByteUtil;
 /**
  * Table cell that formats a hash to to a hexadecimal string.
  */
-public class HashTableCell <T> extends TableCell<T, Hash> {
+public class HashTableCell<T> extends TableCell<T, Hash> {
 
-    public HashTableCell() {
+    private final int size;
+
+    public HashTableCell(int size) {
         super();
+        this.size = size;
         getStyleClass().add("hash");
     }
 
@@ -20,7 +23,7 @@ public class HashTableCell <T> extends TableCell<T, Hash> {
             setText(null);
         }
         else {
-            setText(ByteUtil.toHexString(item.getValue(), 32));
+            setText(ByteUtil.toHexString(item.getValue(), size));
         }
     }
 

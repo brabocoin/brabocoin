@@ -16,6 +16,8 @@ public final class Constants {
 
     public static final int BLOCK_HASH_SIZE = 32;
 
+    public static final int TRANSACTION_HASH_SIZE = 32;
+
     /**
      * PBKDF2
      */
@@ -40,4 +42,9 @@ public final class Constants {
      * JIT poll delay in milliseconds.
      */
     public static final int JIT_POLL_DELAY = 5;
+
+    /**
+     * Radix of hexadecimal numbers.
+     */
+    public static final int HEX = 16;
 }

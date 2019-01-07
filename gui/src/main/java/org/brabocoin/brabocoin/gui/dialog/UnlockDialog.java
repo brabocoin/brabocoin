@@ -6,10 +6,10 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.layout.GridPane;
+import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.controlsfx.validation.ValidationMessage;
 import org.controlsfx.validation.ValidationSupport;
@@ -26,7 +26,7 @@ import java.util.function.Function;
  *
  * @param <T> The type of the object to unlock.
  */
-public class UnlockDialog<T> extends Dialog<T> {
+public class UnlockDialog<T> extends BraboDialog<T> {
 
     private T object;
 
@@ -38,7 +38,7 @@ public class UnlockDialog<T> extends Dialog<T> {
     private Label messageLabel;
 
     public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker) {
-        super();
+        super(false);
         this.unlocker = unlocker;
 
         // Add buttons

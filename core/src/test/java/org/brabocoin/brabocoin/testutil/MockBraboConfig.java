@@ -88,6 +88,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public int maxRecentRejectBlocks() {
+        return delegator.maxRecentRejectBlocks();
+    }
+
+    @Override
     public int servicePort() {
         return delegator.servicePort();
     }
@@ -100,5 +105,10 @@ public class MockBraboConfig implements BraboConfig {
     @Override
     public String transactionHistoryFile() {
         return delegator.transactionHistoryFile();
+    }
+
+    @Override
+    public int maxSequentialOrphanBlocks() {
+        return delegator.maxSequentialOrphanBlocks();
     }
 }

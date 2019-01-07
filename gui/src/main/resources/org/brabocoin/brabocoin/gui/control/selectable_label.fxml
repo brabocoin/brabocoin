@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<fx:root type="javafx.scene.layout.HBox"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.control.SelectableLabel">
+    <Label fx:id="before" text="…"/>
+    <TextField fx:id="textField" editable="false" styleClass="label-like" HBox.hgrow="ALWAYS"/>
+    <Label fx:id="after" text="…"/>
+</fx:root>

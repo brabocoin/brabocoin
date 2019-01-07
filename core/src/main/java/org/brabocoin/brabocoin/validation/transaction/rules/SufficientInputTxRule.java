@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
-import org.brabocoin.brabocoin.validation.transaction.TransactionRuleUtil;
+import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
 
 /**
  * Transaction rule
@@ -18,7 +18,7 @@ public class SufficientInputTxRule extends TransactionRule {
 
     public boolean isValid() {
         try {
-            return TransactionRuleUtil.computeFee(
+            return TransactionUtil.computeFee(
                 transaction,
                 utxoSet
             ) >= consensus.getMinimumTransactionFee();

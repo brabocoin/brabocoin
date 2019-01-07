@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.chain;
 
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -64,6 +66,11 @@ public class Blockchain {
     private final int maxOrphans;
 
     /**
+     * Recently rejected blocks.
+     */
+    private final @NotNull Queue<Block> recentRejects;
+
+    /**
      * The random instance.
      */
     private final @NotNull Random random;
@@ -77,17 +84,21 @@ public class Blockchain {
      *     The consensus on which this blockchain needs to be constructed.
      * @param maxOrphans
      *     The maximum number of orphans to store.
-     * @param random The random instance.
+     * @param maxRecentRejects
+     *     The maximum number of recently rejected blocks to store.
+     * @param random
+     *     The random instance.
      * @throws DatabaseException
      *     When the genesis block could not be stored.
      */
     public Blockchain(@NotNull BlockDatabase database,
                       @NotNull Consensus consensus, int maxOrphans,
-                      @NotNull Random random) throws DatabaseException {
+                      int maxRecentRejects, @NotNull Random random) throws DatabaseException {
         this.database = database;
         this.orphanMap = HashMultimap.create();
         this.orphanIndex = new HashMap<>();
         this.maxOrphans = maxOrphans;
+        this.recentRejects = EvictingQueue.create(maxRecentRejects);
         this.random = random;
         this.listeners = new HashSet<>();
 
@@ -285,6 +296,27 @@ public class Blockchain {
         }
 
         return keys.next();
+    }
+
+    /**
+     * Add a block to the recently rejected memory storage.
+     *
+     * @param block
+     *     The block that was rejected.
+     */
+    public synchronized void addRejected(@NotNull Block block) {
+        recentRejects.add(block);
+
+        listeners.forEach(l -> l.onRecentRejectAdded(block));
+    }
+
+    /**
+     * Iterator over the recently rejected blocks.
+     *
+     * @return An iterator of the recently rejected blocks.
+     */
+    public Iterator<Block> recentRejectsIterator() {
+        return recentRejects.iterator();
     }
 
     /**

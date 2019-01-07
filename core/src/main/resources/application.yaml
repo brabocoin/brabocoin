@@ -6,6 +6,7 @@ brabo:
   bootstrapPeers:                     # List of peers known at startup
   - brabocoin.org:56129               #  - Dictator node
   updatePeerInterval: 45              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
+  maxSequentialOrphanBlocks: 10       # Max sequential orphan blocks to receive before initializing synchronization.
   dataDirectory: data                 # Data directory
   blockStoreDirectory: blocks         # Subfolder to store block data
   utxoStoreDirectory: utxo            # Subfolder to store UTXO data
@@ -15,6 +16,7 @@ brabo:
   maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
   maxOrphanTransactions: 100          # Max number of orphan transactions
   maxOrphanBlocks: 100                # Max number of orphan blocks
+  maxRecentRejectBlocks: 20           # Max number of recently rejected blocks
   servicePort: 56129                  # Port on which the application listens for messages
   walletFile: wallet.dat              # Wallet file
   transactionHistoryFile: txhist.dat  # Wallet transaction history file

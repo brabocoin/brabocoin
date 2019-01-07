@@ -38,11 +38,6 @@ public class TaskManager {
             }
         });
 
-        statusBar.progressProperty().bind(Bindings.createDoubleBinding(
-            () -> tasks.stream().mapToDouble(Task::getProgress).min().orElse(0),
-            tasks
-        ));
-
         statusBar.graphicProperty().bind(Bindings.createObjectBinding(
             () -> tasks.isEmpty() ? null : INDICATOR,
             tasks

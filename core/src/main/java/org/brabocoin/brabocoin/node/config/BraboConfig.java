@@ -55,6 +55,13 @@ public interface BraboConfig {
     int maxOrphanBlocks();
 
     /**
+     * Maximum number of recently rejected blocks in memory.
+     *
+     * @return The maximum number of recently rejected blocks.
+     */
+    int maxRecentRejectBlocks();
+
+    /**
      * Port on which the application listens for messages on the network.
      *
      * @return The port number.
@@ -74,4 +81,6 @@ public interface BraboConfig {
      * @return The transaction history file path.
      */
     String transactionHistoryFile();
+
+    int maxSequentialOrphanBlocks();
 }
