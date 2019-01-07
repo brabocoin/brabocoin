@@ -78,4 +78,6 @@ public interface State {
     @NotNull File getWalletFile();
 
     @NotNull File getTxHistoryFile();
+
+    @NotNull File getUsedInputsFile();
 }
