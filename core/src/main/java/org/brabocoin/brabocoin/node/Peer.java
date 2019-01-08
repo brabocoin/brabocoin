@@ -144,7 +144,7 @@ public class Peer implements NetworkMessageListener {
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
     }
 
-    public Queue<NetworkMessage> getMessageQueue() {
+    public synchronized Queue<NetworkMessage> getMessageQueue() {
         return messageQueue;
     }
 

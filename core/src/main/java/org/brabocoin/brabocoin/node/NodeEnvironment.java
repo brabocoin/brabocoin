@@ -274,7 +274,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         networkMessageListeners.remove(listener);
     }
 
-    public Iterable<NetworkMessage> getReceivedMessages() {
+    public synchronized Iterable<NetworkMessage> getReceivedMessages() {
         return receivedMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
     }
 
