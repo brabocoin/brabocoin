@@ -1,25 +1,82 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" height="165.77mm" width="165.77mm" version="1.1"
-     xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 587.36452 587.36451">
-    <defs>
-        <path id="a"
-              fill="black"
-              stroke="black"
-              stroke-width="20"
-              d="m11 665q0 7 11 18h191q194-2 218-6 151-28 151-162 0-27-9-47-19-55-89-96l-10-6h1q145-49 145-188 0-63-52-109t-148-63q-27-5-213-7h-185q-11 11-11 19 0 17 40 17 28 2 37 4t14 13q5 18 5 289t-5 289q-5 10-14 13t-37 5h-5q-35 0-35 17zm131-324q0-212-1-253t-7-51q-1-1-1-2h107l-7 13-4 13v562l4 12 7 13h-107l5-9q4-18 4-298zm142 29q81 8 107 41t26 97q0 43-11 73t-28 43-31 19-27 5q-22 0-42-13-11-7-12-24t-2-119v-122h20zm262 145q0 36-15 62t-37 40-40 18-32 6l-11 2 9-13q19-26 25-51t7-69v-6q0-23-1-37t-10-37-26-47q5 0 24 8t44 22 44 42 19 60zm39-330q0 36-15 64t-36 45-44 26-37 14-17 3l-1-1 5-6q5-5 12-15t15-27 12-42 5-58q0-43-10-78t-20-48-12-14q0-1 2-1 6 0 26 7t47 21 47 44 21 66zm-136-1q0 132-91 148-3 0-23 1t-33 2h-38v-136q2-131 6-142 5-7 19-14 11-6 35-6 125 0 125 147z"/>
-        <mask id="m">
-            <rect x="0" y="0" width="1000" height="1000" fill="white"/>
-            <g transform="matrix(.49398 0 0 -.49398 274.77 625.32)">
-                <g transform="matrix(1.0644 0 0 1.0644 -77.611 .064352)">
-                    <use xlink:href="#a" height="100%" width="100%" y="0" x="0"/>
-                </g>
-            </g>
-        </mask>
-    </defs>
-    <g transform="translate(-108.63 -152.32)" mask="url(#m)">
-        <g transform="matrix(.57673 -.23889 .23889 .57673 432.14 218.11)">
-            <path fill="white"
-                  d="m176.23 679.07-360.07 149.15-360.07-149.15-149.15-360.07 149.15-360.07 360.07-149.15 360.07 149.15 149.15 360.07z"/>
-        </g>
-    </g>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="120.70241mm"
+   height="120.70241mm"
+   viewBox="0 0 427.6857 427.6857"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   inkscape:export-filename="C:\Users\s154619\IdeaProjects\brabocoin\src\main\resources\org\brabocoin\brabocoin\gui\icon\48.png"
+   inkscape:export-xdpi="10.100876"
+   inkscape:export-ydpi="10.100876"
+   sodipodi:docname="icon.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="54.688641"
+     inkscape:cy="87.989978"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-144.72859,-132.80507)">
+    <circle
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#c81919;stroke-width:53.40000153;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4136"
+       cx="358.57144"
+       cy="346.64792"
+       r="187.14285" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:181.15771484px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#c81919;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="223.53633"
+       y="409.50891"
+       id="text4138"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4140"
+         x="223.53633"
+         y="409.50891"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:181.16249084px;line-height:125%;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, Bold';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#c81919;fill-opacity:1">BrC</tspan></text>
+  </g>
 </svg>
