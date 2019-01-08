@@ -15,7 +15,9 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,13 +31,14 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
 
     private BlockDetailView blockDetailView;
 
-    @FXML private TableView<Block> blocksTable;
-    @FXML private TableColumn<Block, Integer> heightColumn;
-    @FXML private TableColumn<Block, Hash> hashColumn;
+    @FXML private TableView<RejectedBlock> blocksTable;
+    @FXML private TableColumn<RejectedBlock, Integer> heightColumn;
+    @FXML private TableColumn<RejectedBlock, Hash> hashColumn;
+    @FXML private TableColumn<RejectedBlock, RuleBookFailMarker> ruleColumn;
 
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
-    private ObservableList<Block> observableBlocks = FXCollections.observableArrayList();
+    private ObservableList<RejectedBlock> observableBlocks = FXCollections.observableArrayList();
 
     public RecentRejectView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
         super();
@@ -60,22 +63,27 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
         blocksTable.setItems(observableBlocks);
 
         heightColumn.setCellValueFactory(features -> {
-            int blockHeight = features.getValue().getBlockHeight();
+            int blockHeight = features.getValue().getBlock().getBlockHeight();
             return new ReadOnlyObjectWrapper<>(blockHeight);
         });
 
         hashColumn.setCellValueFactory(features -> {
-            Hash hash = features.getValue().getHash();
+            Hash hash = features.getValue().getBlock().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
         });
         hashColumn.setCellFactory(col -> new HashTableCell<>(Constants.BLOCK_HASH_SIZE));
+
+        ruleColumn.setCellValueFactory(features -> {
+            RuleBookFailMarker marker = features.getValue().getValidationResult().getFailMarker();
+            return new ReadOnlyObjectWrapper<>(marker);
+        });
 
         blocksTable.getSelectionModel().selectedItemProperty().addListener((obs, old, block) -> {
             if (block == null) {
                 return;
             }
 
-            blockDetailView.setBlock(block);
+            blockDetailView.setBlock(block.getBlock());
             setShowDetailNode(true);
         });
     }
