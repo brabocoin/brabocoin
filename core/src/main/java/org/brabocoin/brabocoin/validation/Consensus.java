@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class Consensus {
      */
     private static final Hash TARGET_VALUE = new Hash(
         ByteString.copyFrom(
-            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(65)).toByteArray()
+            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(69)).toByteArray()
         )
     );
 
@@ -179,5 +180,9 @@ public class Consensus {
             - getMaxBlockHeaderSize()
             - getMaxCoinbaseTransactionSize()
             - Long.BYTES;
+    }
+
+    public boolean immatureCoinbase(int chainHeight, UnspentOutputInfo info) {
+        return info.isCoinbase() && chainHeight - this.getCoinbaseMaturityDepth() < info.getBlockHeight();
     }
 }

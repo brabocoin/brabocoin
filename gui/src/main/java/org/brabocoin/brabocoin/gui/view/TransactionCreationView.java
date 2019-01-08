@@ -359,9 +359,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             }
 
             // Prevent coinbase maturity failure
-            if (info.getValue().isCoinbase() && blockchain.getMainChain()
-                .getHeight() - consensus.getCoinbaseMaturityDepth() < info.getValue()
-                .getBlockHeight()) {
+            if (consensus.immatureCoinbase(blockchain.getMainChain().getHeight(), info.getValue())) {
                 continue;
             }
 

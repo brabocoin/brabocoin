@@ -22,7 +22,6 @@ import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.processor.BlockProcessorListener;
 import org.brabocoin.brabocoin.util.Destructible;
-import org.brabocoin.brabocoin.util.LambdaExceptionUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -32,19 +31,15 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * The wallet data structure.
@@ -113,9 +108,14 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     private @Nullable Hash miningAddress;
 
     /**
-     * Key pair generated listeners
+     * Key pair generated listeners.
      */
     private List<KeyPairListener> keyPairListeners = new ArrayList<>();
+
+    /**
+     * BalanceListener list
+     */
+    private List<BalanceListener> balanceListeners = new ArrayList<>();
 
     /**
      * Create a wallet for a given public to private key map.
@@ -401,6 +401,8 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                     new ConfirmedTransaction(t, block.getBlockHeight())
                 );
             });
+
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     @Override
@@ -414,6 +416,9 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                 transactionHistory.removeConfirmedTransaction(t.getHash());
                 transactionHistory.addUnconfirmedTransaction(t);
             });
+
+
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {
@@ -447,6 +452,54 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         return miningAddress;
     }
 
+    /**
+     * Computes the confirmed or pending balance in the chain, using the wallet UTXO set and the
+     * {@link #usedInputs}.
+     *
+     * @param pending
+     *     Whether to compute the confirmed or pending balance.
+     * @return Confirmed balance
+     */
+    public long computeBalance(boolean pending) {
+        return computeKeyPairBalance(pending, null);
+    }
+
+    /**
+     * Computes the confirmed or pending balance for a given key pair, using the wallet UTXO set
+     * and the
+     * {@link #usedInputs}.
+     *
+     * @param pending
+     *     Whether to compute the confirmed or pending balance.
+     * @param keyPair
+     *     The key pair to calculate the balance for.
+     * @return Confirmed balance
+     */
+    public long computeKeyPairBalance(boolean pending, KeyPair keyPair) {
+        long sum = 0;
+        for (Map.Entry<Input, UnspentOutputInfo> entry : utxoSet) {
+            UnspentOutputInfo info = entry.getValue();
+
+            if (keyPair != null && !info.getAddress().equals(keyPair.getPublicKey().getHash())) {
+                continue;
+            }
+
+            boolean immatureCoinbase = consensus.immatureCoinbase(blockchain.getMainChain()
+                .getHeight(), info);
+
+            if (pending) {
+                if (!usedInputs.contains(entry.getKey())) {
+                    sum += info.getAmount();
+                }
+            }
+            else if (!immatureCoinbase) {
+                sum += info.getAmount();
+            }
+        }
+
+        return sum;
+    }
+
     public @NotNull TransactionHistory getTransactionHistory() {
         return transactionHistory;
     }
@@ -467,12 +520,17 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         return usedInputs;
     }
 
+    public void addBalanceListener(BalanceListener listener) {
+        balanceListeners.add(listener);
+    }
+
     class ChainListener implements UTXOSetListener {
 
         @Override
         public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                     @NotNull UnspentOutputInfo info) {
             addUnspentOutputInfo(transactionHash, outputIndex, info);
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
 
         @Override
@@ -487,6 +545,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             }
 
             usedInputs.remove(new Input(transactionHash, outputIndex));
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
     }
 
@@ -496,6 +555,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                     @NotNull UnspentOutputInfo info) {
             addUnspentOutputInfo(transactionHash, outputIndex, info);
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
 
         @Override
@@ -503,6 +563,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             addUsedInput(
                 new Input(transactionHash, outputIndex)
             );
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
     }
 
@@ -529,22 +590,5 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
             throw new RuntimeException("Wallet UTXO set could not be updated.", e);
         }
-    }
-
-    public long computeBalance() {
-        long sum = 0;
-        for (Map.Entry<Input, UnspentOutputInfo> entry: utxoSet) {
-            if (!usedInputs.contains(entry.getKey())) {
-                sum += entry.getValue().getAmount();
-            }
-        }
-
-        return sum;
-    }
-
-    public long computePending() throws DatabaseException {
-        return usedInputs.stream()
-            .map(LambdaExceptionUtil.rethrowFunction(utxoSet::findUnspentOutputInfo))
-            .mapToLong(UnspentOutputInfo::getAmount).sum();
     }
 }
