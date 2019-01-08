@@ -7,6 +7,7 @@ import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.dal.UTXOSetListener;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -15,6 +16,7 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
@@ -32,25 +34,21 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * The wallet data structure.
  */
 public class Wallet implements Iterable<KeyPair>, BlockchainListener,
-                               BlockProcessorListener {
+                               BlockProcessorListener, TransactionPoolListener {
 
     private static final Logger LOGGER = Logger.getLogger(Wallet.class.getName());
 
@@ -106,7 +104,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     private final @NotNull Blockchain blockchain;
 
-
     /**
      * Cached mining address.
      */
@@ -157,6 +154,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         this.poolUtxo.addListener(new PoolListener());
         this.chainUtxo.addListener(new ChainListener());
         this.blockchain.addListener(this);
+        transactionPool.addListener(this);
     }
 
     /**
@@ -414,6 +412,25 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                 transactionHistory.removeConfirmedTransaction(t.getHash());
                 transactionHistory.addUnconfirmedTransaction(t);
             });
+    }
+
+    @Override
+    public void onTransactionAddedToPool(@NotNull Transaction transaction) {
+        // Add to unconfirmed transactions if an output matches and address from the wallet
+        if (transaction.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress()))) {
+            transactionHistory.addUnconfirmedTransaction(transaction);
+        }
+
+
+        // Add to unconfirmed transactions if an input matches and address from the wallet
+        // Note that the tx is valid because it is present in the pool, thus the inputs are present
+        // in either the chain or pool UTXO
+        // TODO
+    }
+
+    @Override
+    public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+        transactionHistory.removeUnconfirmedTransaction(transaction.getHash());
     }
 
     private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {

@@ -49,6 +49,14 @@ public class ConfirmedTransaction implements ProtoModel<ConfirmedTransaction> {
         return transaction.getHash();
     }
 
+    public int getBlockHeight() {
+        return blockHeight;
+    }
+
+    public Transaction getTransaction() {
+        return transaction;
+    }
+
     @ProtoClass(BrabocoinStorageProtos.ConfirmedTransaction.class)
     public static class Builder implements ProtoBuilder<ConfirmedTransaction> {
 

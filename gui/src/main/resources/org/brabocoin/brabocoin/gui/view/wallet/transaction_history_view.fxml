@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+<?import org.controlsfx.control.MasterDetailPane?>
+<?import javafx.scene.control.TitledPane?>
+<fx:root type="org.controlsfx.control.MasterDetailPane"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView"
+         dividerPosition="0.65"
+         showDetailNode="false">
+    <masterNode>
+        <VBox>
+            <TitledPane text="Confirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
+                <TableView fx:id="confirmedTable">
+                    <columns>
+                        <TableColumn fx:id="dateConfColumn" text="Date"/>
+                        <TableColumn fx:id="blockHeightConfColumn" text="Block #"/>
+                        <TableColumn fx:id="hashConfColumn" sortable="false" text="Transaction hash"/>
+                        <TableColumn fx:id="amountConfColumn" sortable="false" text="Amount"/>
+                    </columns>
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="5">
+                            <Label text="No confirmed transactions"/>
+                        </VBox>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
+            <TitledPane text="Unconfirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
+                <TableView fx:id="unconfirmedTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="dateUnconfColumn" text="Date"/>
+                        <TableColumn fx:id="hashUnconfColumn" sortable="false" text="Transaction hash"/>
+                        <TableColumn fx:id="amountUnconfColumn" sortable="false" text="Amount"/>
+                    </columns>
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="5">
+                            <Label text="No unconfirmed transactions"/>
+                        </VBox>
+                    </placeholder>
+                </TableView>
+            </TitledPane>
+        </VBox>
+    </masterNode>
+</fx:root>

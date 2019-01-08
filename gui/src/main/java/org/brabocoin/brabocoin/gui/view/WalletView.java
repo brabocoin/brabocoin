@@ -11,39 +11,31 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.brabocoin.brabocoin.crypto.PublicKey;
-import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
-import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
-import org.brabocoin.brabocoin.gui.control.table.BooleanIconTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
-import org.brabocoin.brabocoin.gui.control.table.PublicKeyTableCell;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
-import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
+import org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
-import org.brabocoin.brabocoin.wallet.Wallet;
-import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
-import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import tornadofx.SmartResize;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -54,6 +46,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     private final State state;
 
+    @FXML private Tab txHistoryTab;
     @FXML public Button buttonCreateTransaction;
     @FXML public TableView<TableKeyPairEntry> keyPairsTableView;
     @FXML public Button buttonCreateKeyPair;
@@ -76,6 +69,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        txHistoryTab.setContent(new TransactionHistoryView(state.getWallet().getTransactionHistory()));
         keyPairsTableView.setEditable(false);
         keyPairsTableView.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 

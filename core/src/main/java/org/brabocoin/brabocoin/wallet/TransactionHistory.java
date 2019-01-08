@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.wallet;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
+import org.brabocoin.brabocoin.listeners.TransactionHistoryListener;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.proto.ConfirmedTransactionMapEntryConverter;
@@ -12,8 +13,12 @@ import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +26,8 @@ import java.util.stream.Collectors;
  */
 @ProtoClass(BrabocoinStorageProtos.TransactionHistory.class)
 public class TransactionHistory implements ProtoModel<TransactionHistory> {
+
+    private final Set<TransactionHistoryListener> listeners;
 
     /**
      * Index of confirmed transactions.
@@ -49,8 +56,25 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      */
     public TransactionHistory(@NotNull Map<Hash, ConfirmedTransaction> confirmedTransactions,
                               @NotNull Map<Hash, Transaction> unconfirmedTransactions) {
+        this.listeners = new HashSet<>();
         this.confirmedTransactions = new HashMap<>(confirmedTransactions);
         this.unconfirmedTransactions = new HashMap<>(unconfirmedTransactions);
+    }
+
+    public void addListener(@NotNull TransactionHistoryListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(@NotNull TransactionHistoryListener listener) {
+        listeners.remove(listener);
+    }
+
+    public Collection<ConfirmedTransaction> getConfirmedTransactions() {
+        return Collections.unmodifiableCollection(confirmedTransactions.values());
+    }
+
+    public Collection<Transaction> getUnconfirmedTransactions() {
+        return Collections.unmodifiableCollection(unconfirmedTransactions.values());
     }
 
     /**
@@ -85,6 +109,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      */
     public void addConfirmedTransaction(@NotNull ConfirmedTransaction transaction) {
         confirmedTransactions.put(transaction.getHash(), transaction);
+        listeners.forEach(l -> l.onConfirmedTransactionAdded(transaction));
     }
 
     /**
@@ -95,6 +120,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      */
     public void addUnconfirmedTransaction(@NotNull Transaction transaction) {
         unconfirmedTransactions.put(transaction.getHash(), transaction);
+        listeners.forEach(l -> l.onUnconfirmedTransactionAdded(transaction));
     }
 
     /**
@@ -104,7 +130,10 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     The hash of the transaction to remove.
      */
     public void removeConfirmedTransaction(@NotNull Hash hash) {
-        confirmedTransactions.remove(hash);
+        ConfirmedTransaction transaction = confirmedTransactions.remove(hash);
+        if (transaction != null) {
+            listeners.forEach(l -> l.onConfirmedTransactionRemoved(transaction));
+        }
     }
 
     /**
@@ -114,7 +143,10 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     The hash of the transaction to remove.
      */
     public void removeUnconfirmedTransaction(@NotNull Hash hash) {
-        unconfirmedTransactions.remove(hash);
+        Transaction transaction = unconfirmedTransactions.remove(hash);
+        if(transaction != null) {
+            listeners.forEach(l -> l.onUnconfirmedTransactionRemoved(transaction));
+        }
     }
 
     @Override

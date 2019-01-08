@@ -44,4 +44,5 @@
             </center>
         </BorderPane>
     </Tab>
+    <Tab fx:id="txHistoryTab" closable="false" text="Transaction history"/>
 </fx:root>
