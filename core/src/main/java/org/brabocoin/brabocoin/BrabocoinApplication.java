@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
 
 /**
  * Main Brabocoin application that runs the full node.
@@ -63,7 +61,8 @@ public class BrabocoinApplication {
         storages = Sets.newHashSet(
             state.getBlockStorage(),
             state.getUtxoStorage(),
-            state.getWalletUTXOStorage()
+            state.getWalletChainUtxoStorage(),
+            state.getWalletPoolUtxoStorage()
         );
     }
 

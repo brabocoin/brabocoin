@@ -70,7 +70,7 @@ class WalletTest {
             plain.getPublicKey().getHash(), state.getConsensus().getBlockReward()
         ), 1);
 
-        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
+        state.getWalletChainUtxoDatabase().setOutputsUnspent(coinbaseTx, 1);
 
         UnsignedTransaction utx = new UnsignedTransaction(
             Collections.singletonList(
@@ -100,7 +100,7 @@ class WalletTest {
             encrypted.getPublicKey().getHash(), state.getConsensus().getBlockReward()
         ), 1);
 
-        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
+        state.getWalletChainUtxoDatabase().setOutputsUnspent(coinbaseTx, 1);
 
         UnsignedTransaction utx = new UnsignedTransaction(
             Collections.singletonList(
@@ -143,8 +143,8 @@ class WalletTest {
             encrypted.getPublicKey().getHash(), state.getConsensus().getBlockReward()
         ), 2);
 
-        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx, 1);
-        state.getWalletUTXODatabase().setOutputsUnspent(coinbaseTx2, 2);
+        state.getWalletChainUtxoDatabase().setOutputsUnspent(coinbaseTx, 1);
+        state.getWalletChainUtxoDatabase().setOutputsUnspent(coinbaseTx2, 2);
 
         UnsignedTransaction utx = new UnsignedTransaction(
             Arrays.asList(
@@ -199,7 +199,7 @@ class WalletTest {
 
         coinbaseTxs.forEach(t -> {
             try {
-                state.getWalletUTXODatabase().setOutputsUnspent(t, 1);
+                state.getWalletChainUtxoDatabase().setOutputsUnspent(t, 1);
             }
             catch (DatabaseException e) {
                 e.printStackTrace();

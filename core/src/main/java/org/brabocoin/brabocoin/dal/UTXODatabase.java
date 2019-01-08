@@ -37,8 +37,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 /**
  * Provides the functionality of storing the unspent transaction outputs (UTXO) set.
  */
-public class UTXODatabase implements ReadonlyUTXOSet, Iterable<Map.Entry<Input,
-    UnspentOutputInfo>> {
+public class UTXODatabase implements ReadonlyUTXOSet {
 
     private static final Logger LOGGER = Logger.getLogger(UTXODatabase.class.getName());
     private static final ByteString KEY_PREFIX_OUTPUT = ByteString.copyFromUtf8("c");

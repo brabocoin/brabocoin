@@ -187,11 +187,16 @@ public class PeerProcessor {
     public HandshakeResponse handshake(Peer peer) {
         BrabocoinProtos.HandshakeResponse protoResponse;
         try {
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Handshaking with peer: {0}", peer.toString())
+            );
             protoResponse = peer.getBlockingStub()
                 .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
-                        new HandshakeRequest(config.servicePort(), config.networkId()), BrabocoinProtos.HandshakeRequest.class
+                        new HandshakeRequest(config.servicePort(), config.networkId()),
+                        BrabocoinProtos.HandshakeRequest.class
                     )
                 );
         }
@@ -245,8 +250,12 @@ public class PeerProcessor {
             peers.add(peer);
             peerSetChangedListeners.forEach(l -> l.onPeerAdded(peer));
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Added client peer {0}.", peer));
-        } else {
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Client peer {0} was a local peer.", peer));
+        }
+        else {
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Client peer {0} was a local peer.", peer)
+            );
         }
     }
 

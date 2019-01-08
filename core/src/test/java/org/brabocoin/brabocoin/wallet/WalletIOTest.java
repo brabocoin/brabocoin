@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.wallet;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
-import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -90,7 +89,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -112,7 +112,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -145,7 +146,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -168,7 +170,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -204,6 +207,7 @@ class WalletIOTest {
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB()),
             state.getBlockchain()
         );
 
@@ -224,6 +228,7 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
+            new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
@@ -252,7 +257,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -276,7 +282,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -323,7 +330,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()
@@ -347,7 +355,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
             state.getBlockchain()

@@ -47,7 +47,8 @@ public class WalletIO {
                        Signer signer,
                        KeyGenerator keyGenerator,
                        Cipher privateKeyCipher,
-                       @NotNull UTXODatabase walletUTXOSet,
+                       @NotNull UTXODatabase walletChainUtxoSet,
+                       @NotNull UTXODatabase walletPoolUtxoSet,
                        @NotNull ReadonlyUTXOSet chainUtxo,
                        @NotNull ReadonlyUTXOSet poolUtxo,
                        @NotNull Blockchain blockchain) throws IOException, CipherException,
@@ -123,6 +124,7 @@ public class WalletIO {
 
             protoInput = BrabocoinProtos.Input.parseDelimitedFrom(usedInputFileStream);
         }
+        usedInputFileStream.close();
 
         return new Wallet(
             keyList,
@@ -132,7 +134,8 @@ public class WalletIO {
             signer,
             keyGenerator,
             privateKeyCipher,
-            walletUTXOSet,
+            walletChainUtxoSet,
+            walletPoolUtxoSet,
             chainUtxo,
             poolUtxo,
             blockchain
@@ -204,6 +207,7 @@ public class WalletIO {
 
             protoInput.writeDelimitedTo(usedInputsOutputStream);
         }
+        usedInputsOutputStream.close();
     }
 
     public Cipher getCipher() {
