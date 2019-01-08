@@ -38,11 +38,15 @@ public class UnlockDialog<T> extends BraboDialog<T> {
     private Label messageLabel;
 
     public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker) {
+        this(creation, unlocker, "Unlock");
+    }
+
+    public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker, String okButtonText) {
         super(false);
         this.unlocker = unlocker;
 
         // Add buttons
-        ButtonType unlockButtonType = new ButtonType("Unlock", ButtonBar.ButtonData.OK_DONE);
+        ButtonType unlockButtonType = new ButtonType(okButtonText, ButtonBar.ButtonData.OK_DONE);
         getDialogPane().getButtonTypes().addAll(unlockButtonType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();

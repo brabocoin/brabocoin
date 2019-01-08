@@ -102,6 +102,10 @@
     -fx-indeterminate-bar-flip: false;
 }
 
+.column-fixed {
+    -fx-text-fill: derive(-fx-text-base-color, 95%);
+}
+
 .progress-indicator.no-percentage:determinate {
     -fx-padding: 0 0 -16 0;
 }

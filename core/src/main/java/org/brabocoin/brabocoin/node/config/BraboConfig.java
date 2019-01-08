@@ -82,5 +82,12 @@ public interface BraboConfig {
      */
     String transactionHistoryFile();
 
+    /**
+     * File in which the wallet used inputs are stored.
+     *
+     * @return The used inputs file path.
+     */
+    String usedInputsFile();
+
     int maxSequentialOrphanBlocks();
 }

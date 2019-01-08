@@ -133,26 +133,39 @@ public class DeploymentState implements State {
         );
     }
 
+    @NotNull public File getWalletFile() {
+        return Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.walletFile()
+        ).toFile();
+    }
+
+    @NotNull public File getTxHistoryFile() {
+        return Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.transactionHistoryFile()
+        ).toFile();
+    }
+
+    @NotNull public File getUsedInputsFile() {
+        return Paths.get(
+            config.dataDirectory(),
+            config.walletStoreDirectory(),
+            config.usedInputsFile()
+        ).toFile();
+    }
+
     private Wallet createWallet(
         Unlocker<Wallet> walletUnlocker) throws CipherException, IOException, DestructionException {
         Cipher privateKeyCipher = new BouncyCastleAES();
         KeyGenerator keyGenerator = new SecureRandomKeyGenerator();
 
         Wallet created;
-        File walletFile = Paths.get(
-            config.dataDirectory(),
-            config.walletStoreDirectory(),
-            config.walletFile()
-        ).toFile();
-        File txHistoryFile = Paths.get(
-            config.dataDirectory(),
-            config.walletStoreDirectory(),
-            config.transactionHistoryFile()
-        ).toFile();
-        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(
-            chainUTXODatabase,
-            poolUTXODatabase
-        );
+        File walletFile = getWalletFile();
+        File txHistoryFile = getTxHistoryFile();
+        File usedInputsFile = getUsedInputsFile();
         if (walletFile.exists()) {
             // Read wallet
             created = walletUnlocker.unlock(false, passphrase -> {
@@ -161,13 +174,15 @@ public class DeploymentState implements State {
                     wallet = walletIO.read(
                         walletFile,
                         txHistoryFile,
+                        usedInputsFile,
                         passphrase,
                         consensus,
                         signer,
                         keyGenerator,
                         privateKeyCipher,
                         walletUTXODatabase,
-                        watchUTXOSet,
+                        chainUTXODatabase,
+                        poolUTXODatabase,
                         blockchain
                     );
 
@@ -191,18 +206,20 @@ public class DeploymentState implements State {
                 Wallet wallet = new Wallet(
                     Collections.emptyList(),
                     new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
+                    new HashSet<>(),
                     consensus,
                     signer,
                     keyGenerator,
                     privateKeyCipher,
                     walletUTXODatabase,
-                    watchUTXOSet,
+                    chainUTXODatabase,
+                    poolUTXODatabase,
                     blockchain
                 );
 
                 try {
                     wallet.generatePlainKeyPair();
-                    walletIO.write(wallet, walletFile, txHistoryFile, passphrase);
+                    walletIO.write(wallet, walletFile, txHistoryFile, usedInputsFile, passphrase);
                     passphrase.destruct();
                 }
                 catch (DestructionException | CipherException | IOException e) {
