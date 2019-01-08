@@ -5,6 +5,7 @@ brabo:
   handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
   bootstrapPeers: []                  # List of peers known at startup
   updatePeerInterval: 30              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
+  maxSequentialOrphanBlocks: 10       # Max sequential orphan blocks to receive before initializing synchronization.
   dataDirectory: data                 # Data directory
   blockStoreDirectory: blocks         # Subfolder to store block data
   utxoStoreDirectory: utxo            # Subfolder to store UTXO data

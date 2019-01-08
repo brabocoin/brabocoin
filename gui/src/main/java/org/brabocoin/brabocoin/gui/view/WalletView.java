@@ -24,6 +24,7 @@ import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
+import org.brabocoin.brabocoin.gui.control.table.BooleanIconTableCell;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
