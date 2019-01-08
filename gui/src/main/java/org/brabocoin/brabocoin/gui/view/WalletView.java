@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -117,13 +118,17 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     }
 
     private void updateBalances() {
-        confirmedBalanceLabel.textProperty().setValue(
-            GUIUtils.formatValue(state.getWallet().computeBalance(false), true)
-        );
+        long confirmedBalance = state.getWallet().computeBalance(false);
+        long pendingBalance = state.getWallet().computeBalance(true);
+        Platform.runLater(() -> {
+            confirmedBalanceLabel.textProperty().setValue(
+                GUIUtils.formatValue(confirmedBalance, true)
+            );
 
-        pendingBalanceLabel.textProperty().setValue(
-            GUIUtils.formatValue(state.getWallet().computeBalance(true), true)
-        );
+            pendingBalanceLabel.textProperty().setValue(
+                GUIUtils.formatValue(pendingBalance, true)
+            );
+        });
 
         keyPairObservableList.forEach(TableKeyPairEntry::updateBalances);
 
