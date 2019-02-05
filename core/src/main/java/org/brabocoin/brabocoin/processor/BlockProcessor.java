@@ -172,7 +172,7 @@ public class BlockProcessor {
 
         if (status == ValidationStatus.INVALID) {
             // Add to the recent rejects
-            blockchain.addRejected(block);
+            blockchain.addRejected(block, result);
 
             LOGGER.log(
                 Level.INFO,

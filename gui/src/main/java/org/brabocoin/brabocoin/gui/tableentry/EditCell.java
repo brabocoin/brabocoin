@@ -110,6 +110,10 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
     }
 
     protected TextField getTextField() {
+        if (textField != null) {
+            return textField;
+        }
+
         final TextField textField = new TextField(getItemText());
         // Use onAction here rather than onKeyReleased (with check for Enter),
         textField.setOnAction(event -> {
@@ -124,33 +128,13 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
                 commitEdit(getConverter().fromString(textField.getText()));
             }
         });
-        textField.setOnKeyPressed(t -> {
-            if (t.getCode() == KeyCode.ESCAPE) {
-                escapePressed = true;
-            }
-            else {
-                escapePressed = false;
-            }
-        });
-        textField.setOnKeyReleased(t -> {
-            if (t.getCode() == KeyCode.ESCAPE) {
-                throw new IllegalArgumentException(
-                    "did not expect esc key releases here.");
-            }
-        });
         textField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
-                textField.setText(getConverter().toString(getItem()));
-                cancelEdit();
+                commitEdit(getConverter().fromString(textField.getText()));
                 event.consume();
             }
-            else if (event.getCode() == KeyCode.RIGHT ||
-                event.getCode() == KeyCode.TAB) {
+            else if (event.getCode() == KeyCode.TAB) {
                 getTableView().getSelectionModel().selectNext();
-                event.consume();
-            }
-            else if (event.getCode() == KeyCode.LEFT) {
-                getTableView().getSelectionModel().selectPrevious();
                 event.consume();
             }
             else if (event.getCode() == KeyCode.UP) {
@@ -192,9 +176,7 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
     }
 
     private void startEdit(final TextField textField) {
-        if (textField != null) {
-            textField.setText(getItemText());
-        }
+        textField.setText(getItemText());
         setText(null);
         setGraphic(textField);
         textField.selectAll();

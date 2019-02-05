@@ -42,6 +42,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class BlockProcessorTest {
 
+    private static final String walletPath = "src/test/resources/data/wallet/wallet.dat";
+    private static final String txHistPath = "src/test/resources/data/wallet/txhist.dat";
+    private static final File walletFile = new File(walletPath);
+    private static final File txhistFile = new File(txHistPath);
+
     private static final String BLOCK_FILE_LOCATION = "testenv/blocks";
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
     private static BraboConfig config;
@@ -70,6 +75,14 @@ class BlockProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
+        if (walletFile.exists()) {
+            walletFile.delete();
+        }
+
+        if (txhistFile.exists()) {
+            txhistFile.delete();
+        }
+
         state = new TestState(config) {
             @Override
             protected Consensus createConsensus() {

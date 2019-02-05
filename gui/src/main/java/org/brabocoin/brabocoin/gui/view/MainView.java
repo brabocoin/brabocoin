@@ -83,7 +83,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
         // Initialize menu view mapping
-        currentStateView = new CurrentStateView(state.getBlockchain(), state.getBlockValidator());
+        currentStateView = new CurrentStateView(state);
         minerView = new MinerView(
             state.getMiner(),
             state.getBlockchain(),

@@ -1,8 +1,9 @@
 package org.brabocoin.brabocoin.gui.tableentry;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TextField;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.brabocoin.brabocoin.gui.BrabocoinGUI;
@@ -14,7 +15,7 @@ public class ValidatedEditCell<S, T> extends EditCell<S, T> {
 
     private final Function<T, Boolean> validator;
 
-    private Boolean invalid = false;
+    private BooleanProperty invalid = new SimpleBooleanProperty(false);
 
     public ValidatedEditCell(StringConverter<T> converter, Function<T, Boolean> validator) {
         super(converter);
@@ -24,6 +25,15 @@ public class ValidatedEditCell<S, T> extends EditCell<S, T> {
         // Add base stylesheet
         this.getStylesheets()
             .add(BrabocoinGUI.class.getResource("brabocoin.css").toExternalForm());
+
+        invalid.addListener((obs, old, invalid) -> {
+            if (invalid) {
+                getTextField().getStyleClass().add("invalid");
+            }
+            else {
+                getTextField().getStyleClass().remove("invalid");
+            }
+        });
     }
 
     public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(
@@ -38,32 +48,20 @@ public class ValidatedEditCell<S, T> extends EditCell<S, T> {
 
     @Override
     public void commitEdit(T newValue) {
-        if (!validator.apply(newValue)) {
-            invalid = true;
+        invalid.set(!validator.apply(newValue));
+
+        if (invalid.get()) {
             return;
         }
-
-        invalid = true;
-
         super.commitEdit(newValue);
     }
 
     @Override
-    protected TextField getTextField() {
-        TextField superField = super.getTextField();
+    public void cancelEdit() {
+        if (invalid.get()) {
+            return;
+        }
 
-        String defaultStyle = superField.getStyle();
-
-        superField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (invalid && !newValue) {
-                superField.setStyle("-fx-text-inner-color: red;");
-                superField.requestFocus();
-            }
-        });
-
-        superField.textProperty()
-            .addListener((observable, oldValue, newValue) -> superField.setStyle(defaultStyle));
-
-        return superField;
+        super.cancelEdit();
     }
 }
