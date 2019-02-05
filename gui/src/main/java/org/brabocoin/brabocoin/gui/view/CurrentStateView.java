@@ -21,6 +21,7 @@ import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import java.util.ResourceBundle;
 public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
 
     @FXML private Tab recentRejectTab;
+    @FXML private Tab txPoolTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -48,14 +50,16 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private TableColumn<IndexedBlock, Hash> hashColumn;
     @FXML private TableColumn<IndexedBlock, Double> sizeColumn;
 
+    private final @NotNull State state;
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
-    public CurrentStateView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public CurrentStateView(@NotNull State state) {
         super();
-        this.blockchain = blockchain;
-        this.validator = validator;
+        this.state = state;
+        this.blockchain = state.getBlockchain();
+        this.validator = state.getBlockValidator();
 
         BraboControlInitializer.initialize(this);
     }
@@ -71,6 +75,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         blockchain.addListener(this);
 
         recentRejectTab.setContent(new RecentRejectView(blockchain, validator));
+        txPoolTab.setContent(new TransactionPoolView(state.getTransactionPool()));
     }
 
     private void loadTable() {

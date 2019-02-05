@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+<?import org.controlsfx.control.MasterDetailPane?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.TitledPane?>
+<fx:root type="org.controlsfx.control.MasterDetailPane"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.TransactionPoolView"
+         dividerPosition="0.65"
+         showDetailNode="false">
+    <masterNode>
+        <Accordion expandedPane="$independentPane">
+            <panes>
+                <TitledPane fx:id="independentPane">
+                    <TableView fx:id="independentTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="hashIndepColumn" sortable="false" text="Hash"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <Label text="No independent transactions in transaction pool"/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                </TitledPane>
+                <TitledPane fx:id="dependentPane">
+                    <TableView fx:id="dependentTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="hashDepColumn" sortable="false" text="Hash"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <Label text="No dependent transactions in transaction pool"/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                </TitledPane>
+                <TitledPane fx:id="orphanPane">
+                    <TableView fx:id="orphanTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="hashOrphanColumn" sortable="false" text="Hash"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <Label text="No orphan transactions in transaction pool"/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                </TitledPane>
+            </panes>
+        </Accordion>
+    </masterNode>
+</fx:root>
