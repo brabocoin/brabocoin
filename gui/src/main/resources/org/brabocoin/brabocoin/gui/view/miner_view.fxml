@@ -33,11 +33,20 @@
                     <BraboGlyph icon="MAGIC"/>
                 </graphic>
             </Button>
-            <CheckBox fx:id="continueMining" selected="true" text="Continue mining"/>
+            <Button text="Mine single block" onAction="#mineSingleBlock">
+                <graphic>
+                    <BraboGlyph icon="CUBE"/>
+                </graphic>
+            </Button>
             <Separator/>
             <Button text="Stop" onAction="#stop">
                 <graphic>
                     <BraboGlyph icon="STOP"/>
+                </graphic>
+            </Button>
+            <Button text="Configuration" onAction="#configuration">
+                <graphic>
+                    <BraboGlyph icon="TOOLS"/>
                 </graphic>
             </Button>
         </ToolBar>
