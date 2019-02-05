@@ -989,7 +989,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *
      * @return Set of peers.
      */
-    public synchronized Set<Peer> getPeers() {
+    public Set<Peer> getPeers() {
         LOGGER.fine("Creating a copy of the set of peers.");
         return peerProcessor.copyPeers();
     }
