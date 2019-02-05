@@ -24,9 +24,7 @@ import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
-import org.fxmisc.cssfx.CSSFX;
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -91,11 +89,6 @@ public class BrabocoinGUI extends Application {
                 Platform.runLater(() -> {
                     MainView mainView = new MainView(application.getState());
                     Scene scene = new Scene(mainView);
-
-                    // TODO: remove!
-                    // DEBUG: Auto CSS reloading
-                    CSSFX.addConverter(uri -> Paths.get(uri.startsWith("file:/") ? uri.replace("file:/", "")
-                        .replace("out/production/", "src/main/") : uri)).start();
 
                     // Add base stylesheet
                     scene.getStylesheets().add(getClass().getResource("brabocoin.css").toExternalForm());
