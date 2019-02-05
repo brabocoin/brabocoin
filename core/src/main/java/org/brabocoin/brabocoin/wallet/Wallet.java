@@ -574,6 +574,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     public void addUsedInput(Input input) {
         usedInputs.add(input);
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     private void addUnspentOutputInfo(Hash transactionHash, int outputIndex,
