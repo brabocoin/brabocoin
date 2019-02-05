@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.node;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -259,7 +260,11 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private synchronized void propagateMessageBlocking(
         Consumer<NodeGrpc.NodeBlockingStub> blockingStubConsumer) {
         for (NodeGrpc.NodeBlockingStub stub : getPeerStubs()) {
-            blockingStubConsumer.accept(stub);
+            try {
+                blockingStubConsumer.accept(stub);
+            } catch (StatusRuntimeException e) {
+                LOGGER.log(Level.SEVERE, MessageFormat.format("Exception while propagating message: {0}", e.getMessage()));
+            }
         }
 
         LOGGER.info("Message propagated to all peers.");
