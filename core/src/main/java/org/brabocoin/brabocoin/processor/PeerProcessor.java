@@ -171,6 +171,7 @@ public class PeerProcessor {
             HandshakeResponse response = handshake(peer);
             if (response == null) {
                 peer.shutdown();
+                LOGGER.log(Level.INFO, MessageFormat.format("Removed peer: {0}", peer));
                 peerSetChangedListeners.forEach(l -> l.onPeerRemoved(peer));
                 peerIterator.remove();
             }
