@@ -5,7 +5,6 @@ brabo:
   handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
   bootstrapPeers:                     # List of peers known at startup
   - brabocoin.org:56129               #  - Dictator node
-  - 131.155.185.25:56129
   updatePeerInterval: 45              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
   maxSequentialOrphanBlocks: 10       # Max sequential orphan blocks to receive before initializing synchronization.
   dataDirectory: data                 # Data directory
