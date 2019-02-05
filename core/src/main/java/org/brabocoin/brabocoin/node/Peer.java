@@ -9,9 +9,12 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
@@ -82,6 +85,26 @@ public class Peer implements NetworkMessageListener {
      * @return Whether this peer is the local machine.
      */
     public boolean isLocal() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+            while(interfaces.hasMoreElements())
+            {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                Enumeration addresses = networkInterface.getInetAddresses();
+                while(addresses.hasMoreElements())
+                {
+                    InetAddress address = (InetAddress)addresses.nextElement();
+                    if (address.equals(this.getAddress())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (SocketException e) {
+            e.printStackTrace();
+        }
+
         try {
             return socket.getAddress().isAnyLocalAddress() || socket.getAddress()
                 .isLoopbackAddress() ||

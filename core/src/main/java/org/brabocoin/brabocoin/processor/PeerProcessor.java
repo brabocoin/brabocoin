@@ -110,8 +110,7 @@ public class PeerProcessor {
         LOGGER.info("Discovering peers initiated.");
 
         if (handshakePeers.size() <= 0) {
-            LOGGER.severe("No handshake peers found.");
-            // TODO: What to do now?
+            LOGGER.info("No handshake peers found.");
             return;
         }
 
