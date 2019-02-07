@@ -148,7 +148,7 @@ class BlockProcessorTest {
         state.getPoolUTXODatabase()
             .setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(block);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(block, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -213,9 +213,9 @@ class BlockProcessorTest {
         );
         Hash tHashB = transactionB.getHash();
 
-        state.getBlockProcessor().processNewBlock(blockA);
+        state.getBlockProcessor().processNewBlock(blockA, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -282,10 +282,10 @@ class BlockProcessorTest {
         state.getPoolUTXODatabase()
             .setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        state.getBlockProcessor().processNewBlock(blockA);
-        state.getBlockProcessor().processNewBlock(blockB);
+        state.getBlockProcessor().processNewBlock(blockA, false);
+        state.getBlockProcessor().processNewBlock(blockB, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -414,14 +414,14 @@ class BlockProcessorTest {
                 new UnspentOutputInfo(false, 0, 10L, Simulation.randomHash())
             );
 
-        state.getBlockProcessor().processNewBlock(blockA);
-        state.getBlockProcessor().processNewBlock(blockB);
-        state.getBlockProcessor().processNewBlock(blockC);
-        state.getBlockProcessor().processNewBlock(blockD);
-        state.getBlockProcessor().processNewBlock(blockF);
-        state.getBlockProcessor().processNewBlock(blockG);
+        state.getBlockProcessor().processNewBlock(blockA, false);
+        state.getBlockProcessor().processNewBlock(blockB, false);
+        state.getBlockProcessor().processNewBlock(blockC, false);
+        state.getBlockProcessor().processNewBlock(blockD, false);
+        state.getBlockProcessor().processNewBlock(blockF, false);
+        state.getBlockProcessor().processNewBlock(blockG, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);

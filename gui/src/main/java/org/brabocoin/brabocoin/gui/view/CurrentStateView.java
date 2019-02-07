@@ -52,6 +52,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private TableColumn<IndexedBlock, LocalDateTime> timeColumn;
     @FXML private TableColumn<IndexedBlock, Hash> hashColumn;
     @FXML private TableColumn<IndexedBlock, Double> sizeColumn;
+    @FXML private TableColumn<IndexedBlock, Boolean> minedByColumn;
 
     private final @NotNull State state;
     private final @NotNull Blockchain blockchain;
@@ -142,6 +143,11 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             return new ReadOnlyObjectWrapper<>(sizeKiloBytes);
         });
         sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
+
+        minedByColumn.setCellValueFactory(features -> {
+            boolean minedByMe = features.getValue().getBlockInfo().isMinedByMe();
+            return new ReadOnlyObjectWrapper<>(minedByMe);
+        });
 
         blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
             if (indexedBlock == null) {
