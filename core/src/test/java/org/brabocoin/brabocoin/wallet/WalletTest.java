@@ -258,7 +258,7 @@ class WalletTest {
             0
         );
 
-        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().storeBlock(block, false);
         state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
 
         assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
@@ -285,7 +285,7 @@ class WalletTest {
             0
         );
 
-        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().storeBlock(block, false);
         state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
 
         assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
@@ -312,7 +312,7 @@ class WalletTest {
             0
         );
 
-        state.getBlockchain().storeBlock(block);
+        state.getBlockchain().storeBlock(block, false);
         state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
         state.getBlockchain().popTopBlock();
 

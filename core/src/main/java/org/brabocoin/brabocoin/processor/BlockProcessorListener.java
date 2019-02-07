@@ -32,7 +32,7 @@ public interface BlockProcessorListener {
      *
      * @param block The block that was added.
      *
-     * @see BlockProcessor#processNewBlock(Block)
+     * @see BlockProcessor#processNewBlock(Block, boolean)
      */
     default void onValidBlockProcessed(@NotNull Block block){
 

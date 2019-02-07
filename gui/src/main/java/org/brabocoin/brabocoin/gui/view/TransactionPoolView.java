@@ -1,7 +1,11 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
@@ -30,17 +34,16 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
 
     @FXML private TitledPane independentPane;
     @FXML private TitledPane dependentPane;
-    @FXML private TitledPane orphanPane;
 
     @FXML private TableView<Transaction> independentTable;
     @FXML private TableView<Transaction> dependentTable;
-    @FXML private TableView<Transaction> orphanTable;
 
     @FXML private TableColumn<Transaction, Hash> hashIndepColumn;
     @FXML private TableColumn<Transaction, Hash> hashDepColumn;
-    @FXML private TableColumn<Transaction, Hash> hashOrphanColumn;
 
     private @NotNull TransactionDetailView detailView;
+
+    private final IntegerProperty count = new SimpleIntegerProperty(0);
 
     public TransactionPoolView(@NotNull TransactionPool pool) {
         super();
@@ -69,13 +72,6 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
             )
         );
 
-        orphanPane.textProperty().bind(
-            Bindings.createStringBinding(
-                () -> "Orphan transactions (" + orphanTable.getItems().size() + ")",
-                Bindings.size(orphanTable.getItems())
-            )
-        );
-
         hashIndepColumn.setCellValueFactory(features -> {
             Hash hash = features.getValue().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
@@ -87,12 +83,6 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
             return new ReadOnlyObjectWrapper<>(hash);
         });
         hashDepColumn.setCellFactory(col -> new HashTableCell<>(Constants.TRANSACTION_HASH_SIZE));
-
-        hashOrphanColumn.setCellValueFactory(features -> {
-            Hash hash = features.getValue().getHash();
-            return new ReadOnlyObjectWrapper<>(hash);
-        });
-        hashOrphanColumn.setCellFactory(col -> new HashTableCell<>(Constants.TRANSACTION_HASH_SIZE));
 
         independentTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
             if (tx == null) {
@@ -112,39 +102,37 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
             setShowDetailNode(true);
         });
 
-        orphanTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
-            if (tx == null) {
-                return;
-            }
-
-            detailView.setTransaction(tx);
-            setShowDetailNode(true);
-        });
+        count.bind(Bindings.add(
+            Bindings.size(independentTable.getItems()),
+            Bindings.size(dependentTable.getItems())
+        ));
     }
 
     @Override
     public void onTransactionAddedToPool(@NotNull Transaction transaction) {
-        if (pool.isDependent(transaction.getHash())) {
-            dependentTable.getItems().add(transaction);
-        }
-        else {
-            independentTable.getItems().add(transaction);
-        }
-    }
-
-    @Override
-    public void onTransactionAddedAsOrphan(@NotNull Transaction transaction) {
-        orphanTable.getItems().add(transaction);
+        Platform.runLater(() -> {
+            if (pool.isDependent(transaction.getHash())) {
+                dependentTable.getItems().add(transaction);
+            }
+            else {
+                independentTable.getItems().add(transaction);
+            }
+        });
     }
 
     @Override
     public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
-        dependentTable.getItems().remove(transaction);
-        independentTable.getItems().remove(transaction);
+        Platform.runLater(() -> {
+            dependentTable.getItems().remove(transaction);
+            independentTable.getItems().remove(transaction);
+        });
     }
 
-    @Override
-    public void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
-        orphanTable.getItems().remove(transaction);
+    public ReadOnlyIntegerProperty countProperty() {
+        return count;
+    }
+
+    public int getCount() {
+        return count.get();
     }
 }

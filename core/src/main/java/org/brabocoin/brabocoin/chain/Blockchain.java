@@ -111,7 +111,7 @@ public class Blockchain {
     private @NotNull IndexedBlock storeGenesisBlock(
         @NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
-        database.storeBlock(genesisBlock);
+        database.storeBlock(genesisBlock, false);
         IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.getHash());
         if (indexedGenesis == null) {
             LOGGER.severe("Genesis block could not be stored.");
@@ -195,13 +195,15 @@ public class Blockchain {
      *
      * @param block
      *     The block to store
+     * @param minedByMe
+     *     Whether this block was mined by this user.
      * @return The stored block information.
      * @throws DatabaseException
      *     When the block database is not available.
-     * @see BlockDatabase#storeBlock(Block)
+     * @see BlockDatabase#storeBlock(Block, boolean)
      */
-    public @NotNull BlockInfo storeBlock(@NotNull Block block) throws DatabaseException {
-        return database.storeBlock(block);
+    public BlockInfo storeBlock(@NotNull Block block, boolean minedByMe) throws DatabaseException {
+        return database.storeBlock(block, minedByMe);
     }
 
     /**
@@ -323,6 +325,15 @@ public class Blockchain {
      */
     public Iterator<RejectedBlock> recentRejectsIterator() {
         return recentRejects.iterator();
+    }
+
+    /**
+     * Iterator over the orphan blocks.
+     *
+     * @return An iterator of the orphan blocks.
+     */
+    public Iterator<Block> orphansIterator() {
+        return orphanIndex.values().iterator();
     }
 
     /**

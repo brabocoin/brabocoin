@@ -122,7 +122,7 @@ public class NodeTest {
         Block newBlock = minerA.mineNewBlock(stateA.getBlockchain()
             .getMainChain()
             .getGenesisBlock(), Simulation.randomHash());
-        stateA.getBlockProcessor().processNewBlock(newBlock);
+        stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
         Hash newBlockHash = newBlock.getHash();
 
@@ -210,7 +210,7 @@ public class NodeTest {
             .getMainChain()
             .getGenesisBlock(), Simulation.randomHash());
         Hash newBlockHash = newBlock.getHash();
-        stateA.getBlockProcessor().processNewBlock(newBlock);
+        stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
@@ -328,7 +328,7 @@ public class NodeTest {
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
             previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
             coinbaseOutputAddress = Simulation.randomHash();
@@ -458,7 +458,7 @@ public class NodeTest {
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
             previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
             coinbaseOutputAddress = Simulation.randomHash();
@@ -618,7 +618,7 @@ public class NodeTest {
 
         for (int i = 0; i < mockConsensus.getCoinbaseMaturityDepth() + 1; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlock, coinbaseOutputAddress);
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
             previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
             coinbaseOutputAddress = Simulation.randomHash();
@@ -765,7 +765,7 @@ public class NodeTest {
 
         for (int i = 0; i < 20; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlockA, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
             previousBlockA = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
@@ -796,7 +796,7 @@ public class NodeTest {
         for (int i = 1; i < 9; i++) {
             Block newBlock = stateA.getBlockchain()
                 .getBlock(stateA.getBlockchain().getMainChain().getBlockAtHeight(i));
-            stateB.getBlockProcessor().processNewBlock(newBlock);
+            stateB.getBlockProcessor().processNewBlock(newBlock, false);
         }
 
         State stateC = new TestState(new MockBraboConfig(defaultConfig) {
@@ -826,7 +826,7 @@ public class NodeTest {
         for (int i = 1; i < 11; i++) {
             Block newBlock = stateA.getBlockchain()
                 .getBlock(stateA.getBlockchain().getMainChain().getBlockAtHeight(i));
-            stateC.getBlockProcessor().processNewBlock(newBlock);
+            stateC.getBlockProcessor().processNewBlock(newBlock, false);
         }
 
         Miner minerC = stateC.getMiner();
@@ -835,7 +835,7 @@ public class NodeTest {
 
         for (int i = 0; i < 8; i++) {
             Block newBlock = minerC.mineNewBlock(previousBlockC, Simulation.randomHash());
-            stateC.getBlockProcessor().processNewBlock(newBlock);
+            stateC.getBlockProcessor().processNewBlock(newBlock, false);
             previousBlockC = stateC.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
@@ -918,7 +918,7 @@ public class NodeTest {
 
         for (int i = 0; i < 20; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlockA, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
             previousBlockA = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
@@ -954,7 +954,7 @@ public class NodeTest {
 
         for (int i = 0; i < 9; i++) {
             Block newBlock = minerA.mineNewBlock(previousBlockA, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
             previousBlockA = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
@@ -971,12 +971,12 @@ public class NodeTest {
 
         // Mine two block on top of fork of A
         Block forkBlock1 = minerA.mineNewBlock(previousBlockA, Simulation.randomHash());
-        stateA.getBlockProcessor().processNewBlock(forkBlock1);
+        stateA.getBlockProcessor().processNewBlock(forkBlock1, false);
         IndexedBlock indexedForkBlock1 = stateA.getBlockchain()
             .getIndexedBlock(forkBlock1.getHash());
 
         Block forkBlock2 = minerA.mineNewBlock(indexedForkBlock1, Simulation.randomHash());
-        stateA.getBlockProcessor().processNewBlock(forkBlock2);
+        stateA.getBlockProcessor().processNewBlock(forkBlock2, false);
 
         assert forkBlock2.getBlockHeight() > fork2Start.getBlockInfo().getBlockHeight();
         assert forkBlock2.getBlockHeight() == stateA.getBlockchain().getMainChain().getHeight();
@@ -1000,13 +1000,13 @@ public class NodeTest {
 
         // Mine two block on top of new fork of A, what used to be the main chain
         Block fork2Block1 = minerA.mineNewBlock(fork2Start, Simulation.randomHash());
-        stateA.getBlockProcessor().processNewBlock(fork2Block1);
+        stateA.getBlockProcessor().processNewBlock(fork2Block1, false);
         IndexedBlock indexedFork2Block1 = stateA.getBlockchain()
             .getIndexedBlock(fork2Block1.getHash());
 
         Block fork2Block2 = minerA.mineNewBlock(indexedFork2Block1, Simulation.randomHash());
 
-        stateA.getBlockProcessor().processNewBlock(fork2Block2);
+        stateA.getBlockProcessor().processNewBlock(fork2Block2, false);
 
         assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
 
@@ -1078,7 +1078,7 @@ public class NodeTest {
 
             for (int i = 0; i < 20; i++) {
                 Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-                stateA.getBlockProcessor().processNewBlock(newBlock);
+                stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
                 previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
             }
@@ -1089,7 +1089,7 @@ public class NodeTest {
 
             for (int i = 0; i < 9; i++) {
                 Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-                stateA.getBlockProcessor().processNewBlock(newBlock);
+                stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
                 previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
             }
@@ -1155,12 +1155,12 @@ public class NodeTest {
 
             // Mine two block on top of fork of A
             Block forkBlock1 = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(forkBlock1);
+            stateA.getBlockProcessor().processNewBlock(forkBlock1, false);
             IndexedBlock forkBlock1Indexed = stateA.getBlockchain()
                 .getIndexedBlock(forkBlock1.getHash());
 
             Block forkBlock2 = minerA.mineNewBlock(forkBlock1Indexed, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(forkBlock2);
+            stateA.getBlockProcessor().processNewBlock(forkBlock2, false);
 
             assert forkBlock2.getBlockHeight() == stateA.getBlockchain().getMainChain().getHeight();
 
@@ -1175,12 +1175,12 @@ public class NodeTest {
 
             // Mine two block on top of new fork of A, what used to be the main chain
             Block fork2Block1 = minerA.mineNewBlock(mainChainTop, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(fork2Block1);
+            stateA.getBlockProcessor().processNewBlock(fork2Block1, false);
             IndexedBlock fork2Block1Indexed = stateA.getBlockchain()
                 .getIndexedBlock(fork2Block1.getHash());
 
             Block fork2Block2 = minerA.mineNewBlock(fork2Block1Indexed, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(fork2Block2);
+            stateA.getBlockProcessor().processNewBlock(fork2Block2, false);
 
             assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
 
@@ -1237,7 +1237,7 @@ public class NodeTest {
                 .getPublicKeyFromPrivateKey(privateKey);
 
             Block newBlock = minerA.mineNewBlock(previousBlockA, publicKey.getHash());
-            stateA.getBlockProcessor().processNewBlock(newBlock);
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
             previousBlockA = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
@@ -1407,7 +1407,7 @@ public class NodeTest {
             Simulation.randomHash()
         );
         assert minedBlock != null;
-        stateB.getBlockProcessor().processNewBlock(minedBlock);
+        stateB.getBlockProcessor().processNewBlock(minedBlock, false);
 
         stateB.getEnvironment().announceBlockRequest(minedBlock);
 
