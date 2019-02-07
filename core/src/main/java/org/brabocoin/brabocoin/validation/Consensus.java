@@ -58,6 +58,9 @@ public class Consensus {
     private static final Function<Hash, Hash> DOUBLE_SHA =
         (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
 
+    private static final Function<ByteString, Hash> RIPEMD_SHA =
+        (b) -> Hashing.digestRIPEMD160(Hashing.digestSHA256(b));
+
     /**
      * The max nonce value.
      */
@@ -152,6 +155,10 @@ public class Consensus {
 
     public @NotNull Function<Hash, Hash> getMerkleTreeHashFunction() {
         return DOUBLE_SHA;
+    }
+
+    public @NotNull Function<ByteString, Hash> getPublicKeyHashFunction() {
+        return RIPEMD_SHA;
     }
 
     public int getMaxBlockHeaderSize() {

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +38,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TransactionProcessorTest {
 
+    private static final String walletPath = "data/wallet/wallet.dat";
+    private static final String txHistPath = "data/wallet/txhist.dat";
+    private static final File walletFile = new File(walletPath);
+    private static final File txhistFile = new File(txHistPath);
+
     private static BraboConfig config;
 
     private TestState state;
@@ -48,6 +54,14 @@ class TransactionProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
+        if (walletFile.exists()) {
+            walletFile.delete();
+        }
+
+        if (txhistFile.exists()) {
+            txhistFile.delete();
+        }
+
         state = new TestState(config) {
             @Override
             protected TransactionValidator createTransactionValidator() {
