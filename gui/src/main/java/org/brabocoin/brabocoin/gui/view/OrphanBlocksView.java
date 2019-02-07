@@ -61,7 +61,7 @@ public class OrphanBlocksView extends MasterDetailPane implements BraboControl, 
         loadOrphans();
         blockchain.addListener(this);
 
-        count.bind(Bindings.size(blocksTable.getItems()));
+        count.bind(Bindings.size(observableBlocks));
     }
 
     private void loadTable() {
