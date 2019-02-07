@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,6 +41,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
     @FXML private Tab recentRejectTab;
     @FXML private Tab txPoolTab;
+    @FXML private Tab txOrphansTab;
+    @FXML private Tab blkOrphansTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -75,8 +78,41 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadMainChain();
         blockchain.addListener(this);
 
-        recentRejectTab.setContent(new RecentRejectView(blockchain, validator));
-        txPoolTab.setContent(new TransactionPoolView(state.getTransactionPool()));
+        RecentRejectView rejectView = new RecentRejectView(blockchain, validator);
+        recentRejectTab.setContent(rejectView);
+        recentRejectTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Recently rejected blocks (" + rejectView.getCount() + ")",
+                rejectView.countProperty()
+            )
+        );
+
+        TransactionPoolView poolView = new TransactionPoolView(state.getTransactionPool());
+        txPoolTab.setContent(poolView);
+        txPoolTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Transaction pool (" + poolView.getCount() + ")",
+                poolView.countProperty()
+            )
+        );
+
+        OrphanTransactionsView orphanTxView = new OrphanTransactionsView(state.getTransactionPool());
+        txOrphansTab.setContent(orphanTxView);
+        txOrphansTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Orphan transactions (" + orphanTxView.getCount() + ")",
+                orphanTxView.countProperty()
+            )
+        );
+
+        OrphanBlocksView orphanBlkView = new OrphanBlocksView(state.getBlockchain(), state.getBlockValidator());
+        blkOrphansTab.setContent(orphanBlkView);
+        blkOrphansTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Orphan blocks (" + orphanBlkView.getCount() + ")",
+                orphanBlkView.countProperty()
+            )
+        );
     }
 
     private void loadTable() {
