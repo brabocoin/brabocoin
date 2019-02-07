@@ -14,7 +14,9 @@ import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.wallet.Wallet;
 
 public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig> {
+
     IndexedBlock currentParentBlock = null;
+
     public MiningConfigurationDialog(MiningConfig config, Wallet wallet, Blockchain blockchain) {
         super();
         this.setGraphic(null);
@@ -29,10 +31,7 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
         grid.add(keyDropDown, 1, 0, 1, 1);
 
         CheckBox mineOnTopBlock = new CheckBox("Mine on top block");
-        TextField parentBlockHashTextField = new TextField(
-            config.getParentBlock() == null ? "" :
-                ByteUtil.toHexString(config.getParentBlock().getHash().getValue())
-        );
+        TextField parentBlockHashTextField = new TextField();
         parentBlockHashTextField.setEditable(config.getParentBlock() != null);
         Label parentBlockHashLabel = new Label("Parent block hash:");
 
@@ -43,7 +42,8 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
                 parentBlockHashTextField.setText("");
                 parentBlockHashLabel.setStyle("-fx-text-fill: grey");
                 hideErrorLabel();
-            } else {
+            }
+            else {
                 parentBlockHashLabel.setStyle("-fx-text-fill: black");
                 parentBlockHashTextField.setText(parentBlockHashTextField.getText());
             }
@@ -90,6 +90,9 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
 
             hideErrorLabel();
         });
+        parentBlockHashTextField.setText(
+            config.getParentBlock() == null ? "" :
+                ByteUtil.toHexString(config.getParentBlock().getHash().getValue()));
 
         this.getDialogPane().setContent(grid);
 
