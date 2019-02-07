@@ -38,8 +38,8 @@
             </masterNode>
         </MasterDetailPane>
     </Tab>
-    <Tab fx:id="blkOrphansTab" closable="false"/>
     <Tab fx:id="txPoolTab" closable="false"/>
+    <Tab fx:id="blkOrphansTab" closable="false"/>
     <Tab fx:id="txOrphansTab" closable="false"/>
     <Tab fx:id="recentRejectTab" closable="false"/>
     <Tab closable="false" disable="true" text="UTXO set"/>
