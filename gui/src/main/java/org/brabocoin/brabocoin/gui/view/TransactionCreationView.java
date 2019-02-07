@@ -347,7 +347,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
         for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getUtxoSet()) {
-            if (inputSum >= outputSum) {
+            if (inputSum > outputSum) {
                 break;
             }
 
