@@ -62,6 +62,13 @@ public interface BraboConfig {
     int maxRecentRejectBlocks();
 
     /**
+     * Maximum number of recently rejected transactions in memory.
+     *
+     * @return The maximum number of recently rejected transactions.
+     */
+    int maxRecentRejectTransactions();
+
+    /**
      * Port on which the application listens for messages on the network.
      *
      * @return The port number.

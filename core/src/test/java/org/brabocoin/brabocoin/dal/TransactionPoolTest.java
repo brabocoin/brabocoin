@@ -40,7 +40,8 @@ class TransactionPoolTest {
 
     @BeforeEach
     void setUp() {
-        pool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(),new Random());
+        pool = new TransactionPool(config.maxTransactionPoolSize(), config.maxOrphanTransactions(),new Random(),
+            657989);
     }
 
     @Test
@@ -380,7 +381,9 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom,
+            657989
+        );
 
         List<Transaction> notified = new ArrayList<>();
 
@@ -436,7 +439,9 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom,
+            657989
+        );
 
         List<Transaction> notified = new ArrayList<>();
 
@@ -493,7 +498,9 @@ class TransactionPoolTest {
             }
         };
 
-        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom);
+        pool = new TransactionPool(newConfig.maxTransactionPoolSize(), newConfig.maxOrphanTransactions(), mockRandom,
+            657989
+        );
 
         List<Transaction> notified = new ArrayList<>();
 
@@ -550,7 +557,8 @@ class TransactionPoolTest {
         pool = new TransactionPool(
             newConfig.maxTransactionPoolSize(),
             newConfig.maxOrphanTransactions(),
-            mockRandom
+            mockRandom,
+            657989
         );
 
         List<Transaction> notified = new ArrayList<>();

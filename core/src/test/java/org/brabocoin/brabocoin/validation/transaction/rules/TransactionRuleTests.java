@@ -264,7 +264,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -294,7 +295,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -324,7 +326,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -354,7 +357,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
         Input input = Simulation.randomInput();
@@ -966,7 +970,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
         ;
         transactionPool.addIndependentTransaction(spendingTx);
@@ -1014,7 +1019,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
         transactionPool.addIndependentTransaction(spendingTx);
 
