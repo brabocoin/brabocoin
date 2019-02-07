@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -95,12 +96,12 @@ public class OrphanBlocksView extends MasterDetailPane implements BraboControl, 
 
     @Override
     public void onOrphanAdded(@NotNull Block block) {
-        observableBlocks.add(block);
+        Platform.runLater(() -> observableBlocks.add(block));
     }
 
     @Override
     public void onOrphanRemoved(@NotNull Block block) {
-        observableBlocks.remove(block);
+        Platform.runLater(() -> observableBlocks.remove(block));
     }
 
     public ReadOnlyIntegerProperty countProperty() {

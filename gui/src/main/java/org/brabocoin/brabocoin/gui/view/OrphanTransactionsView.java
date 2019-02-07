@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -71,12 +72,12 @@ public class OrphanTransactionsView extends MasterDetailPane implements BraboCon
 
     @Override
     public void onTransactionAddedAsOrphan(@NotNull Transaction transaction) {
-        orphanTable.getItems().add(transaction);
+        Platform.runLater(() -> orphanTable.getItems().add(transaction));
     }
 
     @Override
     public void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
-        orphanTable.getItems().remove(transaction);
+        Platform.runLater(() -> orphanTable.getItems().remove(transaction));
     }
 
     public ReadOnlyIntegerProperty countProperty() {

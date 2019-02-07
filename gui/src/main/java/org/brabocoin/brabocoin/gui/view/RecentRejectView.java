@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -103,7 +104,7 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
 
     @Override
     public void onRecentRejectAdded(@NotNull Block block) {
-        loadRejects();
+        Platform.runLater(this::loadRejects);
     }
 
     public ReadOnlyIntegerProperty countProperty() {

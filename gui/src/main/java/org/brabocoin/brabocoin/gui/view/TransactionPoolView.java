@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -109,18 +110,22 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
 
     @Override
     public void onTransactionAddedToPool(@NotNull Transaction transaction) {
-        if (pool.isDependent(transaction.getHash())) {
-            dependentTable.getItems().add(transaction);
-        }
-        else {
-            independentTable.getItems().add(transaction);
-        }
+        Platform.runLater(() -> {
+            if (pool.isDependent(transaction.getHash())) {
+                dependentTable.getItems().add(transaction);
+            }
+            else {
+                independentTable.getItems().add(transaction);
+            }
+        });
     }
 
     @Override
     public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
-        dependentTable.getItems().remove(transaction);
-        independentTable.getItems().remove(transaction);
+        Platform.runLater(() -> {
+            dependentTable.getItems().remove(transaction);
+            independentTable.getItems().remove(transaction);
+        });
     }
 
     public ReadOnlyIntegerProperty countProperty() {
