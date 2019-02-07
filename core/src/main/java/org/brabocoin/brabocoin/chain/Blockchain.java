@@ -7,9 +7,11 @@ import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public class Blockchain {
     /**
      * Recently rejected blocks.
      */
-    private final @NotNull Queue<Block> recentRejects;
+    private final @NotNull Queue<RejectedBlock> recentRejects;
 
     /**
      * The random instance.
@@ -303,9 +305,13 @@ public class Blockchain {
      *
      * @param block
      *     The block that was rejected.
+     * @param validationResult
+     * The result of the validation of the block.
+     *
      */
-    public synchronized void addRejected(@NotNull Block block) {
-        recentRejects.add(block);
+    public synchronized void addRejected(@NotNull Block block,
+                                         @NotNull BlockValidationResult validationResult) {
+        recentRejects.add(new RejectedBlock(block, validationResult));
 
         listeners.forEach(l -> l.onRecentRejectAdded(block));
     }
@@ -315,7 +321,7 @@ public class Blockchain {
      *
      * @return An iterator of the recently rejected blocks.
      */
-    public Iterator<Block> recentRejectsIterator() {
+    public Iterator<RejectedBlock> recentRejectsIterator() {
         return recentRejects.iterator();
     }
 

@@ -7,18 +7,24 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
+import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.view.MainView;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
@@ -127,16 +133,32 @@ public class BrabocoinGUI extends Application {
     }
 
     private void showSplash(Stage primaryStage, Task<?> task, Runnable completionHandler) {
+        BraboGlyph icon = new BraboGlyph(BraboGlyph.Icon.BITCOIN);
+        icon.setFontSize(50);
+        icon.setTextFill(Color.WHITE);
+        Label text = new Label("Brabocoin");
+        text.setFont(Font.font(30));
+        text.setTextFill(Color.WHITE);
+        HBox hBox = new HBox(20, icon, text);
+        hBox.setAlignment(Pos.CENTER);
+        Group logoGroup = new Group(hBox);
+        StackPane logoPane = new StackPane(logoGroup);
+        StackPane.setAlignment(logoGroup, Pos.CENTER);
+        logoPane.setPadding(new Insets(20, 20, 10, 20));
+        logoPane.setStyle("-fx-background-color: -fx-accent;");
+        VBox.setVgrow(logoPane, Priority.ALWAYS);
+
         ProgressBar progressBar = new ProgressBar();
         Label progressLabel = new Label("");
-        VBox layout = new VBox(progressLabel, progressBar);
-        VBox.setVgrow(progressBar, Priority.ALWAYS);
+        VBox progressContainer = new VBox(progressLabel, progressBar);
+        VBox.setVgrow(progressBar, Priority.NEVER);
         progressBar.setMaxWidth(Double.MAX_VALUE);
+        progressContainer.setPadding(new Insets(10, 20, 20, 20));
+        progressContainer.setAlignment(Pos.BOTTOM_LEFT);
 
+        VBox layout = new VBox(logoPane, progressContainer);
         layout.setPrefWidth(300);
         layout.setPrefHeight(200);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.BOTTOM_LEFT);
 
         progressBar.progressProperty().bind(task.progressProperty());
         progressLabel.textProperty().bind(task.messageProperty());
