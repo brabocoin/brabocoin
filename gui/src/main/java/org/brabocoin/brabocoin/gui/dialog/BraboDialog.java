@@ -33,7 +33,7 @@ public class BraboDialog<T> extends Dialog<T> {
     public static void setBraboStyling(DialogPane pane) {
         // Add base stylesheet
         pane.getStylesheets()
-            .add(BraboDialog.class.getResource("brabocoin.css").toExternalForm());
+            .add(BrabocoinGUI.class.getResource("brabocoin.css").toExternalForm());
 
         ((Stage)pane.getScene().getWindow()).getIcons()
             .addAll(BrabocoinGUI.ICONS.stream()
