@@ -83,10 +83,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         // Initialize menu view mapping
         currentStateView = new CurrentStateView(state.getBlockchain(), state.getBlockValidator());
         minerView = new MinerView(
-            state.getMiner(),
-            state.getBlockchain(),
-            state.getWallet(),
-            state.getNode().getEnvironment(),
+            state,
             taskManager
         );
 
