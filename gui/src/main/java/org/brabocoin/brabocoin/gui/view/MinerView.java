@@ -11,6 +11,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.awaitility.Duration;
+import org.awaitility.core.ConditionTimeoutException;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -42,6 +44,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.awaitility.Awaitility.await;
 
 /**
  * Miner view.
@@ -147,6 +151,14 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     }
 
     private void showCurrentBlock() {
+        try {
+            await()
+                .atMost(Duration.TWO_SECONDS)
+                .until(() -> miner.getMiningBlock() != null);
+        } catch (ConditionTimeoutException e) {
+            LOGGER.warning("Could not get mining block to display in UI element.");
+        }
+
         MiningBlock block = miner.getMiningBlock();
 
         if (block == null) {
@@ -168,13 +180,13 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     @FXML
     private void mineSingleBlock() {
         isMiningContinuously = false;
-        initiateMininig();
+        initiateMining();
     }
 
     @FXML
     private void autoMine() {
         isMiningContinuously = true;
-        initiateMininig();
+        initiateMining();
     }
 
     @FXML
@@ -188,7 +200,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         configOptional.ifPresent(miningConfig -> config = miningConfig);
     }
 
-    private void initiateMininig() {
+    private void initiateMining() {
         if (miningTask != null && !miningTask.isDone()) {
             return;
         }
@@ -236,7 +248,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
                 // Continue mining if setting is enabled and the mined block was valid
                 if (isMiningContinuously && status == ValidationStatus.VALID) {
-                    initiateMininig();
+                    initiateMining();
                 }
             }
             catch (DatabaseException e) {
@@ -246,6 +258,10 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
         miningTask.stateProperty().addListener((obs, old, state) -> {
             switch (state) {
+                case READY:
+                    break;
+                case SCHEDULED:
+                    break;
                 case RUNNING:
                     showCurrentBlock();
                     miningProgressIndicator.setProgress(-1);
@@ -289,7 +305,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                     return;
                 }
 
-                initiateMininig();
+                initiateMining();
             }
         });
     }
