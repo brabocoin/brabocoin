@@ -84,7 +84,8 @@ public class Simulation {
                 0,
                 0,
                 -1,
-                -1
+                -1,
+                false
             );
 
             previousHash = block.getHash();
