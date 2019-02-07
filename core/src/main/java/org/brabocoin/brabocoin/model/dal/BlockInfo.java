@@ -116,6 +116,12 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
     private final int sizeInUndoFile;
 
     /**
+     * Indicates whether this block was mined by this user.
+     */
+    @ProtoField
+    private final boolean minedByMe;
+
+    /**
      * Creates a new block information holder.
      *
      * @param previousBlockHash
@@ -147,12 +153,14 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
      *     The offset in bytes indicating the location in the file where the undo data is stored.
      * @param sizeInUndoFile
      *     The size in bytes of the serialized undo data in the file.
+     * @param minedByMe
+     *     Indicates whether this block was mined by this user.
      */
     public BlockInfo(@NotNull Hash previousBlockHash, @NotNull Hash merkleRoot,
                      @NotNull Hash targetValue, @NotNull BigInteger nonce, int blockHeight,
                      int transactionCount, int networkId, boolean valid, long timeReceived,
                      int fileNumber, int offsetInFile, int sizeInFile, int offsetInUndoFile,
-                     int sizeInUndoFile) {
+                     int sizeInUndoFile, boolean minedByMe) {
         this.previousBlockHash = previousBlockHash;
         this.merkleRoot = merkleRoot;
         this.targetValue = targetValue;
@@ -167,6 +175,7 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         this.sizeInFile = sizeInFile;
         this.offsetInUndoFile = offsetInUndoFile;
         this.sizeInUndoFile = sizeInUndoFile;
+        this.minedByMe = minedByMe;
     }
 
     public int getNetworkId() {
@@ -225,6 +234,10 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
         return sizeInUndoFile;
     }
 
+    public boolean isMinedByMe() {
+        return minedByMe;
+    }
+
     @Override
     public Class<? extends ProtoBuilder> getBuilder() {
         return Builder.class;
@@ -274,6 +287,9 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
 
         @ProtoField
         private int sizeInUndoFile;
+
+        @ProtoField
+        private boolean minedByMe;
 
         public Builder setNetworkId(int networkId) {
             this.networkId = networkId;
@@ -345,6 +361,11 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
             return this;
         }
 
+        public Builder setMinedByMe(boolean minedByMe) {
+            this.minedByMe = minedByMe;
+            return this;
+        }
+
         @Override
         public BlockInfo build() {
             return new BlockInfo(
@@ -360,7 +381,8 @@ public class BlockInfo implements ProtoModel<BlockInfo> {
                 offsetInFile,
                 sizeInFile,
                 offsetInUndoFile,
-                sizeInUndoFile
+                sizeInUndoFile,
+                minedByMe
             );
         }
     }

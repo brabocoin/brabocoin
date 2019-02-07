@@ -26,6 +26,7 @@
                             <TableColumn fx:id="timeColumn" sortable="false" text="Time received"/>
                             <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
                             <TableColumn fx:id="sizeColumn" sortable="false" text="Size (kB)"/>
+                            <TableColumn fx:id="minedByColumn" sortable="false" text="Mined by me"/>
                         </columns>
                         <placeholder>
                             <VBox alignment="CENTER" spacing="5">

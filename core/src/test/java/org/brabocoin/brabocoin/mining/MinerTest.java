@@ -71,7 +71,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -112,7 +113,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -160,7 +162,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -205,7 +208,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -263,7 +267,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -318,7 +323,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 

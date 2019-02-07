@@ -158,12 +158,14 @@ public class BlockDatabase {
      *
      * @param block
      *     The block to store.
+     * @param minedByMe
+     *     Whether this block was mined by this user.
      * @return The block information of the added block.
      * @throws DatabaseException
      *     When the block could not be stored.
      */
-    public synchronized @NotNull BlockInfo storeBlock(
-        @NotNull Block block) throws DatabaseException {
+    public synchronized BlockInfo storeBlock(
+        @NotNull Block block, boolean minedByMe) throws DatabaseException {
         LOGGER.fine("Storing block.");
         Hash hash = block.getHash();
         ByteString key = getBlockKey(hash);
@@ -172,7 +174,6 @@ public class BlockDatabase {
         // Check if block is already stored
         if (storage.has(key)) {
             LOGGER.fine("Block is already stored.");
-            //noinspection ConstantConditions
             return findBlockInfo(hash);
         }
 
@@ -212,7 +213,8 @@ public class BlockDatabase {
             offsetInFile,
             size,
             -1,
-            -1
+            -1,
+            minedByMe
         );
         LOGGER.fine("Created BlockInfo for block to be stored.");
 
@@ -274,7 +276,8 @@ public class BlockDatabase {
             info.getOffsetInFile(),
             info.getSizeInFile(),
             offsetInUndoFile,
-            undoSize
+            undoSize,
+            false
         );
 
         ByteString key = getBlockKey(block.getHash());
@@ -350,7 +353,8 @@ public class BlockDatabase {
             info.getOffsetInFile(),
             info.getSizeInFile(),
             info.getOffsetInUndoFile(),
-            info.getSizeInUndoFile()
+            info.getSizeInUndoFile(),
+            false
         );
 
         ByteString value = ProtoConverter.toProtoBytes(

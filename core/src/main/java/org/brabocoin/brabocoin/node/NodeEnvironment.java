@@ -279,7 +279,7 @@ public class NodeEnvironment {
 
         try {
             LOGGER.info("Received new block from peer.");
-            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
+            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block, false);
             LOGGER.log(
                 Level.FINEST,
                 () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus)
@@ -905,7 +905,7 @@ public class NodeEnvironment {
      */
     public synchronized ValidationStatus processNewlyMinedBlock(
         @NotNull Block block) throws DatabaseException {
-        ValidationStatus status = blockProcessor.processNewBlock(block);
+        ValidationStatus status = blockProcessor.processNewBlock(block, true);
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
         }
