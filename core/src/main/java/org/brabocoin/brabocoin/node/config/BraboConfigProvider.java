@@ -33,7 +33,7 @@ public class BraboConfigProvider {
     }
 
     public static ConfigurationProvider getConfigFromFile(@NotNull String path) {
-        Path p = new File(path).toPath();
+        Path p = new File(path).getAbsoluteFile().toPath();
 
         final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(
             p.getFileName()
