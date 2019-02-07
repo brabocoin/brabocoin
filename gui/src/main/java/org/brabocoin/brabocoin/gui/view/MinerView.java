@@ -39,12 +39,16 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Miner view.
  */
 public class MinerView extends BorderPane implements BraboControl, Initializable,
                                                      BlockProcessorListener {
+
+    private static final Logger LOGGER = Logger.getLogger(MinerView.class.getName());
 
     private final @NotNull Miner miner;
     private final @NotNull Blockchain blockchain;
@@ -54,9 +58,10 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     private final @NotNull TaskManager taskManager;
     private AnimationTimer timer;
     private MiningConfig config;
+    private boolean isMiningContinuously;
 
     private @Nullable Task<Block> miningTask;
-    private @Nullable IndexedBlock parentBlock;
+    private @NotNull IndexedBlock parentBlock;
 
     @FXML private VBox container;
 
@@ -82,6 +87,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         this.nodeEnvironment = nodeEnvironment;
         this.taskManager = taskManager;
         this.config = new MiningConfig(wallet.getPublicKeys().iterator().next());
+        this.parentBlock = config.getParentBlock();
 
         BraboControlInitializer.initialize(this);
     }
@@ -160,12 +166,14 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     @FXML
     private void mineSingleBlock() {
-        initiateMininig(false);
+        isMiningContinuously = false;
+        initiateMininig();
     }
 
     @FXML
     private void autoMine() {
-        initiateMininig(true);
+        isMiningContinuously = true;
+        initiateMininig();
     }
 
     @FXML
@@ -179,7 +187,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         configOptional.ifPresent(miningConfig -> config = miningConfig);
     }
 
-    private void initiateMininig(boolean repeat) {
+    private void initiateMininig() {
         if (miningTask != null && !miningTask.isDone()) {
             return;
         }
@@ -189,7 +197,9 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             protected Block call() {
                 updateTitle("Mining new block...");
 
-                parentBlock = blockchain.getMainChain().getTopBlock();
+                parentBlock = config.hasCustomParentBlock()
+                    ? config.getParentBlock()
+                    : blockchain.getMainChain().getTopBlock();
 
                 return miner.mineNewBlock(
                     parentBlock,
@@ -219,9 +229,13 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             try {
                 ValidationStatus status = nodeEnvironment.processNewlyMinedBlock(block);
 
+                if (!updateConfigParentBlock(block)) {
+                    return;
+                }
+
                 // Continue mining if setting is enabled and the mined block was valid
-                if (repeat && status == ValidationStatus.VALID) {
-                    autoMine();
+                if (isMiningContinuously && status == ValidationStatus.VALID) {
+                    initiateMininig();
                 }
             }
             catch (DatabaseException e) {
@@ -252,6 +266,22 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
         taskManager.runTask(miningTask);
     }
 
+    private boolean updateConfigParentBlock(Block block) {
+        if (config.hasCustomParentBlock()) {
+            try {
+                config.setParentBlock(blockchain.getIndexedBlock(block.getHash()));
+            }
+            catch (DatabaseException e) {
+                LOGGER.log(
+                    Level.SEVERE,
+                    "Could not retrieve processed block to set new mining target."
+                );
+                return false;
+            }
+        }
+        return true;
+    }
+
     @FXML
     private void stop() {
         if (miningTask != null) {
@@ -261,15 +291,19 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     @Override
     public void onValidBlockProcessed(@NotNull Block block) {
-        if (miningTask == null || parentBlock == null || !miningTask.isRunning()) {
+        if (miningTask == null || !miningTask.isRunning()) {
             return;
         }
 
-        // When auto-mining, check if the current top block is changed and restart mining if so
-        // TODO: when other options as auto-mining are added, check which task is actually running.
-        if (!blockchain.getMainChain().getTopBlock().getHash().equals(parentBlock.getHash())) {
+        // Check if a new block mined on the parent block, restart mining if so
+        if (parentBlock.getHash().equals(block.getHash())) {
             stop();
-            autoMine();
+
+            if (!updateConfigParentBlock(block)) {
+                return;
+            }
+
+            initiateMininig();
         }
     }
 }

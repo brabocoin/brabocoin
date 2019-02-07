@@ -28,9 +28,9 @@
 
     <top>
         <ToolBar>
-            <Button text="Auto-mine top block" onAction="#autoMine">
+            <Button text="Continuously mine" onAction="#autoMine">
                 <graphic>
-                    <BraboGlyph icon="MAGIC"/>
+                    <BraboGlyph icon="REPEAT"/>
                 </graphic>
             </Button>
             <Button text="Mine single block" onAction="#mineSingleBlock">

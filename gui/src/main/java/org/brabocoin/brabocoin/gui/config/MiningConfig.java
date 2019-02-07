@@ -31,4 +31,8 @@ public class MiningConfig {
     public void setParentBlock(IndexedBlock parentBlock) {
         this.parentBlock = parentBlock;
     }
+
+    public boolean hasCustomParentBlock() {
+        return parentBlock != null;
+    }
 }

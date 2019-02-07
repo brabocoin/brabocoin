@@ -39,6 +39,7 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
         mineOnTopBlock.selectedProperty().addListener((observable, oldValue, newValue) -> {
             parentBlockHashTextField.setEditable(!newValue);
             if (newValue) {
+
                 parentBlockHashTextField.setText("");
                 parentBlockHashLabel.setStyle("-fx-text-fill: grey");
                 hideErrorLabel();
