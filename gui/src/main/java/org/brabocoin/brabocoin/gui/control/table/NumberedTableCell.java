@@ -1,11 +1,9 @@
 package org.brabocoin.brabocoin.gui.control.table;
 
-import javafx.scene.control.TableCell;
-
 /**
  * Table cell that shows the row index in the table.
  */
-public class NumberedTableCell<T> extends TableCell<T, Integer> {
+public class NumberedTableCell<T> extends CopyableTableCell<T, Integer> {
 
     public NumberedTableCell() {
         super();
