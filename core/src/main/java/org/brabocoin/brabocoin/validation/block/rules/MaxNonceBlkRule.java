@@ -8,6 +8,6 @@ public class MaxNonceBlkRule extends BlockRule {
 
     @Override
     public boolean isValid() {
-        return block.getNonce().compareTo(consensus.getMaxNonce()) <= 0;
+        return block.getNonce().compareTo(consensus.getMaxNonce()) < 0;
     }
 }

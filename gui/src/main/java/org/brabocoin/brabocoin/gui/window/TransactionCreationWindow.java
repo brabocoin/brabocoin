@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.gui.window;
 
 import javafx.scene.layout.VBox;
-import org.brabocoin.brabocoin.gui.BraboDialog;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.TransactionCreationView;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.state.State;

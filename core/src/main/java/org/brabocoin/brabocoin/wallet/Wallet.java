@@ -428,23 +428,6 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
         return block;
     }
 
-    /**
-     * Retrieve the address used for mining.
-     *
-     * @return The address used for mining.
-     */
-    public @NotNull Hash getMiningAddress() {
-        if (miningAddress == null) {
-            miningAddress = this.keyPairs.stream()
-                .filter(keyPair -> !keyPair.getPrivateKey().isEncrypted())
-                .findFirst()
-                .map(keyPair -> keyPair.getPublicKey().getHash())
-                .orElseThrow(() -> new IllegalStateException("No mining address could be found."));
-        }
-
-        return miningAddress;
-    }
-
     public @NotNull TransactionHistory getTransactionHistory() {
         return transactionHistory;
     }

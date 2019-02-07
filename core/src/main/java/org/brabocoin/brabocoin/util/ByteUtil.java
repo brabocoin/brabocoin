@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
+import java.math.BigInteger;
 
 /**
  * Utility class for raw byte data structures.
@@ -103,5 +104,20 @@ public final class ByteUtil {
         }
 
         return ByteString.copyFrom(DatatypeConverter.parseHexBinary(hexString));
+    }
+
+    /**
+     * Convert a BigInteger to an unsigned representation in bytes.
+     *
+     * @param value
+     *     The unsigned value to represent.
+     * @return The unsigned representation in bytes.
+     */
+    public static @NotNull ByteString toUnsigned(@NotNull BigInteger value) {
+        ByteString result = ByteString.copyFrom(value.toByteArray());
+        if (result.byteAt(0) == 0x00) {
+            return result.substring(1);
+        }
+        return result;
     }
 }

@@ -169,7 +169,10 @@ public class BlockProcessor {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        BlockValidationResult result = blockValidator.validate(block, BlockValidator.INCOMING_BLOCK);
+        BlockValidationResult result = blockValidator.validate(
+            block,
+            BlockValidator.INCOMING_BLOCK
+        );
         ValidationStatus status = result.getStatus();
 
         if (status == ValidationStatus.INVALID) {
@@ -204,6 +207,16 @@ public class BlockProcessor {
         listeners.forEach(l -> l.onValidBlockProcessed(block));
 
         return ValidationStatus.VALID;
+    }
+
+    /**
+     * Add a {@link BlockProcessorListener} to the listener set.
+     *
+     * @param listener
+     *     The listener to add.
+     */
+    public void addBlockProcessorListener(BlockProcessorListener listener) {
+        listeners.add(listener);
     }
 
     private synchronized IndexedBlock storeBlock(
@@ -244,7 +257,10 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.validate(descendant, BlockValidator.AFTER_ORPHAN)
+                ValidationStatus status = blockValidator.validate(
+                    descendant,
+                    BlockValidator.AFTER_ORPHAN
+                )
                     .getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
