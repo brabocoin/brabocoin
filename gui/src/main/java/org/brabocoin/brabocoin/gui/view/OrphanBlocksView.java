@@ -19,9 +19,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,22 +29,21 @@ import java.util.ResourceBundle;
 /**
  * View to display a collection of blocks, with detail view.
  */
-public class RecentRejectView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
+public class OrphanBlocksView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
 
     private BlockDetailView blockDetailView;
 
-    @FXML private TableView<RejectedBlock> blocksTable;
-    @FXML private TableColumn<RejectedBlock, Integer> heightColumn;
-    @FXML private TableColumn<RejectedBlock, Hash> hashColumn;
-    @FXML private TableColumn<RejectedBlock, RuleBookFailMarker> ruleColumn;
+    @FXML private TableView<Block> blocksTable;
+    @FXML private TableColumn<Block, Integer> heightColumn;
+    @FXML private TableColumn<Block, Hash> hashColumn;
 
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
-    private ObservableList<RejectedBlock> observableBlocks = FXCollections.observableArrayList();
+    private ObservableList<Block> observableBlocks = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public OrphanBlocksView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
@@ -61,7 +58,7 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
         blockDetailView = new BlockDetailView(blockchain, null, validator);
         setDetailNode(blockDetailView);
 
-        loadRejects();
+        loadOrphans();
         blockchain.addListener(this);
 
         count.bind(Bindings.size(blocksTable.getItems()));
@@ -71,39 +68,39 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
         blocksTable.setItems(observableBlocks);
 
         heightColumn.setCellValueFactory(features -> {
-            int blockHeight = features.getValue().getBlock().getBlockHeight();
+            int blockHeight = features.getValue().getBlockHeight();
             return new ReadOnlyObjectWrapper<>(blockHeight);
         });
 
         hashColumn.setCellValueFactory(features -> {
-            Hash hash = features.getValue().getBlock().getHash();
+            Hash hash = features.getValue().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
         });
         hashColumn.setCellFactory(col -> new HashTableCell<>(Constants.BLOCK_HASH_SIZE));
-
-        ruleColumn.setCellValueFactory(features -> {
-            RuleBookFailMarker marker = features.getValue().getValidationResult().getFailMarker();
-            return new ReadOnlyObjectWrapper<>(marker);
-        });
 
         blocksTable.getSelectionModel().selectedItemProperty().addListener((obs, old, block) -> {
             if (block == null) {
                 return;
             }
 
-            blockDetailView.setBlock(block.getBlock());
+            blockDetailView.setBlock(block);
             setShowDetailNode(true);
         });
     }
 
-    private void loadRejects() {
+    private void loadOrphans() {
         observableBlocks.clear();
-        blockchain.recentRejectsIterator().forEachRemaining(b -> observableBlocks.add(b));
+        blockchain.orphansIterator().forEachRemaining(b -> observableBlocks.add(b));
     }
 
     @Override
-    public void onRecentRejectAdded(@NotNull Block block) {
-        loadRejects();
+    public void onOrphanAdded(@NotNull Block block) {
+        observableBlocks.add(block);
+    }
+
+    @Override
+    public void onOrphanRemoved(@NotNull Block block) {
+        observableBlocks.remove(block);
     }
 
     public ReadOnlyIntegerProperty countProperty() {

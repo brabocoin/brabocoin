@@ -326,6 +326,15 @@ public class Blockchain {
     }
 
     /**
+     * Iterator over the orphan blocks.
+     *
+     * @return An iterator of the orphan blocks.
+     */
+    public Iterator<Block> orphansIterator() {
+        return orphanIndex.values().iterator();
+    }
+
+    /**
      * Find the block undo data.
      *
      * @param hash
