@@ -118,14 +118,7 @@ public final class Base58Check {
             i++;
         }
 
-        return ByteString.copyFrom(new byte[i]).concat(toUnsigned(result));
+        return ByteString.copyFrom(new byte[i]).concat(ByteUtil.toUnsigned(result));
     }
 
-    private static @NotNull ByteString toUnsigned(@NotNull BigInteger value) {
-        ByteString result = ByteString.copyFrom(value.toByteArray());
-        if (result.byteAt(0) == 0x00) {
-            return result.substring(1);
-        }
-        return result;
-    }
 }
