@@ -386,7 +386,7 @@ public class NodeTest {
 
 
         await().atMost(50, TimeUnit.SECONDS)
-            .until(() -> stateB.getBlockchain().getMainChain().getHeight() == 101);
+            .until(() -> stateB.getBlockchain().getMainChain().getHeight() == mockConsensus.getCoinbaseMaturityDepth() + 1);
 
         stateA.getTransactionProcessor().processNewTransaction(tx);
 
@@ -1404,7 +1404,7 @@ public class NodeTest {
 
         Block minedBlock = minerB.mineNewBlock(
             stateB.getBlockchain().getMainChain().getTopBlock(),
-            Simulation.randomHash()
+            stateB.getConsensus().getPublicKeyHashFunction().apply(Simulation.randomByteString())
         );
         assert minedBlock != null;
         stateB.getBlockProcessor().processNewBlock(minedBlock, false);

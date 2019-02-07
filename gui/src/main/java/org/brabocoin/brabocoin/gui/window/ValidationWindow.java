@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.gui.window;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.gui.BraboDialog;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.view.ValidationView;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;

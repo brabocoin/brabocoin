@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.gui;
+package org.brabocoin.brabocoin.gui.dialog;
 
 import javafx.scene.Node;
 import javafx.scene.control.DialogPane;

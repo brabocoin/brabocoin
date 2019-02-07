@@ -452,19 +452,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     }
 
     /**
-     * Retrieve the address used for mining.
-     *
-     * @return The address used for mining.
-     */
-    public @NotNull Hash getMiningAddress() {
-        if (miningAddress == null) {
-            miningAddress = this.keyPairs.get(keyPairs.size() - 1).getPublicKey().getHash();
-        }
-
-        return miningAddress;
-    }
-
-    /**
      * Computes the confirmed or pending balance in the chain, using the wallet UTXO set and the
      * {@link #usedInputs}.
      *

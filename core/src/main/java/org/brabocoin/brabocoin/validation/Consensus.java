@@ -8,9 +8,11 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,29 +27,29 @@ public class Consensus {
     /**
      * The max block size, excluding the nonce.
      */
-    private static final long MAX_BLOCK_SIZE = 1_000_000L; // In bytes
+    private static final long MAX_BLOCK_SIZE = 10_000L; // In bytes
 
     /**
      * The max nonce size.
      */
-    private static final int MAX_NONCE_SIZE = 16; // In bytes
+    private static final int MAX_NONCE_SIZE = 5; // In bytes
 
     /**
      * Block maturity depth.
      */
-    private static final int COINBASE_MATURITY_DEPTH = 100;
+    private static final int COINBASE_MATURITY_DEPTH = 10;
 
     /**
      * Max money value.
      */
-    private static final long MAX_MONEY_VALUE = (long)(3E9);
+    private static final long MAX_MONEY_VALUE = (long)(3E18);
 
     /**
      * Constant target value.
      */
     private static final Hash TARGET_VALUE = new Hash(
-        ByteString.copyFrom(
-            BigInteger.valueOf(3216).multiply(BigInteger.TEN.pow(69)).toByteArray()
+        ByteUtil.toUnsigned(
+            new BigDecimal("3216E65").toBigInteger()
         )
     );
 
@@ -56,6 +58,9 @@ public class Consensus {
      */
     private static final Function<Hash, Hash> DOUBLE_SHA =
         (h) -> Hashing.digestSHA256(Hashing.digestSHA256(h));
+
+    private static final Function<ByteString, Hash> RIPEMD_SHA =
+        (b) -> Hashing.digestRIPEMD160(Hashing.digestSHA256(b));
 
     /**
      * The max nonce value.
@@ -153,6 +158,10 @@ public class Consensus {
         return DOUBLE_SHA;
     }
 
+    public @NotNull Function<ByteString, Hash> getPublicKeyHashFunction() {
+        return RIPEMD_SHA;
+    }
+
     public int getMaxBlockHeaderSize() {
         return MAX_BLOCK_HEADER_SIZE;
     }
@@ -176,7 +185,6 @@ public class Consensus {
 
     public Long getMaxTransactionSize() {
         return getMaxBlockSize()
-            + getMaxNonceSize()
             - getMaxBlockHeaderSize()
             - getMaxCoinbaseTransactionSize()
             - Long.BYTES;

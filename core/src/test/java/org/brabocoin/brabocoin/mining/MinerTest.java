@@ -215,7 +215,7 @@ class MinerTest {
 
         Hash address = Hashing.digestRIPEMD160(ByteString.copyFromUtf8("Neerkant"));
 
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 1000), 20);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 50), 20);
 
         for (Transaction transaction : transactions) {
             transactionPool.addIndependentTransaction(transaction);

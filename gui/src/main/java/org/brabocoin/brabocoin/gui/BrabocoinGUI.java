@@ -58,6 +58,12 @@ public class BrabocoinGUI extends Application {
 
     @Override
     public void start(Stage stage) {
+        // Set exception dialog handler
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            ExceptionDialog dialog = new ExceptionDialog(e);
+            Platform.runLater(dialog::showAndWait);
+        });
+
         // Parse parameters
         BraboArgs arguments = new BraboArgs();
         JCommander commander = JCommander.newBuilder().addObject(arguments).build();
