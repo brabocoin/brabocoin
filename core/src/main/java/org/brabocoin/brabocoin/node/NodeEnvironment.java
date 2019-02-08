@@ -16,6 +16,7 @@ import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
@@ -43,6 +44,8 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
@@ -52,6 +55,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Represents a node environment.
@@ -112,7 +116,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        receivedMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        receivedMessages =
+            Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
         sentMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
         peerProcessor.addPeerSetChangedListener(this);
@@ -265,8 +270,12 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         for (NodeGrpc.NodeBlockingStub stub : getPeerStubs()) {
             try {
                 blockingStubConsumer.accept(stub);
-            } catch (StatusRuntimeException e) {
-                LOGGER.log(Level.SEVERE, MessageFormat.format("Exception while propagating message: {0}", e.getMessage()));
+            }
+            catch (StatusRuntimeException e) {
+                LOGGER.log(
+                    Level.SEVERE,
+                    MessageFormat.format("Exception while propagating message: {0}", e.getMessage())
+                );
             }
         }
 
@@ -1110,7 +1119,18 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
             )
         );
 
-        return transactionPool.findValidatedTransaction(transactionHash);
+        Transaction validTx = transactionPool.findValidatedTransaction(transactionHash);
+        if (validTx != null) {
+            return validTx;
+        }
+
+        Optional<RejectedTransaction> recentlyRejectedTx = StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(
+                transactionPool.recentRejectsIterator(),
+                Spliterator.ORDERED
+            ), false).filter(t -> t.getTransaction().getHash().equals(transactionHash)).findFirst();
+
+        return recentlyRejectedTx.map(RejectedTransaction::getTransaction).orElse(null);
     }
 
     /**
