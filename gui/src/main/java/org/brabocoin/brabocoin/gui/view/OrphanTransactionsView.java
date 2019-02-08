@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import java.util.ResourceBundle;
 public class OrphanTransactionsView extends MasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
 
     private final @NotNull TransactionPool pool;
+    private final @NotNull TransactionValidator validator;
 
     @FXML private TableView<Transaction> orphanTable;
 
@@ -39,9 +41,10 @@ public class OrphanTransactionsView extends MasterDetailPane implements BraboCon
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public OrphanTransactionsView(@NotNull TransactionPool pool) {
+    public OrphanTransactionsView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
         super();
         this.pool = pool;
+        this.validator = validator;
         BraboControlInitializer.initialize(this);
 
         this.pool.addListener(this);
@@ -49,7 +52,7 @@ public class OrphanTransactionsView extends MasterDetailPane implements BraboCon
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        detailView = new TransactionDetailView(null);
+        detailView = new TransactionDetailView(null, validator);
         setDetailNode(detailView);
 
         hashColumn.setCellValueFactory(features -> {

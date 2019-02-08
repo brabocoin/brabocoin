@@ -31,7 +31,7 @@
                         <placeholder>
                             <VBox alignment="CENTER" spacing="5">
                                 <ProgressIndicator maxHeight="20"/>
-                                <Label text="Loading blockchain..."/>
+                                <Label text="Loading pool..."/>
                             </VBox>
                         </placeholder>
                     </TableView>
@@ -42,6 +42,7 @@
     <Tab fx:id="txPoolTab" closable="false"/>
     <Tab fx:id="blkOrphansTab" closable="false"/>
     <Tab fx:id="txOrphansTab" closable="false"/>
-    <Tab fx:id="recentRejectTab" closable="false"/>
+    <Tab fx:id="recentRejectBlkTab" closable="false"/>
+    <Tab fx:id="recentRejectTxTab" closable="false"/>
     <Tab closable="false" disable="true" text="UTXO set"/>
 </fx:root>

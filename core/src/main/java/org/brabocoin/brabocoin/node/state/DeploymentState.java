@@ -304,7 +304,8 @@ public class DeploymentState implements State {
         return new TransactionPool(
             config.maxTransactionPoolSize(),
             config.maxOrphanTransactions(),
-            unsecureRandom
+            unsecureRandom,
+            657989
         );
     }
 

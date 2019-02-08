@@ -58,4 +58,14 @@ public interface TransactionPoolListener {
     default void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
 
     }
+
+    /**
+     * Called when a transaction is added as recently rejected.
+     *
+     * @param transaction
+     *     The transaction that was added as recent reject.
+     */
+    default void onRecentRejectAdded(@NotNull Transaction transaction) {
+
+    };
 }

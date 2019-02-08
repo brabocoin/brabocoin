@@ -142,7 +142,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
             @Override
             public void run() {
                 peerProcessor.clearDeadPeers();
-                peerProcessor.discoverPeers(peerProcessor.copyPeersList());
+                peerProcessor.updatePeers();
             }
         }, 0, updatePeerInterval * 1000);
 

@@ -187,7 +187,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.transaction = transaction;
         this.validator = validator;
 
-        transactionDetailView = new TransactionDetailView(transaction);
+        transactionDetailView = new TransactionDetailView(transaction, null);
         this.setDetailNode(transactionDetailView);
 
         BraboControlInitializer.initialize(this);

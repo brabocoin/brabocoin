@@ -93,6 +93,11 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
+    public int maxRecentRejectTransactions() {
+        return delegator.maxRecentRejectTransactions();
+    }
+
+    @Override
     public int servicePort() {
         return delegator.servicePort();
     }

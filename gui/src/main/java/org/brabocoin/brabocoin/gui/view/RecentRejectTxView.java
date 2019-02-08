@@ -13,16 +13,18 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.chain.BlockchainListener;
+import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
-import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.gui.control.table.RuleTableCell;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.RejectedBlock;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.model.RejectedTransaction;
+import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,26 +32,25 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 /**
- * View to display a collection of blocks, with detail view.
+ * View for recently rejected transactions.
  */
-public class RecentRejectView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
+public class RecentRejectTxView extends MasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
 
-    private BlockDetailView blockDetailView;
+    private TransactionDetailView transactionDetailView;
 
-    @FXML private TableView<RejectedBlock> blocksTable;
-    @FXML private TableColumn<RejectedBlock, Integer> heightColumn;
-    @FXML private TableColumn<RejectedBlock, Hash> hashColumn;
-    @FXML private TableColumn<RejectedBlock, RuleBookFailMarker> ruleColumn;
+    @FXML private TableView<RejectedTransaction> txsTable;
+    @FXML private TableColumn<RejectedTransaction, Hash> hashColumn;
+    @FXML private TableColumn<RejectedTransaction, Class<? extends Rule>> ruleColumn;
 
-    private final @NotNull Blockchain blockchain;
-    private final BlockValidator validator;
-    private ObservableList<RejectedBlock> observableBlocks = FXCollections.observableArrayList();
+    private final @NotNull TransactionPool pool;
+    private final @NotNull TransactionValidator validator;
+    private ObservableList<RejectedTransaction> observableTxs = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public RecentRejectTxView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
         super();
-        this.blockchain = blockchain;
+        this.pool = pool;
         this.validator = validator;
 
         BraboControlInitializer.initialize(this);
@@ -59,51 +60,47 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        blockDetailView = new BlockDetailView(blockchain, null, validator);
-        setDetailNode(blockDetailView);
+        transactionDetailView = new TransactionDetailView(null, validator);
+        setDetailNode(transactionDetailView);
 
         loadRejects();
-        blockchain.addListener(this);
+        pool.addListener(this);
 
-        count.bind(Bindings.size(blocksTable.getItems()));
+        count.bind(Bindings.size(txsTable.getItems()));
     }
 
     private void loadTable() {
-        blocksTable.setItems(observableBlocks);
-
-        heightColumn.setCellValueFactory(features -> {
-            int blockHeight = features.getValue().getBlock().getBlockHeight();
-            return new ReadOnlyObjectWrapper<>(blockHeight);
-        });
+        txsTable.setItems(observableTxs);
 
         hashColumn.setCellValueFactory(features -> {
-            Hash hash = features.getValue().getBlock().getHash();
+            Hash hash = features.getValue().getTransaction().getHash();
             return new ReadOnlyObjectWrapper<>(hash);
         });
         hashColumn.setCellFactory(col -> new HashTableCell<>(Constants.BLOCK_HASH_SIZE));
 
         ruleColumn.setCellValueFactory(features -> {
             RuleBookFailMarker marker = features.getValue().getValidationResult().getFailMarker();
-            return new ReadOnlyObjectWrapper<>(marker);
+            return new ReadOnlyObjectWrapper<>(marker.getFailedRule());
         });
+        ruleColumn.setCellFactory(col -> new RuleTableCell<>());
 
-        blocksTable.getSelectionModel().selectedItemProperty().addListener((obs, old, block) -> {
-            if (block == null) {
+        txsTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
+            if (tx == null) {
                 return;
             }
 
-            blockDetailView.setBlock(block.getBlock());
+            transactionDetailView.setTransaction(tx.getTransaction());
             setShowDetailNode(true);
         });
     }
 
     private void loadRejects() {
-        observableBlocks.clear();
-        blockchain.recentRejectsIterator().forEachRemaining(b -> observableBlocks.add(b));
+        observableTxs.clear();
+        pool.recentRejectsIterator().forEachRemaining(b -> observableTxs.add(b));
     }
 
     @Override
-    public void onRecentRejectAdded(@NotNull Block block) {
+    public void onRecentRejectAdded(@NotNull Transaction transaction) {
         Platform.runLater(this::loadRejects);
     }
 

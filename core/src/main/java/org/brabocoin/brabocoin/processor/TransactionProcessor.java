@@ -136,6 +136,7 @@ public class TransactionProcessor {
         ValidationStatus status = result.getStatus();
         if (status == ValidationStatus.INVALID) {
             LOGGER.log(Level.INFO, MessageFormat.format("New transaction is invalid, rulebook result: {0}", result));
+            transactionPool.addRejected(transaction, result);
             return;
         }
 
