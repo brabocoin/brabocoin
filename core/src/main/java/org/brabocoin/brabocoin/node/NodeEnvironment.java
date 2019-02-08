@@ -11,6 +11,7 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
+import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -52,7 +54,7 @@ import java.util.stream.Collectors;
 /**
  * Represents a node environment.
  */
-public class NodeEnvironment {
+public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedListener {
 
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
@@ -74,8 +76,10 @@ public class NodeEnvironment {
     private Queue<Runnable> messageQueue;
     private final List<BlockReceivedListener> blockListeners;
     private final List<TransactionReceivedListener> transactionListeners;
+    private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
+    private List<NetworkMessage> receivedMessages;
 
     /*
      * Processors
@@ -104,6 +108,10 @@ public class NodeEnvironment {
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
+        networkMessageListeners = new ArrayList<>();
+        receivedMessages = new ArrayList<>();
+
+        peerProcessor.addPeerSetChangedListener(this);
     }
 
     /**
@@ -257,6 +265,49 @@ public class NodeEnvironment {
         LOGGER.info("Message propagated to all peers.");
     }
 
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
+    }
+
+    public synchronized Iterable<NetworkMessage> getReceivedMessages() {
+        return receivedMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
+    }
+
+    public Iterable<NetworkMessage> getSentMessages() {
+        return peerProcessor.copyPeers().stream()
+            .map(Peer::getMessageQueue)
+            .flatMap(Collection::stream)
+            .sorted(NetworkMessage::compareTo)::iterator;
+    }
+
+    @Override
+    public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            receivedMessages.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onIncomingMessage(message, isUpdate));
+    }
+
+    @Override
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
+    }
+
+    @Override
+    public void onPeerAdded(Peer peer) {
+        peer.addNetworkMessageListener(this);
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(null, false));
+    }
+
+    @Override
+    public void onPeerRemoved(Peer peer) {
+        peer.removeNetworkMessageListeners(this);
+    }
 
     //================================================================================
     // Callbacks
@@ -923,9 +974,7 @@ public class NodeEnvironment {
             status = ValidationStatus.INVALID;
         }
 
-        if (status == ValidationStatus.VALID) {
-            messageQueue.add(() -> announceTransactionRequest(transaction));
-        }
+        messageQueue.add(() -> announceTransactionRequest(transaction));
 
         return status;
     }

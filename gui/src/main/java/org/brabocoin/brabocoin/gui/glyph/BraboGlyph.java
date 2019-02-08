@@ -110,7 +110,9 @@ public class BraboGlyph extends Glyph {
         CIRCLEMINUS(Font.FONT_AWESOME_SOLID, '\uf056'),
         CUBE(Font.FONT_AWESOME_SOLID, '\uf1b2'),
         TOOLS(Font.FONT_AWESOME_SOLID, '\uf0ad'),
-        REPEAT(Font.FONT_AWESOME_SOLID, '\uf363');
+        REPEAT(Font.FONT_AWESOME_SOLID, '\uf363'),
+        LOCK(Font.FONT_AWESOME_SOLID, '\uf023'),
+        UNLOCK(Font.FONT_AWESOME_SOLID, '\uf3c1');
 
         private final @NotNull Font font;
         private final char ch;

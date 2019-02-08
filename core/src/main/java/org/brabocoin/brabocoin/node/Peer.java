@@ -2,19 +2,25 @@ package org.brabocoin.brabocoin.node;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * A representation of an peer in the network.
  */
-public class Peer {
+public class Peer implements NetworkMessageListener {
 
     private static final Logger LOGGER = Logger.getLogger(Peer.class.getName());
     /**
@@ -25,6 +31,12 @@ public class Peer {
     private ManagedChannel channel;
     private NodeGrpc.NodeBlockingStub blockingStub;
     private NodeGrpc.NodeStub asyncStub;
+    private PeerMessageInterceptor interceptor;
+
+    private Queue<NetworkMessage> messageQueue =
+        new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
+
+    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
 
     /**
      * Creates a peer from an address and port.
@@ -63,13 +75,21 @@ public class Peer {
         setupStubs();
     }
 
+
     /**
      * Check whether this peer is a connection to the local machine.
      *
      * @return Whether this peer is the local machine.
      */
     public boolean isLocal() {
-        return socket.getAddress().isAnyLocalAddress() || socket.getAddress().isLoopbackAddress();
+        try {
+            return socket.getAddress().isAnyLocalAddress() || socket.getAddress()
+                .isLoopbackAddress() ||
+                InetAddress.getLocalHost().equals(this.getAddress());
+        }
+        catch (UnknownHostException e) {
+            return false;
+        }
     }
 
     /**
@@ -87,9 +107,12 @@ public class Peer {
      */
     private void setupStubs() throws MalformedSocketException {
         LOGGER.log(Level.FINE, "Setting up a new peer: {0}", toSocketString());
+        this.interceptor = new PeerMessageInterceptor(this);
+        this.interceptor.addNetworkMessageListener(this);
         try {
             this.channel = ManagedChannelBuilder
                 .forAddress(socket.getHostString(), socket.getPort())
+                .intercept(interceptor.createClientCallInterceptor())
                 .usePlaintext()
                 .build();
         }
@@ -103,6 +126,26 @@ public class Peer {
 
 
         Runtime.getRuntime().addShutdownHook(new Thread(channel::shutdown));
+    }
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
+    }
+
+    @Override
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate && !messageQueue.contains(message)) {
+            messageQueue.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
+    }
+
+    public synchronized Queue<NetworkMessage> getMessageQueue() {
+        return messageQueue;
     }
 
     /**
@@ -204,7 +247,7 @@ public class Peer {
      * @return Socket string in {ip}:{port} format.
      */
     public String toSocketString() {
-        return String.format("%s:%d", socket.getHostString(), socket.getPort());
+        return String.format("%s:%d", socket.getHostName(), socket.getPort());
     }
 
     @Override
