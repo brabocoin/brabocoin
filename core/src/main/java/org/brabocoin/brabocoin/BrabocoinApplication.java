@@ -17,13 +17,14 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
 
 /**
  * Main Brabocoin application that runs the full node.
@@ -80,7 +81,7 @@ public class BrabocoinApplication {
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(@Nullable String configPath, @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
+    public BrabocoinApplication(@Nullable String configPath, @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
         this(getConfig(configPath), walletUnlocker);
     }
 
@@ -95,7 +96,7 @@ public class BrabocoinApplication {
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(@NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
+    public BrabocoinApplication(@NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
         this(getConfig(null), walletUnlocker);
     }
 
@@ -151,13 +152,16 @@ public class BrabocoinApplication {
         application.start();
     }
 
-    private static @NotNull BraboConfig getConfig(@Nullable String path) {
-        if (path == null) {
-            return BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+    private static @NotNull BraboConfig getConfig(@NotNull String path) throws IOException {
+        File configFile = new File(path);
+
+        if (!configFile.exists()) {
+            // Unpack the default config to use
+            InputStream config = BrabocoinApplication.class.getResourceAsStream("/application.yaml");
+            Files.copy(config, configFile.getAbsoluteFile().toPath());
         }
-        else {
-            return BraboConfigProvider.getConfigFromFile(path).bind("brabo", BraboConfig.class);
-        }
+
+        return BraboConfigProvider.getConfigFromFile(path).bind("brabo", BraboConfig.class);
     }
 
     /**
