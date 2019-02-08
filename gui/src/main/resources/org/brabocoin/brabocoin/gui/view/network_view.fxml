@@ -37,13 +37,13 @@
             </TitledPane>
             <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
                 <VBox>
-                    <TableView fx:id="peerTable">
+                    <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
                             <TableColumn fx:id="peerPortColumn" sortable="false" text="Port"/>
                             <TableColumn fx:id="peerIncomingMessageCountColumn" sortable="false" text="Incoming messages"/>
                             <TableColumn fx:id="peerOutgoingMessageCountColumn" sortable="false" text="Outgoing messages"/>
-                            <TableColumn fx:id="peerRunningColumn" sortable="false" text=""/>
+                            <TableColumn fx:id="peerRunningColumn" sortable="false" text="Active"/>
                         </columns>
                         <placeholder>
                             <VBox alignment="CENTER" spacing="5">

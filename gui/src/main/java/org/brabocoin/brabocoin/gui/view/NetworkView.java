@@ -23,8 +23,8 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
+import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.MethodDescriptorTableCell;
-import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PeerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.StringTableCell;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
@@ -195,6 +195,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     }
 
     private void loadPeerTable() {
+        peers.addAll(state.getPeerProcessor().getPeers());
         peerTable.setItems(peers);
 
         peerIPColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
@@ -204,17 +205,17 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
         peerPortColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
             .getPort()));
-        peerPortColumn.setCellFactory(f -> new NumberedTableCell<>());
+        peerPortColumn.setCellFactory(f -> new IntegerTableCell<>());
 
         peerOutgoingMessageCountColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
             .getOutgoingMessageQueue()
             .size()));
-        peerOutgoingMessageCountColumn.setCellFactory(f -> new NumberedTableCell<>());
+        peerOutgoingMessageCountColumn.setCellFactory(f -> new IntegerTableCell<>());
 
         peerIncomingMessageCountColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
             .getIncomingMessageQueue()
             .size()));
-        peerIncomingMessageCountColumn.setCellFactory(f -> new NumberedTableCell<>());
+        peerIncomingMessageCountColumn.setCellFactory(f -> new IntegerTableCell<>());
 
         peerRunningColumn.setCellValueFactory(f -> new ReadOnlyBooleanWrapper(f.getValue()
             .isRunning()));
@@ -268,18 +269,24 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @Override
     public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
-        Platform.runLater(() -> incomingMessages.setAll(Lists.newArrayList(state.getEnvironment()
-            .getReceivedMessages())));
+        Platform.runLater(() -> {
+            incomingMessages.setAll(Lists.newArrayList(state.getEnvironment()
+                .getReceivedMessages()));
 
-        incomingMessagesTable.refresh();
+            incomingMessagesTable.refresh();
+            peerTable.refresh();
+        });
     }
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
-        Platform.runLater(() -> outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment()
-            .getSentMessages())));
+        Platform.runLater(() -> {
+            outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment()
+                .getSentMessages()));
 
-        outgoingMessagesTable.refresh();
+            outgoingMessagesTable.refresh();
+            peerTable.refresh();
+        });
     }
 
     @Override
