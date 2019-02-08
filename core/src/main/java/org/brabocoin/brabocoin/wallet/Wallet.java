@@ -556,8 +556,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         @Override
         public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
             setOutputSpent(transactionHash, outputIndex, walletPoolUtxoSet);
-
-            addUsedInput(new Input(transactionHash, outputIndex));
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
     }
 
