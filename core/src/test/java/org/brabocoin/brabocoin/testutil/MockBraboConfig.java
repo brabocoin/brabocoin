@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.testutil;
 
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 
 import java.util.List;
@@ -115,5 +116,10 @@ public class MockBraboConfig implements BraboConfig {
     @Override
     public int maxSequentialOrphanBlocks() {
         return delegator.maxSequentialOrphanBlocks();
+    }
+
+    @Override
+    public Hash targetValue() {
+        return delegator.targetValue();
     }
 }

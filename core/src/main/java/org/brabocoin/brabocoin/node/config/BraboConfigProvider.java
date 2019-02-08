@@ -40,9 +40,11 @@ public class BraboConfigProvider {
         );
         final ConfigurationSource source = new FilesConfigurationSource(configFilesProvider);
 
-        return new ConfigurationProviderBuilder()
+        ConfigurationProvider provider = new ConfigurationProviderBuilder()
             .withConfigurationSource(source)
             .withEnvironment(new ImmutableEnvironment(p.getParent().toString()))
             .build();
+
+        return new CustomTypeConfigProvider(provider);
     }
 }
