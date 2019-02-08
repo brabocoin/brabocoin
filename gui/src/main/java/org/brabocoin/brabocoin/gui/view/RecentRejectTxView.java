@@ -22,6 +22,7 @@ import org.brabocoin.brabocoin.gui.control.table.RuleTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -43,14 +44,16 @@ public class RecentRejectTxView extends MasterDetailPane implements BraboControl
     @FXML private TableColumn<RejectedTransaction, Class<? extends Rule>> ruleColumn;
 
     private final @NotNull TransactionPool pool;
+    private final NodeEnvironment nodeEnvironment;
     private final @NotNull TransactionValidator validator;
     private ObservableList<RejectedTransaction> observableTxs = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectTxView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
+    public RecentRejectTxView(@NotNull TransactionPool pool, @NotNull NodeEnvironment nodeEnvironment, @NotNull TransactionValidator validator) {
         super();
         this.pool = pool;
+        this.nodeEnvironment = nodeEnvironment;
         this.validator = validator;
 
         BraboControlInitializer.initialize(this);
@@ -60,7 +63,7 @@ public class RecentRejectTxView extends MasterDetailPane implements BraboControl
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        transactionDetailView = new TransactionDetailView(null, validator);
+        transactionDetailView = new TransactionDetailView(null, nodeEnvironment, validator);
         setDetailNode(transactionDetailView);
 
         loadRejects();
