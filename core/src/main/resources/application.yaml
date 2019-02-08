@@ -1,10 +1,10 @@
 brabo:
-  networkId: 1                        # The network on which blocks are accepted
+  networkId: 5                        # The network on which blocks are accepted
   loopInterval: 500                   # The interval in the main node loop, in milliseconds
   targetPeerCount: 25                 # Target of number of peers at which we stop discovering new peers
   handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
   bootstrapPeers:                     # List of peers known at startup
-  - brabocoin.org:56129               #  - Dictator node
+  - 131.155.203.223:56129               #  - Dictator node
   updatePeerInterval: 45              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
   maxSequentialOrphanBlocks: 10       # Max sequential orphan blocks to receive before initializing synchronization.
   dataDirectory: data                 # Data directory

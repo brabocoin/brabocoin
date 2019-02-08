@@ -39,7 +39,8 @@ import java.util.ResourceBundle;
  */
 public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
 
-    @FXML private Tab recentRejectTab;
+    @FXML private Tab recentRejectBlkTab;
+    @FXML private Tab recentRejectTxTab;
     @FXML private Tab txPoolTab;
     @FXML private Tab txOrphansTab;
     @FXML private Tab blkOrphansTab;
@@ -78,12 +79,21 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadMainChain();
         blockchain.addListener(this);
 
-        RecentRejectView rejectView = new RecentRejectView(blockchain, validator);
-        recentRejectTab.setContent(rejectView);
-        recentRejectTab.textProperty().bind(
+        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator);
+        recentRejectBlkTab.setContent(rejectBlkView);
+        recentRejectBlkTab.textProperty().bind(
             Bindings.createStringBinding(
-                () -> "Recently rejected blocks (" + rejectView.getCount() + ")",
-                rejectView.countProperty()
+                () -> "Recently rejected blocks (" + rejectBlkView.getCount() + ")",
+                rejectBlkView.countProperty()
+            )
+        );
+
+        RecentRejectTxView rejectTxView = new RecentRejectTxView(state.getTransactionPool());
+        recentRejectTxTab.setContent(rejectTxView);
+        recentRejectTxTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Recently rejected transactions (" + rejectTxView.getCount() + ")",
+                rejectTxView.countProperty()
             )
         );
 

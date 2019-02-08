@@ -18,10 +18,12 @@ import org.brabocoin.brabocoin.chain.BlockchainListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
+import org.brabocoin.brabocoin.gui.control.table.RuleTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +34,14 @@ import java.util.ResourceBundle;
 /**
  * View to display a collection of blocks, with detail view.
  */
-public class RecentRejectView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
+public class RecentRejectBlkView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
 
     private BlockDetailView blockDetailView;
 
     @FXML private TableView<RejectedBlock> blocksTable;
     @FXML private TableColumn<RejectedBlock, Integer> heightColumn;
     @FXML private TableColumn<RejectedBlock, Hash> hashColumn;
-    @FXML private TableColumn<RejectedBlock, RuleBookFailMarker> ruleColumn;
+    @FXML private TableColumn<RejectedBlock, Class<? extends Rule>> ruleColumn;
 
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
@@ -47,7 +49,7 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public RecentRejectBlkView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
@@ -84,8 +86,9 @@ public class RecentRejectView extends MasterDetailPane implements BraboControl, 
 
         ruleColumn.setCellValueFactory(features -> {
             RuleBookFailMarker marker = features.getValue().getValidationResult().getFailMarker();
-            return new ReadOnlyObjectWrapper<>(marker);
+            return new ReadOnlyObjectWrapper<>(marker.getFailedRule());
         });
+        ruleColumn.setCellFactory(col -> new RuleTableCell<>());
 
         blocksTable.getSelectionModel().selectedItemProperty().addListener((obs, old, block) -> {
             if (block == null) {
