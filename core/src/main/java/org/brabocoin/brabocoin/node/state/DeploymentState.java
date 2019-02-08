@@ -297,7 +297,7 @@ public class DeploymentState implements State {
             config.maxTransactionPoolSize(),
             config.maxOrphanTransactions(),
             unsecureRandom,
-            657989
+            config.maxRecentRejectTransactions()
         );
     }
 
