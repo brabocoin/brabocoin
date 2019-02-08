@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Manages all tasks related to a set of peers.
@@ -51,7 +52,7 @@ public class PeerProcessor {
      * @return The peers read from config.
      */
     private synchronized List<Peer> getBootstrapPeers() {
-        LOGGER.fine("Instantiating bootstrap peers.");
+        LOGGER.fine("Getting bootstrap peers.");
         List<Peer> configPeers = new ArrayList<>();
         for (final String peerSocket : config.bootstrapPeers()) {
             LOGGER.log(
@@ -72,8 +73,6 @@ public class PeerProcessor {
                     "Peer socket ( {0} ) is malformed, exception message: {0}",
                     new Object[] {peerSocket, e.getMessage()}
                 );
-                // TODO: Handle invalid peer socket representation in the config.
-                // Exit throwing an error to the user or skip this peer?
             }
         }
 
@@ -253,5 +252,18 @@ public class PeerProcessor {
         }
 
         peers = new HashSet<>();
+    }
+
+    /**
+     * Updates the peer list by discovering peers using the current peer list and bootstrap peers.
+     */
+    public void updatePeers() {
+        LOGGER.fine("Updating peers.");
+        discoverPeers(
+            Stream.concat(
+                copyPeersList().stream(),
+                getBootstrapPeers().stream()
+            ).collect(Collectors.toList())
+        );
     }
 }

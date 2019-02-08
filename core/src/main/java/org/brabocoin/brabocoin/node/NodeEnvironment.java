@@ -134,7 +134,7 @@ public class NodeEnvironment {
             @Override
             public void run() {
                 peerProcessor.clearDeadPeers();
-                peerProcessor.discoverPeers(peerProcessor.copyPeersList());
+                peerProcessor.updatePeers();
             }
         }, 0, updatePeerInterval * 1000);
 
