@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -20,12 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class WalletIO {
 
@@ -35,15 +40,18 @@ public class WalletIO {
         this.cipher = cipher;
     }
 
-    public Wallet read(File keysFile, File transactionHistoryFile, Destructible<char[]> passphrase,
+    public Wallet read(File keysFile, File transactionHistoryFile,
+                       Destructible<char[]> passphrase,
                        Consensus consensus,
                        Signer signer,
                        KeyGenerator keyGenerator,
                        Cipher privateKeyCipher,
-                       @NotNull UTXODatabase walletUTXOSet,
-                       @NotNull ReadonlyUTXOSet watchedUTXOSet,
+                       @NotNull UTXODatabase walletChainUtxoSet,
+                       @NotNull UTXODatabase walletPoolUtxoSet,
+                       @NotNull ReadonlyUTXOSet chainUtxo,
+                       @NotNull ReadonlyUTXOSet poolUtxo,
                        @NotNull Blockchain blockchain) throws IOException, CipherException,
-                       DestructionException {
+                                                              DestructionException {
         if (!keysFile.exists()) {
             throw new IllegalArgumentException("Keys file does not exist.");
         }
@@ -85,10 +93,15 @@ public class WalletIO {
             );
         }
         else {
-            BrabocoinStorageProtos.TransactionHistory protoTxHistory = BrabocoinStorageProtos.TransactionHistory.parseFrom(
-                txHistoryBytes
+            BrabocoinStorageProtos.TransactionHistory protoTxHistory =
+                BrabocoinStorageProtos.TransactionHistory
+                .parseFrom(
+                    txHistoryBytes
+                );
+            transactionHistory = ProtoConverter.toDomain(
+                protoTxHistory,
+                TransactionHistory.Builder.class
             );
-            transactionHistory = ProtoConverter.toDomain(protoTxHistory, TransactionHistory.Builder.class);
             if (transactionHistory == null) {
                 throw new IllegalStateException("Transaction history could not be read.");
             }
@@ -101,13 +114,16 @@ public class WalletIO {
             signer,
             keyGenerator,
             privateKeyCipher,
-            walletUTXOSet,
-            watchedUTXOSet,
+            walletChainUtxoSet,
+            walletPoolUtxoSet,
+            chainUtxo,
+            poolUtxo,
             blockchain
         );
     }
 
-    public void write(Wallet wallet, File keysFile, File transactionHistoryFile,
+    public void write(Wallet wallet, File keysFile,
+                      File transactionHistoryFile,
                       Destructible<char[]> passphrase) throws IOException, CipherException,
                                                               DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -154,5 +170,9 @@ public class WalletIO {
             txhistDirectory.mkdirs();
         }
         Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
+    }
+
+    public Cipher getCipher() {
+        return cipher;
     }
 }

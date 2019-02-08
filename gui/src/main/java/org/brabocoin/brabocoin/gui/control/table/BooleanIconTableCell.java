@@ -20,12 +20,20 @@ public class BooleanIconTableCell<S> extends TableCell<S, Boolean> {
     protected void updateItem(Boolean item, boolean empty) {
         super.updateItem(item, empty);
 
-        if (empty || item == null) {
+        boolean clearGraphic = empty || item == null;
+
+
+        BraboGlyph.Icon icon = null;
+        if (!clearGraphic) {
+            icon = item ? trueIcon : falseIcon;
+        }
+
+        if (clearGraphic || icon == null) {
             setText(null);
             setGraphic(null);
             return;
         }
 
-        setGraphic(new BraboGlyph(item ? trueIcon : falseIcon));
+        setGraphic(new BraboGlyph(icon));
     }
 }

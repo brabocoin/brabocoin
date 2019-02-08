@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.gui.view;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -156,14 +157,16 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @Override
     public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
-        incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
+        Platform.runLater(() -> incomingMessages.setAll(Lists.newArrayList(state.getEnvironment()
+            .getReceivedMessages())));
 
         incomingMessagesTable.refresh();
     }
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
-        outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment().getSentMessages()));
+        Platform.runLater(() -> outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment()
+            .getSentMessages())));
 
         outgoingMessagesTable.refresh();
     }

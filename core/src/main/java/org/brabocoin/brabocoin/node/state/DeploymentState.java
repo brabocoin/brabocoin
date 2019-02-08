@@ -10,7 +10,6 @@ import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.dal.LevelDB;
-import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -55,11 +54,13 @@ public class DeploymentState implements State {
     protected final @NotNull WalletIO walletIO;
     protected final @NotNull KeyValueStore blockStorage;
     protected final @NotNull KeyValueStore utxoStorage;
-    protected final @NotNull KeyValueStore walletUTXOStorage;
+    protected final @NotNull KeyValueStore walletChainUtxoStorage;
+    protected final @NotNull KeyValueStore walletPoolUtxoStorage;
     protected final @NotNull BlockDatabase blockDatabase;
     protected final @NotNull ChainUTXODatabase chainUTXODatabase;
     protected final @NotNull UTXODatabase poolUTXODatabase;
-    protected final @NotNull UTXODatabase walletUTXODatabase;
+    protected final @NotNull UTXODatabase walletChainUtxoDatabase;
+    protected final @NotNull UTXODatabase walletPoolUtxoDatabase;
     protected final @NotNull Blockchain blockchain;
     protected final @NotNull TransactionPool transactionPool;
     protected final @NotNull BlockProcessor blockProcessor;
@@ -85,13 +86,14 @@ public class DeploymentState implements State {
 
         blockStorage = createBlockStorage();
         utxoStorage = createUtxoStorage();
-        walletUTXOStorage = createWalletUTXOStorage();
+        walletChainUtxoStorage = createWalletChainUtxoStorage();
+        walletPoolUtxoStorage = createWalletPoolUtxoStorage();
 
         blockDatabase = createBlockDatabase();
         chainUTXODatabase = createChainUTXODatabase();
         poolUTXODatabase = createPoolUTXODatabase();
-        walletUTXODatabase = createWalletUTXODatabase();
-
+        walletChainUtxoDatabase = createWalletChainUtxoDatabase();
+        walletPoolUtxoDatabase = createWalletPoolUtxoDatabase();
 
         blockchain = createBlockchain();
 
@@ -133,7 +135,7 @@ public class DeploymentState implements State {
         );
     }
 
-    public File getWalletFile() {
+    @NotNull public File getWalletFile() {
         return Paths.get(
             config.dataDirectory(),
             config.walletStoreDirectory(),
@@ -141,7 +143,7 @@ public class DeploymentState implements State {
         ).toFile();
     }
 
-    public File getTxHistoryFile() {
+    @NotNull public File getTxHistoryFile() {
         return Paths.get(
             config.dataDirectory(),
             config.walletStoreDirectory(),
@@ -157,10 +159,6 @@ public class DeploymentState implements State {
         Wallet created;
         File walletFile = getWalletFile();
         File txHistoryFile = getTxHistoryFile();
-        ReadonlyUTXOSet watchUTXOSet = new CompositeReadonlyUTXOSet(
-            chainUTXODatabase,
-            poolUTXODatabase
-        );
         if (walletFile.exists()) {
             // Read wallet
             created = walletUnlocker.unlock(false, passphrase -> {
@@ -174,8 +172,10 @@ public class DeploymentState implements State {
                         signer,
                         keyGenerator,
                         privateKeyCipher,
-                        walletUTXODatabase,
-                        watchUTXOSet,
+                        walletChainUtxoDatabase,
+                        walletPoolUtxoDatabase,
+                        chainUTXODatabase,
+                        poolUTXODatabase,
                         blockchain
                     );
 
@@ -203,8 +203,10 @@ public class DeploymentState implements State {
                     signer,
                     keyGenerator,
                     privateKeyCipher,
-                    walletUTXODatabase,
-                    watchUTXOSet,
+                    walletChainUtxoDatabase,
+                    walletPoolUtxoDatabase,
+                    chainUTXODatabase,
+                    poolUTXODatabase,
                     blockchain
                 );
 
@@ -258,12 +260,16 @@ public class DeploymentState implements State {
         ).toFile());
     }
 
-    protected KeyValueStore createWalletUTXOStorage() {
+    protected KeyValueStore createWalletChainUtxoStorage() {
         return new LevelDB(Paths.get(
             config.dataDirectory(),
             config.walletStoreDirectory(),
             config.databaseDirectory()
         ).toFile());
+    }
+
+    protected KeyValueStore createWalletPoolUtxoStorage() {
+        return new HashMapDB();
     }
 
     protected BlockDatabase createBlockDatabase() throws DatabaseException {
@@ -286,8 +292,12 @@ public class DeploymentState implements State {
         return new UTXODatabase(new HashMapDB());
     }
 
-    protected UTXODatabase createWalletUTXODatabase() throws DatabaseException {
-        return new UTXODatabase(walletUTXOStorage);
+    protected UTXODatabase createWalletChainUtxoDatabase() throws DatabaseException {
+        return new UTXODatabase(walletChainUtxoStorage);
+    }
+
+    protected UTXODatabase createWalletPoolUtxoDatabase() throws DatabaseException {
+        return new UTXODatabase(walletPoolUtxoStorage);
     }
 
     protected Blockchain createBlockchain() throws DatabaseException {
@@ -389,8 +399,14 @@ public class DeploymentState implements State {
 
     @NotNull
     @Override
-    public KeyValueStore getWalletUTXOStorage() {
-        return walletUTXOStorage;
+    public KeyValueStore getWalletChainUtxoStorage() {
+        return walletChainUtxoStorage;
+    }
+
+    @NotNull
+    @Override
+    public KeyValueStore getWalletPoolUtxoStorage() {
+        return walletPoolUtxoStorage;
     }
 
     @NotNull
@@ -413,8 +429,14 @@ public class DeploymentState implements State {
 
     @NotNull
     @Override
-    public UTXODatabase getWalletUTXODatabase() {
-        return walletUTXODatabase;
+    public UTXODatabase getWalletChainUtxoDatabase() {
+        return walletChainUtxoDatabase;
+    }
+
+    @NotNull
+    @Override
+    public UTXODatabase getWalletPoolUtxoDatabase() {
+        return walletPoolUtxoDatabase;
     }
 
     @NotNull

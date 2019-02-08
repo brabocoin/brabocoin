@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
@@ -187,5 +188,9 @@ public class Consensus {
             - getMaxBlockHeaderSize()
             - getMaxCoinbaseTransactionSize()
             - Long.BYTES;
+    }
+
+    public boolean immatureCoinbase(int chainHeight, UnspentOutputInfo info) {
+        return info.isCoinbase() && chainHeight - this.getCoinbaseMaturityDepth() < info.getBlockHeight();
     }
 }

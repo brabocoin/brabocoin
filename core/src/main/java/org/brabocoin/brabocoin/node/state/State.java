@@ -39,7 +39,9 @@ public interface State {
 
     @NotNull KeyValueStore getUtxoStorage();
 
-    @NotNull KeyValueStore getWalletUTXOStorage();
+    @NotNull KeyValueStore getWalletChainUtxoStorage();
+
+    @NotNull KeyValueStore getWalletPoolUtxoStorage();
 
     @NotNull BlockDatabase getBlockDatabase();
 
@@ -47,7 +49,9 @@ public interface State {
 
     @NotNull UTXODatabase getPoolUTXODatabase();
 
-    @NotNull UTXODatabase getWalletUTXODatabase();
+    @NotNull UTXODatabase getWalletChainUtxoDatabase();
+
+    @NotNull UTXODatabase getWalletPoolUtxoDatabase();
 
     @NotNull Blockchain getBlockchain();
 

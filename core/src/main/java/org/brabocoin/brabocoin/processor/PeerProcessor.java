@@ -109,8 +109,7 @@ public class PeerProcessor {
         LOGGER.info("Discovering peers initiated.");
 
         if (handshakePeers.size() <= 0) {
-            LOGGER.severe("No handshake peers found.");
-            // TODO: What to do now?
+            LOGGER.info("No handshake peers found.");
             return;
         }
 
@@ -170,6 +169,7 @@ public class PeerProcessor {
             HandshakeResponse response = handshake(peer);
             if (response == null) {
                 peer.shutdown();
+                LOGGER.log(Level.INFO, MessageFormat.format("Removed peer: {0}", peer));
                 peerSetChangedListeners.forEach(l -> l.onPeerRemoved(peer));
                 peerIterator.remove();
             }
@@ -186,11 +186,16 @@ public class PeerProcessor {
     public HandshakeResponse handshake(Peer peer) {
         BrabocoinProtos.HandshakeResponse protoResponse;
         try {
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Handshaking with peer: {0}", peer.toString())
+            );
             protoResponse = peer.getBlockingStub()
                 .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
-                        new HandshakeRequest(config.servicePort(), config.networkId()), BrabocoinProtos.HandshakeRequest.class
+                        new HandshakeRequest(config.servicePort(), config.networkId()),
+                        BrabocoinProtos.HandshakeRequest.class
                     )
                 );
         }
@@ -244,8 +249,12 @@ public class PeerProcessor {
             peers.add(peer);
             peerSetChangedListeners.forEach(l -> l.onPeerAdded(peer));
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Added client peer {0}.", peer));
-        } else {
-            LOGGER.log(Level.FINEST, () -> MessageFormat.format("Client peer {0} was a local peer.", peer));
+        }
+        else {
+            LOGGER.log(
+                Level.FINEST,
+                () -> MessageFormat.format("Client peer {0} was a local peer.", peer)
+            );
         }
     }
 
