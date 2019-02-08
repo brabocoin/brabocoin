@@ -54,7 +54,7 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
         for (int i = 1; i < transactions.size(); i++) {
             Transaction tx = transactions.get(i);
 
-            TransactionDetailView detailView = new TransactionDetailView(tx);
+            TransactionDetailView detailView = new TransactionDetailView(tx, null);
             detailView.setShowHeader(false);
 
             TitledPane pane = new TitledPane("Transaction " + i, detailView);

@@ -24,6 +24,7 @@ import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,13 +43,15 @@ public class RecentRejectTxView extends MasterDetailPane implements BraboControl
     @FXML private TableColumn<RejectedTransaction, Class<? extends Rule>> ruleColumn;
 
     private final @NotNull TransactionPool pool;
+    private final @NotNull TransactionValidator validator;
     private ObservableList<RejectedTransaction> observableTxs = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectTxView(@NotNull TransactionPool pool) {
+    public RecentRejectTxView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
         super();
         this.pool = pool;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
     }
@@ -57,7 +60,7 @@ public class RecentRejectTxView extends MasterDetailPane implements BraboControl
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        transactionDetailView = new TransactionDetailView(null);
+        transactionDetailView = new TransactionDetailView(null, validator);
         setDetailNode(transactionDetailView);
 
         loadRejects();

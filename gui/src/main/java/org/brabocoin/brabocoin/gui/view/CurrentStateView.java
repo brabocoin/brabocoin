@@ -88,7 +88,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        RecentRejectTxView rejectTxView = new RecentRejectTxView(state.getTransactionPool());
+        RecentRejectTxView rejectTxView = new RecentRejectTxView(state.getTransactionPool(), state.getTransactionValidator());
         recentRejectTxTab.setContent(rejectTxView);
         recentRejectTxTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -97,7 +97,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        TransactionPoolView poolView = new TransactionPoolView(state.getTransactionPool());
+        TransactionPoolView poolView = new TransactionPoolView(state.getTransactionPool(), state.getTransactionValidator());
         txPoolTab.setContent(poolView);
         txPoolTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -106,7 +106,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        OrphanTransactionsView orphanTxView = new OrphanTransactionsView(state.getTransactionPool());
+        OrphanTransactionsView orphanTxView = new OrphanTransactionsView(
+            state.getTransactionPool(),
+            state.getTransactionValidator()
+        );
         txOrphansTab.setContent(orphanTxView);
         txOrphansTab.textProperty().bind(
             Bindings.createStringBinding(
