@@ -32,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +79,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
-    private List<NetworkMessage> receivedMessages;
+    private Set<NetworkMessage> receivedMessages;
+    private Set<NetworkMessage> sentMessages;
 
     /*
      * Processors
@@ -109,7 +110,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        receivedMessages = new ArrayList<>();
+        receivedMessages = new HashSet<>();
+        sentMessages = new HashSet<>();
 
         peerProcessor.addPeerSetChangedListener(this);
     }
@@ -279,10 +281,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     }
 
     public Iterable<NetworkMessage> getSentMessages() {
-        return peerProcessor.copyPeers().stream()
-            .map(Peer::getMessageQueue)
-            .flatMap(Collection::stream)
-            .sorted(NetworkMessage::compareTo)::iterator;
+        return sentMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
     }
 
     @Override
@@ -295,6 +294,9 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            sentMessages.add(message);
+        }
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
     }
 

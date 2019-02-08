@@ -30,7 +30,7 @@
                             <placeholder>
                                 <VBox alignment="CENTER" spacing="5">
                                     <ProgressIndicator maxHeight="20"/>
-                                    <Label text="Waiting for message to be received..."/>
+                                    <Label text="Waiting for message to be received."/>
                                 </VBox>
                             </placeholder>
                         </TableView>
@@ -50,7 +50,7 @@
                             <placeholder>
                                 <VBox alignment="CENTER" spacing="5">
                                     <ProgressIndicator maxHeight="20"/>
-                                    <Label text="Waiting for messages to be sent..."/>
+                                    <Label text="Waiting for messages to be sent."/>
                                 </VBox>
                             </placeholder>
                         </TableView>
