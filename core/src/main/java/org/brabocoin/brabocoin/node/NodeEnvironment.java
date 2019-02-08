@@ -35,15 +35,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
@@ -79,8 +80,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
-    private Set<NetworkMessage> receivedMessages;
-    private Set<NetworkMessage> sentMessages;
+    private SortedSet<NetworkMessage> receivedMessages;
+    private SortedSet<NetworkMessage> sentMessages;
 
     /*
      * Processors
@@ -110,8 +111,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        receivedMessages = new HashSet<>();
-        sentMessages = new HashSet<>();
+        receivedMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        sentMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
         peerProcessor.addPeerSetChangedListener(this);
     }
@@ -277,11 +278,11 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     }
 
     public synchronized Iterable<NetworkMessage> getReceivedMessages() {
-        return receivedMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
+        return Collections.unmodifiableSortedSet(receivedMessages);
     }
 
     public Iterable<NetworkMessage> getSentMessages() {
-        return sentMessages.stream().sorted(NetworkMessage::compareTo)::iterator;
+        return Collections.unmodifiableSortedSet(sentMessages);
     }
 
     @Override
