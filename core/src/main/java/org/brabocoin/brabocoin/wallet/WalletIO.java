@@ -41,7 +41,6 @@ public class WalletIO {
     }
 
     public Wallet read(File keysFile, File transactionHistoryFile,
-                       File usedInputsFile,
                        Destructible<char[]> passphrase,
                        Consensus consensus,
                        Signer signer,
@@ -108,28 +107,9 @@ public class WalletIO {
             }
         }
 
-        InputStream usedInputFileStream = new FileInputStream(usedInputsFile);
-
-        Set<Input> usedInputs = new HashSet<>();
-
-        Input input;
-        BrabocoinProtos.Input protoInput = BrabocoinProtos.Input.parseDelimitedFrom(usedInputFileStream);
-
-        while (protoInput != null) {
-            input = ProtoConverter.toDomain(protoInput, Input.Builder.class);
-            if (input == null) {
-                throw new IllegalStateException("Could not parse KeyPair from read wallet file");
-            }
-            usedInputs.add(input);
-
-            protoInput = BrabocoinProtos.Input.parseDelimitedFrom(usedInputFileStream);
-        }
-        usedInputFileStream.close();
-
         return new Wallet(
             keyList,
             transactionHistory,
-            usedInputs,
             consensus,
             signer,
             keyGenerator,
@@ -144,7 +124,6 @@ public class WalletIO {
 
     public void write(Wallet wallet, File keysFile,
                       File transactionHistoryFile,
-                      File usedInputsFile,
                       Destructible<char[]> passphrase) throws IOException, CipherException,
                                                               DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -191,23 +170,6 @@ public class WalletIO {
             txhistDirectory.mkdirs();
         }
         Files.write(transactionHistoryFile.toPath(), txHistoryBytes.toByteArray());
-
-        // Write used inputs
-        File usedInputsDirectory = usedInputsFile.getParentFile();
-        if (!usedInputsDirectory.exists()) {
-            usedInputsDirectory.mkdirs();
-        }
-
-        FileOutputStream usedInputsOutputStream = new FileOutputStream(usedInputsFile);
-        for (Input input : wallet.getUsedInputs()) {
-            BrabocoinProtos.Input protoInput = ProtoConverter.toProto(
-                input,
-                BrabocoinProtos.Input.class
-            );
-
-            protoInput.writeDelimitedTo(usedInputsOutputStream);
-        }
-        usedInputsOutputStream.close();
     }
 
     public Cipher getCipher() {

@@ -218,7 +218,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                         state.getWallet(),
                         state.getWalletFile(),
                         state.getTxHistoryFile(),
-                        state.getUsedInputsFile(),
                         d
                     );
                     d.destruct();

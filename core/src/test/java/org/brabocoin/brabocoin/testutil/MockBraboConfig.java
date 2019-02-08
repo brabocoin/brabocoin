@@ -108,11 +108,6 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public String usedInputsFile() {
-        return delegator.usedInputsFile();
-    }
-
-    @Override
     public int maxSequentialOrphanBlocks() {
         return delegator.maxSequentialOrphanBlocks();
     }

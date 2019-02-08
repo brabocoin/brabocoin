@@ -38,10 +38,8 @@ class WalletIOTest {
         .bind("brabo", BraboConfig.class);
     private static final String walletPath = "src/test/resources/testwallet.dat";
     private static final String txHistPath = "src/test/resources/testtxhist.dat";
-    private static final String usedInputsPath = "src/test/resources/testusedinputs.dat";
     private static final File walletFile = new File(walletPath);
     private static final File txhistFile = new File(txHistPath);
-    private static final File usedInputsFile = new File(usedInputsPath);
     private EllipticCurve curve = EllipticCurve.secp256k1();
 
     @BeforeEach
@@ -84,7 +82,6 @@ class WalletIOTest {
                 )
             ),
             new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-            new HashSet<>(),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
@@ -102,11 +99,10 @@ class WalletIOTest {
             wallet,
             walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray)
         );
 
-        Wallet readWallet = io.read(walletFile, txhistFile, usedInputsFile,
+        Wallet readWallet = io.read(walletFile, txhistFile,
             new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
@@ -141,7 +137,6 @@ class WalletIOTest {
         Wallet wallet = new Wallet(
             Collections.singletonList(new KeyPair(publicKey, key)),
             new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-            new HashSet<>(),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
@@ -159,12 +154,11 @@ class WalletIOTest {
             wallet,
             walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray)
         );
 
         Wallet readWallet = io.read(
-            walletFile, txhistFile, usedInputsFile,
+            walletFile, txhistFile,
             new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
@@ -199,7 +193,6 @@ class WalletIOTest {
         Wallet wallet = new Wallet(
             Collections.singletonList(new KeyPair(publicKey, key)),
             new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-            new HashSet<>(),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
@@ -217,12 +210,11 @@ class WalletIOTest {
             wallet,
             walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray)
         );
 
         assertThrows(CipherException.class, () -> io.read(
-            walletFile, txhistFile, usedInputsFile,
+            walletFile, txhistFile,
             new Destructible<>("fout"::toCharArray),
             state.getConsensus(),
             state.getSigner(),
@@ -252,7 +244,6 @@ class WalletIOTest {
         Wallet wallet = new Wallet(
             keys,
             new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-            new HashSet<>(),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
@@ -270,13 +261,11 @@ class WalletIOTest {
             wallet,
             walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray)
         );
 
         Wallet readWallet = io.read(walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
@@ -325,7 +314,6 @@ class WalletIOTest {
         Wallet wallet = new Wallet(
             keys,
             new TransactionHistory(Collections.emptyMap(), Collections.emptyMap()),
-            new HashSet<>(),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
@@ -343,13 +331,11 @@ class WalletIOTest {
             wallet,
             walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray)
         );
 
         Wallet readWallet = io.read(walletFile,
             txhistFile,
-            usedInputsFile,
             new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),

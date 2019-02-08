@@ -20,4 +20,3 @@ brabo:
   servicePort: 56129                  # Port on which the application listens for messages
   walletFile: wallet.dat              # Wallet file
   transactionHistoryFile: txhist.dat  # Wallet transaction history file
-  usedInputsFile: usedinputs.dat      # Used inputs file

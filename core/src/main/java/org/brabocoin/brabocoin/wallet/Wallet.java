@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -142,7 +143,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
      */
     public Wallet(@NotNull List<KeyPair> keyPairs,
                   @NotNull TransactionHistory transactionHistory,
-                  @NotNull Set<Input> usedInputs,
                   @NotNull Consensus consensus,
                   @NotNull Signer signer, @NotNull KeyGenerator keyGenerator,
                   @NotNull Cipher privateKeyCipher,
@@ -153,7 +153,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                   @NotNull Blockchain blockchain) {
         this.keyPairs = new ArrayList<>(keyPairs);
         this.transactionHistory = transactionHistory;
-        this.usedInputs = usedInputs;
         this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
@@ -163,6 +162,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         this.chainUtxo = chainUtxo;
         this.poolUtxo = poolUtxo;
         this.blockchain = blockchain;
+        this.usedInputs = new HashSet<>();
 
         // Add listeners
         this.poolUtxo.addListener(new PoolListener());
@@ -476,7 +476,10 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
      */
     public long computeKeyPairBalance(boolean pending, KeyPair keyPair) {
         long sum = 0;
-        for (Map.Entry<Input, UnspentOutputInfo> entry : walletCompositeUtxoSet) {
+
+        ReadonlyUTXOSet balanceUtxo = pending ? walletCompositeUtxoSet : walletChainUtxoSet;
+
+        for (Map.Entry<Input, UnspentOutputInfo> entry : balanceUtxo) {
             UnspentOutputInfo info = entry.getValue();
 
             if (keyPair != null && !info.getAddress().equals(keyPair.getPublicKey().getHash())) {
@@ -516,7 +519,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     }
 
     public Set<Input> getUsedInputs() {
-        return usedInputs;
+        return new HashSet<>(usedInputs);
     }
 
     public void addBalanceListener(BalanceListener listener) {
@@ -554,8 +557,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
             setOutputSpent(transactionHash, outputIndex, walletPoolUtxoSet);
 
-            usedInputs.add(new Input(transactionHash, outputIndex));
-            balanceListeners.forEach(BalanceListener::onBalanceChanged);
+            addUsedInput(new Input(transactionHash, outputIndex));
         }
     }
 
