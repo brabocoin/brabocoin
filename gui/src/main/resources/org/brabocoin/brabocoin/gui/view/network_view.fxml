@@ -14,7 +14,47 @@
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkView">
-    <Tab closable="false" text="Peers" disable="true"/>
+    <Tab closable="false" text="Peers">
+        <VBox>
+            <TitledPane collapsible="false" text="Service info">
+                <VBox>
+                    <Label text="IP addresses"/>
+                    <TableView fx:id="ipTable">
+                        <columns>
+                            <TableColumn fx:id="ipNameColumn" sortable="false" text="Name"/>
+                            <TableColumn fx:id="ipValueColumn" sortable="false" text="IP"/>
+                            <TableColumn fx:id="ipHostnameColumn" sortable="false" text="Hostname"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <ProgressIndicator maxHeight="20"/>
+                                <Label fx:id="ipTablePlaceholderLabel" text="Loading data..."/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                    <Label fx:id="portLabel" text="Port:"/>
+                </VBox>
+            </TitledPane>
+            <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
+                <VBox>
+                    <TableView fx:id="peerTable">
+                        <columns>
+                            <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
+                            <TableColumn fx:id="peerPortColumn" sortable="false" text="Port"/>
+                            <TableColumn fx:id="peerIncomingMessageCountColumn" sortable="false" text="Incoming messages"/>
+                            <TableColumn fx:id="peerOutgoingMessageCountColumn" sortable="false" text="Outgoing messages"/>
+                            <TableColumn fx:id="peerRunningColumn" sortable="false" text=""/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <Label text="No connected peers."/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+            </TitledPane>
+        </VBox>
+    </Tab>
     <Tab closable="false" text="Messages">
         <SplitPane dividerPositions="0.5" orientation="VERTICAL">
             <TitledPane text="Incoming messages" collapsible="false">

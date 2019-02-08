@@ -2,10 +2,13 @@ package org.brabocoin.brabocoin.processor;
 
 import io.grpc.StatusRuntimeException;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.model.messages.HandshakeRequest;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
+import org.brabocoin.brabocoin.node.NetworkMessage;
+import org.brabocoin.brabocoin.node.NetworkMessageListener;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -14,6 +17,7 @@ import org.brabocoin.brabocoin.util.ProtoConverter;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -29,14 +33,15 @@ import java.util.stream.Stream;
  * This includes bootstrapping and maintaining the peer set to match the desired number of peers
  * set in the config.
  */
-public class PeerProcessor {
+public class PeerProcessor implements NetworkMessageListener {
 
     private static final Logger LOGGER = Logger.getLogger(PeerProcessor.class.getName());
-    private volatile Set<Peer> peers;
+
+    private volatile ObservableSet<Peer> peers;
+
     private BraboConfig config;
 
-    private List<PeerSetChangedListener> peerSetChangedListeners = new ArrayList<>();
-
+    private Collection<PeerSetChangedListener> peerSetChangedListeners = new ArrayList<>();
     /**
      * Create a new peer processor for a referenced set of peers and a config file.
      *
@@ -48,6 +53,10 @@ public class PeerProcessor {
     public PeerProcessor(Set<Peer> peers, BraboConfig config) {
         this.peers = FXCollections.observableSet(peers);
         this.config = config;
+    }
+
+    public ObservableSet<Peer> getPeers() {
+        return peers;
     }
 
     /**
@@ -289,5 +298,17 @@ public class PeerProcessor {
                 getBootstrapPeers().stream()
             ).collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
+        // Add sent messages to destination peer
+        if (!isUpdate) {
+            List<Peer> clientPeers = findClientPeers(message.getPeer().getAddress());
+            // TODO: One peer might run on different ports, adding to all...
+            for (Peer peer : clientPeers) {
+                peer.addIncomingMessage(message);
+            }
+        }
     }
 }

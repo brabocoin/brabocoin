@@ -14,6 +14,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Queue;
@@ -36,7 +38,10 @@ public class Peer implements NetworkMessageListener {
     private NodeGrpc.NodeStub asyncStub;
     private PeerMessageInterceptor interceptor;
 
-    private Queue<NetworkMessage> messageQueue =
+    private Queue<NetworkMessage> outgoingMessageQueue =
+        new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
+
+    private Queue<NetworkMessage> incomingMessageQueue =
         new CircularFifoQueue<>(Constants.MAX_MESSAGE_HISTORY_PER_PEER);
 
     private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
@@ -88,12 +93,10 @@ public class Peer implements NetworkMessageListener {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
 
-            while(interfaces.hasMoreElements())
-            {
+            while (interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
                 Enumeration addresses = networkInterface.getInetAddresses();
-                while(addresses.hasMoreElements())
-                {
+                while (addresses.hasMoreElements()) {
                     InetAddress address = (InetAddress)addresses.nextElement();
                     if (address.equals(this.getAddress())) {
                         return true;
@@ -161,14 +164,18 @@ public class Peer implements NetworkMessageListener {
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
-        if (!isUpdate && !messageQueue.contains(message)) {
-            messageQueue.add(message);
+        if (!isUpdate && !outgoingMessageQueue.contains(message)) {
+            outgoingMessageQueue.add(message);
         }
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
     }
 
-    public synchronized Queue<NetworkMessage> getMessageQueue() {
-        return messageQueue;
+    public synchronized Collection<NetworkMessage> getOutgoingMessageQueue() {
+        return Collections.unmodifiableCollection(outgoingMessageQueue);
+    }
+
+    public synchronized Collection<NetworkMessage> getIncomingMessageQueue() {
+        return Collections.unmodifiableCollection(incomingMessageQueue);
     }
 
     /**
@@ -301,5 +308,15 @@ public class Peer implements NetworkMessageListener {
      */
     public InetAddress getAddress() {
         return socket.getAddress();
+    }
+
+    /**
+     * Add a message to this peer's incoming messages.
+     *
+     * @param networkMessage
+     *     The messsage to add.
+     */
+    public void addIncomingMessage(NetworkMessage networkMessage) {
+        incomingMessageQueue.add(networkMessage);
     }
 }

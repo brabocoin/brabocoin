@@ -4,40 +4,72 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.MethodDescriptorTableCell;
+import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PeerTableCell;
+import org.brabocoin.brabocoin.gui.control.table.StringTableCell;
+import org.brabocoin.brabocoin.gui.task.TaskManager;
+import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.node.NetworkMessage;
 import org.brabocoin.brabocoin.node.NetworkMessageListener;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.util.IpData;
+import org.brabocoin.brabocoin.util.NetworkUtil;
 import org.controlsfx.control.MasterDetailPane;
 import tornadofx.SmartResize;
 
+import java.net.SocketException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
 public class NetworkView extends TabPane implements BraboControl, Initializable,
-                                                    NetworkMessageListener {
+                                                    NetworkMessageListener, PeerSetChangedListener {
 
     private static final double KILO_BYTES = 1000.0;
+    public static final int CELL_SIZE = 25;
+    public static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
+    public static final double IP_TABLE_HEIGHT_OFFSET = 1.01;
     private final State state;
+    private final TaskManager taskManager;
+
+    @FXML private TableView<Peer> peerTable;
+    @FXML private TableColumn<Peer, String> peerIPColumn;
+    @FXML private TableColumn<Peer, Integer> peerPortColumn;
+    @FXML private TableColumn<Peer, Integer> peerIncomingMessageCountColumn;
+    @FXML private TableColumn<Peer, Integer> peerOutgoingMessageCountColumn;
+    @FXML private TableColumn<Peer, Boolean> peerRunningColumn;
+
+    @FXML private Label portLabel;
+    @FXML private TableView<IpData> ipTable;
+    @FXML private TableColumn<IpData, String> ipNameColumn;
+    @FXML private TableColumn<IpData, String> ipValueColumn;
+    @FXML private TableColumn<IpData, String> ipHostnameColumn;
+    @FXML private Label ipTablePlaceholderLabel;
 
     @FXML private MasterDetailPane incomingMasterPane;
     @FXML private MasterDetailPane outgoingMasterPane;
@@ -59,16 +91,21 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private NetworkMessageDetailView incomingMessageDetailView;
     private NetworkMessageDetailView outgoingMessageDetailView;
 
-    public NetworkView(State state) {
+    private ObservableList<Peer> peers = FXCollections.observableArrayList();
+
+    public NetworkView(State state, TaskManager taskManager) {
         super();
         this.state = state;
+        this.taskManager = taskManager;
 
         BraboControlInitializer.initialize(this);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        loadTable();
+        loadIPTable();
+        loadPeerTable();
+        loadMessageTable();
 
         state.getEnvironment().addNetworkMessageListener(this);
         incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
@@ -79,6 +116,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
         outgoingMessageDetailView = new NetworkMessageDetailView();
         outgoingMasterPane.setDetailNode(outgoingMessageDetailView);
+
+        portLabel.setText("Port: " + state.getConfig().servicePort());
     }
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
@@ -110,7 +149,79 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         );
     }
 
-    private void loadTable() {
+    private void loadIPTable() {
+        Task<List<IpData>> ipDataTask = new Task<List<IpData>>() {
+            @Override
+            protected List<IpData> call() {
+                updateTitle("Getting ip data...");
+                try {
+                    return NetworkUtil.getIpData();
+                }
+                catch (SocketException e) {
+                    return null;
+                }
+            }
+        };
+
+        ipDataTask.setOnSucceeded(event -> {
+            if (ipDataTask.getValue() == null) {
+                ipTablePlaceholderLabel.setText("Could not get IP data.");
+                return;
+            }
+
+            Platform.runLater(() -> {
+                ipTable.setItems(FXCollections.observableArrayList(ipDataTask.getValue()));
+                ipTable.prefHeightProperty()
+                    .bind(ipTable.fixedCellSizeProperty()
+                        .multiply(Bindings.size(ipTable.getItems()).add(IP_TABLE_HEIGHT_OFFSET)));
+            });
+        });
+
+        taskManager.runTask(ipDataTask);
+
+        ipNameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
+            .getDeviceName()));
+        ipValueColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
+            .getAddress()));
+        ipValueColumn.setCellFactory(f -> new StringTableCell<>());
+        ipHostnameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
+            .getHostname()));
+        ipHostnameColumn.setCellFactory(f -> new StringTableCell<>());
+
+        ipTable.setFixedCellSize(CELL_SIZE);
+        ipTable.prefHeightProperty().set(IP_TABLE_INITIAL_HEIGHT);
+        ipTable.minHeightProperty().bind(ipTable.prefHeightProperty());
+        ipTable.maxHeightProperty().bind(ipTable.prefHeightProperty());
+    }
+
+    private void loadPeerTable() {
+        peerTable.setItems(peers);
+
+        peerIPColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
+            .getAddress()
+            .getHostAddress()));
+        peerIPColumn.setCellFactory(f -> new StringTableCell<>());
+
+        peerPortColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
+            .getPort()));
+        peerPortColumn.setCellFactory(f -> new NumberedTableCell<>());
+
+        peerOutgoingMessageCountColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
+            .getOutgoingMessageQueue()
+            .size()));
+        peerOutgoingMessageCountColumn.setCellFactory(f -> new NumberedTableCell<>());
+
+        peerIncomingMessageCountColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
+            .getIncomingMessageQueue()
+            .size()));
+        peerIncomingMessageCountColumn.setCellFactory(f -> new NumberedTableCell<>());
+
+        peerRunningColumn.setCellValueFactory(f -> new ReadOnlyBooleanWrapper(f.getValue()
+            .isRunning()));
+        peerRunningColumn.setCellFactory(f -> new BooleanTextTableCell<>("True", "False"));
+    }
+
+    private void loadMessageTable() {
         incomingMessagesTable.setItems(incomingMessages);
         outgoingMessagesTable.setItems(outgoingMessages);
 
@@ -169,5 +280,15 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             .getSentMessages())));
 
         outgoingMessagesTable.refresh();
+    }
+
+    @Override
+    public void onPeerAdded(Peer peer) {
+        peers.add(peer);
+    }
+
+    @Override
+    public void onPeerRemoved(Peer peer) {
+        // ignored
     }
 }
