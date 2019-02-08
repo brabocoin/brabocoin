@@ -241,29 +241,27 @@ public class Wallet implements Iterable<KeyPair>, UTXOSetListener, BlockchainLis
             privateKeys.add(privateKey);
         }
 
+        Collection<Integer> handledIndices = new ArrayList<>();
         for (int i = 0; i < privateKeys.size(); i++) {
-            PrivateKey privateKey = privateKeys.get(i);
-
-            boolean hasDuplicate = false;
-            for (int j = 0; j < i; j++) {
-                if (privateKeys.get(j).equals(privateKey)) {
-                    signatures.add(signatures.get(j));
-                    hasDuplicate = true;
-                    break;
-                }
-            }
-
-            if (hasDuplicate) {
+            if (handledIndices.contains(i)) {
                 continue;
             }
 
+            PrivateKey privateKey = privateKeys.get(i);
             Destructible<BigInteger> privateKeyValue = privateKey.getKey();
-            signatures.add(
-                signer.signMessage(
-                    unsignedTransaction.getSignableTransactionData(),
-                    Objects.requireNonNull(privateKeyValue.getReference().get())
-                )
-            );
+            for (int j = i; j < privateKeys.size(); j++) {
+                if (privateKeys.get(j).equals(privateKey)) {
+                    handledIndices.add(j);
+                    signatures.add(
+                        j,
+                        signer.signMessage(
+                            unsignedTransaction.getSignableTransactionData(),
+                            Objects.requireNonNull(privateKeyValue.getReference().get())
+                        )
+                    );
+                }
+            }
+
             privateKeyValue.destruct();
         }
 
