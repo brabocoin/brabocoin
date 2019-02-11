@@ -171,6 +171,39 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     }
 
     private void refreshIPData() {
+        ipDataTask = new Task<List<IpData>>() {
+            @Override
+            protected List<IpData> call() {
+                updateTitle("Getting ip data...");
+                try {
+                    return NetworkUtil.getIpData();
+                }
+                catch (SocketException e) {
+                    return null;
+                }
+            }
+        };
+
+        externalIpTask = new Task<String>() {
+            @Override
+            protected String call() {
+                externalIp.set("Loading...");
+                updateTitle("Getting external IP...");
+                try {
+                    URL ipCheck = new URL("http://checkip.amazonaws.com");
+                    BufferedReader in = new BufferedReader(new InputStreamReader(
+                        ipCheck.openStream()));
+
+                    return in.readLine();
+                }
+                catch (IOException e) {
+                    // ignored
+                }
+
+                return null;
+            }
+        };
+
         portLabel.setText(Integer.toString(state.getConfig().servicePort()));
         taskManager.runTask(ipDataTask);
         taskManager.runTask(externalIpTask);
@@ -195,19 +228,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
         buttonRefresh.setOnAction(event -> refreshIPData());
 
-        ipDataTask = new Task<List<IpData>>() {
-            @Override
-            protected List<IpData> call() {
-                updateTitle("Getting ip data...");
-                try {
-                    return NetworkUtil.getIpData();
-                }
-                catch (SocketException e) {
-                    return null;
-                }
-            }
-        };
-
         ipDataTask.setOnSucceeded(event -> {
             if (ipDataTask.getValue() == null) {
                 ipTablePlaceholderLabel.setText("Could not get IP data.");
@@ -221,26 +241,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
                         .multiply(Bindings.size(ipTable.getItems()).add(IP_TABLE_HEIGHT_OFFSET)));
             });
         });
-
-        externalIpTask = new Task<String>() {
-            @Override
-            protected String call() {
-                externalIp.set("Loading...");
-                updateTitle("Getting external IP...");
-                try {
-                    URL ipCheck = new URL("http://checkip.amazonaws.com");
-                    BufferedReader in = new BufferedReader(new InputStreamReader(
-                        ipCheck.openStream()));
-
-                    return in.readLine();
-                }
-                catch (IOException e) {
-                    // ignored
-                }
-
-                return null;
-            }
-        };
 
         externalIpTask.setOnSucceeded(event -> {
             String result = externalIpTask.getValue();
