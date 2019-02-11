@@ -59,7 +59,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private static final double KILO_BYTES = 1000.0;
     private static final int CELL_SIZE = 25;
     private static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
-    private static final double IP_TABLE_HEIGHT_OFFSET = 1.01;
+    private static final double IP_TABLE_HEIGHT_OFFSET = 1.50;
     private final State state;
     private final TaskManager taskManager;
     private String externalIp;
