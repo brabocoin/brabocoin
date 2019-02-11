@@ -73,6 +73,7 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
 
         javafx.beans.value.ChangeListener<String> listener = (observable, oldValue, newValue) -> {
             okButtonNode.setDisable(true);
+            statusBar.setGraphic(null);
             statusBar.setText("");
         };
 
