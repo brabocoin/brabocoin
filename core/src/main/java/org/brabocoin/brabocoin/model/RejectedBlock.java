@@ -25,4 +25,23 @@ public class RejectedBlock {
     public @NotNull BlockValidationResult getValidationResult() {
         return validationResult;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        RejectedBlock that = (RejectedBlock)o;
+
+        return block.getHash().equals(that.block.getHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return block.getHash().hashCode();
+    }
 }

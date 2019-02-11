@@ -313,8 +313,11 @@ public class Blockchain {
      */
     public synchronized void addRejected(@NotNull Block block,
                                          @NotNull BlockValidationResult validationResult) {
-        recentRejects.add(new RejectedBlock(block, validationResult));
-
+        RejectedBlock reject = new RejectedBlock(block, validationResult);
+        if (recentRejects.contains(reject)) {
+            return;
+        }
+        recentRejects.add(reject);
         listeners.forEach(l -> l.onRecentRejectAdded(block));
     }
 

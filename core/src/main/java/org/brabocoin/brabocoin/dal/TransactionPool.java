@@ -548,6 +548,8 @@ public class TransactionPool implements Iterable<Transaction> {
     /**
      * Add a transaction to the recently rejected memory storage.
      *
+     * The transaction is only added when not already present in the recent reject storage.
+     *
      * @param transaction
      *     The transaction that was rejected.
      * @param validationResult
@@ -556,8 +558,12 @@ public class TransactionPool implements Iterable<Transaction> {
      */
     public synchronized void addRejected(@NotNull Transaction transaction,
                                          @NotNull TransactionValidationResult validationResult) {
-        recentRejects.add(new RejectedTransaction(transaction, validationResult));
+        RejectedTransaction reject = new RejectedTransaction(transaction, validationResult);
+        if (recentRejects.contains(reject)) {
+            return;
+        }
 
+        recentRejects.add(reject);
         listeners.forEach(l -> l.onRecentRejectAdded(transaction));
     }
 

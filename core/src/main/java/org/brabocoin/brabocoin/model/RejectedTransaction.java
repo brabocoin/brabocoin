@@ -25,4 +25,23 @@ public class RejectedTransaction {
     public @NotNull TransactionValidationResult getValidationResult() {
         return validationResult;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        RejectedTransaction that = (RejectedTransaction)o;
+
+        return transaction.getHash().equals(that.transaction.getHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return transaction.getHash().hashCode();
+    }
 }
