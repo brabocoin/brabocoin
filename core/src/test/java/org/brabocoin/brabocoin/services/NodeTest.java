@@ -18,7 +18,6 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -56,16 +55,16 @@ public class NodeTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
 
-        mockConsensus = new Consensus() {
             @Override
-            public @NotNull Hash getTargetValue() {
+            public Hash targetValue() {
                 return new Hash(ByteString.copyFrom(
                     BigInteger.valueOf(2).pow(255).toByteArray()
                 ));
             }
         };
+
+        mockConsensus = new Consensus();
     }
 
     @AfterEach

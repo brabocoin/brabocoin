@@ -65,7 +65,7 @@ class BlockRuleTests {
         Block block = new Block(
             Simulation.randomHash(),
             Simulation.randomHash(),
-            consensus.getTargetValue(),
+            defaultConfig.targetValue(),
             Simulation.randomBigInteger(),
             0,
             Collections.emptyList(),
@@ -79,6 +79,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
+        facts.put("config", defaultConfig);
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -102,6 +103,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
+        facts.put("config", defaultConfig);
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
