@@ -48,7 +48,7 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
 
         TextField ipTextField = new TextField();
         TextField portTextField = new NumberTextField();
-        Button checkButton = new Button("Check");
+        Button checkButton = new Button("Connect");
         StatusBar statusBar = new StatusBar();
         statusBar.setText("");
 
@@ -68,8 +68,8 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
         grid.add(ipTextField, 1, 0, 1, 1);
         grid.add(new Label("Port:"), 0, 1, 1, 1);
         grid.add(portTextField, 1, 1, 1, 1);
-        grid.add(statusBar, 0, 2, 1, 1);
-        grid.add(checkButton, 1, 2, 1, 1);
+        grid.add(checkButton, 0, 2, 1, 1);
+        grid.add(statusBar, 1, 2, 1, 1);
 
         javafx.beans.value.ChangeListener<String> listener = (observable, oldValue, newValue) -> {
             okButtonNode.setDisable(true);
