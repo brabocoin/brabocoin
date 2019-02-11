@@ -1212,6 +1212,11 @@ public class NodeTest {
             }
 
             @Override
+            public List<String> bootstrapPeers() {
+                return Collections.emptyList();
+            }
+
+            @Override
             public int servicePort() {
                 return 8090;
             }
