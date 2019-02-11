@@ -8,14 +8,14 @@ import javafx.scene.layout.GridPane;
 
 public class BraboValidatedDialog<T> extends BraboDialog<T> {
     Label messageLabel;
-    Node buttonNode;
+    Node okButtonNode;
 
     GridPane grid = new GridPane();
 
     public BraboValidatedDialog() {
         super(false);
         this.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        buttonNode = this.getDialogPane().lookupButton(ButtonType.OK);
+        okButtonNode = this.getDialogPane().lookupButton(ButtonType.OK);
 
         grid.setHgap(10);
         grid.setVgap(10);
@@ -33,7 +33,7 @@ public class BraboValidatedDialog<T> extends BraboDialog<T> {
         messageLabel.setManaged(true);
         messageLabel.setText(message);
 
-        buttonNode.setDisable(true);
+        okButtonNode.setDisable(true);
 
         getDialogPane().getScene().getWindow().sizeToScene();
     }
@@ -42,7 +42,7 @@ public class BraboValidatedDialog<T> extends BraboDialog<T> {
         messageLabel.setVisible(false);
         messageLabel.setManaged(false);
 
-        buttonNode.setDisable(false);
+        okButtonNode.setDisable(false);
 
         getDialogPane().getScene().getWindow().sizeToScene();
     }

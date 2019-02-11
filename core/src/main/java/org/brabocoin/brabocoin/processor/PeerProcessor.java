@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.processor;
 import io.grpc.StatusRuntimeException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.model.messages.HandshakeRequest;
@@ -42,6 +43,7 @@ public class PeerProcessor implements NetworkMessageListener {
     private BraboConfig config;
 
     private Collection<PeerSetChangedListener> peerSetChangedListeners = new ArrayList<>();
+
     /**
      * Create a new peer processor for a referenced set of peers and a config file.
      *
@@ -53,6 +55,14 @@ public class PeerProcessor implements NetworkMessageListener {
     public PeerProcessor(Set<Peer> peers, BraboConfig config) {
         this.peers = FXCollections.observableSet(peers);
         this.config = config;
+
+        this.peers.addListener((SetChangeListener<Peer>)change -> {
+            if (change.wasAdded()) {
+                peerSetChangedListeners.forEach(l -> l.onPeerAdded(change.getElementAdded()));
+            } else {
+                peerSetChangedListeners.forEach(l -> l.onPeerRemoved(change.getElementRemoved()));
+            }
+        });
     }
 
     public ObservableSet<Peer> getPeers() {
@@ -179,7 +189,6 @@ public class PeerProcessor implements NetworkMessageListener {
             if (response == null) {
                 peer.shutdown();
                 LOGGER.log(Level.INFO, MessageFormat.format("Removed peer: {0}", peer));
-                peerSetChangedListeners.forEach(l -> l.onPeerRemoved(peer));
                 peerIterator.remove();
             }
         }
@@ -256,7 +265,6 @@ public class PeerProcessor implements NetworkMessageListener {
     public synchronized void addPeer(Peer peer) {
         if (filterPeer(peer)) {
             peers.add(peer);
-            peerSetChangedListeners.forEach(l -> l.onPeerAdded(peer));
             LOGGER.log(Level.FINEST, () -> MessageFormat.format("Added client peer {0}.", peer));
         }
         else {
@@ -277,6 +285,17 @@ public class PeerProcessor implements NetworkMessageListener {
         }
 
         peers.clear();
+    }
+
+    /**
+     * Shutdown peer and remove from peer list.
+     *
+     * @param peer
+     *     Peer to remove
+     */
+    public synchronized void shutdownPeer(Peer peer) {
+        peer.shutdown();
+        peers.remove(peer);
     }
 
     public void addPeerSetChangedListener(PeerSetChangedListener listener) {

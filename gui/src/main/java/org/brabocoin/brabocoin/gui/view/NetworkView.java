@@ -5,13 +5,13 @@ import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -20,13 +20,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.MethodDescriptorTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PeerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.StringTableCell;
+import org.brabocoin.brabocoin.gui.dialog.PeerCreationDialog;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.node.NetworkMessage;
@@ -38,11 +38,17 @@ import org.brabocoin.brabocoin.util.NetworkUtil;
 import org.controlsfx.control.MasterDetailPane;
 import tornadofx.SmartResize;
 
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.SocketException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
@@ -51,18 +57,20 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
                                                     NetworkMessageListener, PeerSetChangedListener {
 
     private static final double KILO_BYTES = 1000.0;
-    public static final int CELL_SIZE = 25;
-    public static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
-    public static final double IP_TABLE_HEIGHT_OFFSET = 1.01;
+    private static final int CELL_SIZE = 25;
+    private static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
+    private static final double IP_TABLE_HEIGHT_OFFSET = 1.01;
     private final State state;
     private final TaskManager taskManager;
+    private String externalIp;
+    private Task<String> externalIpTask;
+    @FXML private Label externalIpLabel;
 
     @FXML private TableView<Peer> peerTable;
     @FXML private TableColumn<Peer, String> peerIPColumn;
     @FXML private TableColumn<Peer, Integer> peerPortColumn;
     @FXML private TableColumn<Peer, Integer> peerIncomingMessageCountColumn;
     @FXML private TableColumn<Peer, Integer> peerOutgoingMessageCountColumn;
-    @FXML private TableColumn<Peer, Boolean> peerRunningColumn;
 
     @FXML private Label portLabel;
     @FXML private TableView<IpData> ipTable;
@@ -98,6 +106,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         this.state = state;
         this.taskManager = taskManager;
 
+        state.getPeerProcessor().addPeerSetChangedListener(this);
         BraboControlInitializer.initialize(this);
     }
 
@@ -177,7 +186,41 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             });
         });
 
+        externalIpTask = new Task<String>() {
+            @Override
+            protected String call() {
+                Platform.runLater(() -> externalIpLabel.setText("External IP address: Loading..."));
+                updateTitle("Getting external IP...");
+                try {
+                    URL ipCheck = new URL("http://checkip.amazonaws.com");
+                    BufferedReader in = new BufferedReader(new InputStreamReader(
+                        ipCheck.openStream()));
+
+                    return in.readLine();
+                }
+                catch (IOException e) {
+                    // ignored
+                }
+
+                return null;
+            }
+        };
+
+        externalIpTask.setOnSucceeded(event -> {
+            String result = externalIpTask.getValue();
+            if (result == null) {
+                externalIp = "Failed getting ip";
+            }
+            else {
+
+                externalIp = result;
+            }
+
+            Platform.runLater(() -> externalIpLabel.setText("External IP address: " + externalIp));
+        });
+
         taskManager.runTask(ipDataTask);
+        taskManager.runTask(externalIpTask);
 
         ipNameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
             .getDeviceName()));
@@ -192,11 +235,15 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         ipTable.prefHeightProperty().set(IP_TABLE_INITIAL_HEIGHT);
         ipTable.minHeightProperty().bind(ipTable.prefHeightProperty());
         ipTable.maxHeightProperty().bind(ipTable.prefHeightProperty());
+
+        ipTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
     }
 
     private void loadPeerTable() {
         peers.addAll(state.getPeerProcessor().getPeers());
         peerTable.setItems(peers);
+
+        peerTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 
         peerIPColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
             .getAddress()
@@ -216,10 +263,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             .getIncomingMessageQueue()
             .size()));
         peerIncomingMessageCountColumn.setCellFactory(f -> new IntegerTableCell<>());
-
-        peerRunningColumn.setCellValueFactory(f -> new ReadOnlyBooleanWrapper(f.getValue()
-            .isRunning()));
-        peerRunningColumn.setCellFactory(f -> new BooleanTextTableCell<>("True", "False"));
     }
 
     private void loadMessageTable() {
@@ -262,9 +305,11 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         outgoingTimeSent.setCellFactory(col -> new DateTimeTableCell<>());
 
         incomingSizeColumn.setCellValueFactory(NetworkView::readOnlyMessageSizeFeature);
-        incomingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
+        incomingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0"
+            + ".00")));
         outgoingSizeColumn.setCellValueFactory(NetworkView::readOnlyMessageSizeFeature);
-        outgoingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
+        outgoingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0"
+            + ".00")));
     }
 
     @Override
@@ -296,6 +341,55 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @Override
     public void onPeerRemoved(Peer peer) {
-        // ignored
+        peers.remove(peer);
+    }
+
+    @FXML
+    protected void addPeer(ActionEvent event) {
+        Optional<Peer> peerOptional = new PeerCreationDialog(
+            state.getConfig(),
+            state.getPeerProcessor()
+        ).showAndWait();
+
+        peerOptional.ifPresent(p -> state.getPeerProcessor().addPeer(peerOptional.get()));
+    }
+
+    @FXML
+    protected void discoverPeers(ActionEvent event) {
+        new Thread(() -> state.getPeerProcessor().updatePeers()).run();
+    }
+
+
+    @FXML
+    protected void removePeer(ActionEvent event) {
+        Peer peer = peerTable.getSelectionModel().getSelectedItem();
+        if (peer == null) {
+            return;
+        }
+
+        state.getPeerProcessor().shutdownPeer(peer);
+
+        peerTable.refresh();
+    }
+
+    @FXML
+    protected void copyPort(ActionEvent event) {
+        setClipboardContent(Integer.toString(state.getConfig().servicePort()));
+    }
+
+    @FXML
+    protected void copyExternalIP(ActionEvent event) {
+        setClipboardContent(externalIp);
+    }
+
+    @FXML
+    protected void refreshExternalIP(ActionEvent event) {
+        taskManager.runTask(externalIpTask);
+    }
+
+    private void setClipboardContent(String content) {
+        StringSelection selection =
+            new StringSelection(content);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
     }
 }

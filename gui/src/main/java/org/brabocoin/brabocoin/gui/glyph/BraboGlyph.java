@@ -112,7 +112,11 @@ public class BraboGlyph extends Glyph {
         TOOLS(Font.FONT_AWESOME_SOLID, '\uf0ad'),
         REPEAT(Font.FONT_AWESOME_SOLID, '\uf363'),
         LOCK(Font.FONT_AWESOME_SOLID, '\uf023'),
-        UNLOCK(Font.FONT_AWESOME_SOLID, '\uf3c1');
+        UNLOCK(Font.FONT_AWESOME_SOLID, '\uf3c1'),
+        COPY(Font.FONT_AWESOME_SOLID, '\uf0c5'),
+        REFRESH(Font.FONT_AWESOME_SOLID, '\uf2f1'),
+        HAPPY(Font.FONT_AWESOME_SOLID, '\uf5b8'),
+        CRYSAD(Font.FONT_AWESOME_SOLID, '\uf5b3');
 
         private final @NotNull Font font;
         private final char ch;

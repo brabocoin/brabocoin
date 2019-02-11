@@ -4,10 +4,6 @@
     -fx-min-height: 100px;
 }
 
-.table-action-box {
-    -fx-spacing: 10px;
-}
-
 .action-table-padding {
     -fx-padding: 5px 0 5px 0;
 }

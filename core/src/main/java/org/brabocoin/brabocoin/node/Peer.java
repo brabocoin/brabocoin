@@ -183,7 +183,12 @@ public class Peer implements NetworkMessageListener {
      */
     public void shutdown() {
         LOGGER.log(Level.INFO, "Stopping peer: {0}", toSocketString());
+        this.interceptor.removeNetworkMessageListeners(this);
         channel.shutdown();
+    }
+
+    public void restart() throws MalformedSocketException {
+        setupStubs();
     }
 
     /**
