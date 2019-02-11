@@ -211,10 +211,14 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             }
 
             Platform.runLater(() -> {
-                ipTable.setItems(FXCollections.observableArrayList(ipDataTask.getValue()));
-                ipTable.prefHeightProperty()
-                    .bind(ipTable.fixedCellSizeProperty()
-                        .multiply(Bindings.size(ipTable.getItems()).add(IP_TABLE_HEIGHT_OFFSET)));
+                List<IpData> data = ipDataTask.getValue();
+                if (data != null) {
+                    ipTable.setItems(FXCollections.observableArrayList(data));
+                    ipTable.prefHeightProperty()
+                        .bind(ipTable.fixedCellSizeProperty()
+                            .multiply(Bindings.size(ipTable.getItems())
+                                .add(IP_TABLE_HEIGHT_OFFSET)));
+                }
             });
         });
 
