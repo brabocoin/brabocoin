@@ -11,7 +11,7 @@
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns="http://javafx.com/javafx/8.0.171"
@@ -19,22 +19,13 @@
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkView">
     <Tab closable="false" text="Peers">
         <VBox>
-            <TitledPane collapsible="false" text="Service info">
+            <TitledPane fx:id="serviceInfoTitledPane" collapsible="false">
                 <VBox spacing="10">
                     <HBox spacing="5" alignment="CENTER_LEFT">
-                        <Label fx:id="externalIpLabel" text="External IP address:"/>
-                        <Button onAction="#copyExternalIP">
-                            <graphic>
-                                <BraboGlyph icon="COPY"/>
-                            </graphic>
-                        </Button>
-                        <Button onAction="#refreshExternalIP">
-                            <graphic>
-                                <BraboGlyph icon="REFRESH"/>
-                            </graphic>
-                        </Button>
+                        <Label text="External IP address:"/>
+                        <SelectableLabel fx:id="externalIpLabel" alignment="CENTER_LEFT"/>
                     </HBox>
-                    <Label text="Local IP addresses"/>
+                    <Label text="Local IP addresses:"/>
                     <TableView fx:id="ipTable">
                         <columns>
                             <TableColumn fx:id="ipNameColumn" sortable="false" text="Name"/>
@@ -49,12 +40,8 @@
                         </placeholder>
                     </TableView>
                     <HBox spacing="5" alignment="CENTER_LEFT">
-                        <Label fx:id="portLabel" text="Port:"/>
-                        <Button onAction="#copyPort">
-                            <graphic>
-                                <BraboGlyph icon="COPY"/>
-                            </graphic>
-                        </Button>
+                        <Label text="Port:"/>
+                        <SelectableLabel fx:id="portLabel"/>
                     </HBox>
                 </VBox>
             </TitledPane>

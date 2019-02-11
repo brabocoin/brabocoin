@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -14,12 +15,17 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TitledPane;
+import javafx.scene.layout.HBox;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
@@ -27,6 +33,7 @@ import org.brabocoin.brabocoin.gui.control.table.MethodDescriptorTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PeerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.StringTableCell;
 import org.brabocoin.brabocoin.gui.dialog.PeerCreationDialog;
+import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.node.NetworkMessage;
@@ -60,11 +67,15 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private static final int CELL_SIZE = 25;
     private static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
     private static final double IP_TABLE_HEIGHT_OFFSET = 1.50;
+    public static final int REFRESH_ICON_SIZE = 14;
+    public static final double SERVICE_INFO_HBOX_SPACING = 10.0;
     private final State state;
     private final TaskManager taskManager;
-    private String externalIp;
+    private SimpleStringProperty externalIp = new SimpleStringProperty();
     private Task<String> externalIpTask;
-    @FXML private Label externalIpLabel;
+    private Task<List<IpData>> ipDataTask;
+    @FXML private SelectableLabel externalIpLabel;
+    @FXML private TitledPane serviceInfoTitledPane;
 
     @FXML private TableView<Peer> peerTable;
     @FXML private TableColumn<Peer, String> peerIPColumn;
@@ -72,7 +83,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     @FXML private TableColumn<Peer, Integer> peerIncomingMessageCountColumn;
     @FXML private TableColumn<Peer, Integer> peerOutgoingMessageCountColumn;
 
-    @FXML private Label portLabel;
+    @FXML private SelectableLabel portLabel;
     @FXML private TableView<IpData> ipTable;
     @FXML private TableColumn<IpData, String> ipNameColumn;
     @FXML private TableColumn<IpData, String> ipValueColumn;
@@ -126,7 +137,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         outgoingMessageDetailView = new NetworkMessageDetailView();
         outgoingMasterPane.setDetailNode(outgoingMessageDetailView);
 
-        portLabel.setText("Port: " + state.getConfig().servicePort());
+        externalIpLabel.textProperty().bind(externalIp);
     }
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
@@ -158,8 +169,32 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         );
     }
 
+    private void refreshIPData() {
+        portLabel.setText(Integer.toString(state.getConfig().servicePort()));
+        taskManager.runTask(ipDataTask);
+        taskManager.runTask(externalIpTask);
+    }
+
     private void loadIPTable() {
-        Task<List<IpData>> ipDataTask = new Task<List<IpData>>() {
+        HBox hbox = new HBox();
+        hbox.setAlignment(Pos.CENTER_LEFT);
+        hbox.setSpacing(SERVICE_INFO_HBOX_SPACING);
+
+        Label titleOfTitledPane = new Label("Service info");
+
+        Button buttonRefresh = new Button();
+        BraboGlyph refreshIcon = new BraboGlyph("REFRESH");
+        refreshIcon.setFontSize(REFRESH_ICON_SIZE);
+        buttonRefresh.setGraphic(refreshIcon);
+
+        hbox.getChildren().add(titleOfTitledPane);
+        hbox.getChildren().add(buttonRefresh);
+
+        serviceInfoTitledPane.setGraphic(hbox);
+
+        buttonRefresh.setOnAction(event -> refreshIPData());
+
+        ipDataTask = new Task<List<IpData>>() {
             @Override
             protected List<IpData> call() {
                 updateTitle("Getting ip data...");
@@ -189,7 +224,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         externalIpTask = new Task<String>() {
             @Override
             protected String call() {
-                Platform.runLater(() -> externalIpLabel.setText("External IP address: Loading..."));
+                externalIp.set("Loading...");
                 updateTitle("Getting external IP...");
                 try {
                     URL ipCheck = new URL("http://checkip.amazonaws.com");
@@ -209,18 +244,13 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         externalIpTask.setOnSucceeded(event -> {
             String result = externalIpTask.getValue();
             if (result == null) {
-                externalIp = "Failed getting ip";
+                externalIp.set("Failed getting ip");
             }
             else {
 
-                externalIp = result;
+                externalIp.set(result);
             }
-
-            Platform.runLater(() -> externalIpLabel.setText("External IP address: " + externalIp));
         });
-
-        taskManager.runTask(ipDataTask);
-        taskManager.runTask(externalIpTask);
 
         ipNameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
             .getDeviceName()));
@@ -237,6 +267,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         ipTable.maxHeightProperty().bind(ipTable.prefHeightProperty());
 
         ipTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
+
+        refreshIPData();
     }
 
     private void loadPeerTable() {
@@ -356,7 +388,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @FXML
     protected void discoverPeers(ActionEvent event) {
-        new Thread(() -> state.getPeerProcessor().updatePeers()).run();
+        new Thread(() -> state.getPeerProcessor().updatePeers()).start();
     }
 
 
@@ -379,7 +411,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @FXML
     protected void copyExternalIP(ActionEvent event) {
-        setClipboardContent(externalIp);
+        setClipboardContent(externalIp.get());
     }
 
     @FXML
