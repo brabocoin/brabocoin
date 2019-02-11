@@ -25,6 +25,7 @@
         <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Label fx:id="titleLabel" styleClass="side-pane-title"/>
             <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
+            <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>

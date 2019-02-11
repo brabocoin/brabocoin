@@ -19,6 +19,7 @@ import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -38,10 +39,12 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private final @NotNull Blockchain blockchain;
     private boolean hasActions;
     @Nullable private BlockValidator validator;
+    private final NodeEnvironment nodeEnvironment;
 
     @FXML private BlockHeaderPane blockHeaderPane;
     @FXML private BlockDetailsPane blockDetailsPane;
     @FXML private BlockTransactionsPane blockTransactionsPane;
+    @FXML private Button buttonPropagate;
 
     @FXML private Label titleLabel;
     @FXML private Button buttonValidate;
@@ -54,9 +57,14 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     }
 
     public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator) {
+        this(blockchain, block, validator, null);
+    }
+
+    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator, NodeEnvironment nodeEnvironment) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
+        this.nodeEnvironment = nodeEnvironment;
 
         BraboControlInitializer.initialize(this);
 
@@ -73,6 +81,12 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         blockDetailsPane.setBlockchain(blockchain);
+
+        // Propagate button
+        if (nodeEnvironment == null) {
+            buttonPropagate.setManaged(false);
+            buttonPropagate.setVisible(false);
+        }
     }
 
     private void loadBlock(@NotNull Block block) {
@@ -108,5 +122,10 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         );
 
         dialog.showAndWait();
+    }
+
+    @FXML
+    protected void propagate(ActionEvent event) {
+        nodeEnvironment.announceBlockRequest(block.get());
     }
 }

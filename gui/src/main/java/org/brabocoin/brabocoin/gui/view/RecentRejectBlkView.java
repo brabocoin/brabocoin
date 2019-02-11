@@ -22,6 +22,7 @@ import org.brabocoin.brabocoin.gui.control.table.RuleTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedBlock;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
@@ -45,14 +46,17 @@ public class RecentRejectBlkView extends MasterDetailPane implements BraboContro
 
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
+    private final NodeEnvironment nodeEnvironment;
     private ObservableList<RejectedBlock> observableBlocks = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectBlkView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public RecentRejectBlkView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator, @NotNull
+                               NodeEnvironment nodeEnvironment) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
+        this.nodeEnvironment = nodeEnvironment;
 
         BraboControlInitializer.initialize(this);
     }
@@ -61,7 +65,7 @@ public class RecentRejectBlkView extends MasterDetailPane implements BraboContro
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        blockDetailView = new BlockDetailView(blockchain, null, validator);
+        blockDetailView = new BlockDetailView(blockchain, null, validator, nodeEnvironment);
         setDetailNode(blockDetailView);
 
         loadRejects();
