@@ -170,7 +170,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         );
     }
 
-    private void refreshIPData() {
+    private void createTasks() {
         ipDataTask = new Task<List<IpData>>() {
             @Override
             protected List<IpData> call() {
@@ -203,6 +203,10 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
                 return null;
             }
         };
+    }
+
+    private void refreshIPData() {
+        createTasks();
 
         portLabel.setText(Integer.toString(state.getConfig().servicePort()));
         taskManager.runTask(ipDataTask);
@@ -227,6 +231,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         serviceInfoTitledPane.setGraphic(hbox);
 
         buttonRefresh.setOnAction(event -> refreshIPData());
+
+        createTasks();
 
         ipDataTask.setOnSucceeded(event -> {
             if (ipDataTask.getValue() == null) {
