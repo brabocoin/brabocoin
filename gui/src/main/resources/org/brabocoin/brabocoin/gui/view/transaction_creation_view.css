@@ -4,14 +4,6 @@
     -fx-min-height: 100px;
 }
 
-.table-action-box {
-    -fx-spacing: 10px;
-}
-
-.column-fixed {
-    -fx-text-fill: derive(-fx-text-base-color, 95%);
-}
-
 .action-table-padding {
     -fx-padding: 5px 0 5px 0;
 }

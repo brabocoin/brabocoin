@@ -18,7 +18,6 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -56,16 +55,16 @@ public class NodeTest {
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
-        };
 
-        mockConsensus = new Consensus() {
             @Override
-            public @NotNull Hash getTargetValue() {
+            public Hash targetValue() {
                 return new Hash(ByteString.copyFrom(
                     BigInteger.valueOf(2).pow(255).toByteArray()
                 ));
             }
         };
+
+        mockConsensus = new Consensus();
     }
 
     @AfterEach
@@ -103,8 +102,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -128,8 +127,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -184,8 +183,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -214,8 +213,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -236,8 +235,8 @@ public class NodeTest {
 
         State stateC = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeC";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeC";
             }
 
             @Override
@@ -297,8 +296,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -358,8 +357,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -423,8 +422,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -488,8 +487,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -512,8 +511,8 @@ public class NodeTest {
 
         State stateC = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeC";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeC";
             }
 
             @Override
@@ -588,8 +587,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -648,8 +647,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -672,8 +671,8 @@ public class NodeTest {
 
         State stateC = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeC";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeC";
             }
 
             @Override
@@ -742,8 +741,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -771,8 +770,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -801,8 +800,8 @@ public class NodeTest {
 
         State stateC = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeC";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeC";
             }
 
             @Override
@@ -897,8 +896,8 @@ public class NodeTest {
         // Create default node A
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -926,8 +925,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override
@@ -1053,9 +1052,9 @@ public class NodeTest {
 
             State stateA = new TestState(new MockBraboConfig(defaultConfig) {
                 @Override
-                public String blockStoreDirectory() {
-                    return super.blockStoreDirectory() + "/nodeA";
-                }
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
+            }
 
                 @Override
                 public int servicePort() {
@@ -1096,9 +1095,9 @@ public class NodeTest {
 
             State stateB = new TestState(new MockBraboConfig(defaultConfig) {
                 @Override
-                public String blockStoreDirectory() {
-                    return super.blockStoreDirectory() + "/nodeB";
-                }
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
+            }
 
                 @Override
                 public List<String> bootstrapPeers() {
@@ -1121,9 +1120,9 @@ public class NodeTest {
 
             State stateC = new TestState(new MockBraboConfig(defaultConfig) {
                 @Override
-                public String blockStoreDirectory() {
-                    return super.blockStoreDirectory() + "/nodeC";
-                }
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeC";
+            }
 
                 @Override
                 public int servicePort() {
@@ -1208,8 +1207,8 @@ public class NodeTest {
     void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeA";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeA";
             }
 
             @Override
@@ -1365,8 +1364,8 @@ public class NodeTest {
 
         State stateB = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
-            public String blockStoreDirectory() {
-                return super.blockStoreDirectory() + "/nodeB";
+            public String dataDirectory() {
+                return super.dataDirectory() + "/nodeB";
             }
 
             @Override

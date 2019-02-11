@@ -22,6 +22,8 @@ import org.brabocoin.brabocoin.wallet.Wallet;
 import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author Sten Wessel
  */
@@ -37,7 +39,9 @@ public interface State {
 
     @NotNull KeyValueStore getUtxoStorage();
 
-    @NotNull KeyValueStore getWalletUTXOStorage();
+    @NotNull KeyValueStore getWalletChainUtxoStorage();
+
+    @NotNull KeyValueStore getWalletPoolUtxoStorage();
 
     @NotNull BlockDatabase getBlockDatabase();
 
@@ -45,7 +49,9 @@ public interface State {
 
     @NotNull UTXODatabase getPoolUTXODatabase();
 
-    @NotNull UTXODatabase getWalletUTXODatabase();
+    @NotNull UTXODatabase getWalletChainUtxoDatabase();
+
+    @NotNull UTXODatabase getWalletPoolUtxoDatabase();
 
     @NotNull Blockchain getBlockchain();
 
@@ -72,4 +78,8 @@ public interface State {
     @NotNull Wallet getWallet();
 
     @NotNull WalletIO getWalletIO();
+
+    @NotNull File getWalletFile();
+
+    @NotNull File getTxHistoryFile();
 }

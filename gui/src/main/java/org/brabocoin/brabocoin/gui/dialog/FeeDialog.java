@@ -24,7 +24,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
 
         feeField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (feeField.getText().equals("")) {
-                buttonNode.setDisable(true);
+                okButtonNode.setDisable(true);
                 return;
             }
 

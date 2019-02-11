@@ -15,7 +15,6 @@ import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -62,6 +61,11 @@ class BlockProcessorTest {
             public String blockStoreDirectory() {
                 return BLOCK_FILE_LOCATION;
             }
+
+            @Override
+            public Hash targetValue() {
+                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+            }
         };
     }
 
@@ -84,16 +88,6 @@ class BlockProcessorTest {
         }
 
         state = new TestState(config) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
-                    }
-                };
-            }
-
             @Override
             protected BlockValidator createBlockValidator() {
                 return new BlockValidator(

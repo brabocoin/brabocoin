@@ -37,7 +37,8 @@ import java.util.ResourceBundle;
 /**
  * View for the current state.
  */
-public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
+public class CurrentStateView extends TabPane implements BraboControl, Initializable,
+                                                         BlockchainListener {
 
     @FXML private Tab recentRejectBlkTab;
     @FXML private Tab recentRejectTxTab;
@@ -88,7 +89,11 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        RecentRejectTxView rejectTxView = new RecentRejectTxView(state.getTransactionPool(), state.getTransactionValidator());
+        RecentRejectTxView rejectTxView = new RecentRejectTxView(
+            state.getTransactionPool(),
+            state.getEnvironment(),
+            state.getTransactionValidator()
+        );
         recentRejectTxTab.setContent(rejectTxView);
         recentRejectTxTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -97,7 +102,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        TransactionPoolView poolView = new TransactionPoolView(state.getTransactionPool(), state.getTransactionValidator());
+        TransactionPoolView poolView = new TransactionPoolView(
+            state.getTransactionPool(),
+            state.getTransactionValidator()
+        );
         txPoolTab.setContent(poolView);
         txPoolTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -118,7 +126,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        OrphanBlocksView orphanBlkView = new OrphanBlocksView(state.getBlockchain(), state.getBlockValidator());
+        OrphanBlocksView orphanBlkView = new OrphanBlocksView(
+            state.getBlockchain(),
+            state.getBlockValidator()
+        );
         blkOrphansTab.setContent(orphanBlkView);
         blkOrphansTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -162,18 +173,20 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             return new ReadOnlyObjectWrapper<>(minedByMe);
         });
 
-        blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
-            if (indexedBlock == null) {
-                return;
-            }
-            try {
-                blockDetailView.setBlock(blockchain.getBlock(indexedBlock));
-            }
-            catch (DatabaseException e) {
-                // ignore
-            }
-            masterDetailPane.setShowDetailNode(true);
-        });
+        blockchainTable.getSelectionModel()
+            .selectedItemProperty()
+            .addListener((obs, old, indexedBlock) -> {
+                if (indexedBlock == null) {
+                    return;
+                }
+                try {
+                    blockDetailView.setBlock(blockchain.getBlock(indexedBlock));
+                }
+                catch (DatabaseException e) {
+                    // ignore
+                }
+                masterDetailPane.setShowDetailNode(true);
+            });
     }
 
     private void loadMainChain() {

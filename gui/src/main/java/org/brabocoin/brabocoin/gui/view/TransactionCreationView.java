@@ -251,7 +251,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             .equals(ByteString.EMPTY)) {
             UnspentOutputInfo info = null;
             try {
-                info = wallet.getUtxoSet().findUnspentOutputInfo(
+                info = wallet.getCompositeUtxoSet().findUnspentOutputInfo(
                     entry.getReferencedTransaction(), entry.getReferencedOutputIndex()
                 );
             }
@@ -346,30 +346,35 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void findInputs(ActionEvent event) {
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
-        for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getUtxoSet()) {
+        for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getCompositeUtxoSet()) {
             if (inputSum > outputSum) {
                 break;
             }
 
+            Input input = info.getKey();
+
+            // Prevent using used inputs
+            if (wallet.getUsedInputs().contains(input)) {
+                continue;
+            }
+
             // Prevent coinbase maturity failure
-            if (info.getValue().isCoinbase() && blockchain.getMainChain()
-                .getHeight() - consensus.getCoinbaseMaturityDepth() < info.getValue()
-                .getBlockHeight()) {
+            if (consensus.immatureCoinbase(blockchain.getMainChain().getHeight(), info.getValue())) {
                 continue;
             }
 
             // Prevent duplicates
             if (inputTableView.getItems().stream().anyMatch(
                 i -> i.getReferencedTransaction()
-                    .equals(info.getKey().getReferencedTransaction()) &&
-                    i.getReferencedOutputIndex() == info.getKey().getReferencedOutputIndex()
+                    .equals(input.getReferencedTransaction()) &&
+                    i.getReferencedOutputIndex() == input.getReferencedOutputIndex()
             )) {
                 continue;
             }
 
             inputSum += info.getValue().getAmount();
             EditableTableInputEntry entry = new EditableTableInputEntry(
-                info.getKey(),
+                input,
                 inputTableView.getItems().size()
             );
             entry.setAddress(info.getValue().getAddress());
@@ -462,7 +467,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         );
         alert.setTitle("Send transaction");
         alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
-        alert.setContentText("Are you sure you want the transaction to your peers?");
+        alert.setContentText("Are you sure you want to send the transaction to your peers?");
 
         Optional<ButtonType> result = alert.showAndWait();
 
@@ -477,25 +482,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         ValidationStatus status = this.environment.processNewlyCreatedTransaction(transaction);
 
         if (status == ValidationStatus.VALID) {
-            transaction.getInputs()
-                .forEach(i -> {
-                    try {
-                        wallet.getUtxoSet()
-                            .setOutputSpent(
-                                i.getReferencedTransaction(),
-                                i.getReferencedOutputIndex()
-                            );
-                    }
-                    catch (DatabaseException e) {
-                        LOGGER.severe("Could not set output to spent.");
-                        throw new RuntimeException("Set output to spent failed.");
-                    }
-                });
-
-            transactionCreationWindow.close();
+            transaction.getInputs().forEach(wallet::addUsedInput);
         }
-
-        // TODO: What if status is not valid?
+        transactionCreationWindow.close();
     }
 
 

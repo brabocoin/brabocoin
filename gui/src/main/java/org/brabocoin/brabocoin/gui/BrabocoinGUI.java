@@ -102,11 +102,6 @@ public class BrabocoinGUI extends Application {
                     MainView mainView = new MainView(application.getState());
                     Scene scene = new Scene(mainView);
 
-                    // TODO: remove!
-                    // DEBUG: Auto CSS reloading
-                    //CSSFX.addConverter(uri -> Paths.get(uri.startsWith("file:/") ? uri.replace("file:/", "")
-                    //    .replace("out/production/", "src/main/") : uri)).start();
-
                     // Add base stylesheet
                     scene.getStylesheets().add(getClass().getResource("brabocoin.css").toExternalForm());
 

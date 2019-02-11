@@ -6,12 +6,11 @@ import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
-import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,15 +41,6 @@ public class Consensus {
      * Max money value.
      */
     private static final long MAX_MONEY_VALUE = (long)(3E18);
-
-    /**
-     * Constant target value.
-     */
-    private static final Hash TARGET_VALUE = new Hash(
-        ByteUtil.toUnsigned(
-            new BigDecimal("3216E65").toBigInteger()
-        )
-    );
 
     /**
      * Double SHA256 hash.
@@ -149,10 +139,6 @@ public class Consensus {
         return MAX_MONEY_VALUE;
     }
 
-    public @NotNull Hash getTargetValue() {
-        return TARGET_VALUE;
-    }
-
     public @NotNull Function<Hash, Hash> getMerkleTreeHashFunction() {
         return DOUBLE_SHA;
     }
@@ -187,5 +173,9 @@ public class Consensus {
             - getMaxBlockHeaderSize()
             - getMaxCoinbaseTransactionSize()
             - Long.BYTES;
+    }
+
+    public boolean immatureCoinbase(int chainHeight, UnspentOutputInfo info) {
+        return info.isCoinbase() && chainHeight - this.getCoinbaseMaturityDepth() < info.getBlockHeight();
     }
 }

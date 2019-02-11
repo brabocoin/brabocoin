@@ -16,12 +16,10 @@ import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.rules.NonContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.InputOutputNotEmptyTxRule;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -42,24 +40,19 @@ class BlockValidatorTest {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig);
+        defaultConfig = new MockBraboConfig(defaultConfig) {
+            @Override
+            public Hash targetValue() {
+                return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
+            }
+        };
 
         signer = new Signer(CURVE);
     }
 
     @Test
     void checkBlockValidOrphan() throws DatabaseException {
-        State state = new TestState(defaultConfig) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
-                    }
-                };
-            }
-        };
+        State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
                 Transaction.coinbase( new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),1)
@@ -71,7 +64,7 @@ class BlockValidatorTest {
         Block block = new Block(
                 Simulation.randomHash(),
                 merkleRoot,
-                state.getConsensus().getTargetValue(),
+                state.getConfig().targetValue(),
                 BigInteger.ZERO,
                 1,
                 transactionList,
@@ -86,17 +79,7 @@ class BlockValidatorTest {
 
     @Test
     void checkBlockValidInvalidBlockHeight() throws DatabaseException {
-        State state = new TestState(defaultConfig) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
-                    }
-                };
-            }
-        };
+        State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
                 Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2)
@@ -108,7 +91,7 @@ class BlockValidatorTest {
         Block block = new Block(
                 state.getConsensus().getGenesisBlock().getHash(),
                 merkleRoot,
-                state.getConsensus().getTargetValue(),
+                state.getConfig().targetValue(),
                 BigInteger.ZERO,
                 2,
                 transactionList,
@@ -124,17 +107,7 @@ class BlockValidatorTest {
 
     @Test
     void checkBlockValidInvalidTransactionEmpty() throws DatabaseException {
-        State state = new TestState(defaultConfig) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
-                    }
-                };
-            }
-        };
+        State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Arrays.asList(
                 Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2),
@@ -147,7 +120,7 @@ class BlockValidatorTest {
         Block block = new Block(
                 state.getConsensus().getGenesisBlock().getHash(),
                 merkleRoot,
-                state.getConsensus().getTargetValue(),
+                state.getConfig().targetValue(),
                 BigInteger.ZERO,
                 2,
                 transactionList,
@@ -165,17 +138,7 @@ class BlockValidatorTest {
 
     @Test
     void checkBlockValidValid() throws DatabaseException {
-        State state = new TestState(defaultConfig) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
-                    }
-                };
-            }
-        };
+        State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
                 Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()), 1)
@@ -187,7 +150,7 @@ class BlockValidatorTest {
         Block block = new Block(
                 state.getConsensus().getGenesisBlock().getHash(),
                 merkleRoot,
-                state.getConsensus().getTargetValue(),
+                state.getConfig().targetValue(),
                 BigInteger.ZERO,
                 1,
                 transactionList,

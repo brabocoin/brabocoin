@@ -64,7 +64,8 @@ public class BrabocoinApplication {
         storages = Sets.newHashSet(
             state.getBlockStorage(),
             state.getUtxoStorage(),
-            state.getWalletUTXOStorage()
+            state.getWalletChainUtxoStorage(),
+            state.getWalletPoolUtxoStorage()
         );
     }
 

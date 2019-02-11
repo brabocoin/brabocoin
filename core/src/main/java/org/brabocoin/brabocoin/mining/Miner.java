@@ -41,6 +41,7 @@ public class Miner {
     private final @NotNull Random random;
     private final ReadonlyUTXOSet utxoSet;
     private final int networkId;
+    private final @NotNull Hash targetValue;
 
     /**
      * Block that is currently mined.
@@ -51,21 +52,22 @@ public class Miner {
 
     /**
      * Create a new miner that is able to mine a new block.
-     *
-     * @param transactionPool
+     *  @param transactionPool
      *     The transaction pool to retrieve transactions from.
      * @param consensus
      *     The consensus.
      * @param random
-     *     A random instance, used to find a random starting nonce.
+     * @param targetValue
      */
     public Miner(@NotNull TransactionPool transactionPool, @NotNull Consensus consensus,
-                 @NotNull Random random, @NotNull ReadonlyUTXOSet utxoSet, int networkId) {
+                 @NotNull Random random, @NotNull ReadonlyUTXOSet utxoSet, int networkId,
+                 @NotNull Hash targetValue) {
         this.transactionPool = transactionPool;
         this.consensus = consensus;
         this.random = random;
         this.utxoSet = utxoSet;
         this.networkId = networkId;
+        this.targetValue = targetValue;
     }
 
     /**
@@ -112,7 +114,7 @@ public class Miner {
         block = new MiningBlock(
             previousBlock.getHash(),
             merkleRoot,
-            consensus.getTargetValue(),
+            targetValue,
             randomStartingNonce,
             previousBlock.getBlockInfo().getBlockHeight() + 1,
             transactions,

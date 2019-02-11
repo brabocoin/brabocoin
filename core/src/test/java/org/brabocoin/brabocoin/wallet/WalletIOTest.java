@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.wallet;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
-import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -87,22 +86,32 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
             state.getBlockchain()
         );
 
         WalletIO io = state.getWalletIO();
 
-        io.write(wallet, walletFile, txhistFile, new Destructible<>(passphrase::toCharArray));
+        io.write(
+            wallet,
+            walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray)
+        );
 
-        Wallet readWallet = io.read(walletFile, txhistFile, new Destructible<>(passphrase::toCharArray),
+        Wallet readWallet = io.read(walletFile, txhistFile,
+            new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
             state.getBlockchain()
         );
 
@@ -132,14 +141,21 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()),
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
             state.getBlockchain()
         );
 
         WalletIO io = state.getWalletIO();
 
-        io.write(wallet, walletFile, txhistFile, new Destructible<>(passphrase::toCharArray));
+        io.write(
+            wallet,
+            walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray)
+        );
 
         Wallet readWallet = io.read(
             walletFile, txhistFile,
@@ -148,8 +164,11 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()), state.getBlockchain()
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getBlockchain()
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
@@ -180,12 +199,19 @@ class WalletIOTest {
             new BouncyCastleAES(),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB()),
             state.getBlockchain()
         );
 
         WalletIO io = state.getWalletIO();
 
-        io.write(wallet, walletFile, txhistFile, new Destructible<>(passphrase::toCharArray));
+        io.write(
+            wallet,
+            walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray)
+        );
 
         assertThrows(CipherException.class, () -> io.read(
             walletFile, txhistFile,
@@ -194,6 +220,8 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
+            new UTXODatabase(new HashMapDB()),
+            new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             state.getBlockchain()
@@ -220,21 +248,34 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()), state.getBlockchain()
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getBlockchain()
         );
 
         WalletIO io = state.getWalletIO();
 
-        io.write(wallet, walletFile, txhistFile, new Destructible<>(passphrase::toCharArray));
+        io.write(
+            wallet,
+            walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray)
+        );
 
-        Wallet readWallet = io.read(walletFile, txhistFile, new Destructible<>(passphrase::toCharArray),
+        Wallet readWallet = io.read(walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()), state.getBlockchain()
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getBlockchain()
         );
 
         assertEquals(
@@ -277,21 +318,34 @@ class WalletIOTest {
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()), state.getBlockchain()
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getBlockchain()
         );
 
         WalletIO io = state.getWalletIO();
 
-        io.write(wallet, walletFile, txhistFile, new Destructible<>(passphrase::toCharArray));
+        io.write(
+            wallet,
+            walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray)
+        );
 
-        Wallet readWallet = io.read(walletFile, txhistFile, new Destructible<>(passphrase::toCharArray),
+        Wallet readWallet = io.read(walletFile,
+            txhistFile,
+            new Destructible<>(passphrase::toCharArray),
             state.getConsensus(),
             state.getSigner(),
             new SecureRandomKeyGenerator(),
             new BouncyCastleAES(),
-            state.getWalletUTXODatabase(),
-            new CompositeReadonlyUTXOSet(state.getChainUTXODatabase(), state.getPoolUTXODatabase()), state.getBlockchain()
+            state.getWalletChainUtxoDatabase(),
+            state.getWalletPoolUtxoDatabase(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getBlockchain()
         );
 
         assertEquals(

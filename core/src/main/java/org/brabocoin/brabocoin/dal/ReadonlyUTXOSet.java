@@ -7,10 +7,13 @@ import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * UTXO Set.
  */
-public interface ReadonlyUTXOSet {
+public interface ReadonlyUTXOSet extends Iterable<Map.Entry<Input,
+    UnspentOutputInfo>> {
 
     /**
      * Checks whether the output referenced by the given transaction input is unspent.

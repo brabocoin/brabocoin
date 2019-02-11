@@ -31,6 +31,7 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     private final ObjectProperty<Transaction> transaction = new SimpleObjectProperty<>();
     private final BooleanProperty showHeader = new SimpleBooleanProperty(true);
+    private final NodeEnvironment nodeEnvironment;
     private @Nullable TransactionValidator validator;
 
     @FXML private TableView<Input> inputTableView;
@@ -70,10 +72,18 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     @FXML private SelectableLabel hashField;
     @FXML private HBox header;
     @FXML private Button buttonValidate;
+    @FXML public Button buttonPropagate;
 
     public TransactionDetailView(Transaction transaction,
                                  @Nullable TransactionValidator validator) {
+        this(transaction, null, validator);
+    }
+
+    public TransactionDetailView(Transaction transaction,
+                                 @Nullable NodeEnvironment nodeEnvironment,
+                                 @Nullable TransactionValidator validator) {
         super();
+        this.nodeEnvironment = nodeEnvironment;
         this.validator = validator;
 
         BraboControlInitializer.initialize(this);
@@ -127,6 +137,12 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         sigSColumn.setCellFactory(col -> new BigIntegerTableCell<>(Constants.HEX));
         sigPubKeyColumn.setCellValueFactory(new PropertyValueFactory<>("publicKey"));
         sigPubKeyColumn.setCellFactory(col -> new PublicKeyTableCell<>());
+
+        // Propagate button
+        if (nodeEnvironment == null) {
+            buttonPropagate.setManaged(false);
+            buttonPropagate.setVisible(false);
+        }
     }
 
     private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
@@ -159,5 +175,10 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     protected void validate(ActionEvent event) {
         Dialog dialog = new ValidationWindow(transaction.get(), validator);
         dialog.showAndWait();
+    }
+
+    @FXML
+    protected void propagate(ActionEvent event) {
+        nodeEnvironment.announceTransactionRequest(transaction.get());
     }
 }
