@@ -124,7 +124,9 @@ public class UTXOProcessor {
                 continue;
             }
 
-            List<UnspentOutputInfo> inputInfos = undos.get(i).getOutputInfoList();
+            // Unspent output info is not present for the coinbase transaction
+            // The first tx is the coinbase tx. Hence, we can skip using -1.
+            List<UnspentOutputInfo> inputInfos = undos.get(i - 1).getOutputInfoList();
             // Apply undo for the inputs
             List<Input> inputs = transaction.getInputs();
             for (int inputIndex = 0; inputIndex < inputs.size(); inputIndex++) {
