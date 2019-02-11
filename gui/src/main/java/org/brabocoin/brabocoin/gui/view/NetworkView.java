@@ -79,6 +79,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @FXML private TableView<Peer> peerTable;
     @FXML private TableColumn<Peer, String> peerIPColumn;
+    @FXML private TableColumn<Peer, String> peerHostnameColumn;
     @FXML private TableColumn<Peer, Integer> peerPortColumn;
     @FXML private TableColumn<Peer, Integer> peerIncomingMessageCountColumn;
     @FXML private TableColumn<Peer, Integer> peerOutgoingMessageCountColumn;
@@ -281,6 +282,11 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             .getAddress()
             .getHostAddress()));
         peerIPColumn.setCellFactory(f -> new StringTableCell<>());
+
+        peerHostnameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
+            .getAddress()
+            .getHostName()));
+        peerHostnameColumn.setCellFactory(f -> new StringTableCell<>());
 
         peerPortColumn.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()
             .getPort()));

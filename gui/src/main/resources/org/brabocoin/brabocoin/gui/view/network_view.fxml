@@ -50,6 +50,7 @@
                     <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
+                            <TableColumn fx:id="peerHostnameColumn" sortable="false" text="Hostname"/>
                             <TableColumn fx:id="peerPortColumn" sortable="false" text="Port"/>
                             <TableColumn fx:id="peerIncomingMessageCountColumn" sortable="false" text="Incoming messages"/>
                             <TableColumn fx:id="peerOutgoingMessageCountColumn" sortable="false" text="Outgoing messages"/>
