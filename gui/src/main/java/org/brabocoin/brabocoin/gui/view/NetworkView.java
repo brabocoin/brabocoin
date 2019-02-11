@@ -203,6 +203,31 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
                 return null;
             }
         };
+
+        ipDataTask.setOnSucceeded(event -> {
+            if (ipDataTask.getValue() == null) {
+                ipTablePlaceholderLabel.setText("Could not get IP data.");
+                return;
+            }
+
+            Platform.runLater(() -> {
+                ipTable.setItems(FXCollections.observableArrayList(ipDataTask.getValue()));
+                ipTable.prefHeightProperty()
+                    .bind(ipTable.fixedCellSizeProperty()
+                        .multiply(Bindings.size(ipTable.getItems()).add(IP_TABLE_HEIGHT_OFFSET)));
+            });
+        });
+
+        externalIpTask.setOnSucceeded(event -> {
+            String result = externalIpTask.getValue();
+            if (result == null) {
+                externalIp.set("Failed getting ip");
+            }
+            else {
+
+                externalIp.set(result);
+            }
+        });
     }
 
     private void refreshIPData() {
@@ -231,33 +256,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         serviceInfoTitledPane.setGraphic(hbox);
 
         buttonRefresh.setOnAction(event -> refreshIPData());
-
-        createTasks();
-
-        ipDataTask.setOnSucceeded(event -> {
-            if (ipDataTask.getValue() == null) {
-                ipTablePlaceholderLabel.setText("Could not get IP data.");
-                return;
-            }
-
-            Platform.runLater(() -> {
-                ipTable.setItems(FXCollections.observableArrayList(ipDataTask.getValue()));
-                ipTable.prefHeightProperty()
-                    .bind(ipTable.fixedCellSizeProperty()
-                        .multiply(Bindings.size(ipTable.getItems()).add(IP_TABLE_HEIGHT_OFFSET)));
-            });
-        });
-
-        externalIpTask.setOnSucceeded(event -> {
-            String result = externalIpTask.getValue();
-            if (result == null) {
-                externalIp.set("Failed getting ip");
-            }
-            else {
-
-                externalIp.set(result);
-            }
-        });
 
         ipNameColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
             .getDeviceName()));
