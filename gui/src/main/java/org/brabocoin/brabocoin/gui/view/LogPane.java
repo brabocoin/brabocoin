@@ -17,7 +17,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
-import org.apache.commons.lang.StringUtils;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.LogTextArea;
@@ -85,7 +84,7 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
                     setText(null);
                 }
                 else {
-                    setText(StringUtils.capitalize(level.toString().toLowerCase()));
+                    setText(level.toString().toUpperCase().charAt(0) + level.toString().toLowerCase().substring(1));
                 }
             }
         };

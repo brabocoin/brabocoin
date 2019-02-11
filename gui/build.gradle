@@ -1,3 +1,13 @@
+buildscript {
+    dependencies {
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
+
 repositories {
     mavenCentral()
     jcenter()
@@ -6,11 +16,19 @@ repositories {
 
 dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
-    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
     compile('org.fxmisc.cssfx:cssfx:1.0.0')
     compile('no.tornado:tornadofx:1.7.17')
 
     compile project(':core')
+}
+
+apply plugin: 'javafx-gradle-plugin'
+
+jfx {
+    mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    vendor = 'Brabocoin'
+    appName = 'brabocoin'
+    
 }
 
 jar {
