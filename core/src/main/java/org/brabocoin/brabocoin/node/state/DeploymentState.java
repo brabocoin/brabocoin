@@ -337,7 +337,8 @@ public class DeploymentState implements State {
             consensus,
             unsecureRandom,
             new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase),
-            config.networkId()
+            config.networkId(),
+            config.targetValue()
         );
     }
 
