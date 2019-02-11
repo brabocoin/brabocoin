@@ -4,6 +4,7 @@ import io.grpc.MethodDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NetworkMessage implements Comparable<NetworkMessage> {
@@ -38,11 +39,11 @@ public class NetworkMessage implements Comparable<NetworkMessage> {
     }
 
     public List<MessageArtifact> getRequestMessages() {
-        return requestMessages;
+        return Collections.unmodifiableList(requestMessages);
     }
 
     public List<MessageArtifact> getResponseMessages() {
-        return responseMessages;
+        return Collections.unmodifiableList(responseMessages);
     }
 
     public void addRequestMessage(MessageArtifact artifact) {

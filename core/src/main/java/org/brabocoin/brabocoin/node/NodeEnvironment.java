@@ -121,6 +121,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         sentMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
         peerProcessor.addPeerSetChangedListener(this);
+        networkMessageListeners.add(this.peerProcessor);
     }
 
     /**

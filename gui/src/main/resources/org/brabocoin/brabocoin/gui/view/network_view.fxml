@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.SplitPane?>
@@ -8,13 +9,67 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkView">
-    <Tab closable="false" text="Peers" disable="true"/>
+    <Tab closable="false" text="Peers">
+        <VBox>
+            <TitledPane fx:id="serviceInfoTitledPane" collapsible="false">
+                <VBox spacing="10">
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="External IP address:"/>
+                        <SelectableLabel fx:id="externalIpLabel" alignment="CENTER_LEFT"/>
+                    </HBox>
+                    <Label text="Local IP addresses:"/>
+                    <TableView fx:id="ipTable">
+                        <columns>
+                            <TableColumn fx:id="ipNameColumn" sortable="false" text="Name"/>
+                            <TableColumn fx:id="ipValueColumn" sortable="false" text="IP"/>
+                            <TableColumn fx:id="ipHostnameColumn" sortable="false" text="Hostname"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <ProgressIndicator maxHeight="20"/>
+                                <Label fx:id="ipTablePlaceholderLabel" text="Loading data..."/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="Port:"/>
+                        <SelectableLabel fx:id="portLabel"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+            <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
+                <VBox VBox.vgrow="ALWAYS">
+                    <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
+                            <TableColumn fx:id="peerHostnameColumn" sortable="false" text="Hostname"/>
+                            <TableColumn fx:id="peerPortColumn" sortable="false" text="Port"/>
+                            <TableColumn fx:id="peerIncomingMessageCountColumn" sortable="false" text="Incoming messages"/>
+                            <TableColumn fx:id="peerOutgoingMessageCountColumn" sortable="false" text="Outgoing messages"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="5">
+                                <Label text="No connected peers."/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                    <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
+                        <Button text="Discover peers" onAction="#discoverPeers"/>
+                        <Button text="+" onAction="#addPeer"/>
+                        <Button text="-" onAction="#removePeer"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+        </VBox>
+    </Tab>
     <Tab closable="false" text="Messages">
         <SplitPane dividerPositions="0.5" orientation="VERTICAL">
             <TitledPane text="Incoming messages" collapsible="false">

@@ -90,7 +90,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         );
 
         walletView = new WalletView(state);
-        networkView = new NetworkView(state);
+        networkView = new NetworkView(state, taskManager);
 
         toggleToViewMap = new HashMap<>();
         toggleToViewMap.put(stateToggleButton, currentStateView);
