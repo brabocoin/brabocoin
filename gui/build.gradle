@@ -1,17 +1,5 @@
-buildscript {
-    dependencies {
-        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
-    }
-
-    repositories {
-        mavenCentral()
-    }
-}
-
 repositories {
-    mavenCentral()
     jcenter()
-    maven { url 'http://maven.bestsolution.at/efxclipse-releases/' }
 }
 
 dependencies {
@@ -22,23 +10,19 @@ dependencies {
     compile project(':core')
 }
 
-apply plugin: 'javafx-gradle-plugin'
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    baseName 'brabocoin'
+    classifier null
+    reallyExecutable
 
-jfx {
-    mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
-    vendor = 'Brabocoin'
-    appName = 'brabocoin'
-    
-}
-
-jar {
-    manifest {
-        attributes(
-            'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
-        )
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.gui'
+        applicationName = 'Brabocoin'
     }
 }
 
-shadowJar {
-    classifier = null
+artifacts {
+    archives fatCapsule
 }

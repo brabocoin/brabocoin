@@ -58,17 +58,19 @@ clean {
     delete protobuf.generatedFilesBaseDir
 }
 
-jar {
-    manifest {
-        attributes(
-            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
-        )
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.BrabocoinApplication'
+    baseName 'brabocoin'
+    classifier 'headless'
+    reallyExecutable
+
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.core'
+        applicationName = 'Brabocoin'
     }
 }
 
-shadowJar {
-    classifier = 'headless'
-    dependencies {
-        exclude(dependency('org.bouncycastle:bcprov-jdk15on'))
-    }
+artifacts {
+    archives fatCapsule
 }
