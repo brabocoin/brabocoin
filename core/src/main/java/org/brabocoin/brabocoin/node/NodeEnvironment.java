@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.node;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
@@ -156,7 +157,6 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
             }
         }, 0, updatePeerInterval * 1000);
 
-        updateBlockchain();
         seekTransactionPoolRequest();
     }
 
@@ -181,13 +181,23 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     }
 
     /**
-     * Update the blockchain, requesting the top heights of each peer.
+     * Update the blockchain, requesting the top heights of all peers.
      * Also call  {@link #seekBlockchainRequest} on the peer with the longest chain, if the chain
      * is longer than the current chain.
      */
     private synchronized void updateBlockchain() {
+        Set<Peer> peers = getPeers();
+        updateBlockchain(peers.toArray(new Peer[peers.size()]));
+    }
+
+    /**
+     * Update the blockchain, requesting the top heights of the given peers.
+     * Also call  {@link #seekBlockchainRequest} on the peer with the longest chain, if the chain
+     * is longer than the current chain.
+     */
+    private synchronized void updateBlockchain(Peer... peers) {
         LOGGER.info("Update blockchain.");
-        Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest();
+        Map<Peer, Integer> topBlockHeights = discoverTopBlockHeightRequest(peers);
         Optional<Map.Entry<Peer, Integer>> maxHeightEntryOptional = topBlockHeights
             .entrySet()
             .stream()
@@ -320,6 +330,9 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     public void onPeerAdded(Peer peer) {
         peer.addNetworkMessageListener(this);
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(null, false));
+
+        // Sync with this peer
+        messageQueue.add(() -> updateBlockchain(peer));
     }
 
     @Override
@@ -769,12 +782,12 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *
      * @return A map of peer matching its block height.
      */
-    public synchronized Map<Peer, Integer> discoverTopBlockHeightRequest() {
+    public synchronized Map<Peer, Integer> discoverTopBlockHeightRequest(Peer... peers) {
         LOGGER.fine("Requesting peers for top block height.");
 
         Map<Peer, Integer> peerHeights = new HashMap<>();
 
-        for (Peer peer : getPeers()) {
+        for (Peer peer : peers) {
             BrabocoinProtos.BlockHeight protoBlockHeight = peer.getBlockingStub()
                 .discoverTopBlockHeight(Empty.newBuilder().build());
             LOGGER.log(
