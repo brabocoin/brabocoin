@@ -387,6 +387,7 @@ public class TransactionPool implements Iterable<Transaction> {
             "Promoted {0} transactions to independent.",
             transactions.size()
         ));
+        listeners.forEach(l -> l.onDependentTransactionsPromoted(transactions));
     }
 
     /**
@@ -408,6 +409,7 @@ public class TransactionPool implements Iterable<Transaction> {
             "Demoted {0} transactions from dependent to independent.",
             transactions.size()
         ));
+        listeners.forEach(l -> l.onIndependentTransactionsDemoted(transactions));
     }
 
     /**
