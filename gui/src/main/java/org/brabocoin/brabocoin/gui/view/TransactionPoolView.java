@@ -64,14 +64,14 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
         independentPane.textProperty().bind(
             Bindings.createStringBinding(
                 () -> "Independent transactions (" + independentTable.getItems().size() + ")",
-                Bindings.size(independentTable.getItems())
+                independentTable.getItems()
             )
         );
 
         dependentPane.textProperty().bind(
             Bindings.createStringBinding(
                 () -> "Dependent transactions (" + dependentTable.getItems().size() + ")",
-                Bindings.size(dependentTable.getItems())
+                dependentTable.getItems()
             )
         );
 
