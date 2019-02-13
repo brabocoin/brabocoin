@@ -24,7 +24,7 @@ dependencies {
     compile('org.apache.commons:commons-collections4:4.2')
     compile(fileTree('lib') { include '*.jar' })
 
-    implementation('com.github.BAData:protobuf-converter:1.1.5')
+    compile('com.github.BAData:protobuf-converter:1.1.5')
 }
 
 protobuf {
