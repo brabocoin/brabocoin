@@ -124,7 +124,7 @@ public class PeerProcessor implements NetworkMessageListener {
      * Tries to handshake with bootstrapping peers until the desired number of peers are found.
      * This constant is defined in the config.
      */
-    public synchronized void discoverPeers(List<Peer> handshakePeers) {
+    public void discoverPeers(List<Peer> handshakePeers) {
         LOGGER.info("Discovering peers initiated.");
 
         if (handshakePeers.size() <= 0) {
@@ -181,7 +181,7 @@ public class PeerProcessor implements NetworkMessageListener {
     /**
      * Removes unresponsive peers, using the handshake RPC.
      */
-    public synchronized void clearDeadPeers() {
+    public void clearDeadPeers() {
         Iterator<Peer> peerIterator = peers.iterator();
         while (peerIterator.hasNext()) {
             Peer peer = peerIterator.next();
