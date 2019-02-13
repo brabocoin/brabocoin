@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.services;
 
+import com.dosse.upnp.UPnP;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -55,6 +56,7 @@ public class Node {
     private final AtomicReference<ServerCall<?, ?>> serverCallCapture =
         new AtomicReference<>();
 
+    private final int servicePort;
     /**
      * The network id of this node
      */
@@ -103,7 +105,7 @@ public class Node {
                                     true
                                 ));
                         }
-                    }, requestHeaders),networkMessage);
+                    }, requestHeaders), networkMessage);
             }
         };
     }
@@ -144,6 +146,7 @@ public class Node {
             )
             .build();
         this.environment = environment;
+        this.servicePort = servicePort;
         this.networkId = networkId;
 
         networkMessageListeners.add(this.environment);
@@ -151,10 +154,26 @@ public class Node {
 
     public void start() throws IOException {
         LOGGER.info("Starting node.");
+        attemptUPnP();
         environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
+    }
+
+    private void attemptUPnP() {
+        if (!UPnP.isUPnPAvailable()) {
+            LOGGER.log(Level.WARNING, "UPnP not available in current network, will not attempt to open port.");
+            return;
+        }
+
+        try {
+            UPnP.openPortTCP(servicePort);
+            LOGGER.log(Level.INFO, MessageFormat.format("UPnP port ({0}) opened.", servicePort));
+        }
+        catch (Exception e) {
+            LOGGER.log(Level.WARNING, MessageFormat.format("UPnP port ({0}) opening did not succeed.", servicePort));
+        }
     }
 
     public void stop() {
