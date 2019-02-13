@@ -1,18 +1,25 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
 @ValidationRule(name="Correct signature amount", description = "The amount of signatures is equal to the amount of inputs.")
 public class SignatureCountTxRule extends TransactionRule {
+    @DescriptionField
+    private int signatureCount;
+
+    @DescriptionField
+    private int inputCount;
 
     @Override
     public boolean isValid() {
-        int signatureCount = transaction.getSignatures().size();
+        signatureCount = transaction.getSignatures().size();
+        inputCount = transaction.getInputs().size();
         if (transaction.isCoinbase()) {
             return signatureCount == 0;
         }
 
-        return transaction.getInputs().size() == signatureCount;
+        return inputCount == signatureCount;
     }
 }

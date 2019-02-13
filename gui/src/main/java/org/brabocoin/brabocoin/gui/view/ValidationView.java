@@ -1,10 +1,16 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import com.google.common.io.Resources;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
@@ -14,6 +20,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -30,10 +37,18 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
+import org.jtwig.JtwigModel;
+import org.jtwig.JtwigTemplate;
+import org.jtwig.resource.exceptions.ResourceNotFoundException;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,11 +62,14 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     private final Map<Class, List<TreeItem<String>>> ruleTreeItemMap;
     private final Map<TreeItem, Transaction> transactionItemMap;
+    private final Map<TreeItem, String> descriptionItemMap;
     private final Validator validator;
     private TransactionDetailView transactionDetailView;
     private BlockDetailView blockDetailView;
     private Transaction transaction;
     private Block block;
+    private WebEngine descriptionWebEngine;
+    @FXML private MasterDetailPane masterDetailNode;
 
     private static final RuleList skippedBlockRules = new RuleList(
         DuplicateStorageBlkRule.class,
@@ -170,12 +188,20 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ruleTreeItemMap.get(rule).add(ruleTreeItem);
             }
             else {
-                ruleTreeItemMap.put(rule, new ArrayList<TreeItem<String>>() {{
-                    add(ruleTreeItem);
-                }});
+                ruleTreeItemMap.put(rule, Collections.singletonList(ruleTreeItem));
             }
             node.getChildren().add(ruleTreeItem);
         }
+    }
+
+    private void createDescriptionNode() {
+        WebView browser = new WebView();
+        descriptionWebEngine = browser.getEngine();
+
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(browser);
+
+        masterDetailNode.setDetailNode(scrollPane);
     }
 
     public ValidationView(@NotNull Transaction transaction, @NotNull
@@ -191,6 +217,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.setDetailNode(transactionDetailView);
 
         BraboControlInitializer.initialize(this);
+        descriptionItemMap = new HashMap<>();
     }
 
     public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
@@ -206,6 +233,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.setDetailNode(blockDetailView);
 
         BraboControlInitializer.initialize(this);
+        descriptionItemMap = new HashMap<>();
     }
 
     private boolean isForBlock() {
@@ -214,7 +242,18 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        createDescriptionNode();
         loadRules();
+
+        ruleView.getSelectionModel()
+            .selectedItemProperty()
+            .addListener((observable, oldValue, newValue) -> {
+                String data = "This rule was not executed.";
+                if (descriptionItemMap.containsKey(newValue)) {
+                    data = descriptionItemMap.get(newValue);
+                }
+                descriptionWebEngine.loadContent(data);
+            });
 
         ValidationView me = this;
         Platform.runLater(() -> {
@@ -238,6 +277,40 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 validator.removeListener(this);
             }
         });
+    }
+
+    public String deriveDescription(Rule rule, RuleBookResult result) {
+        String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
+        JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
+
+        JtwigModel model = JtwigModel.newModel();
+
+        for (Field field : rule.getClass().getDeclaredFields()) {
+            if (field.getAnnotation(DescriptionField.class) != null) {
+                field.setAccessible(true);
+
+                Object value;
+                try {
+                    value = field.get(rule);
+                }
+                catch (IllegalAccessException e) {
+                    value = "NOT-FOUND";
+                }
+
+                model.with(
+                    field.getName(),
+                    MessageFormat.format("<code>{0}</code>", value.toString())
+                );
+            }
+        }
+
+        try {
+            return template.render(model);
+        }
+        catch (
+            ResourceNotFoundException e) {
+            return "Could not find rule description template.";
+        }
     }
 
     @Override
@@ -284,6 +357,8 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         else {
             throw new IllegalStateException("Rule of invalid type");
         }
+
+        descriptionItemMap.put(item, deriveDescription(rule, result));
 
         if (result.isPassed()) {
             Platform.runLater(() -> {
