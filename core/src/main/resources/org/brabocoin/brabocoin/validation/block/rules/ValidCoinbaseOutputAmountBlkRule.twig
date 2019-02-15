@@ -1,0 +1,7 @@
+This rule checks whether the coinbase output amount is less or equal to the block reward determined by consensus plus the sum of fees in each transaction in the block.<br>
+<br>
+Fee sum: {{ feeSum }}<br>
+Consensus block reward: {{ blockReward }}<br>
+Coinbase output in block: {{ coinbaseOutput }}<br>
+<br>
+Check: <code>{{ coinbaseOutput }} <= {{ blockReward }} + {{ feeSum }}</code>

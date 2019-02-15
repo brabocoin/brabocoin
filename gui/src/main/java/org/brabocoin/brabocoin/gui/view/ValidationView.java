@@ -1,14 +1,11 @@
 package org.brabocoin.brabocoin.gui.view;
 
-import com.google.common.io.Resources;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.brabocoin.brabocoin.chain.Blockchain;
@@ -28,6 +25,7 @@ import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheck
 import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.LegalTransactionFeesBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
+import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseOutputAmountBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
@@ -35,22 +33,19 @@ import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
 import org.jtwig.resource.exceptions.ResourceNotFoundException;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,15 +66,51 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private WebEngine descriptionWebEngine;
     @FXML private MasterDetailPane masterDetailNode;
 
+    private final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
+    private final BraboGlyph.Icon ICON_SKIPPED = BraboGlyph.Icon.CIRCLEMINUS;
+    private final BraboGlyph.Icon ICON_SUCCESS = BraboGlyph.Icon.CHECK;
+    private final BraboGlyph.Icon ICON_FAIL = BraboGlyph.Icon.CROSS;
+
+    public enum RuleState {
+        PENDING,
+        SKIPPED,
+        SUCCESS,
+        FAIL
+    }
+
+    private BraboGlyph createIcon(RuleState state) {
+        switch (state) {
+            case PENDING:
+                BraboGlyph glyphPending = new BraboGlyph(ICON_PENDING);
+                return glyphPending;
+            case SKIPPED:
+                BraboGlyph glyphSkipped = new BraboGlyph(ICON_SKIPPED);
+                glyphSkipped.setColor(Color.GRAY);
+                return glyphSkipped;
+            case SUCCESS:
+                BraboGlyph glyphSuccess = new BraboGlyph(ICON_SUCCESS);
+                glyphSuccess.setColor(Color.GREEN);
+                return glyphSuccess;
+            case FAIL:
+                BraboGlyph glyphFail = new BraboGlyph(ICON_FAIL);
+                glyphFail.setColor(Color.RED);
+                return glyphFail;
+        }
+
+        return null;
+    }
+
     private static final RuleList skippedBlockRules = new RuleList(
         DuplicateStorageBlkRule.class,
         UniqueUnspentCoinbaseBlkRule.class,
         ContextualTransactionCheckBlkRule.class,
-        LegalTransactionFeesBlkRule.class
+        LegalTransactionFeesBlkRule.class,
+        ValidCoinbaseOutputAmountBlkRule.class
     );
 
     private static final RuleList skippedTransactionRules = new RuleList(
-        Collections.emptyList()
+        DuplicatePoolTxRule.class,
+        PoolDoubleSpendingTxRule.class
     );
 
     private static final RuleList blockRules = new RuleList(
@@ -115,10 +146,10 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         for (Class rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
             if (ignored || isSkippedRuleClass(rule)) {
-                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+                ruleTreeItem.setGraphic(createIcon(RuleState.SKIPPED));
             }
             else {
-                ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLE));
+                ruleTreeItem.setGraphic(createIcon(RuleState.PENDING));
             }
 
             Annotation annotation = rule.getAnnotation(ValidationRule.class);
@@ -127,7 +158,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ruleTreeItem.setValue(validationRule.name());
 
                 if (isSkippedRuleClass(rule) && !validationRule.composite()) {
-                    ruleTreeItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+                    ruleTreeItem.setGraphic(createIcon(RuleState.SKIPPED));
                 }
                 else if (validationRule.composite()) {
                     RuleList composite = null;
@@ -156,7 +187,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
                         if (tx.isCoinbase()) {
                             txItem.setValue("Coinbase");
-                            txItem.setGraphic(new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS));
+                            txItem.setGraphic(createIcon(RuleState.SKIPPED));
                             txItem.setExpanded(false);
                             addRules(txItem, composite, true);
                         }
@@ -164,8 +195,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                             txItem.setValue("Transaction " + i);
                             txItem.setGraphic(
                                 isSkippedRuleClass(rule) ?
-                                    new BraboGlyph(BraboGlyph.Icon.CIRCLEMINUS) :
-                                    new BraboGlyph(BraboGlyph.Icon.CIRCLE)
+                                    createIcon(RuleState.SKIPPED) : createIcon(RuleState.PENDING)
                             );
                             txItem.setExpanded(true);
 
@@ -188,7 +218,9 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ruleTreeItemMap.get(rule).add(ruleTreeItem);
             }
             else {
-                ruleTreeItemMap.put(rule, Collections.singletonList(ruleTreeItem));
+                ruleTreeItemMap.put(rule, new ArrayList<TreeItem<String>>() {{
+                    add(ruleTreeItem);
+                }});
             }
             node.getChildren().add(ruleTreeItem);
         }
@@ -198,10 +230,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         WebView browser = new WebView();
         descriptionWebEngine = browser.getEngine();
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(browser);
-
-        masterDetailNode.setDetailNode(scrollPane);
+        masterDetailNode.setDetailNode(browser);
     }
 
     public ValidationView(@NotNull Transaction transaction, @NotNull
@@ -279,7 +308,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         });
     }
 
-    public String deriveDescription(Rule rule, RuleBookResult result) {
+    private String deriveDescription(Rule rule, RuleBookResult result) {
         String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
@@ -360,21 +389,25 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
         descriptionItemMap.put(item, deriveDescription(rule, result));
 
+        if (item == null) {
+            return;
+        }
+
         if (result.isPassed()) {
             Platform.runLater(() -> {
-                item.setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+                item.setGraphic(createIcon(RuleState.SUCCESS));
 
                 if (item.getParent()
                     .getChildren()
                     .stream()
                     .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
-                        .equals(BraboGlyph.Icon.CHECK))) {
-                    item.getParent().setGraphic(new BraboGlyph(BraboGlyph.Icon.CHECK));
+                        .equals(ICON_SUCCESS))) {
+                    item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
                 }
             });
         }
         else {
-            Platform.runLater(() -> item.setGraphic(new BraboGlyph(BraboGlyph.Icon.CROSS)));
+            Platform.runLater(() -> item.setGraphic(createIcon(RuleState.FAIL)));
         }
 
         Platform.runLater(() -> ruleView.refresh());

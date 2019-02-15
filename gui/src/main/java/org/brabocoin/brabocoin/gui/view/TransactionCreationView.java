@@ -2,8 +2,8 @@ package org.brabocoin.brabocoin.gui.view;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.JsonFormat;
-import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -17,7 +17,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 import javafx.util.converter.LongStringConverter;
 import org.brabocoin.brabocoin.chain.Blockchain;
@@ -62,12 +61,14 @@ import tornadofx.SmartResizeKt;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TransactionCreationView extends VBox implements BraboControl, Initializable {
 
@@ -359,7 +360,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             }
 
             // Prevent coinbase maturity failure
-            if (consensus.immatureCoinbase(blockchain.getMainChain().getHeight(), info.getValue())) {
+            if (consensus.immatureCoinbase(
+                blockchain.getMainChain().getHeight(),
+                info.getValue()
+            )) {
                 continue;
             }
 
@@ -388,67 +392,73 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void signTransaction(ActionEvent event) {
         signatureTableView.getItems().clear();
 
-        Platform.runLater(() -> {
-            FadeTransition fade = new FadeTransition();
-            fade.setDuration(Duration.millis(100));
-            fade.setFromValue(1);
-            fade.setToValue(0.1);
-            fade.setCycleCount(2);
-            fade.setAutoReverse(true);
-            fade.setNode(inputOutputVBox);
-            fade.play();
+
+        Task<TransactionSigningResult> signingTask = new Task<TransactionSigningResult>() {
+            @Override
+            protected TransactionSigningResult call() {
+                TransactionSigningResult result = null;
+                do {
+                    try {
+                        result = wallet.signTransaction(buildUnsignedTransaction());
+                    }
+                    catch (DatabaseException | DestructionException e) {
+                        errorDialog(
+                            "Transaction signing failed due to database or destruction error.");
+                        break;
+                    }
+
+                    if (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED) {
+                        KeyPair lockedKeyPair = result.getLockedKeyPair();
+
+                        UnlockDialog<Object> privateKeyUnlockDialog = new UnlockDialog<>(
+                            false,
+                            (d) -> {
+                                try {
+                                    lockedKeyPair.getPrivateKey().unlock(d);
+                                }
+                                catch (CipherException | DestructionException e) {
+                                    return null;
+                                }
+
+                                return new Object();
+                            }
+                        );
+
+                        privateKeyUnlockDialog.setTitle("Unlock private key");
+                        privateKeyUnlockDialog.setHeaderText("Enter password for address: " + lockedKeyPair
+                            .getPublicKey()
+                            .getBase58Address());
+
+                        Optional<Object> unlockResult = privateKeyUnlockDialog.showAndWait();
+
+                        if (!unlockResult.isPresent()) {
+                            break;
+                        }
+                    }
+                }
+                while (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED);
+
+                return result;
+            }
+        };
+
+        signingTask.setOnSucceeded(e -> {
+            TransactionSigningResult result = signingTask.getValue();
+
+            if (result != null && result.getStatus() == TransactionSigningStatus.SIGNED) {
+                Transaction signedTransaction = result.getTransaction();
+
+                List<EditableTableSignatureEntry> entries = IntStream.range(
+                    0,
+                    signedTransaction.getSignatures().size()
+                ).mapToObj(i -> new EditableTableSignatureEntry(signedTransaction.getSignatures()
+                    .get(i), i)).collect(Collectors.toList());
+
+                Platform.runLater(() -> signatureTableView.getItems().setAll(entries));
+            }
         });
 
-        TransactionSigningResult result = null;
-        do {
-            try {
-                result = wallet.signTransaction(buildUnsignedTransaction());
-            }
-            catch (DatabaseException | DestructionException e) {
-                errorDialog("Transaction signing failed due to database or destruction error.");
-                break;
-            }
-
-            if (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED) {
-                KeyPair lockedKeyPair = result.getLockedKeyPair();
-
-                UnlockDialog<Object> privateKeyUnlockDialog = new UnlockDialog<>(
-                    false,
-                    (d) -> {
-                        try {
-                            lockedKeyPair.getPrivateKey().unlock(d);
-                        }
-                        catch (CipherException | DestructionException e) {
-                            return null;
-                        }
-
-                        return new Object();
-                    }
-                );
-
-                privateKeyUnlockDialog.setTitle("Unlock private key");
-                privateKeyUnlockDialog.setHeaderText("Enter password for address: " + lockedKeyPair.getPublicKey()
-                    .getBase58Address());
-
-                Optional<Object> unlockResult = privateKeyUnlockDialog.showAndWait();
-
-                if (!unlockResult.isPresent()) {
-                    break;
-                }
-            }
-        }
-        while (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED);
-
-        if (result != null && result.getStatus() == TransactionSigningStatus.SIGNED) {
-            Transaction signedTransaction = result.getTransaction();
-
-            signedTransaction.getSignatures().forEach(
-                s -> signatureTableView.getItems().add(
-                    new EditableTableSignatureEntry(s, signatureTableView.getItems().size())
-                )
-            );
-            signatureTableView.refresh();
-        }
+        signingTask.run();
     }
 
     @FXML
