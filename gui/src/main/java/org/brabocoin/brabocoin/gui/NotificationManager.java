@@ -3,23 +3,24 @@ package org.brabocoin.brabocoin.gui;
 import javafx.application.Platform;
 import javafx.util.Duration;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
-import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
-import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
+import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.Action;
 
-public class NotificationManager implements BlockReceivedListener, TransactionReceivedListener {
+import java.text.MessageFormat;
+
+public class NotificationManager implements NotificationListener {
 
     private final State state;
 
     public NotificationManager(State state) {
         this.state = state;
 
-        state.getEnvironment().addBlockListener(this);
-        state.getEnvironment().addTransactionListener(this);
+        state.getEnvironment().addNotificationListener(this);
+        state.getBlockProcessor().addNotificationListener(this);
     }
 
     @Override
@@ -58,5 +59,15 @@ public class NotificationManager implements BlockReceivedListener, TransactionRe
             ))
             .hideAfter(Duration.seconds(8))
             .showInformation());
+    }
+
+    @Override
+    public void forkSwitched(int height) {
+        Platform.runLater(() ->
+            Notifications.create()
+                .title(MessageFormat.format("Switched fork at height {0}", height))
+                .hideAfter(Duration.seconds(8))
+                .showInformation()
+        );
     }
 }
