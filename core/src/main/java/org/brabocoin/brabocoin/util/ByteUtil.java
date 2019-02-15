@@ -60,7 +60,7 @@ public final class ByteUtil {
      * Convert a ByteString to a hexadecimal string representation of the bytes.
      *
      * @param byteString
-     *     The value to convert.
+     *     The value to convert.b
      * @return The hexadecimal representation of the bytes in a string.
      */
     public static String toHexString(ByteString byteString) {

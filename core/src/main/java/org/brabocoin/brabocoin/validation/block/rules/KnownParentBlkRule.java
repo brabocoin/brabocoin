@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
@@ -9,11 +10,14 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class KnownParentBlkRule extends BlockRule {
 
     private Blockchain blockchain;
+    @DescriptionField
+    private boolean parentStored;
 
     @Override
     public boolean isValid() {
         try {
-            return blockchain.isBlockStored(block.getPreviousBlockHash());
+            parentStored = blockchain.isBlockStored(block.getPreviousBlockHash());
+            return parentStored;
         }
         catch (DatabaseException e) {
             e.printStackTrace();

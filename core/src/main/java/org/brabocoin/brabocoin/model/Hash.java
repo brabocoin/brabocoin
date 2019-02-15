@@ -7,6 +7,7 @@ import org.bouncycastle.util.Arrays;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -113,5 +114,10 @@ public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
         public Hash build() {
             return new Hash(value);
         }
+    }
+
+    @Override
+    public String toString() {
+        return ByteUtil.toHexString(value, 32);
     }
 }
