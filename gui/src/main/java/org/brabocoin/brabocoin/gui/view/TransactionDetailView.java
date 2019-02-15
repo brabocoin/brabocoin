@@ -13,6 +13,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
@@ -98,7 +100,10 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     private void loadTransaction(@NotNull Transaction transaction) {
         buttonValidate.setVisible(validator != null);
-        hashField.setText(ByteUtil.toHexString(transaction.getHash().getValue(), Constants.TRANSACTION_HASH_SIZE));
+        hashField.setText(ByteUtil.toHexString(
+            transaction.getHash().getValue(),
+            Constants.TRANSACTION_HASH_SIZE
+        ));
 
         inputTableView.getItems().setAll(transaction.getInputs());
         outputTableView.getItems().setAll(transaction.getOutputs());
@@ -118,9 +123,11 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
         // Input table
         inputIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
-        inputReferencedTxColumn.setCellValueFactory(new PropertyValueFactory<>("referencedTransaction"));
+        inputReferencedTxColumn.setCellValueFactory(new PropertyValueFactory<>(
+            "referencedTransaction"));
         inputReferencedTxColumn.setCellFactory(col -> new HashTableCell<>(Constants.TRANSACTION_HASH_SIZE));
-        inputReferencedOutputColumn.setCellValueFactory(new PropertyValueFactory<>("referencedOutputIndex"));
+        inputReferencedOutputColumn.setCellValueFactory(new PropertyValueFactory<>(
+            "referencedOutputIndex"));
 
         // Output table
         outputIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
@@ -146,8 +153,14 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     }
 
     private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
-        tableView.prefHeightProperty().bind(tableView.fixedCellSizeProperty().multiply(Bindings.size(tableView.getItems()).add(1.01)));
-        tableView.minHeightProperty().bind(Bindings.max(tableView.prefHeightProperty(), tableView.fixedCellSizeProperty().multiply(minRowsVisible + 1.01)));
+        tableView.prefHeightProperty()
+            .bind(tableView.fixedCellSizeProperty()
+                .multiply(Bindings.size(tableView.getItems()).add(1.01)));
+        tableView.minHeightProperty()
+            .bind(Bindings.max(
+                tableView.prefHeightProperty(),
+                tableView.fixedCellSizeProperty().multiply(minRowsVisible + 1.01)
+            ));
         tableView.maxHeightProperty().bind(tableView.prefHeightProperty());
     }
 
@@ -180,5 +193,21 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     @FXML
     protected void propagate(ActionEvent event) {
         nodeEnvironment.announceTransactionRequest(transaction.get());
+    }
+
+    @FXML
+    protected void copyUnsignedData(ActionEvent event) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+
+        try {
+            content.putString(
+                ByteUtil.toHexString(transaction.get().getRawData())
+            );
+            clipboard.setContent(content);
+        }
+        catch (Exception e) {
+            // ignore
+        }
     }
 }

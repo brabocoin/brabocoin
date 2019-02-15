@@ -102,7 +102,7 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
     }
 
 
-    private @NotNull ByteString getRawData() {
+    public @NotNull ByteString getRawData() {
         return ProtoConverter.toProto(
             new UnsignedTransaction(this),
             BrabocoinProtos.UnsignedTransaction.class

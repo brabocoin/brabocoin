@@ -59,6 +59,10 @@
                 </TableView>
             </TitledPane>
 
+            <HBox alignment="BASELINE_RIGHT">
+                <Button onAction="#copyUnsignedData" text="Copy unsigned data"/>
+            </HBox>
+
             <TitledPane text="Signatures" collapsible="false">
                 <TableView fx:id="signatureTableView" fixedCellSize="24">
                     <columns>

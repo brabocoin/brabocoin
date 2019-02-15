@@ -49,6 +49,7 @@ import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
@@ -91,7 +92,6 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     @FXML public Button buttonSignTransaction;
     @FXML public VBox inputOutputVBox;
     @FXML public Button buttonSendTransaction;
-    @FXML public Button buttonCopyJSON;
     @FXML public Button buttonAddSignature;
     @FXML public Button buttonRemoveSignature;
     @FXML public Button buttonCreateChange;
@@ -359,7 +359,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             }
 
             // Prevent coinbase maturity failure
-            if (consensus.immatureCoinbase(blockchain.getMainChain().getHeight(), info.getValue())) {
+            if (consensus.immatureCoinbase(
+                blockchain.getMainChain().getHeight(),
+                info.getValue()
+            )) {
                 continue;
             }
 
@@ -539,6 +542,22 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             );
 
             content.putString(JsonFormat.printer().print(protoTransaction));
+            clipboard.setContent(content);
+        }
+        catch (Exception e) {
+            // ignore
+        }
+    }
+
+
+    @FXML
+    private void copyUnsignedData(ActionEvent event) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+
+        try {
+            content.putString(
+                ByteUtil.toHexString(buildUnsignedTransaction().getRawData()));
             clipboard.setContent(content);
         }
         catch (Exception e) {
