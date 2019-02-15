@@ -52,7 +52,8 @@ public class Miner {
 
     /**
      * Create a new miner that is able to mine a new block.
-     *  @param transactionPool
+     *
+     * @param transactionPool
      *     The transaction pool to retrieve transactions from.
      * @param consensus
      *     The consensus.
@@ -188,7 +189,9 @@ public class Miner {
                 continue;
             }
 
-            int transactionSize = serialized.size();
+            // Protobuf uses separators for repeated fields, these are 3 bytes long for
+            // transactions.
+            int transactionSize = serialized.size() + 3;
 
             // Skip if the max transactions size is reached
             if (usedSize + transactionSize > maxTransactionsSize) {
