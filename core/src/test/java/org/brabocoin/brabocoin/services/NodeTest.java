@@ -20,7 +20,6 @@ import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -1204,7 +1203,7 @@ public class NodeTest {
      * Node B tries to acquire the transaction pool from its peer A on startup.
      * Node B mines a block using all transaction.
      */
-    @RepeatedTest(20)
+    @Test
     void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
         State stateA = new TestState(new MockBraboConfig(defaultConfig) {
             @Override
