@@ -272,6 +272,11 @@ public class Blockchain {
      *     The block to add as orphan.
      */
     public synchronized void addOrphan(@NotNull Block block) {
+        if (orphanIndex.containsKey(block.getHash())) {
+            LOGGER.fine("Adding block as orphan, but is already present in orphan index.");
+            return;
+        }
+
         LOGGER.fine("Adding block as orphan.");
         orphanMap.put(block.getPreviousBlockHash(), block);
         orphanIndex.put(block.getHash(), block);
