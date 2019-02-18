@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -313,7 +314,7 @@ class BlockProcessorTest {
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction),
+            Arrays.asList(Transaction.coinbase(Simulation.randomOutput(), 1), transaction),
             0
         );
         Hash hashA = blockA.getHash();
@@ -444,7 +445,7 @@ class BlockProcessorTest {
 
         // Check UTXO
         assertFalse(state.getChainUTXODatabase()
-            .isUnspent(blockA.getTransactions().get(0).getHash(), 0));
+            .isUnspent(blockA.getTransactions().get(1).getHash(), 0));
         assertFalse(state.getChainUTXODatabase()
             .isUnspent(blockB.getTransactions().get(0).getHash(), 0));
         assertFalse(state.getChainUTXODatabase()
@@ -461,7 +462,7 @@ class BlockProcessorTest {
 
         // Check transaction pool
         assertTrue(state.getTransactionPool()
-            .hasValidTransaction(blockA.getTransactions().get(0).getHash()));
+            .hasValidTransaction(blockA.getTransactions().get(1).getHash()));
         assertFalse(state.getTransactionPool()
             .hasValidTransaction(blockB.getTransactions().get(0).getHash()));
         assertFalse(state.getTransactionPool()

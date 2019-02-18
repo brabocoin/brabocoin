@@ -191,7 +191,7 @@ class TransactionRuleTests {
         List<Block> blockList = new ArrayList<Block>() {{
             add(block);
         }};
-        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5));
+        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5, false));
 
         for (Block b : blockList) {
             state.getBlockProcessor().processNewBlock(b, false);

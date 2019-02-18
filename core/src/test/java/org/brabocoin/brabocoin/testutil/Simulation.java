@@ -39,16 +39,21 @@ public class Simulation {
 
     public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
                                                         int startBlockHeight) {
-        return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5);
+        return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5, false);
+    }
+
+    public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
+                                                        int startBlockHeight, boolean withCoinbases) {
+        return randomBlockChainGenerator(length, previousHash, startBlockHeight, 5, 5, withCoinbases);
     }
 
     public static List<Block> randomBlockChainGenerator(int length, Hash previousHash,
                                                         int startBlockHeight, int inputs,
-                                                        int outputs) {
+                                                        int outputs, boolean withCoinbases) {
         List<Block> list = new ArrayList<>();
 
         for (int i = startBlockHeight; i < length + startBlockHeight; i++) {
-            Block block = randomBlock(previousHash, i, inputs, outputs, 30);
+            Block block = randomBlock(previousHash, i, inputs, outputs, 30, withCoinbases);
             previousHash = block.getHash();
             list.add(block);
         }
@@ -98,15 +103,32 @@ public class Simulation {
 
     public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound,
                                     int transactionOutputBound, int transactionsBound) {
+        return randomBlock(previousHash, blockHeight, transactionInputBound, transactionOutputBound, transactionsBound, false);
+    }
+
+    public static Block randomBlock(Hash previousHash, int blockHeight, int transactionInputBound,
+                                    int transactionOutputBound, int transactionsBound, boolean withExtraCoinbase) {
+        List<Transaction> transactions = new ArrayList<>();
+
+        if (withExtraCoinbase) {
+            transactions.add(Transaction.coinbase(Simulation.randomOutput(), blockHeight));
+        }
+
+        transactions.addAll(
+            repeatedBuilder(
+                () -> randomTransaction(transactionInputBound, transactionOutputBound),
+                transactionsBound
+            )
+        );
+
         return new Block(
             previousHash,
             randomHash(),
             randomHash(),
-            randomBigInteger(), blockHeight,
-            repeatedBuilder(
-                () -> randomTransaction(transactionInputBound, transactionOutputBound),
-                transactionsBound
-            ), 0
+            randomBigInteger(),
+            blockHeight,
+            transactions,
+            0
         );
     }
 
