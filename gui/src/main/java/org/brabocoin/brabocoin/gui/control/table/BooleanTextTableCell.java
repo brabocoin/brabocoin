@@ -4,8 +4,16 @@ import javafx.geometry.Pos;
 import javafx.scene.control.TableCell;
 
 public class BooleanTextTableCell<S> extends TableCell<S, Boolean> {
+
+    private static final String YES = "Yes";
+    private static final String NO = "No";
+
     private final String trueText;
     private final String falseText;
+
+    public BooleanTextTableCell() {
+        this(YES, NO);
+    }
 
     public BooleanTextTableCell(String trueText, String falseText) {
         this.trueText = trueText;

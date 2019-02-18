@@ -79,7 +79,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         TableColumn<TableKeyPairEntry, Boolean> encryptedColumn = new TableColumn<>(
             "Encrypted");
         encryptedColumn.setCellValueFactory(new PropertyValueFactory<>("encrypted"));
-        encryptedColumn.setCellFactory(col -> new BooleanTextTableCell<>("Yes", "No"));
+        encryptedColumn.setCellFactory(col -> new BooleanTextTableCell<>());
 
         TableColumn<TableKeyPairEntry, Hash> addressColumn = new TableColumn<>(
             "Address");
