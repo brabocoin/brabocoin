@@ -40,7 +40,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
             hideErrorLabel();
         });
 
-        grid.add(new Label("Fee:"), 0, 1);
+        grid.add(new Label("Fee value in cents:"), 0, 1);
         grid.add(feeField, 1, 1);
         grid.add(new Label("Output address:"), 0, 2);
         grid.add(dropDown, 1, 2);
