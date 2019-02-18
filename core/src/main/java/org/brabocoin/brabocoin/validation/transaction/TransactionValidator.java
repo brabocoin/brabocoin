@@ -36,6 +36,7 @@ import java.util.logging.Logger;
  * Validation rules for transactions.
  */
 public class TransactionValidator implements Validator<Transaction> {
+
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
     public static final RuleList ALL = new RuleList(
@@ -118,13 +119,21 @@ public class TransactionValidator implements Validator<Transaction> {
         return facts;
     }
 
-    public TransactionValidationResult validate(@NotNull Transaction transaction, @NotNull RuleList ruleList, boolean useCompositeUTXO) {
+    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                @NotNull RuleList ruleList,
+                                                boolean useCompositeUTXO) {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
 
-        return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction,
-            useCompositeUTXO ? compositeUTXO : chainUTXODatabase)));
+        FactMap factMap = createFactMap(
+            transaction,
+            useCompositeUTXO ? compositeUTXO : chainUTXODatabase
+        );
+
+        validationListeners.forEach(l -> l.onValidationStarted(factMap));
+
+        return TransactionValidationResult.from(ruleBook.run(factMap));
     }
 
     @Override

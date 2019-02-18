@@ -41,7 +41,6 @@ import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
 import org.jtwig.resource.exceptions.ResourceNotFoundException;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -55,15 +54,16 @@ import java.util.stream.Collectors;
 public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
                                                                 ValidationListener {
 
-    private final Map<Class, List<TreeItem<String>>> ruleTreeItemMap;
-    private final Map<TreeItem, Transaction> transactionItemMap;
-    private final Map<TreeItem, String> descriptionItemMap;
-    private final Validator validator;
+    private final Map<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItemMap;
+    private final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
+    private final Map<TreeItem<? extends String>, String> descriptionItemMap;
+    private final Validator<? extends org.brabocoin.brabocoin.model.proto.ProtoModel> validator;
     private TransactionDetailView transactionDetailView;
     private BlockDetailView blockDetailView;
     private Transaction transaction;
     private Block block;
     private WebEngine descriptionWebEngine;
+    private TreeItem<String> root;
     @FXML private MasterDetailPane masterDetailNode;
 
     private final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
@@ -123,7 +123,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     public TreeView<String> ruleView;
 
     private void loadRules() {
-        TreeItem<String> root = new TreeItem<>();
+        root = new TreeItem<>();
         ruleView.setShowRoot(false);
 
         RuleList ruleList;
@@ -137,13 +137,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         ruleView.setRoot(root);
     }
 
-    private boolean isSkippedRuleClass(Class rule) {
+    private boolean isSkippedRuleClass(Class<? extends Rule> rule) {
         return (isForBlock() && skippedBlockRules.getRules().contains(rule)) ||
             (!isForBlock() && skippedTransactionRules.getRules().contains(rule));
     }
 
     private void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
-        for (Class rule : ruleList) {
+        for (Class<? extends Rule> rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
             if (ignored || isSkippedRuleClass(rule)) {
                 ruleTreeItem.setGraphic(createIcon(RuleState.SKIPPED));
@@ -152,15 +152,14 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 ruleTreeItem.setGraphic(createIcon(RuleState.PENDING));
             }
 
-            Annotation annotation = rule.getAnnotation(ValidationRule.class);
-            if (annotation instanceof ValidationRule) {
-                ValidationRule validationRule = (ValidationRule)annotation;
-                ruleTreeItem.setValue(validationRule.name());
+            ValidationRule annotation = rule.getAnnotation(ValidationRule.class);
+            if (annotation != null) {
+                ruleTreeItem.setValue(annotation.name());
 
-                if (isSkippedRuleClass(rule) && !validationRule.composite()) {
+                if (isSkippedRuleClass(rule) && !annotation.composite()) {
                     ruleTreeItem.setGraphic(createIcon(RuleState.SKIPPED));
                 }
-                else if (validationRule.composite()) {
+                else if (annotation.composite()) {
                     RuleList composite = null;
                     for (Field field : rule.getDeclaredFields()) {
                         field.setAccessible(true);
@@ -308,7 +307,20 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         });
     }
 
-    private String deriveDescription(Rule rule, RuleBookResult result) {
+    private String deriveDescription(Class<? extends Rule> ruleClass) {
+        String templatePath = ruleClass.getName().replace('.', '/') + ".twig";
+        JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
+
+        try {
+            return template.render(JtwigModel.newModel());
+        }
+        catch (
+            ResourceNotFoundException e) {
+            return "Could not find rule description template.";
+        }
+    }
+
+    private String deriveDescription(Rule rule) {
         String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
@@ -387,7 +399,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             throw new IllegalStateException("Rule of invalid type");
         }
 
-        descriptionItemMap.put(item, deriveDescription(rule, result));
+        descriptionItemMap.put(item, deriveDescription(rule));
 
         if (item == null) {
             return;
@@ -411,5 +423,33 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         }
 
         Platform.runLater(() -> ruleView.refresh());
+    }
+
+    @Override
+    public void onValidationStarted(FactMap facts) {
+        setSkippedRuleDescriptions(root, facts);
+    }
+
+    private void setSkippedRuleDescriptions(TreeItem<String> root, FactMap factMap) {
+        Class<? extends Rule> inverseSearch = inverseSearchRule(root);
+
+        if (inverseSearch != null && isSkippedRuleClass(inverseSearch)) {
+            descriptionItemMap.put(root, deriveDescription(inverseSearch));
+        }
+
+        for (TreeItem<String> child : root.getChildren()) {
+            setSkippedRuleDescriptions(child, factMap);
+        }
+    }
+
+    private Class<? extends Rule> inverseSearchRule(TreeItem<String> item) {
+        for (Map.Entry<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItem :
+            ruleTreeItemMap.entrySet()) {
+            if (ruleTreeItem.getValue().contains(item)) {
+                return ruleTreeItem.getKey();
+            }
+        }
+
+        return null;
     }
 }

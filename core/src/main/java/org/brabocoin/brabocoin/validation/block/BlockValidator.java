@@ -121,7 +121,11 @@ public class BlockValidator implements Validator<Block> {
 
         ruleBook.addListener(this);
 
-        return BlockValidationResult.from(ruleBook.run(createFactMap(block)));
+        FactMap factMap = createFactMap(block);
+
+        validationListeners.forEach(l -> l.onValidationStarted(factMap));
+
+        return BlockValidationResult.from(ruleBook.run(factMap));
     }
 
     @Override
