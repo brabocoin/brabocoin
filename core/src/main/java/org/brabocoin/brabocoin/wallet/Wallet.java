@@ -463,8 +463,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     /**
      * Computes the confirmed or pending balance for a given key pair, using the wallet UTXO set
-     * and the
-     * {@link #usedInputs}.
+     * and the {@link #usedInputs}.
      *
      * @param pending
      *     Whether to compute the confirmed or pending balance.
@@ -487,12 +486,50 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             boolean immatureCoinbase = consensus.immatureCoinbase(blockchain.getMainChain()
                 .getHeight(), info);
 
+            if (immatureCoinbase) {
+                continue;
+            }
+
             if (pending) {
                 if (!usedInputs.contains(entry.getKey())) {
                     sum += info.getAmount();
                 }
             }
-            else if (!immatureCoinbase) {
+            else {
+                sum += info.getAmount();
+            }
+        }
+
+        return sum;
+    }
+
+    /**
+     * Computes the immature pending coinbase block reward.
+     *
+     * @return Immature coinbase balance.
+     */
+    public long computeImmatureCoinbase() {
+        return computeImmatureCoinbase(null);
+    }
+
+    /**
+     * Computes the immature pending coinbase block reward for a given keypair.
+     *
+     * @param keyPair The keypair to calculate the balance for.
+     * @return Immature coinbase balance.
+     */
+    public long computeImmatureCoinbase(KeyPair keyPair) {
+        long sum = 0;
+
+        for (Map.Entry<Input, UnspentOutputInfo> entry : walletChainUtxoSet) {
+            UnspentOutputInfo info = entry.getValue();
+
+            if (keyPair != null && !info.getAddress().equals(keyPair.getPublicKey().getHash())) {
+                continue;
+            }
+
+            if (consensus.immatureCoinbase(blockchain.getMainChain()
+                .getHeight(), info))  {
                 sum += info.getAmount();
             }
         }
