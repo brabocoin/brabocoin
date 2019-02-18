@@ -9,6 +9,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
@@ -20,12 +22,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
+import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.view.MainView;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.wallet.Wallet;
@@ -103,7 +108,8 @@ public class BrabocoinGUI extends Application {
                     Scene scene = new Scene(mainView);
 
                     // Add base stylesheet
-                    scene.getStylesheets().add(getClass().getResource("brabocoin.css").toExternalForm());
+                    scene.getStylesheets()
+                        .add(getClass().getResource("brabocoin.css").toExternalForm());
 
                     Stage stage = new Stage();
                     stage.getIcons()
@@ -114,10 +120,7 @@ public class BrabocoinGUI extends Application {
                     stage.setTitle("Brabocoin " + VERSION);
                     stage.setScene(scene);
 
-                    stage.setOnCloseRequest(t -> {
-                        Platform.exit();
-                        System.exit(0);
-                    });
+                    stage.setOnCloseRequest(t -> onExit(t, application.getState()));
 
                     mainStage.set(stage);
                     latch.countDown();
@@ -136,6 +139,37 @@ public class BrabocoinGUI extends Application {
 
         showSplash(stage, startupTask, () -> startupTask.getValue().show());
         new Thread(startupTask).start();
+    }
+
+    private void onExit(WindowEvent t, State state) {
+        Object result = null;
+
+        Optional<Object> optionalO = WalletUtils.saveWallet(state);
+        if (optionalO.isPresent()) {
+            result = optionalO.get();
+        }
+
+        if (result == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+
+            alert.getButtonTypes().add(ButtonType.CANCEL);
+
+            alert.setTitle("Discard wallet changes");
+            alert.setHeaderText("Your wallet is not saved.");
+            alert.setContentText("Your wallet has unsaved changes, are you sure you want to exit?");
+
+            Optional<ButtonType> alertResult = alert.showAndWait();
+
+            if (alertResult.isPresent()) {
+                ButtonType r = alertResult.get();
+                if (r == ButtonType.CLOSE || r == ButtonType.CANCEL) {
+                    t.consume();
+                    return;
+                }
+            }
+        }
+
+        System.exit(0);
     }
 
     private void showSplash(Stage primaryStage, Task<?> task, Runnable completionHandler) {
@@ -199,7 +233,8 @@ public class BrabocoinGUI extends Application {
         primaryStage.show();
     }
 
-    private Wallet createUnlockerDialog(boolean creation, Function<Destructible<char[]>, Wallet> creator) {
+    private Wallet createUnlockerDialog(boolean creation,
+                                        Function<Destructible<char[]>, Wallet> creator) {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Optional<Wallet>> wallet = new AtomicReference<>();
 
