@@ -44,5 +44,5 @@
     <Tab fx:id="txOrphansTab" closable="false"/>
     <Tab fx:id="recentRejectBlkTab" closable="false"/>
     <Tab fx:id="recentRejectTxTab" closable="false"/>
-    <Tab closable="false" disable="true" text="UTXO set"/>
+    <Tab fx:id="utxoTab" closable="false"/>
 </fx:root>

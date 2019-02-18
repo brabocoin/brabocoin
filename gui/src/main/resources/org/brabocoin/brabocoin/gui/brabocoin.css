@@ -121,3 +121,11 @@
 .table-action-box {
     -fx-spacing: 10px;
 }
+
+.table-cell.right-separator, .column-header.right-separator {
+    -fx-border-color: transparent derive(-fx-table-cell-border-color, -50%) transparent transparent;
+}
+
+.text-primary {
+    -fx-text-fill: -fx-accent;
+}

@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.common.collect.Iterators;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -306,7 +308,8 @@ public class UTXODatabase implements ReadonlyUTXOSet {
 
     @Override
     public Iterator<Map.Entry<Input, UnspentOutputInfo>> iterator() {
-        return new Iterator<Map.Entry<Input, UnspentOutputInfo>>() {
+        Iterator<Map.Entry<Input, UnspentOutputInfo>> iterator = new Iterator<Map.Entry<Input,
+            UnspentOutputInfo>>() {
             Iterator<Map.Entry<ByteString, ByteString>> storageIterator = storage.iterator();
 
             @Override
@@ -317,6 +320,9 @@ public class UTXODatabase implements ReadonlyUTXOSet {
             @Override
             public Map.Entry<Input, UnspentOutputInfo> next() {
                 Map.Entry<ByteString, ByteString> value = storageIterator.next();
+
+                if (!value.getKey().startsWith(KEY_PREFIX_OUTPUT))
+                    return null;
 
                 try {
                     return new AbstractMap.SimpleEntry<>(
@@ -333,5 +339,7 @@ public class UTXODatabase implements ReadonlyUTXOSet {
                 }
             }
         };
+
+        return Iterators.filter(iterator, Objects::nonNull);
     }
 }

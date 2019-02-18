@@ -45,6 +45,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private Tab txPoolTab;
     @FXML private Tab txOrphansTab;
     @FXML private Tab blkOrphansTab;
+    @FXML private Tab utxoTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -137,6 +138,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
                 orphanBlkView.countProperty()
             )
         );
+
+        UTXOSetView utxoView = new UTXOSetView(state.getChainUTXODatabase());
+        utxoTab.setContent(utxoView);
+        utxoTab.setText("UTXO set");
     }
 
     private void loadTable() {
