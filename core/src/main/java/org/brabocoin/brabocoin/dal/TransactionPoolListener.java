@@ -3,6 +3,8 @@ package org.brabocoin.brabocoin.dal;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * Listener for transaction pool events.
  */
@@ -56,6 +58,36 @@ public interface TransactionPoolListener {
      *     The transaction that was removed from the orphan pool.
      */
     default void onTransactionRemovedAsOrphan(@NotNull Transaction transaction) {
+
+    }
+
+    /**
+     * Called when a transaction is added as recently rejected.
+     *
+     * @param transaction
+     *     The transaction that was added as recent reject.
+     */
+    default void onRecentRejectAdded(@NotNull Transaction transaction) {
+
+    }
+
+    /**
+     * Called when the transactions are promoted from dependent to independent.
+     *
+     * @param transactions
+     *     The transactions that were promoted.
+     */
+    default void onDependentTransactionsPromoted(@NotNull Collection<Transaction> transactions) {
+
+    }
+
+    /**
+     * Called when the transactions are demoted from independent to dependent.
+     *
+     * @param transactions
+     *     The transactions that were demoted.
+     */
+    default void onIndependentTransactionsDemoted(@NotNull Collection<Transaction> transactions) {
 
     }
 }

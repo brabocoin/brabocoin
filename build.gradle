@@ -1,21 +1,22 @@
-allprojects {
-    group 'org.brabocoin'
-    version '0.1-SNAPSHOT'
-}
-
 buildscript {
     repositories {
         jcenter()
     }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
-    }
 }
 
-subprojects {
-    apply plugin: 'com.github.johnrengelman.shadow'
+plugins {
+    id "us.kirchmeier.capsule" version "1.0.2"
+}
+
+allprojects {
+    group 'org.brabocoin'
+    version '0.1'
+}
+
+subprojects {    
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'us.kirchmeier.capsule'
 
     sourceCompatibility = 1.8
 
@@ -43,13 +44,5 @@ subprojects {
                 'Implementation-Version': version,
             )
         }
-    }
-
-    shadowJar {
-        baseName = rootProject.name
-    }
-
-    artifacts {
-        archives shadowJar
     }
 }

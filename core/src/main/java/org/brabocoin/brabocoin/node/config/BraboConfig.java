@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.node.config;
 
+import org.brabocoin.brabocoin.model.Hash;
+
 import java.util.List;
 
 public interface BraboConfig {
@@ -62,6 +64,13 @@ public interface BraboConfig {
     int maxRecentRejectBlocks();
 
     /**
+     * Maximum number of recently rejected transactions in memory.
+     *
+     * @return The maximum number of recently rejected transactions.
+     */
+    int maxRecentRejectTransactions();
+
+    /**
      * Port on which the application listens for messages on the network.
      *
      * @return The port number.
@@ -82,12 +91,20 @@ public interface BraboConfig {
      */
     String transactionHistoryFile();
 
-    /**
-     * File in which the wallet used inputs are stored.
-     *
-     * @return The used inputs file path.
-     */
-    String usedInputsFile();
-
     int maxSequentialOrphanBlocks();
+
+    /**
+     * The target value for blocks.
+     * <p>
+     * The representation of the target value is interpreted as:
+     * <ul>
+     * <li>If the string starts with a zero, the string is interpreted as the hexadeximal hash
+     * representation of the target value.</li>
+     * <li>Otherwise, the string is parsed as a BigDecimal value in base 10, and then converted
+     * to a BigInteger (allowing scientific notation).</li>
+     * </ul>
+     *
+     * @return The block target value.
+     */
+    Hash targetValue();
 }

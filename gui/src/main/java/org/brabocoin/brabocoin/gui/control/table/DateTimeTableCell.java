@@ -1,14 +1,12 @@
 package org.brabocoin.brabocoin.gui.control.table;
 
-import javafx.scene.control.TableCell;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
  * Table cell that formats a timestamp.
  */
-public class DateTimeTableCell <T> extends TableCell<T, LocalDateTime> {
+public class DateTimeTableCell <T> extends CopyableTableCell<T, LocalDateTime> {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss");

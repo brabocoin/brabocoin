@@ -1,13 +1,11 @@
 package org.brabocoin.brabocoin.gui.control.table;
 
-import javafx.scene.control.TableCell;
-
 import java.math.BigInteger;
 
 /**
  * Table cell that formats a hash to to a hexadecimal string.
  */
-public class BigIntegerTableCell<T> extends TableCell<T, BigInteger> {
+public class BigIntegerTableCell<T> extends CopyableTableCell<T, BigInteger> {
 
     private final int radix;
 

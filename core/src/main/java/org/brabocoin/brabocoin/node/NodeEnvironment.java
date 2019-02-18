@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.node;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
@@ -11,9 +12,11 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
+import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
@@ -40,19 +43,24 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Represents a node environment.
  */
-public class NodeEnvironment {
+public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedListener {
 
     private static final Logger LOGGER = Logger.getLogger(NodeEnvironment.class.getName());
 
@@ -74,8 +82,11 @@ public class NodeEnvironment {
     private Queue<Runnable> messageQueue;
     private final List<BlockReceivedListener> blockListeners;
     private final List<TransactionReceivedListener> transactionListeners;
+    private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
+    private SortedSet<NetworkMessage> receivedMessages;
+    private SortedSet<NetworkMessage> sentMessages;
 
     /*
      * Processors
@@ -104,6 +115,13 @@ public class NodeEnvironment {
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
+        networkMessageListeners = new ArrayList<>();
+        receivedMessages =
+            Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        sentMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+
+        peerProcessor.addPeerSetChangedListener(this);
+        networkMessageListeners.add(this.peerProcessor);
     }
 
     /**
@@ -134,7 +152,7 @@ public class NodeEnvironment {
             @Override
             public void run() {
                 peerProcessor.clearDeadPeers();
-                peerProcessor.discoverPeers(peerProcessor.copyPeersList());
+                peerProcessor.updatePeers();
             }
         }, 0, updatePeerInterval * 1000);
 
@@ -251,12 +269,63 @@ public class NodeEnvironment {
     private synchronized void propagateMessageBlocking(
         Consumer<NodeGrpc.NodeBlockingStub> blockingStubConsumer) {
         for (NodeGrpc.NodeBlockingStub stub : getPeerStubs()) {
-            blockingStubConsumer.accept(stub);
+            try {
+                blockingStubConsumer.accept(stub);
+            }
+            catch (StatusRuntimeException e) {
+                LOGGER.log(
+                    Level.SEVERE,
+                    MessageFormat.format("Exception while propagating message: {0}", e.getMessage())
+                );
+            }
         }
 
         LOGGER.info("Message propagated to all peers.");
     }
 
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
+    }
+
+    public synchronized Iterable<NetworkMessage> getReceivedMessages() {
+        return Collections.unmodifiableSortedSet(receivedMessages);
+    }
+
+    public Iterable<NetworkMessage> getSentMessages() {
+        return Collections.unmodifiableSortedSet(sentMessages);
+    }
+
+    @Override
+    public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            receivedMessages.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onIncomingMessage(message, isUpdate));
+    }
+
+    @Override
+    public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
+        if (!isUpdate) {
+            sentMessages.add(message);
+        }
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
+    }
+
+    @Override
+    public void onPeerAdded(Peer peer) {
+        peer.addNetworkMessageListener(this);
+        networkMessageListeners.forEach(l -> l.onOutgoingMessage(null, false));
+    }
+
+    @Override
+    public void onPeerRemoved(Peer peer) {
+        peer.removeNetworkMessageListeners(this);
+    }
 
     //================================================================================
     // Callbacks
@@ -279,7 +348,7 @@ public class NodeEnvironment {
 
         try {
             LOGGER.info("Received new block from peer.");
-            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block);
+            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block, false);
             LOGGER.log(
                 Level.FINEST,
                 () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus)
@@ -905,7 +974,7 @@ public class NodeEnvironment {
      */
     public synchronized ValidationStatus processNewlyMinedBlock(
         @NotNull Block block) throws DatabaseException {
-        ValidationStatus status = blockProcessor.processNewBlock(block);
+        ValidationStatus status = blockProcessor.processNewBlock(block, true);
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
         }
@@ -938,7 +1007,7 @@ public class NodeEnvironment {
      *
      * @return Set of peers.
      */
-    public synchronized Set<Peer> getPeers() {
+    public Set<Peer> getPeers() {
         LOGGER.fine("Creating a copy of the set of peers.");
         return peerProcessor.copyPeers();
     }
@@ -1051,7 +1120,18 @@ public class NodeEnvironment {
             )
         );
 
-        return transactionPool.findValidatedTransaction(transactionHash);
+        Transaction validTx = transactionPool.findValidatedTransaction(transactionHash);
+        if (validTx != null) {
+            return validTx;
+        }
+
+        Optional<RejectedTransaction> recentlyRejectedTx = StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(
+                transactionPool.recentRejectsIterator(),
+                Spliterator.ORDERED
+            ), false).filter(t -> t.getTransaction().getHash().equals(transactionHash)).findFirst();
+
+        return recentlyRejectedTx.map(RejectedTransaction::getTransaction).orElse(null);
     }
 
     /**

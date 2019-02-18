@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.common.collect.Iterators;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
@@ -10,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +21,8 @@ import java.util.logging.Logger;
 /**
  * Uses multiple UTXO sets which are used as fallback (in order).
  */
-public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet, UTXOSetListener {
+public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet, UTXOSetListener, Iterable<Map.Entry<Input,
+    UnspentOutputInfo>> {
 
     private static final Logger LOGGER = Logger.getLogger(CompositeReadonlyUTXOSet.class.getName());
 
@@ -112,5 +116,16 @@ public class CompositeReadonlyUTXOSet implements ReadonlyUTXOSet, UTXOSetListene
     @Override
     public void removeListener(@NotNull UTXOSetListener listener) {
         listeners.remove(listener);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Map.Entry<Input, UnspentOutputInfo>> iterator() {
+        //noinspection unchecked
+        return Iterators.concat(
+            utxoSets.stream()
+                .map(Iterable::iterator)
+                .toArray(Iterator[]::new)
+        );
     }
 }

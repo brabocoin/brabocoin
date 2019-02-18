@@ -215,7 +215,7 @@ class NodeMessageTest {
         );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b);
+            database.storeBlock(b, false);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -295,7 +295,7 @@ class NodeMessageTest {
         );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b);
+            database.storeBlock(b, false);
         }
 
         Node nodeA = generateNode(8091, config, database);
@@ -377,7 +377,7 @@ class NodeMessageTest {
         );
         List<Block> blocks = Simulation.randomBlockChainGenerator(2);
         for (Block b : blocks) {
-            database.storeBlock(b);
+            database.storeBlock(b, false);
         }
 
         Node nodeA = generateNode(8091, config, database);

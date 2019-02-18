@@ -57,8 +57,10 @@ public class BraboGlyph extends Glyph {
      * The registered icon fonts.
      */
     public enum Font {
-        FONT_AWESOME("Font Awesome 5 Free", "fa-regular-400.ttf", "fa-solid-900.ttf"),
-        FONT_AWESOME_BRANDS("Font Awesome 5 Brands", "fa-brands-400.ttf");
+        FONT_AWESOME("Font Awesome 5 Pro Regular", "fa-regular-400.ttf"),
+        FONT_AWESOME_SOLID("Font Awesome 5 Pro Solid", "fa-solid-900.ttf"),
+        FONT_AWESOME_LIGHT("Font Awesome 5 Pro Light", "fa-light-300.ttf"),
+        FONT_AWESOME_BRANDS("Font Awesome 5 Brands Regular", "fa-brands-400.ttf");
 
         private final @NotNull String name;
         private final @NotNull GlyphFont glyphFont;
@@ -85,29 +87,36 @@ public class BraboGlyph extends Glyph {
      * Registered icons.
      */
     public enum Icon {
-        ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME, '\uf103'),
-        ARROW_DOWN(Font.FONT_AWESOME, '\uf063'),
-        ARROW_UP(Font.FONT_AWESOME, '\uf062'),
+        ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME_SOLID, '\uf103'),
+        ARROW_DOWN(Font.FONT_AWESOME_SOLID, '\uf063'),
+        ARROW_UP(Font.FONT_AWESOME_SOLID, '\uf062'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
-        BROADCAST_TOWER(Font.FONT_AWESOME, '\uf519'),
-        CHECK(Font.FONT_AWESOME, '\uf058'),
-        CODE_BRANCH(Font.FONT_AWESOME, '\uf126'),
-        DATABASE(Font.FONT_AWESOME, '\uf1c0'),
-        LEVEL_DOWN_ALT(Font.FONT_AWESOME, '\uf3be'),
-        MAGIC(Font.FONT_AWESOME, '\uf0d0'),
-        MICROCHIP(Font.FONT_AWESOME, '\uf2db'),
-        MINUS(Font.FONT_AWESOME, '\uf068'),
-        PLUS(Font.FONT_AWESOME, '\uf067'),
-        SEARCH(Font.FONT_AWESOME, '\uf002'),
-        STOP(Font.FONT_AWESOME, '\uf04d'),
-        TASKS(Font.FONT_AWESOME, '\uf0ae'),
-        TIMES(Font.FONT_AWESOME, '\uf00d'),
-        WALLET(Font.FONT_AWESOME, '\uf555'),
-        CIRCLE(Font.FONT_AWESOME, '\uf111'),
-        CROSS(Font.FONT_AWESOME, '\uf057'),
-        CIRCLEMINUS(Font.FONT_AWESOME, '\uf056'),
-        LOCK(Font.FONT_AWESOME, '\uf023'),
-        UNLOCK(Font.FONT_AWESOME, '\uf3c1');
+        BROADCAST_TOWER(Font.FONT_AWESOME_SOLID, '\uf519'),
+        CHECK(Font.FONT_AWESOME_SOLID, '\uf058'),
+        CODE_BRANCH(Font.FONT_AWESOME_SOLID, '\uf126'),
+        DATABASE(Font.FONT_AWESOME_SOLID, '\uf1c0'),
+        LEVEL_DOWN_ALT(Font.FONT_AWESOME_SOLID, '\uf3be'),
+        MAGIC(Font.FONT_AWESOME_SOLID, '\uf0d0'),
+        MICROCHIP(Font.FONT_AWESOME_SOLID, '\uf2db'),
+        MINUS(Font.FONT_AWESOME_SOLID, '\uf068'),
+        PLUS(Font.FONT_AWESOME_SOLID, '\uf067'),
+        SEARCH(Font.FONT_AWESOME_SOLID, '\uf002'),
+        STOP(Font.FONT_AWESOME_SOLID, '\uf04d'),
+        TASKS(Font.FONT_AWESOME_SOLID, '\uf0ae'),
+        TIMES(Font.FONT_AWESOME_SOLID, '\uf00d'),
+        WALLET(Font.FONT_AWESOME_SOLID, '\uf555'),
+        CIRCLE(Font.FONT_AWESOME_SOLID, '\uf111'),
+        CROSS(Font.FONT_AWESOME_SOLID, '\uf057'),
+        CIRCLEMINUS(Font.FONT_AWESOME_SOLID, '\uf056'),
+        CUBE(Font.FONT_AWESOME_SOLID, '\uf1b2'),
+        TOOLS(Font.FONT_AWESOME_SOLID, '\uf0ad'),
+        REPEAT(Font.FONT_AWESOME_SOLID, '\uf363'),
+        LOCK(Font.FONT_AWESOME_SOLID, '\uf023'),
+        UNLOCK(Font.FONT_AWESOME_SOLID, '\uf3c1'),
+        COPY(Font.FONT_AWESOME_SOLID, '\uf0c5'),
+        REFRESH(Font.FONT_AWESOME_SOLID, '\uf2f1'),
+        HAPPY(Font.FONT_AWESOME_SOLID, '\uf5b8'),
+        CRYSAD(Font.FONT_AWESOME_SOLID, '\uf5b3');
 
         private final @NotNull Font font;
         private final char ch;

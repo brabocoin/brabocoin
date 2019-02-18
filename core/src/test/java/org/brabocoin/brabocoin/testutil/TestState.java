@@ -33,7 +33,12 @@ public class TestState extends DeploymentState {
     }
 
     @Override
-    protected KeyValueStore createWalletUTXOStorage() {
+    protected KeyValueStore createWalletPoolUtxoStorage() {
+        return new HashMapDB();
+    }
+
+    @Override
+    protected KeyValueStore createWalletChainUtxoStorage() {
         return new HashMapDB();
     }
 

@@ -158,21 +158,26 @@ public class BlockProcessor {
      *
      * @param block
      *     The block to add.
+     * @param minedByMe
+     *     Whether this user mined this block.
      * @return The status of the block that is added.
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public synchronized ValidationStatus processNewBlock(@NotNull Block block)
+    public synchronized ValidationStatus processNewBlock(@NotNull Block block, boolean minedByMe)
         throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
         // Check if the block is valid
-        BlockValidationResult result = blockValidator.validate(block, BlockValidator.INCOMING_BLOCK);
+        BlockValidationResult result = blockValidator.validate(
+            block,
+            BlockValidator.INCOMING_BLOCK
+        );
         ValidationStatus status = result.getStatus();
 
         if (status == ValidationStatus.INVALID) {
             // Add to the recent rejects
-            blockchain.addRejected(block);
+            blockchain.addRejected(block, result);
 
             LOGGER.log(
                 Level.INFO,
@@ -188,7 +193,7 @@ public class BlockProcessor {
         }
 
         // Store the block on disk
-        IndexedBlock indexedBlock = storeBlock(block);
+        IndexedBlock indexedBlock = storeBlock(block, minedByMe);
 
         // Check if any orphan blocks are descendants and can be added as well
         // Return the leaf blocks of the new family, which are new top candidates
@@ -204,9 +209,19 @@ public class BlockProcessor {
         return ValidationStatus.VALID;
     }
 
-    private synchronized @NotNull IndexedBlock storeBlock(
-        @NotNull Block block) throws DatabaseException {
-        BlockInfo info = blockchain.storeBlock(block);
+    /**
+     * Add a {@link BlockProcessorListener} to the listener set.
+     *
+     * @param listener
+     *     The listener to add.
+     */
+    public void addBlockProcessorListener(BlockProcessorListener listener) {
+        listeners.add(listener);
+    }
+
+    private synchronized IndexedBlock storeBlock(
+        @NotNull Block block, boolean minedByMe) throws DatabaseException {
+        BlockInfo info = blockchain.storeBlock(block, minedByMe);
         Hash hash = block.getHash();
         return new IndexedBlock(hash, info);
     }
@@ -242,7 +257,10 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.validate(descendant, BlockValidator.AFTER_ORPHAN)
+                ValidationStatus status = blockValidator.validate(
+                    descendant,
+                    BlockValidator.AFTER_ORPHAN
+                )
                     .getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
@@ -252,7 +270,7 @@ public class BlockProcessor {
 
                 if (status == ValidationStatus.VALID) {
                     // The orphan is now valid, store on disk
-                    IndexedBlock indexedDescendant = storeBlock(descendant);
+                    IndexedBlock indexedDescendant = storeBlock(descendant, false);
 
                     // Add to top candidates
                     topCandidates.add(indexedDescendant);

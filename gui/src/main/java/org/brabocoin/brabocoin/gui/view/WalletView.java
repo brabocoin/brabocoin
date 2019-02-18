@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -20,16 +21,19 @@ import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.gui.BraboDialog;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
+import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
+import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
 import tornadofx.SmartResize;
 
@@ -42,7 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-public class WalletView extends TabPane implements BraboControl, Initializable, KeyPairListener {
+public class WalletView extends TabPane implements BraboControl, Initializable, KeyPairListener, BalanceListener {
 
     private final State state;
 
@@ -51,9 +55,8 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     @FXML public TableView<TableKeyPairEntry> keyPairsTableView;
     @FXML public Button buttonCreateKeyPair;
     @FXML public Button buttonSaveWallet;
-    @FXML public Label balanceLabel;
-    @FXML public Label totalPendingBalanceLabel;
-    @FXML public Label pendingLabel;
+    @FXML public Label confirmedBalanceLabel;
+    @FXML public Label pendingBalanceLabel;
 
     private ObservableList<TableKeyPairEntry> keyPairObservableList =
         FXCollections.observableArrayList();
@@ -63,6 +66,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         this.state = state;
 
         this.state.getWallet().addKeyPairListener(this);
+        this.state.getWallet().addBalanceListener(this);
 
         BraboControlInitializer.initialize(this);
     }
@@ -71,7 +75,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     public void initialize(URL location, ResourceBundle resources) {
         txHistoryTab.setContent(new TransactionHistoryView(state.getWallet().getTransactionHistory()));
         keyPairsTableView.setEditable(false);
-        keyPairsTableView.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 
         TableColumn<TableKeyPairEntry, Integer> indexColumn = new TableColumn<>(
             "Index");
@@ -83,14 +86,23 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         encryptedColumn.setCellValueFactory(new PropertyValueFactory<>("encrypted"));
         encryptedColumn.setCellFactory(col -> new BooleanTextTableCell<>("Yes", "No"));
 
-
         TableColumn<TableKeyPairEntry, Hash> addressColumn = new TableColumn<>(
             "Address");
         addressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
         addressColumn.setCellFactory(col -> new AddressTableCell<>());
 
+        TableColumn<TableKeyPairEntry, Long> confirmedBalance = new TableColumn<>(
+            "Confirmed balance (BRC)");
+        confirmedBalance.setCellValueFactory(new PropertyValueFactory<>("confirmedBalance"));
+        confirmedBalance.setCellFactory(col -> new BalanceTableCell<>());
+
+        TableColumn<TableKeyPairEntry, Long> pendingBalance = new TableColumn<>(
+            "Pending balance (BRC)");
+        pendingBalance.setCellValueFactory(new PropertyValueFactory<>("pendingBalance"));
+        pendingBalance.setCellFactory(col -> new BalanceTableCell<>());
+
         keyPairsTableView.getColumns().addAll(
-            indexColumn, encryptedColumn, addressColumn
+            indexColumn, encryptedColumn, addressColumn, confirmedBalance, pendingBalance
         );
 
         keyPairObservableList.addListener((ListChangeListener<TableKeyPairEntry>)c ->
@@ -103,9 +115,29 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
         keyPairObservableList.addAll(
             StreamSupport.stream(state.getWallet().spliterator(), false).map(
-                TableKeyPairEntry::new
+                l -> new TableKeyPairEntry(l, state.getWallet())
             ).collect(Collectors.toList())
         );
+
+        updateBalances();
+    }
+
+    private void updateBalances() {
+        long confirmedBalance = state.getWallet().computeBalance(false);
+        long pendingBalance = state.getWallet().computeBalance(true);
+        Platform.runLater(() -> {
+            confirmedBalanceLabel.textProperty().setValue(
+                GUIUtils.formatValue(confirmedBalance, true)
+            );
+
+            pendingBalanceLabel.textProperty().setValue(
+                GUIUtils.formatValue(pendingBalance, true)
+            );
+        });
+
+        keyPairObservableList.forEach(TableKeyPairEntry::updateBalances);
+
+        keyPairsTableView.refresh();
     }
 
     @FXML
@@ -191,7 +223,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                         state.getWallet(),
                         state.getWalletFile(),
                         state.getTxHistoryFile(),
-                        state.getUsedInputsFile(),
                         d
                     );
                     d.destruct();
@@ -212,6 +243,11 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void onKeyPairGenerated(KeyPair keyPair) {
-        keyPairObservableList.add(new TableKeyPairEntry(keyPair));
+        keyPairObservableList.add(new TableKeyPairEntry(keyPair, state.getWallet()));
+    }
+
+    @Override
+    public void onBalanceChanged() {
+        updateBalances();
     }
 }

@@ -7,9 +7,11 @@ import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public class Blockchain {
     /**
      * Recently rejected blocks.
      */
-    private final @NotNull Queue<Block> recentRejects;
+    private final @NotNull Queue<RejectedBlock> recentRejects;
 
     /**
      * The random instance.
@@ -109,7 +111,7 @@ public class Blockchain {
     private @NotNull IndexedBlock storeGenesisBlock(
         @NotNull Block genesisBlock) throws DatabaseException {
         LOGGER.info("Initializing blockchain with genesis block.");
-        database.storeBlock(genesisBlock);
+        database.storeBlock(genesisBlock, false);
         IndexedBlock indexedGenesis = getIndexedBlock(genesisBlock.getHash());
         if (indexedGenesis == null) {
             LOGGER.severe("Genesis block could not be stored.");
@@ -193,13 +195,15 @@ public class Blockchain {
      *
      * @param block
      *     The block to store
+     * @param minedByMe
+     *     Whether this block was mined by this user.
      * @return The stored block information.
      * @throws DatabaseException
      *     When the block database is not available.
-     * @see BlockDatabase#storeBlock(Block)
+     * @see BlockDatabase#storeBlock(Block, boolean)
      */
-    public @NotNull BlockInfo storeBlock(@NotNull Block block) throws DatabaseException {
-        return database.storeBlock(block);
+    public BlockInfo storeBlock(@NotNull Block block, boolean minedByMe) throws DatabaseException {
+        return database.storeBlock(block, minedByMe);
     }
 
     /**
@@ -303,10 +307,17 @@ public class Blockchain {
      *
      * @param block
      *     The block that was rejected.
+     * @param validationResult
+     * The result of the validation of the block.
+     *
      */
-    public synchronized void addRejected(@NotNull Block block) {
-        recentRejects.add(block);
-
+    public synchronized void addRejected(@NotNull Block block,
+                                         @NotNull BlockValidationResult validationResult) {
+        RejectedBlock reject = new RejectedBlock(block, validationResult);
+        if (recentRejects.contains(reject)) {
+            return;
+        }
+        recentRejects.add(reject);
         listeners.forEach(l -> l.onRecentRejectAdded(block));
     }
 
@@ -315,8 +326,17 @@ public class Blockchain {
      *
      * @return An iterator of the recently rejected blocks.
      */
-    public Iterator<Block> recentRejectsIterator() {
+    public Iterator<RejectedBlock> recentRejectsIterator() {
         return recentRejects.iterator();
+    }
+
+    /**
+     * Iterator over the orphan blocks.
+     *
+     * @return An iterator of the orphan blocks.
+     */
+    public Iterator<Block> orphansIterator() {
+        return orphanIndex.values().iterator();
     }
 
     /**

@@ -1,11 +1,14 @@
 package org.brabocoin.brabocoin.dal;
 
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Iterators;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.util.collection.MultiDependenceIndex;
 import org.brabocoin.brabocoin.util.collection.RecursiveMultiDependenceIndex;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
@@ -83,22 +87,28 @@ public class TransactionPool implements Iterable<Transaction> {
     private final RecursiveMultiDependenceIndex<Hash, Transaction, Hash> orphanTransactions;
 
     /**
+     * Recently rejected transactions.
+     */
+    private final @NotNull Queue<RejectedTransaction> recentRejects;
+
+    /**
      * Creates an empty transaction pool.
-     *
-     * @param maxPoolSize
+     *  @param maxPoolSize
      *     Maximum number of transactions in the pool.
      * @param maxOrphanPoolSize
      *     Maximum number of transactions in the orphan pool.
      * @param random
-     *     The random instance.
+     * @param maxRecentRejects
      */
-    public TransactionPool(int maxPoolSize, int maxOrphanPoolSize, @NotNull Random random) {
+    public TransactionPool(int maxPoolSize, int maxOrphanPoolSize, @NotNull Random random,
+                           int maxRecentRejects) {
         LOGGER.info("Initializing transaction pool.");
 
         this.listeners = new HashSet<>();
         this.maxOrphanPoolSize = maxOrphanPoolSize;
         this.maxPoolSize = maxPoolSize;
         this.random = random;
+        this.recentRejects = EvictingQueue.create(maxRecentRejects);
 
         this.independentTransactions = new MultiDependenceIndex<>(
             Transaction::getHash,
@@ -377,6 +387,7 @@ public class TransactionPool implements Iterable<Transaction> {
             "Promoted {0} transactions to independent.",
             transactions.size()
         ));
+        listeners.forEach(l -> l.onDependentTransactionsPromoted(transactions));
     }
 
     /**
@@ -398,6 +409,7 @@ public class TransactionPool implements Iterable<Transaction> {
             "Demoted {0} transactions from dependent to independent.",
             transactions.size()
         ));
+        listeners.forEach(l -> l.onIndependentTransactionsDemoted(transactions));
     }
 
     /**
@@ -533,5 +545,36 @@ public class TransactionPool implements Iterable<Transaction> {
             independentTransactions.iterator(),
             dependentTransactions.iterator()
         );
+    }
+
+    /**
+     * Add a transaction to the recently rejected memory storage.
+     *
+     * The transaction is only added when not already present in the recent reject storage.
+     *
+     * @param transaction
+     *     The transaction that was rejected.
+     * @param validationResult
+     *     The result of the validation of the transaction.
+     *
+     */
+    public synchronized void addRejected(@NotNull Transaction transaction,
+                                         @NotNull TransactionValidationResult validationResult) {
+        RejectedTransaction reject = new RejectedTransaction(transaction, validationResult);
+        if (recentRejects.contains(reject)) {
+            return;
+        }
+
+        recentRejects.add(reject);
+        listeners.forEach(l -> l.onRecentRejectAdded(transaction));
+    }
+
+    /**
+     * Iterator over the recently rejected transactions.
+     *
+     * @return An iterator of the recently rejected transactions.
+     */
+    public Iterator<RejectedTransaction> recentRejectsIterator() {
+        return recentRejects.iterator();
     }
 }

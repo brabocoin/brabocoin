@@ -21,7 +21,7 @@ public final class Constants {
     /**
      * PBKDF2
      */
-    public static final int PBKDF_ITERATIONS = 2000;
+    public static final int PBKDF_ITERATIONS = 10000;
 
     /**
      * Salt length.
@@ -47,4 +47,9 @@ public final class Constants {
      * Radix of hexadecimal numbers.
      */
     public static final int HEX = 16;
+
+    /**
+     * Maximum amount of messages to store per peer.
+     */
+    public static final int MAX_MESSAGE_HISTORY_PER_PEER = 100;
 }

@@ -1,5 +1,6 @@
 brabo:
   networkId: 1                        # The network on which blocks are accepted
+  targetValue: 3216E65                # Target value for blocks
   loopInterval: 500                   # The interval in the main node loop, in milliseconds
   targetPeerCount: 25                 # Target of number of peers at which we stop discovering new peers
   handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
@@ -17,7 +18,7 @@ brabo:
   maxOrphanTransactions: 100          # Max number of orphan transactions
   maxOrphanBlocks: 100                # Max number of orphan blocks
   maxRecentRejectBlocks: 20           # Max number of recently rejected blocks
+  maxRecentRejectTransactions: 20     # Max number of recently rejected transactions
   servicePort: 56129                  # Port on which the application listens for messages
   walletFile: wallet.dat              # Wallet file
   transactionHistoryFile: txhist.dat  # Wallet transaction history file
-  usedInputsFile: usedinputs.dat      # Used inputs file

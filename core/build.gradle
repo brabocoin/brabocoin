@@ -19,10 +19,12 @@ dependencies {
     compile('com.google.api.grpc:googleapis-common-protos:0.0.3')
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
-    compile("com.beust:jcommander:1.71")
+    compile('com.beust:jcommander:1.71')
     compile('org.awaitility:awaitility:3.1.2')
+    compile('org.apache.commons:commons-collections4:4.2')
+    compile(fileTree('lib') { include '*.jar' })
 
-    implementation('com.github.BAData:protobuf-converter:1.1.5')
+    compile('com.github.BAData:protobuf-converter:1.1.5')
 }
 
 protobuf {
@@ -57,17 +59,19 @@ clean {
     delete protobuf.generatedFilesBaseDir
 }
 
-jar {
-    manifest {
-        attributes(
-            'Main-Class': 'org.brabocoin.brabocoin.BrabocoinApplication'
-        )
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.BrabocoinApplication'
+    baseName 'brabocoin'
+    classifier 'headless'
+    reallyExecutable
+
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.core'
+        applicationName = 'Brabocoin'
     }
 }
 
-shadowJar {
-    classifier = 'headless'
-    dependencies {
-        exclude(dependency('org.bouncycastle:bcprov-jdk15on'))
-    }
+artifacts {
+    archives fatCapsule
 }

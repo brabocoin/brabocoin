@@ -5,8 +5,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -22,13 +25,17 @@ import org.brabocoin.brabocoin.gui.control.table.BigIntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PublicKeyTableCell;
+import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.net.URL;
@@ -43,6 +50,8 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     private final ObjectProperty<Transaction> transaction = new SimpleObjectProperty<>();
     private final BooleanProperty showHeader = new SimpleBooleanProperty(true);
+    private final NodeEnvironment nodeEnvironment;
+    private @Nullable TransactionValidator validator;
 
     @FXML private TableView<Input> inputTableView;
     @FXML private TableColumn<Input, Integer> inputIndexColumn;
@@ -62,21 +71,33 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     @FXML private SelectableLabel hashField;
     @FXML private HBox header;
+    @FXML private Button buttonValidate;
+    @FXML public Button buttonPropagate;
 
-    public TransactionDetailView(Transaction transaction) {
+    public TransactionDetailView(Transaction transaction,
+                                 @Nullable TransactionValidator validator) {
+        this(transaction, null, validator);
+    }
+
+    public TransactionDetailView(Transaction transaction,
+                                 @Nullable NodeEnvironment nodeEnvironment,
+                                 @Nullable TransactionValidator validator) {
         super();
+        this.nodeEnvironment = nodeEnvironment;
+        this.validator = validator;
 
         BraboControlInitializer.initialize(this);
 
         this.transaction.addListener((obs, old, val) -> {
             if (val != null) {
-                loadTransction(val);
+                loadTransaction(val);
             }
         });
         setTransaction(transaction);
     }
 
-    private void loadTransction(@NotNull Transaction transaction) {
+    private void loadTransaction(@NotNull Transaction transaction) {
+        buttonValidate.setVisible(validator != null);
         hashField.setText(ByteUtil.toHexString(transaction.getHash().getValue(), Constants.TRANSACTION_HASH_SIZE));
 
         inputTableView.getItems().setAll(transaction.getInputs());
@@ -116,6 +137,12 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         sigSColumn.setCellFactory(col -> new BigIntegerTableCell<>(Constants.HEX));
         sigPubKeyColumn.setCellValueFactory(new PropertyValueFactory<>("publicKey"));
         sigPubKeyColumn.setCellFactory(col -> new PublicKeyTableCell<>());
+
+        // Propagate button
+        if (nodeEnvironment == null) {
+            buttonPropagate.setManaged(false);
+            buttonPropagate.setVisible(false);
+        }
     }
 
     private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
@@ -142,5 +169,16 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     public BooleanProperty showHeaderProperty() {
         return showHeader;
+    }
+
+    @FXML
+    protected void validate(ActionEvent event) {
+        Dialog dialog = new ValidationWindow(transaction.get(), validator);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    protected void propagate(ActionEvent event) {
+        nodeEnvironment.announceTransactionRequest(transaction.get());
     }
 }

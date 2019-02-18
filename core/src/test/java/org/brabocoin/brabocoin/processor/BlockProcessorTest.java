@@ -15,7 +15,6 @@ import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -29,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +41,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Test {@link BlockProcessor}.
  */
 class BlockProcessorTest {
+
+    private static final String walletPath = "src/test/resources/data/wallet/wallet.dat";
+    private static final String txHistPath = "src/test/resources/data/wallet/txhist.dat";
+    private static final File walletFile = new File(walletPath);
+    private static final File txhistFile = new File(txHistPath);
 
     private static final String BLOCK_FILE_LOCATION = "testenv/blocks";
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
@@ -57,6 +62,11 @@ class BlockProcessorTest {
             public String blockStoreDirectory() {
                 return BLOCK_FILE_LOCATION;
             }
+
+            @Override
+            public Hash targetValue() {
+                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
+            }
         };
     }
 
@@ -70,17 +80,15 @@ class BlockProcessorTest {
 
     @BeforeEach
     void setUp() throws DatabaseException {
-        state = new TestState(config) {
-            @Override
-            protected Consensus createConsensus() {
-                return new Consensus() {
-                    @Override
-                    public @NotNull Hash getTargetValue() {
-                        return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
-                    }
-                };
-            }
+        if (walletFile.exists()) {
+            walletFile.delete();
+        }
 
+        if (txhistFile.exists()) {
+            txhistFile.delete();
+        }
+
+        state = new TestState(config) {
             @Override
             protected BlockValidator createBlockValidator() {
                 return new BlockValidator(
@@ -135,7 +143,7 @@ class BlockProcessorTest {
         state.getPoolUTXODatabase()
             .setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(block);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(block, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -200,9 +208,9 @@ class BlockProcessorTest {
         );
         Hash tHashB = transactionB.getHash();
 
-        state.getBlockProcessor().processNewBlock(blockA);
+        state.getBlockProcessor().processNewBlock(blockA, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -269,10 +277,10 @@ class BlockProcessorTest {
         state.getPoolUTXODatabase()
             .setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        state.getBlockProcessor().processNewBlock(blockA);
-        state.getBlockProcessor().processNewBlock(blockB);
+        state.getBlockProcessor().processNewBlock(blockA, false);
+        state.getBlockProcessor().processNewBlock(blockB, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -306,7 +314,7 @@ class BlockProcessorTest {
             Simulation.randomHash(),
             Simulation.randomHash(),
             Simulation.randomBigInteger(), 1,
-            Collections.singletonList(transaction),
+            Arrays.asList(Transaction.coinbase(Simulation.randomOutput(), 1), transaction),
             0
         );
         Hash hashA = blockA.getHash();
@@ -401,14 +409,14 @@ class BlockProcessorTest {
                 new UnspentOutputInfo(false, 0, 10L, Simulation.randomHash())
             );
 
-        state.getBlockProcessor().processNewBlock(blockA);
-        state.getBlockProcessor().processNewBlock(blockB);
-        state.getBlockProcessor().processNewBlock(blockC);
-        state.getBlockProcessor().processNewBlock(blockD);
-        state.getBlockProcessor().processNewBlock(blockF);
-        state.getBlockProcessor().processNewBlock(blockG);
+        state.getBlockProcessor().processNewBlock(blockA, false);
+        state.getBlockProcessor().processNewBlock(blockB, false);
+        state.getBlockProcessor().processNewBlock(blockC, false);
+        state.getBlockProcessor().processNewBlock(blockD, false);
+        state.getBlockProcessor().processNewBlock(blockF, false);
+        state.getBlockProcessor().processNewBlock(blockG, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE, false);
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -437,7 +445,7 @@ class BlockProcessorTest {
 
         // Check UTXO
         assertFalse(state.getChainUTXODatabase()
-            .isUnspent(blockA.getTransactions().get(0).getHash(), 0));
+            .isUnspent(blockA.getTransactions().get(1).getHash(), 0));
         assertFalse(state.getChainUTXODatabase()
             .isUnspent(blockB.getTransactions().get(0).getHash(), 0));
         assertFalse(state.getChainUTXODatabase()
@@ -454,7 +462,7 @@ class BlockProcessorTest {
 
         // Check transaction pool
         assertTrue(state.getTransactionPool()
-            .hasValidTransaction(blockA.getTransactions().get(0).getHash()));
+            .hasValidTransaction(blockA.getTransactions().get(1).getHash()));
         assertFalse(state.getTransactionPool()
             .hasValidTransaction(blockB.getTransactions().get(0).getHash()));
         assertFalse(state.getTransactionPool()

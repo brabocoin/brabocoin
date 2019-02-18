@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -27,8 +26,7 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
             return transaction.getInputs().stream()
                 .map(rethrowFunction(utxoSet::findUnspentOutputInfo))
                 .filter(Objects::nonNull)
-                .filter(UnspentOutputInfo::isCoinbase)
-                .allMatch(u -> u.getBlockHeight() <= mainChain.getHeight() - consensus.getCoinbaseMaturityDepth());
+                .noneMatch(u -> consensus.immatureCoinbase(mainChain.getHeight(), u));
         }
         catch (DatabaseException e) {
             e.printStackTrace();

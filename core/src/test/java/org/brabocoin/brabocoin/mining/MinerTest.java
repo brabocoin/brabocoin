@@ -15,7 +15,6 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 class MinerTest {
 
+    private static final Hash EASY_TARGET_VALUE = Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
     private Consensus consensus;
     private TransactionPool transactionPool;
     private Miner miner;
@@ -45,14 +45,13 @@ class MinerTest {
         Random random = new Random();
         BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
 
-        transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(),defaultConfig.maxOrphanTransactions(), random);
-        consensus = new Consensus() {
-            @Override
-            public @NotNull Hash getTargetValue() {
-                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
-            }
-        };
-        miner = new Miner(transactionPool, consensus, random, new CompositeReadonlyUTXOSet(), defaultConfig.networkId());
+        transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(),defaultConfig.maxOrphanTransactions(), random,
+            657989
+        );
+        consensus = new Consensus();
+        miner = new Miner(transactionPool, consensus, random, new CompositeReadonlyUTXOSet(), defaultConfig.networkId(),
+            EASY_TARGET_VALUE
+        );
     }
 
     @Test
@@ -71,7 +70,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -83,7 +83,7 @@ class MinerTest {
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
         assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
-        assertEquals(consensus.getTargetValue(), block.getTargetValue());
+        assertEquals(EASY_TARGET_VALUE, block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
 
@@ -112,7 +112,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -128,7 +129,7 @@ class MinerTest {
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
         assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
-        assertEquals(consensus.getTargetValue(), block.getTargetValue());
+        assertEquals(EASY_TARGET_VALUE, block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
 
@@ -160,7 +161,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -176,7 +178,7 @@ class MinerTest {
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
         assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
-        assertEquals(consensus.getTargetValue(), block.getTargetValue());
+        assertEquals(EASY_TARGET_VALUE, block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
 
@@ -205,13 +207,14 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
         Hash address = Hashing.digestRIPEMD160(ByteString.copyFromUtf8("Neerkant"));
 
-        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 1000), 20);
+        List<Transaction> transactions = Simulation.repeatedBuilder(() -> Simulation.randomTransaction(1, 50), 20);
 
         for (Transaction transaction : transactions) {
             transactionPool.addIndependentTransaction(transaction);
@@ -225,7 +228,7 @@ class MinerTest {
         assertEquals(genesis.getHash(), block.getPreviousBlockHash());
         assertEquals(genesis.getBlockInfo().getBlockHeight() + 1, block.getBlockHeight());
         assertTrue(block.getHash().compareTo(block.getTargetValue()) <= 0);
-        assertEquals(consensus.getTargetValue(), block.getTargetValue());
+        assertEquals(EASY_TARGET_VALUE, block.getTargetValue());
 
         ByteString serialized = ProtoConverter.toProtoBytes(block, BrabocoinProtos.Block.class);
 
@@ -240,14 +243,8 @@ class MinerTest {
 
     @Test
     void stop() {
-        consensus = new Consensus() {
-            @Override
-            public Hash getTargetValue() {
-                return new Hash(ByteString.copyFrom(new byte[] { 0x01 }));
-            }
-        };
-
-        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0);
+        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0,
+            new Hash(ByteString.copyFrom(new byte[] { 0x01 })));
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -263,7 +260,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 
@@ -295,14 +293,8 @@ class MinerTest {
 
     @Test
     void stopImmediately() {
-        consensus = new Consensus() {
-            @Override
-            public Hash getTargetValue() {
-                return new Hash(ByteString.copyFrom(new byte[] { 0x01 }));
-            }
-        };
-
-        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0);
+        miner = new Miner(transactionPool, consensus, new Random(), new CompositeReadonlyUTXOSet(), 0,
+            new Hash(ByteString.copyFrom(new byte[] { 0x01 })));
 
         IndexedBlock genesis = new IndexedBlock(
             consensus.getGenesisBlock().getHash(),
@@ -318,7 +310,8 @@ class MinerTest {
                 0,
                 0,
                 0,
-                0
+                0,
+                false
             )
         );
 

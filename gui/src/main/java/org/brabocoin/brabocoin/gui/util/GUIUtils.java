@@ -4,12 +4,17 @@ import com.sun.javafx.scene.control.skin.TableViewSkin;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import org.brabocoin.brabocoin.validation.Consensus;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 public class GUIUtils {
     private static Method columnToFitMethod;
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     static {
         try {
@@ -30,5 +35,17 @@ public class GUIUtils {
                 }
             }
         });
+    }
+
+    public static String formatValue(long value, boolean addSuffix) {
+        BigDecimal roundedOutput = BigDecimal.valueOf(value)
+            .divide(BigDecimal.valueOf(Consensus.COIN), 2, RoundingMode.UNNECESSARY);
+        String formattedValue = DECIMAL_FORMAT.format(roundedOutput);
+
+        if (addSuffix) {
+            return formattedValue + " BRC";
+        }
+
+        return formattedValue;
     }
 }

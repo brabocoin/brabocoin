@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
+import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
@@ -24,7 +25,6 @@ import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.processor.BlockProcessorListener;
 import org.brabocoin.brabocoin.util.Destructible;
-import org.brabocoin.brabocoin.util.LambdaExceptionUtil;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +78,19 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     private final @NotNull KeyGenerator keyGenerator;
 
     /**
-     * The wallet UTXO set.
+     * The wallet chain UTXO set.
      */
-    private final @NotNull UTXODatabase utxoSet;
+    private final @NotNull UTXODatabase walletChainUtxoSet;
+
+    /**
+     * The wallet pool UTXO set.
+     */
+    private final @NotNull UTXODatabase walletPoolUtxoSet;
+
+    /**
+     * The wallet composite UTXO set.
+     */
+    private final @NotNull ReadonlyUTXOSet walletCompositeUtxoSet;
 
     /**
      * The cipher used to create private keys.
@@ -110,18 +120,20 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     private @Nullable Hash miningAddress;
 
     /**
-     * Key pair generated listeners
+     * Key pair generated listeners.
      */
     private List<KeyPairListener> keyPairListeners = new ArrayList<>();
+
+    /**
+     * BalanceListener list
+     */
+    private List<BalanceListener> balanceListeners = new ArrayList<>();
 
     /**
      * Create a wallet for a given public to private key map.
      *
      * @param keyPairs
      *     Key map
-     * @param utxoSet
-     *     The UTXO set for the wallet, containing only unspent outputs for the addresses
-     *     corresponding to the keys contained in the wallet.
      * @param chainUtxo
      *     The chain UTXO set to watch for changes to the chain UTXO to update the wallet UTXO
      *     and used inputs.
@@ -131,30 +143,33 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
      */
     public Wallet(@NotNull List<KeyPair> keyPairs,
                   @NotNull TransactionHistory transactionHistory,
-                  @NotNull Set<Input> usedInputs,
                   @NotNull Consensus consensus,
                   @NotNull Signer signer, @NotNull KeyGenerator keyGenerator,
-                  @NotNull Cipher privateKeyCipher, @NotNull UTXODatabase utxoSet,
+                  @NotNull Cipher privateKeyCipher,
+                  @NotNull UTXODatabase walletChainUtxoSet,
+                  @NotNull UTXODatabase walletPoolUtxoSet,
                   @NotNull ReadonlyUTXOSet chainUtxo,
                   @NotNull ReadonlyUTXOSet poolUtxo,
                   @NotNull Blockchain blockchain) {
         this.keyPairs = new ArrayList<>(keyPairs);
         this.transactionHistory = transactionHistory;
-        this.usedInputs = usedInputs;
         this.consensus = consensus;
         this.signer = signer;
         this.keyGenerator = keyGenerator;
         this.privateKeyCipher = privateKeyCipher;
-        this.utxoSet = utxoSet;
+        this.walletChainUtxoSet = walletChainUtxoSet;
+        this.walletPoolUtxoSet = walletPoolUtxoSet;
         this.chainUtxo = chainUtxo;
         this.poolUtxo = poolUtxo;
         this.blockchain = blockchain;
+        this.usedInputs = new HashSet<>();
 
         // Add listeners
         this.poolUtxo.addListener(new PoolListener());
         this.chainUtxo.addListener(new ChainListener());
         this.blockchain.addListener(this);
         transactionPool.addListener(this);
+        this.walletCompositeUtxoSet = new CompositeReadonlyUTXOSet(walletChainUtxoSet, walletPoolUtxoSet);
     }
 
     /**
@@ -243,7 +258,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         List<Signature> signatures = new ArrayList<>();
 
         for (Input input : unsignedTransaction.getInputs()) {
-            UnspentOutputInfo outputInfo = utxoSet.findUnspentOutputInfo(input);
+            UnspentOutputInfo outputInfo = walletCompositeUtxoSet.findUnspentOutputInfo(input);
             if (outputInfo == null) {
                 throw new IllegalStateException(
                     "Could not find output info for input in the transaction");
@@ -275,29 +290,27 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             privateKeys.add(privateKey);
         }
 
+        Collection<Integer> handledIndices = new ArrayList<>();
         for (int i = 0; i < privateKeys.size(); i++) {
-            PrivateKey privateKey = privateKeys.get(i);
-
-            boolean hasDuplicate = false;
-            for (int j = 0; j < i; j++) {
-                if (privateKeys.get(j).equals(privateKey)) {
-                    signatures.add(signatures.get(j));
-                    hasDuplicate = true;
-                    break;
-                }
-            }
-
-            if (hasDuplicate) {
+            if (handledIndices.contains(i)) {
                 continue;
             }
 
+            PrivateKey privateKey = privateKeys.get(i);
             Destructible<BigInteger> privateKeyValue = privateKey.getKey();
-            signatures.add(
-                signer.signMessage(
-                    unsignedTransaction.getSignableTransactionData(),
-                    Objects.requireNonNull(privateKeyValue.getReference().get())
-                )
-            );
+            for (int j = i; j < privateKeys.size(); j++) {
+                if (privateKeys.get(j).equals(privateKey)) {
+                    handledIndices.add(j);
+                    signatures.add(
+                        j,
+                        signer.signMessage(
+                            unsignedTransaction.getSignableTransactionData(),
+                            Objects.requireNonNull(privateKeyValue.getReference().get())
+                        )
+                    );
+                }
+            }
+
             privateKeyValue.destruct();
         }
 
@@ -399,6 +412,8 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                     new ConfirmedTransaction(t, block.getBlockHeight())
                 );
             });
+
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     @Override
@@ -412,6 +427,9 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                 transactionHistory.removeConfirmedTransaction(t.getHash());
                 transactionHistory.addUnconfirmedTransaction(t);
             });
+
+
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     @Override
@@ -452,24 +470,62 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     }
 
     /**
-     * Retrieve the address used for mining.
+     * Computes the confirmed or pending balance in the chain, using the wallet UTXO set and the
+     * {@link #usedInputs}.
      *
-     * @return The address used for mining.
+     * @param pending
+     *     Whether to compute the confirmed or pending balance.
+     * @return Confirmed balance
      */
-    public @NotNull Hash getMiningAddress() {
-        if (miningAddress == null) {
-            miningAddress = this.keyPairs.get(keyPairs.size() - 1).getPublicKey().getHash();
+    public long computeBalance(boolean pending) {
+        return computeKeyPairBalance(pending, null);
+    }
+
+    /**
+     * Computes the confirmed or pending balance for a given key pair, using the wallet UTXO set
+     * and the
+     * {@link #usedInputs}.
+     *
+     * @param pending
+     *     Whether to compute the confirmed or pending balance.
+     * @param keyPair
+     *     The key pair to calculate the balance for.
+     * @return Confirmed balance
+     */
+    public long computeKeyPairBalance(boolean pending, KeyPair keyPair) {
+        long sum = 0;
+
+        ReadonlyUTXOSet balanceUtxo = pending ? walletCompositeUtxoSet : walletChainUtxoSet;
+
+        for (Map.Entry<Input, UnspentOutputInfo> entry : balanceUtxo) {
+            UnspentOutputInfo info = entry.getValue();
+
+            if (keyPair != null && !info.getAddress().equals(keyPair.getPublicKey().getHash())) {
+                continue;
+            }
+
+            boolean immatureCoinbase = consensus.immatureCoinbase(blockchain.getMainChain()
+                .getHeight(), info);
+
+            if (pending) {
+                if (!usedInputs.contains(entry.getKey())) {
+                    sum += info.getAmount();
+                }
+            }
+            else if (!immatureCoinbase) {
+                sum += info.getAmount();
+            }
         }
 
-        return miningAddress;
+        return sum;
     }
 
     public @NotNull TransactionHistory getTransactionHistory() {
         return transactionHistory;
     }
 
-    public UTXODatabase getUtxoSet() {
-        return utxoSet;
+    public ReadonlyUTXOSet getCompositeUtxoSet() {
+        return walletCompositeUtxoSet;
     }
 
     public void addKeyPairListener(KeyPairListener keyPairListener) {
@@ -481,7 +537,11 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     }
 
     public Set<Input> getUsedInputs() {
-        return usedInputs;
+        return new HashSet<>(usedInputs);
+    }
+
+    public void addBalanceListener(BalanceListener listener) {
+        balanceListeners.add(listener);
     }
 
     class ChainListener implements UTXOSetListener {
@@ -489,21 +549,16 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         @Override
         public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                     @NotNull UnspentOutputInfo info) {
-            addUnspentOutputInfo(transactionHash, outputIndex, info);
+            addUnspentOutputInfo(transactionHash, outputIndex, info, walletChainUtxoSet);
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
 
         @Override
         public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
-            // Set the UTXO as spent in the wallet UTXO set as well.
-            try {
-                utxoSet.setOutputSpent(transactionHash, outputIndex);
-            }
-            catch (DatabaseException e) {
-                LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
-                throw new RuntimeException("Wallet UTXO set could not be updated.", e);
-            }
+            setOutputSpent(transactionHash, outputIndex, walletChainUtxoSet);
 
             usedInputs.remove(new Input(transactionHash, outputIndex));
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
     }
 
@@ -512,30 +567,31 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         @Override
         public void onOutputUnspent(@NotNull Hash transactionHash, int outputIndex,
                                     @NotNull UnspentOutputInfo info) {
-            addUnspentOutputInfo(transactionHash, outputIndex, info);
+            addUnspentOutputInfo(transactionHash, outputIndex, info, walletPoolUtxoSet);
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
 
         @Override
         public void onOutputSpent(@NotNull Hash transactionHash, int outputIndex) {
-            addUsedInput(
-                new Input(transactionHash, outputIndex)
-            );
+            setOutputSpent(transactionHash, outputIndex, walletPoolUtxoSet);
+            balanceListeners.forEach(BalanceListener::onBalanceChanged);
         }
     }
 
     public void addUsedInput(Input input) {
         usedInputs.add(input);
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
     private void addUnspentOutputInfo(Hash transactionHash, int outputIndex,
-                                      UnspentOutputInfo info) {
+                                      UnspentOutputInfo info, UTXODatabase utxoDatabase) {
         // Filter UTXO from addresses in this wallet and add to the wallet UTXO
         if (!hasAddress(info.getAddress())) {
             return;
         }
 
         try {
-            utxoSet.addUnspentOutputInfo(transactionHash, outputIndex, info);
+            utxoDatabase.addUnspentOutputInfo(transactionHash, outputIndex, info);
             LOGGER.info(() -> MessageFormat.format(
                 "Added {0} cents as spendable amount to wallet for address {1}.",
                 info.getAmount(),
@@ -546,22 +602,18 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
             throw new RuntimeException("Wallet UTXO set could not be updated.", e);
         }
+
+        balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
 
-    public long computeBalance() {
-        long sum = 0;
-        for (Map.Entry<Input, UnspentOutputInfo> entry: utxoSet) {
-            if (!usedInputs.contains(entry.getKey())) {
-                sum += entry.getValue().getAmount();
-            }
+    private void setOutputSpent(Hash transactionHash, int outputIndex, UTXODatabase utxoDatabase) {
+        // Set the UTXO as spent in the wallet UTXO set as well.
+        try {
+            utxoDatabase.setOutputSpent(transactionHash, outputIndex);
         }
-
-        return sum;
-    }
-
-    public long computePending() throws DatabaseException {
-        return usedInputs.stream()
-            .map(LambdaExceptionUtil.rethrowFunction(utxoSet::findUnspentOutputInfo))
-            .mapToLong(UnspentOutputInfo::getAmount).sum();
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
+            throw new RuntimeException("Wallet UTXO set could not be updated.", e);
+        }
     }
 }

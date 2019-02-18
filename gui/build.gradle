@@ -1,26 +1,28 @@
 repositories {
-    mavenCentral()
     jcenter()
-    maven { url 'http://maven.bestsolution.at/efxclipse-releases/' }
 }
 
 dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
-    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
     compile('org.fxmisc.cssfx:cssfx:1.0.0')
     compile('no.tornado:tornadofx:1.7.17')
 
     compile project(':core')
 }
 
-jar {
-    manifest {
-        attributes(
-            'Main-Class': 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
-        )
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    baseName 'brabocoin'
+    classifier null
+    reallyExecutable
+
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.gui'
+        applicationName = 'Brabocoin'
     }
 }
 
-shadowJar {
-    classifier = null
+artifacts {
+    archives fatCapsule
 }

@@ -3,6 +3,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TitledPane?>
@@ -29,16 +31,14 @@
                 <VBox>
                     <TitledPane collapsible="false" text="Balance info">
                         <GridPane style="-fx-padding: 1em">
-                            <Label text="Balance:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                            <Label fx:id="balanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                            <Label text="Pending:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                            <Label fx:id="pendingLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                            <Label text="Total pending balance:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                            <Label fx:id="totalPendingBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                            <Label text="Confirmed balance:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <Label style="-fx-padding: 0 0 0 1em" fx:id="confirmedBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            <Label text="Pending balance:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Label style="-fx-padding: 0 0 0 1em" fx:id="pendingBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                         </GridPane>
                     </TitledPane>
-                    <TitledPane collapsible="false" text="Key pairs">
-                        <TableView fx:id="keyPairsTableView" VBox.vgrow="ALWAYS"/>
+                    <TitledPane collapsible="false" text="Key pairs" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+                        <TableView fx:id="keyPairsTableView" />
                     </TitledPane>
                 </VBox>
             </center>

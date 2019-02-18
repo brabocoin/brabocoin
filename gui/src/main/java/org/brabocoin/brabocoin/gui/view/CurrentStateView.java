@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -21,6 +22,7 @@ import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +37,14 @@ import java.util.ResourceBundle;
 /**
  * View for the current state.
  */
-public class CurrentStateView extends TabPane implements BraboControl, Initializable, BlockchainListener {
+public class CurrentStateView extends TabPane implements BraboControl, Initializable,
+                                                         BlockchainListener {
 
-    @FXML private Tab recentRejectTab;
+    @FXML private Tab recentRejectBlkTab;
+    @FXML private Tab recentRejectTxTab;
+    @FXML private Tab txPoolTab;
+    @FXML private Tab txOrphansTab;
+    @FXML private Tab blkOrphansTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -47,15 +54,18 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private TableColumn<IndexedBlock, LocalDateTime> timeColumn;
     @FXML private TableColumn<IndexedBlock, Hash> hashColumn;
     @FXML private TableColumn<IndexedBlock, Double> sizeColumn;
+    @FXML private TableColumn<IndexedBlock, Boolean> minedByColumn;
 
+    private final @NotNull State state;
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
-    public CurrentStateView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public CurrentStateView(@NotNull State state) {
         super();
-        this.blockchain = blockchain;
-        this.validator = validator;
+        this.state = state;
+        this.blockchain = state.getBlockchain();
+        this.validator = state.getBlockValidator();
 
         BraboControlInitializer.initialize(this);
     }
@@ -70,7 +80,63 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadMainChain();
         blockchain.addListener(this);
 
-        recentRejectTab.setContent(new RecentRejectView(blockchain, validator));
+        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator, state.getEnvironment());
+        recentRejectBlkTab.setContent(rejectBlkView);
+        recentRejectBlkTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Recently rejected blocks (" + rejectBlkView.getCount() + ")",
+                rejectBlkView.countProperty()
+            )
+        );
+
+        RecentRejectTxView rejectTxView = new RecentRejectTxView(
+            state.getTransactionPool(),
+            state.getEnvironment(),
+            state.getTransactionValidator()
+        );
+        recentRejectTxTab.setContent(rejectTxView);
+        recentRejectTxTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Recently rejected transactions (" + rejectTxView.getCount() + ")",
+                rejectTxView.countProperty()
+            )
+        );
+
+        TransactionPoolView poolView = new TransactionPoolView(
+            state.getTransactionPool(),
+            state.getTransactionValidator()
+        );
+        txPoolTab.setContent(poolView);
+        txPoolTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Transaction pool (" + poolView.getCount() + ")",
+                poolView.countProperty()
+            )
+        );
+
+        OrphanTransactionsView orphanTxView = new OrphanTransactionsView(
+            state.getTransactionPool(),
+            state.getTransactionValidator()
+        );
+        txOrphansTab.setContent(orphanTxView);
+        txOrphansTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Orphan transactions (" + orphanTxView.getCount() + ")",
+                orphanTxView.countProperty()
+            )
+        );
+
+        OrphanBlocksView orphanBlkView = new OrphanBlocksView(
+            state.getBlockchain(),
+            state.getBlockValidator()
+        );
+        blkOrphansTab.setContent(orphanBlkView);
+        blkOrphansTab.textProperty().bind(
+            Bindings.createStringBinding(
+                () -> "Orphan blocks (" + orphanBlkView.getCount() + ")",
+                orphanBlkView.countProperty()
+            )
+        );
     }
 
     private void loadTable() {
@@ -102,18 +168,25 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         });
         sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0.00")));
 
-        blockchainTable.getSelectionModel().selectedItemProperty().addListener((obs, old, indexedBlock) -> {
-            if (indexedBlock == null) {
-                return;
-            }
-            try {
-                blockDetailView.setBlock(blockchain.getBlock(indexedBlock));
-            }
-            catch (DatabaseException e) {
-                // ignore
-            }
-            masterDetailPane.setShowDetailNode(true);
+        minedByColumn.setCellValueFactory(features -> {
+            boolean minedByMe = features.getValue().getBlockInfo().isMinedByMe();
+            return new ReadOnlyObjectWrapper<>(minedByMe);
         });
+
+        blockchainTable.getSelectionModel()
+            .selectedItemProperty()
+            .addListener((obs, old, indexedBlock) -> {
+                if (indexedBlock == null) {
+                    return;
+                }
+                try {
+                    blockDetailView.setBlock(blockchain.getBlock(indexedBlock));
+                }
+                catch (DatabaseException e) {
+                    // ignore
+                }
+                masterDetailPane.setShowDetailNode(true);
+            });
     }
 
     private void loadMainChain() {

@@ -117,3 +117,7 @@
 .text-field.invalid {
     -fx-text-fill: red !important;
 }
+
+.table-action-box {
+    -fx-spacing: 10px;
+}

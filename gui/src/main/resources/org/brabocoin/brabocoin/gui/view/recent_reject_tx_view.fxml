@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
-         fx:controller="org.brabocoin.brabocoin.gui.view.RecentRejectView"
+         fx:controller="org.brabocoin.brabocoin.gui.view.RecentRejectTxView"
          dividerPosition="0.65"
          showDetailNode="false">
     <masterNode>
         <VBox>
-            <TableView fx:id="blocksTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="txsTable" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="heightColumn" sortable="false" text="Height"/>
                     <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
+                    <TableColumn fx:id="ruleColumn" sortable="false" text="Failed validation rule"/>
                 </columns>
                 <placeholder>
                     <VBox alignment="CENTER" spacing="5">
-                        <Label text="No recently rejected blocks received"/>
+                        <Label text="No recently rejected transactions received"/>
                     </VBox>
                 </placeholder>
             </TableView>

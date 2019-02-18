@@ -136,6 +136,7 @@ public class TransactionProcessor {
         ValidationStatus status = result.getStatus();
         if (status == ValidationStatus.INVALID) {
             LOGGER.log(Level.INFO, MessageFormat.format("New transaction is invalid, rulebook result: {0}", result));
+            transactionPool.addRejected(transaction, result);
             return;
         }
 
@@ -181,6 +182,10 @@ public class TransactionProcessor {
         LOGGER.fine("Processing top block connected.");
 
         for (Transaction transaction : block.getTransactions()) {
+            if (transaction.isCoinbase()) {
+                continue;
+            }
+
             Hash hash = transaction.getHash();
 
             // Remove from pool

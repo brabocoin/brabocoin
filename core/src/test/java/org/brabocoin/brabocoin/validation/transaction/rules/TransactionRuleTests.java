@@ -147,7 +147,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendCoinbase = new Transaction(
             Collections.singletonList(new Input(coinbase.getHash(), 0)),
@@ -191,10 +191,10 @@ class TransactionRuleTests {
         List<Block> blockList = new ArrayList<Block>() {{
             add(block);
         }};
-        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5));
+        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5, false));
 
         for (Block b : blockList) {
-            state.getBlockProcessor().processNewBlock(b);
+            state.getBlockProcessor().processNewBlock(b, false);
         }
 
         Transaction spendCoinbase = new Transaction(
@@ -264,7 +264,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -294,7 +295,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -324,7 +326,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
 
@@ -354,7 +357,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
 
         Input input = Simulation.randomInput();
@@ -490,7 +494,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTransaction = new Transaction(
             Collections.singletonList(new Input(
@@ -576,7 +580,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTransaction = new Transaction(
             Collections.singletonList(new Input(
@@ -632,7 +636,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTransaction = new Transaction(
             Arrays.asList(
@@ -728,7 +732,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTransaction = new Transaction(
             Collections.singletonList(new Input(
@@ -966,7 +970,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
         ;
         transactionPool.addIndependentTransaction(spendingTx);
@@ -1014,7 +1019,8 @@ class TransactionRuleTests {
         TransactionPool transactionPool = new TransactionPool(
             defaultConfig.maxTransactionPoolSize(),
             defaultConfig.maxOrphanTransactions(),
-            new Random()
+            new Random(),
+            657989
         );
         transactionPool.addIndependentTransaction(spendingTx);
 
@@ -1068,7 +1074,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         UnsignedTransaction unsignedSpendingTx = new UnsignedTransaction(
             Collections.singletonList(
@@ -1131,7 +1137,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         UnsignedTransaction unsignedSpendingTx = new UnsignedTransaction(
             Collections.singletonList(
@@ -1194,7 +1200,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         UnsignedTransaction unsignedSpendingTx = new UnsignedTransaction(
             Collections.singletonList(
@@ -1268,7 +1274,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTx = new Transaction(
             Arrays.asList(
@@ -1357,7 +1363,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTx = new Transaction(
             Arrays.asList(
@@ -1446,7 +1452,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTx = new Transaction(
             Arrays.asList(
@@ -1562,7 +1568,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTx = new Transaction(
             Arrays.asList(new Input(
@@ -1616,7 +1622,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         Transaction spendingTx = new Transaction(
             Arrays.asList(new Input(
@@ -1730,7 +1736,7 @@ class TransactionRuleTests {
             0
         );
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         state.getTransactionProcessor().processNewTransaction(coinbaseTwo);
 

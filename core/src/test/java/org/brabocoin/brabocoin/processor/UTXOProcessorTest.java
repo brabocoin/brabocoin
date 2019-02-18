@@ -112,7 +112,7 @@ class UTXOProcessorTest {
 
     @Test
     void processBlockDisconnected() throws DatabaseException {
-        Block block = Simulation.randomBlockChainGenerator(1, consensus.getGenesisBlock().getHash(), 1).get(0);
+        Block block = Simulation.randomBlockChainGenerator(1, consensus.getGenesisBlock().getHash(), 1, true).get(0);
         Hash address = Simulation.randomHash();
 
         // Set all inputs of new block manually unspent

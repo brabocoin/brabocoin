@@ -65,7 +65,7 @@ class BlockRuleTests {
         Block block = new Block(
             Simulation.randomHash(),
             Simulation.randomHash(),
-            consensus.getTargetValue(),
+            defaultConfig.targetValue(),
             Simulation.randomBigInteger(),
             0,
             Collections.emptyList(),
@@ -79,6 +79,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
+        facts.put("config", defaultConfig);
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -102,6 +103,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
+        facts.put("config", defaultConfig);
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -177,7 +179,7 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -263,7 +265,7 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(block);
+        state.getBlockProcessor().processNewBlock(block, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -559,8 +561,8 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(coinbase);
-        state.getBlockProcessor().processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase, false);
+        state.getBlockProcessor().processNewBlock(coinbase2, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -645,8 +647,8 @@ class BlockRuleTests {
         ));
         State state = new TestState(defaultConfig);
 
-        state.getBlockProcessor().processNewBlock(coinbase);
-        state.getBlockProcessor().processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase, false);
+        state.getBlockProcessor().processNewBlock(coinbase2, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -731,8 +733,8 @@ class BlockRuleTests {
         ));
         State state = new TestState(defaultConfig);
 
-        state.getBlockProcessor().processNewBlock(coinbase);
-        state.getBlockProcessor().processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase, false);
+        state.getBlockProcessor().processNewBlock(coinbase2, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -1161,8 +1163,8 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(coinbase);
-        state.getBlockProcessor().processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase, false);
+        state.getBlockProcessor().processNewBlock(coinbase2, false);
 
         Block block = new Block(
             consensus.getGenesisBlock().getHash(),
@@ -1264,8 +1266,8 @@ class BlockRuleTests {
         );
         State state = new TestState(defaultConfig);
 
-        state.getBlockProcessor().processNewBlock(coinbase);
-        state.getBlockProcessor().processNewBlock(coinbase2);
+        state.getBlockProcessor().processNewBlock(coinbase, false);
+        state.getBlockProcessor().processNewBlock(coinbase2, false);
 
         Block block = new Block(
             consensus.getGenesisBlock().getHash(),
@@ -1477,7 +1479,7 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(parent);
+        state.getBlockProcessor().processNewBlock(parent, false);
 
         FactMap facts = new FactMap();
         facts.put("block", block);
@@ -1541,7 +1543,7 @@ class BlockRuleTests {
             }
         };
 
-        state.getBlockProcessor().processNewBlock(parent);
+        state.getBlockProcessor().processNewBlock(parent, false);
         state.getBlockchain().setBlockInvalid(parent.getHash());
 
         FactMap facts = new FactMap();

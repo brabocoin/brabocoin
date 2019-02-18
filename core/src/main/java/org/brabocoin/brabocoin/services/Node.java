@@ -1,9 +1,13 @@
 package org.brabocoin.brabocoin.services;
 
+import com.dosse.upnp.UPnP;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.ForwardingServerCall;
+import io.grpc.ForwardingServerCallListener;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.Server;
@@ -13,12 +17,16 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.stub.StreamObserver;
+import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.messages.BlockHeight;
 import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
+import org.brabocoin.brabocoin.node.MessageArtifact;
+import org.brabocoin.brabocoin.node.NetworkMessage;
+import org.brabocoin.brabocoin.node.NetworkMessageListener;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -29,8 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,9 +52,11 @@ import java.util.stream.Collectors;
 public class Node {
 
     private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
-    private static final AtomicReference<ServerCall<?, ?>> serverCallCapture =
-        new AtomicReference<ServerCall<?, ?>>();
+    private final List<NetworkMessageListener> networkMessageListeners = new ArrayList<>();
+    private final AtomicReference<ServerCall<?, ?>> serverCallCapture =
+        new AtomicReference<>();
 
+    private final int servicePort;
     /**
      * The network id of this node
      */
@@ -60,40 +72,108 @@ public class Node {
      * Captures the request attributes. Useful for testing ServerCalls.
      * {@link ServerCall#getAttributes()}
      */
-    private static ServerInterceptor recordServerCallInterceptor(
-        final AtomicReference<ServerCall<?, ?>> serverCallCapture) {
+    private ServerInterceptor recordServerCallInterceptor() {
         return new ServerInterceptor() {
             @Override
             public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
                 ServerCall<ReqT, RespT> call,
                 Metadata requestHeaders,
                 ServerCallHandler<ReqT, RespT> next) {
-
                 serverCallCapture.set(call);
-                return next.startCall(call, requestHeaders);
+                InetSocketAddress clientAddress = (InetSocketAddress)call.getAttributes()
+                    .get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+                Peer peer = null;
+                try {
+                    peer = new Peer(clientAddress);
+                }
+                catch (MalformedSocketException e) {
+                    // ignore
+                }
+                NetworkMessage networkMessage = new NetworkMessage(peer);
+                networkMessage.setMethodDescriptor(call.getMethodDescriptor());
+                return createCallListener(next.startCall(
+                    new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
+                        @Override
+                        public void sendMessage(RespT message) {
+                            super.sendMessage(message);
+                            networkMessage.addResponseMessage(
+                                new MessageArtifact((Message)message)
+                            );
+                            networkMessageListeners.forEach(l ->
+                                l.onIncomingMessage(
+                                    networkMessage,
+                                    true
+                                ));
+                        }
+                    }, requestHeaders), networkMessage);
+            }
+        };
+    }
+
+
+    private <ReqT> ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> createCallListener(
+        ServerCall.Listener<ReqT> listener,
+        NetworkMessage networkMessage) {
+        return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listener) {
+            @Override
+            public void onComplete() {
+                super.onComplete();
+            }
+
+            @Override
+            public void onMessage(ReqT message) {
+                super.onMessage(message);
+                networkMessage.addRequestMessage(
+                    new MessageArtifact((Message)message)
+                );
+                networkMessageListeners.forEach(l ->
+                    l.onIncomingMessage(
+                        networkMessage,
+                        false
+                    ));
             }
         };
     }
 
     public Node(NodeEnvironment environment, int servicePort, int networkId) {
         this.server = ServerBuilder.forPort(servicePort)
+            .executor(Executors.newFixedThreadPool(4))
             .addService(
                 ServerInterceptors.intercept(
                     new NodeService(),
-                    recordServerCallInterceptor(serverCallCapture)
+                    recordServerCallInterceptor()
                 )
             )
             .build();
         this.environment = environment;
+        this.servicePort = servicePort;
         this.networkId = networkId;
+
+        networkMessageListeners.add(this.environment);
     }
 
     public void start() throws IOException {
         LOGGER.info("Starting node.");
+        attemptUPnP();
         environment.setup();
         server.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(Node.this::stop));
+    }
+
+    private void attemptUPnP() {
+        if (!UPnP.isUPnPAvailable()) {
+            LOGGER.log(Level.WARNING, "UPnP not available in current network, will not attempt to open port.");
+            return;
+        }
+
+        try {
+            UPnP.openPortTCP(servicePort);
+            LOGGER.log(Level.INFO, MessageFormat.format("UPnP port ({0}) opened.", servicePort));
+        }
+        catch (Exception e) {
+            LOGGER.log(Level.WARNING, MessageFormat.format("UPnP port ({0}) opening did not succeed.", servicePort));
+        }
     }
 
     public void stop() {
@@ -401,5 +481,13 @@ public class Node {
 
     public @NotNull NodeEnvironment getEnvironment() {
         return environment;
+    }
+
+    public void addNetworkMessageListener(NetworkMessageListener listener) {
+        networkMessageListeners.add(listener);
+    }
+
+    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+        networkMessageListeners.remove(listener);
     }
 }

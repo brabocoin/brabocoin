@@ -11,15 +11,12 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
+import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.brabocoin.brabocoin.validation.Consensus;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -32,7 +29,6 @@ public class BlockDetailsPane extends TitledPane implements BraboControl {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss");
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
 
@@ -67,9 +63,7 @@ public class BlockDetailsPane extends TitledPane implements BraboControl {
             .flatMap(t -> t.getOutputs().stream())
             .mapToLong(Output::getAmount)
             .sum();
-        BigDecimal roundedOutput = BigDecimal.valueOf(totalOutput)
-            .divide(BigDecimal.valueOf(Consensus.COIN), 2, RoundingMode.UNNECESSARY);
-        outputTotalField.setText(DECIMAL_FORMAT.format(roundedOutput) + " BRC");
+        outputTotalField.setText(GUIUtils.formatValue(totalOutput, true));
 
         IndexedBlock indexedBlock = null;
         try {

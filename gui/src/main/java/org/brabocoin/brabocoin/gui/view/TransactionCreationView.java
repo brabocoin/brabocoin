@@ -251,7 +251,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             .equals(ByteString.EMPTY)) {
             UnspentOutputInfo info = null;
             try {
-                info = wallet.getUtxoSet().findUnspentOutputInfo(
+                info = wallet.getCompositeUtxoSet().findUnspentOutputInfo(
                     entry.getReferencedTransaction(), entry.getReferencedOutputIndex()
                 );
             }
@@ -346,8 +346,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void findInputs(ActionEvent event) {
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
-        for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getUtxoSet()) {
-            if (inputSum >= outputSum) {
+        for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getCompositeUtxoSet()) {
+            if (inputSum > outputSum) {
                 break;
             }
 
@@ -359,9 +359,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             }
 
             // Prevent coinbase maturity failure
-            if (info.getValue().isCoinbase() && blockchain.getMainChain()
-                .getHeight() - consensus.getCoinbaseMaturityDepth() < info.getValue()
-                .getBlockHeight()) {
+            if (consensus.immatureCoinbase(blockchain.getMainChain().getHeight(), info.getValue())) {
                 continue;
             }
 
