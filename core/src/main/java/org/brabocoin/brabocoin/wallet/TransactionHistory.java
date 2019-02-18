@@ -108,6 +108,10 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     The transaction to add.
      */
     public void addConfirmedTransaction(@NotNull ConfirmedTransaction transaction) {
+        if (confirmedTransactions.containsKey(transaction.getHash())) {
+            return;
+        }
+
         confirmedTransactions.put(transaction.getHash(), transaction);
         listeners.forEach(l -> l.onConfirmedTransactionAdded(transaction));
     }
@@ -119,6 +123,10 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     The transaction to add.
      */
     public void addUnconfirmedTransaction(@NotNull Transaction transaction) {
+        if (unconfirmedTransactions.containsKey(transaction.getHash())) {
+            return;
+        }
+
         unconfirmedTransactions.put(transaction.getHash(), transaction);
         listeners.forEach(l -> l.onUnconfirmedTransactionAdded(transaction));
     }

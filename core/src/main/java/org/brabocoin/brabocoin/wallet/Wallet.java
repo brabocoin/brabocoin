@@ -8,6 +8,7 @@ import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.dal.UTXOSetListener;
@@ -34,6 +35,7 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -131,15 +133,14 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     /**
      * Create a wallet for a given public to private key map.
-     *
-     * @param keyPairs
+     *  @param keyPairs
      *     Key map
      * @param chainUtxo
      *     The chain UTXO set to watch for changes to the chain UTXO to update the wallet UTXO
      *     and used inputs.
      * @param poolUtxo
-     *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
-     *     and used inputs.
+ *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
+     * @param transactionPool
      */
     public Wallet(@NotNull List<KeyPair> keyPairs,
                   @NotNull TransactionHistory transactionHistory,
@@ -150,7 +151,8 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                   @NotNull UTXODatabase walletPoolUtxoSet,
                   @NotNull ReadonlyUTXOSet chainUtxo,
                   @NotNull ReadonlyUTXOSet poolUtxo,
-                  @NotNull Blockchain blockchain) {
+                  @NotNull Blockchain blockchain,
+                  @NotNull TransactionPool transactionPool) {
         this.keyPairs = new ArrayList<>(keyPairs);
         this.transactionHistory = transactionHistory;
         this.consensus = consensus;
@@ -396,14 +398,20 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     public void onTopBlockConnected(@NotNull IndexedBlock indexedBlock) {
         Block block = getBlock(indexedBlock);
 
-        // Find transactions that pay to an address contained in this wallet
+        // Find transactions that use an address contained in this wallet
         block.getTransactions().stream()
             .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
-            .forEach(t -> transactionHistory.addConfirmedTransaction(
-                new ConfirmedTransaction(t, block.getBlockHeight())
-            ));
+            .forEach(t -> {
+                transactionHistory.removeUnconfirmedTransaction(t.getHash());
+                transactionHistory.addConfirmedTransaction(
+                    new ConfirmedTransaction(t, block.getBlockHeight())
+                );
+            });
 
         // Find my transactions that might be confirmed now
+        // Actually we want to find transactions that use an address in this wallet for an input
+        // Because this information is already removed from the UTXO set
+        // The below implementation is the best-we-can-get
         block.getTransactions().stream()
             .filter(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()) != null)
             .forEach(t -> {
@@ -443,12 +451,22 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         // Add to unconfirmed transactions if an input matches and address from the wallet
         // Note that the tx is valid because it is present in the pool, thus the inputs are present
         // in either the chain or pool UTXO
-        // TODO
-    }
+        if (transaction.getInputs().stream().anyMatch(i -> {
+            UnspentOutputInfo info;
+            try {
+                info = chainUtxo.findUnspentOutputInfo(i);
+                if (info == null) {
+                    info = poolUtxo.findUnspentOutputInfo(i);
+                }
+            }
+            catch (DatabaseException e) {
+                return false;
+            }
 
-    @Override
-    public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
-        transactionHistory.removeUnconfirmedTransaction(transaction.getHash());
+            return info != null && hasAddress(info.getAddress());
+        })) {
+            transactionHistory.addUnconfirmedTransaction(transaction);
+        }
     }
 
     private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {

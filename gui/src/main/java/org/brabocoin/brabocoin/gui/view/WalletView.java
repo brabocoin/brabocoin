@@ -35,7 +35,6 @@ import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
-import tornadofx.SmartResize;
 
 import java.io.IOException;
 import java.net.URL;
@@ -73,7 +72,10 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        txHistoryTab.setContent(new TransactionHistoryView(state.getWallet().getTransactionHistory()));
+        txHistoryTab.setContent(new TransactionHistoryView(
+            state.getWallet().getTransactionHistory(),
+            state.getTransactionValidator()
+        ));
         keyPairsTableView.setEditable(false);
 
         TableColumn<TableKeyPairEntry, Integer> indexColumn = new TableColumn<>(

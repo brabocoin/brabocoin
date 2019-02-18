@@ -16,10 +16,12 @@ import org.brabocoin.brabocoin.gui.view.TransactionDetailView;
 import org.brabocoin.brabocoin.listeners.TransactionHistoryListener;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.ConfirmedTransaction;
 import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -31,6 +33,7 @@ import java.util.ResourceBundle;
 public class TransactionHistoryView extends MasterDetailPane implements BraboControl, Initializable, TransactionHistoryListener {
 
     private final @NotNull TransactionHistory transactionHistory;
+    private final @Nullable TransactionValidator validator;
     private Node txDetailiew;
 
     @FXML private TableView<ConfirmedTransaction> confirmedTable;
@@ -45,9 +48,11 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
     @FXML private TableColumn<Transaction, Hash> hashUnconfColumn;
     @FXML private TableColumn<Transaction, Long> amountUnconfColumn;
 
-    public TransactionHistoryView(@NotNull TransactionHistory transactionHistory) {
+    public TransactionHistoryView(@NotNull TransactionHistory transactionHistory,
+                                  @Nullable TransactionValidator validator) {
         super();
         this.transactionHistory = transactionHistory;
+        this.validator = validator;
         this.transactionHistory.addListener(this);
         BraboControlInitializer.initialize(this);
     }
@@ -78,7 +83,7 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
                     setDetailNode(new CoinbaseDetailView(transaction));
                 }
                 else {
-                    setDetailNode(new TransactionDetailView(transaction));
+                    setDetailNode(new TransactionDetailView(transaction, validator));
                 }
                 setShowDetailNode(true);
             }
@@ -90,7 +95,7 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
                     setDetailNode(new CoinbaseDetailView(tx));
                 }
                 else {
-                    setDetailNode(new TransactionDetailView(tx));
+                    setDetailNode(new TransactionDetailView(tx, validator));
                 }
                 setShowDetailNode(true);
             }
