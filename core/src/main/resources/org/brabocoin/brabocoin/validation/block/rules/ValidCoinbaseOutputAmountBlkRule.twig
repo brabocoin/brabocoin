@@ -1,4 +1,5 @@
-This rule checks whether the coinbase output amount is less or equal to the block reward determined by consensus plus the sum of fees in each transaction in the block.<br>
+This rule checks whether the coinbase output amount is less or equal to the block reward determined by consensus plus the sum of fees in each transaction in the block.
+If not, the block is invalid and should be rejected.<br>
 <br>
 Fee sum: {{ feeSum }}<br>
 Consensus block reward: {{ blockReward }}<br>

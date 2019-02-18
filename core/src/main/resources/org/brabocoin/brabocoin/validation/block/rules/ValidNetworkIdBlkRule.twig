@@ -1,0 +1,7 @@
+This rule checks whether the network ID defined in the block header is equal to the network ID determined by configuration.
+If not, the block is invalid and should be rejected.<br>
+<br>
+Block network ID: {{ networkID }}<br>
+Configuration network ID: {{ configID }}<br>
+<br>
+Check: <code>{{ networkID }} = {{ configID }}</code>

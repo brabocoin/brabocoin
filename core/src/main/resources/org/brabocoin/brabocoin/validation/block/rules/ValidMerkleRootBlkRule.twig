@@ -1,0 +1,7 @@
+This rule checks whether the merkle root defined in the block header is equal to the merkle root computed with the transactions in the block.
+If not, the block is invalid and should be rejected.<br>
+<br>
+Computed merkle root: {{ computedRoot }}<br>
+Block merkle root: {{ blockRoot }}<br>
+<br>
+Check: <code>{{ computedRoot }}= {{ blockRoot }}</code>
