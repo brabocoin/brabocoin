@@ -7,7 +7,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 import java.util.HashSet;
 import java.util.Set;
 
-@ValidationRule(name="No duplicate inputs", description = "The block does not contain duplicate inputs.")
+@ValidationRule(name="No duplicate inputs", failedName = "Block contains duplicate inputs", description = "The block does not contain duplicate inputs.")
 public class DuplicateInputBlkRule extends BlockRule {
 
     @Override

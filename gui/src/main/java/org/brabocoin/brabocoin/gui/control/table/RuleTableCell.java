@@ -20,7 +20,7 @@ public class RuleTableCell<T> extends CopyableTableCell<T, Class<? extends Rule>
                 return;
             }
 
-            setText(annotation.name());
+            setText(annotation.failedName());
         }
     }
 }

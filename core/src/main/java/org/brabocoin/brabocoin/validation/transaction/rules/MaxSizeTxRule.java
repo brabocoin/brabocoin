@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * Size of transaction should be limited.
  */
-@ValidationRule(name="Transaction size smaller than max transaction size", description = "The transaction size is smaller than the maximum transaction size defined in consensus.")
+@ValidationRule(name="Transaction size smaller than max transaction size", failedName = "Transaction size larger than max transaction size", description = "The transaction size is smaller than the maximum transaction size defined in consensus.")
 public class MaxSizeTxRule extends TransactionRule {
 
     public boolean isValid() {

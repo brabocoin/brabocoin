@@ -8,7 +8,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 import java.util.stream.Collectors;
 
-@ValidationRule(name="Valid merkle root", description = "The block's merkle root is equal to the merkle root of the block's transaction's merkle tree.")
+@ValidationRule(name="Valid merkle root", failedName = "Invalid merkle root", description = "The block's merkle root is equal to the merkle root of the block's transaction's merkle tree.")
 public class ValidMerkleRootBlkRule extends BlockRule {
 
     @Override

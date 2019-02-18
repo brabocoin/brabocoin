@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * Output values must be positive and the sum must be smaller than the max transaction range
  * decided by consensus.
  */
-@ValidationRule(name="Legal output value", description = "The sum of all outputs is within the allowed range, and does not overflow.")
+@ValidationRule(name="Legal output value", failedName = "Value of sum of outputs is illegal", description = "The sum of all outputs is within the allowed range, and does not overflow.")
 public class OutputValueTxRule extends TransactionRule {
 
     public boolean isValid() {

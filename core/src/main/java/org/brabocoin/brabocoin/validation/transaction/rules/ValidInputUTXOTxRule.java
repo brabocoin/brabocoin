@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * The referenced outputs must be present in the UTXO set.
  */
-@ValidationRule(name="Valid inputs", description = "The outputs referenced by the inputs of the transaction should be unspent.")
+@ValidationRule(name="Valid inputs", failedName = "Transaction double spends an output", description = "The outputs referenced by the inputs of the transaction should be unspent.")
 public class ValidInputUTXOTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

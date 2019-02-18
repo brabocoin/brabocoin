@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Valid block height", description = "The block height is one larger than the parent's block height.")
+@ValidationRule(name="Valid block height", failedName = "Invalid block height", description = "The block height is one larger than the parent's block height.")
 public class ValidBlockHeightBlkRule extends BlockRule {
 
     private Blockchain blockchain;
