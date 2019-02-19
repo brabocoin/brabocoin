@@ -143,7 +143,7 @@ class BlockProcessorTest {
         state.getPoolUTXODatabase()
             .setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(block, false);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(block, false).getStatus();
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -210,7 +210,7 @@ class BlockProcessorTest {
 
         state.getBlockProcessor().processNewBlock(blockA, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB, false);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockB, false).getStatus();
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -280,7 +280,7 @@ class BlockProcessorTest {
         state.getBlockProcessor().processNewBlock(blockA, false);
         state.getBlockProcessor().processNewBlock(blockB, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC, false);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockC, false).getStatus();
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);
@@ -416,7 +416,7 @@ class BlockProcessorTest {
         state.getBlockProcessor().processNewBlock(blockF, false);
         state.getBlockProcessor().processNewBlock(blockG, false);
 
-        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE, false);
+        ValidationStatus status = state.getBlockProcessor().processNewBlock(blockE, false).getStatus();
 
         // Check chain
         assertEquals(ValidationStatus.VALID, status);

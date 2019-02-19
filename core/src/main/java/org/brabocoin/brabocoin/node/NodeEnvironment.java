@@ -29,6 +29,9 @@ import org.brabocoin.brabocoin.proto.services.NodeGrpc;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
+import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
+import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
+import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
@@ -111,9 +114,11 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
-        notificationListeners = new ArrayList<>();;
+        notificationListeners = new ArrayList<>();
+        ;
         networkMessageListeners = new ArrayList<>();
-        networkMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        networkMessages =
+            Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
         peerProcessor.addPeerSetChangedListener(this);
         networkMessageListeners.add(this.peerProcessor);
@@ -351,17 +356,20 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
 
         try {
             LOGGER.info("Received new block from peer.");
-            ValidationStatus processedBlockStatus = blockProcessor.processNewBlock(block, false);
+            BlockValidationResult processedBlockStatus = blockProcessor.processNewBlock(
+                block,
+                false
+            );
             LOGGER.log(
                 Level.FINEST,
                 () -> MessageFormat.format("Processed new block: {0}", processedBlockStatus)
             );
 
-            if (processedBlockStatus == ValidationStatus.VALID) {
+            if (processedBlockStatus.getStatus() == ValidationStatus.VALID) {
                 sequentialOrphanBlockCount = 0;
             }
 
-            switch (processedBlockStatus) {
+            switch (processedBlockStatus.getStatus()) {
                 case ORPHAN:
                     sequentialOrphanBlockCount++;
                     if (sequentialOrphanBlockCount > maxSequentialOrphanBlocks) {
@@ -391,6 +399,14 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
                     return true;
                 case INVALID:
                     LOGGER.log(Level.FINE, "Block invalid.");
+
+                    // Block already stored is not a trigger to fail.
+                    RuleBookFailMarker failMarker = processedBlockStatus.getFailMarker();
+                    if (failMarker != null && failMarker.getFailedRule()
+                        .equals(DuplicateStorageBlkRule.class)) {
+                        return true;
+                    }
+
                     return false;
             }
         }
@@ -1004,7 +1020,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     public synchronized ValidationStatus processNewlyMinedBlock(
         @NotNull Block block) throws DatabaseException {
-        ValidationStatus status = blockProcessor.processNewBlock(block, true);
+        ValidationStatus status = blockProcessor.processNewBlock(block, true).getStatus();
         if (status == ValidationStatus.VALID) {
             announceBlockRequest(block);
         }
