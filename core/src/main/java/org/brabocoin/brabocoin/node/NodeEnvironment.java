@@ -51,7 +51,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
@@ -115,10 +115,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.messageQueue = new LinkedBlockingQueue<>();
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         notificationListeners = new ArrayList<>();
-        ;
         networkMessageListeners = new ArrayList<>();
-        networkMessages =
-            Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        networkMessages = new ConcurrentSkipListSet<>(NetworkMessage::compareTo);
 
         peerProcessor.addPeerSetChangedListener(this);
         networkMessageListeners.add(this.peerProcessor);

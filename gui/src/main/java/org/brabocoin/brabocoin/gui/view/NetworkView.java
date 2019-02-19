@@ -120,9 +120,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         loadMessageTable();
 
         state.getEnvironment().addNetworkMessageListener(this);
-        synchronized (state.getEnvironment()) {
-            messages.setAll(state.getEnvironment().getNetworkMessages());
-        }
+        messages.setAll(state.getEnvironment().getNetworkMessages());
 
         messageDetailView = new NetworkMessageDetailView();
         messageMasterPane.setDetailNode(messageDetailView);
@@ -334,9 +332,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     private void updateMessages() {
         Platform.runLater(() -> {
-            synchronized (state.getEnvironment()) {
-                messages.setAll(state.getEnvironment().getNetworkMessages());
-            }
+            messages.setAll(state.getEnvironment().getNetworkMessages());
 
             messageTable.refresh();
             peerTable.refresh();
