@@ -265,8 +265,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         peers.addAll(state.getPeerProcessor().getPeers());
         peerTable.setItems(peers);
 
-        peerTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
-
         peerIPColumn.setCellValueFactory(f -> new ReadOnlyStringWrapper(f.getValue()
             .getAddress()
             .getHostAddress()));
