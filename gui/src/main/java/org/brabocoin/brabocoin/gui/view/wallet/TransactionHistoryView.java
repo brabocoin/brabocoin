@@ -78,6 +78,7 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
 
         confirmedTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
             if (tx != null) {
+                unconfirmedTable.getSelectionModel().clearSelection();
                 Transaction transaction = tx.getTransaction();
                 if (transaction.isCoinbase()) {
                     setDetailNode(new CoinbaseDetailView(transaction));
@@ -91,6 +92,7 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
 
         unconfirmedTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
             if (tx != null) {
+                confirmedTable.getSelectionModel().clearSelection();
                 if (tx.isCoinbase()) {
                     setDetailNode(new CoinbaseDetailView(tx));
                 }
