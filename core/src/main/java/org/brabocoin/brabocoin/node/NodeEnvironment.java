@@ -172,7 +172,11 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     private synchronized void main() {
         while (!messageQueue.isEmpty()) {
-            messageQueue.remove().run();
+            try {
+                messageQueue.remove().run();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, e, () -> "Exception in message queue loop");
+            }
         }
     }
 
