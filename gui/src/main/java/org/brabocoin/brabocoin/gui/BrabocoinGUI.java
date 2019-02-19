@@ -56,6 +56,9 @@ public class BrabocoinGUI extends Application {
         "icon/48.png"
     );
 
+    private static final double MIN_WIDTH = 800.0;
+    private static final double MIN_HEIGHT = 600.0;
+
     @Override
     public void start(Stage stage) {
         // Set exception dialog handler
@@ -113,6 +116,9 @@ public class BrabocoinGUI extends Application {
 
                     stage.setTitle("Brabocoin " + VERSION);
                     stage.setScene(scene);
+
+                    stage.setMinWidth(MIN_WIDTH);
+                    stage.setMinHeight(MIN_HEIGHT);
 
                     stage.setOnCloseRequest(t -> {
                         Platform.exit();
