@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.processor;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
@@ -16,8 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +35,7 @@ public class BlockProcessor {
     private static final Logger LOGGER = Logger.getLogger(BlockProcessor.class.getName());
 
     private final @NotNull Set<BlockProcessorListener> listeners;
+    private final @NotNull List<NotificationListener> notificationListeners;
 
     /**
      * UTXO processor.
@@ -82,6 +86,7 @@ public class BlockProcessor {
         this.consensus = consensus;
         this.blockValidator = blockValidator;
         this.listeners = new HashSet<>();
+        notificationListeners = new ArrayList<>();
     }
 
     /**
@@ -342,7 +347,7 @@ public class BlockProcessor {
 
 
             // Get block at up to which the main chain needs to be reverted
-            IndexedBlock revertTargetBlock = fork.pop();
+            final IndexedBlock revertTargetBlock = fork.pop();
             LOGGER.finest(() -> MessageFormat.format(
                 "Target block to revert main chain to {0}.",
                 toHexString(revertTargetBlock.getHash().getValue())
@@ -365,6 +370,8 @@ public class BlockProcessor {
                     continue reorganization;
                 }
             }
+
+            notificationListeners.forEach(l -> l.forkSwitched(revertTargetBlock.getBlockInfo().getBlockHeight()));
 
             LOGGER.info("Main chain is updated with new top block.");
             LOGGER.finest(MessageFormat.format(
@@ -504,4 +511,11 @@ public class BlockProcessor {
         return true;
     }
 
+    public void addNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.add(notificationListener);
+    }
+
+    public void removeNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.remove(notificationListener);
+    }
 }

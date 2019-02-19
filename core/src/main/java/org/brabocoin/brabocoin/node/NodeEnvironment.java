@@ -11,9 +11,8 @@ import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
-import org.brabocoin.brabocoin.listeners.BlockReceivedListener;
+import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
-import org.brabocoin.brabocoin.listeners.TransactionReceivedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
@@ -80,8 +79,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private ChainUTXODatabase chainUTXODatabase;
     private TransactionPool transactionPool;
     private Queue<Runnable> messageQueue;
-    private final List<BlockReceivedListener> blockListeners;
-    private final List<TransactionReceivedListener> transactionListeners;
+    private final List<NotificationListener> notificationListeners;
     private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
@@ -112,8 +110,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
-        blockListeners = new ArrayList<>();
-        transactionListeners = new ArrayList<>();
+        notificationListeners = new ArrayList<>();;
         networkMessageListeners = new ArrayList<>();
         networkMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
@@ -335,7 +332,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     private void onReceiveBlock(Block block, List<Peer> peers, boolean propagate) {
         if (propagate) {
-            blockListeners.forEach(l -> l.receivedBlock(block));
+            notificationListeners.forEach(l -> l.receivedBlock(block));
         }
 
         try {
@@ -470,7 +467,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     private synchronized void onReceiveTransaction(Transaction transaction, boolean propagate) {
         if (propagate) {
-            transactionListeners.forEach(l -> l.receivedTransaction(transaction));
+            notificationListeners.forEach(l -> l.receivedTransaction(transaction));
         }
 
         try {
@@ -1182,20 +1179,12 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         return getPeers().stream().map(Peer::getBlockingStub).collect(Collectors.toList());
     }
 
-    public void addBlockListener(BlockReceivedListener blockReceivedListener) {
-        this.blockListeners.add(blockReceivedListener);
+    public void addNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.add(notificationListener);
     }
 
-    public void removeBlockListener(BlockReceivedListener blockReceivedListener) {
-        this.blockListeners.remove(blockReceivedListener);
-    }
-
-    public void addTransactionListener(TransactionReceivedListener transactionReceivedListener) {
-        this.transactionListeners.add(transactionReceivedListener);
-    }
-
-    public void removeTransactionListener(TransactionReceivedListener transactionReceivedListener) {
-        this.transactionListeners.remove(transactionReceivedListener);
+    public void removeNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.remove(notificationListener);
     }
 
     public void addMessageQueueEvent(Consumer<NodeEnvironment> event) {
