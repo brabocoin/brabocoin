@@ -262,11 +262,11 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.validate(
+                BlockValidationResult result = blockValidator.validate(
                     descendant,
                     BlockValidator.AFTER_ORPHAN
-                )
-                    .getStatus();
+                );
+                ValidationStatus status = result.getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
                 if (status == ValidationStatus.ORPHAN) {
@@ -287,6 +287,11 @@ public class BlockProcessor {
                         "Added orphan {0} as top candidate.",
                         toHexString(indexedDescendant.getHash().getValue())
                     ));
+                }
+
+                if (status == ValidationStatus.INVALID) {
+                    // Mark as rejected
+                    blockchain.addRejected(descendant, result);
                 }
             }
         }
@@ -493,7 +498,14 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-        if (!blockValidator.validate(block, BlockValidator.CONNECT_TO_CHAIN).isPassed()) {
+        BlockValidationResult result = blockValidator.validate(
+            block,
+            BlockValidator.CONNECT_TO_CHAIN
+        );
+
+        if (!result.isPassed()) {
+            // Add to the recent rejects
+            blockchain.addRejected(block, result);
             return false;
         }
 
