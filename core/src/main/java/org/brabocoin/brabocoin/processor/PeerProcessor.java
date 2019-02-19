@@ -140,6 +140,8 @@ public class PeerProcessor implements NetworkMessageListener {
             HandshakeResponse response = handshake(handshakePeer);
             if (response == null || config.networkId() != response.getNetworkId()) {
                 handshakePeers.remove(0);
+                // Also remove from peer list (to remove unresponsive peers)
+                peers.remove(handshakePeer);
                 continue;
             }
 

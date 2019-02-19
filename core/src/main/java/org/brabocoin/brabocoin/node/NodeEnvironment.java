@@ -148,7 +148,6 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         updatePeerTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                peerProcessor.clearDeadPeers();
                 peerProcessor.updatePeers();
             }
         }, 0, updatePeerInterval * 1000);

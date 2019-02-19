@@ -315,7 +315,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
         incomingColumn.setCellValueFactory(NetworkView::readOnlyIncomingFeature);
         incomingColumn.setCellFactory(col -> new BooleanIconTableCell<>(
-            BraboGlyph.Icon.ARROW_DOWN_FAT, BraboGlyph.Icon.ARROW_UP_FAT, Color.RED, Color.BLUE
+            BraboGlyph.Icon.ARROW_DOWN_FAT, BraboGlyph.Icon.ARROW_UP_FAT, Color.RED, Color.GREEN
         ));
 
         peerColumn.setCellValueFactory(NetworkView::readOnlyPeerFeature);
