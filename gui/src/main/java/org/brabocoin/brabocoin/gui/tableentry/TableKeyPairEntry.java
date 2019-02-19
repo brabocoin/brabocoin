@@ -24,6 +24,8 @@ public class TableKeyPairEntry {
 
     private final SimpleLongProperty pendingBalance;
 
+    private final SimpleLongProperty immatureMiningReward;
+
     private SimpleIntegerProperty index;
 
     private final KeyPair keyPair;
@@ -38,6 +40,7 @@ public class TableKeyPairEntry {
         this.address = new SimpleObjectProperty<>(keyPair.getPublicKey().getHash());
         this.confirmedBalance = new SimpleLongProperty();
         this.pendingBalance = new SimpleLongProperty();
+        this.immatureMiningReward = new SimpleLongProperty();
         this.wallet = wallet;
         this.keyPair = keyPair;
         updateBalances();
@@ -74,12 +77,18 @@ public class TableKeyPairEntry {
     public long getConfirmedBalance() {
         return confirmedBalance.get();
     }
+
     public long getPendingBalance() {
-        return pendingBalance.get();
+        return pendingBalance.get() - confirmedBalance.get();
+    }
+
+    public long getImmatureMiningReward() {
+        return immatureMiningReward.get();
     }
 
     public void updateBalances() {
         confirmedBalance.set(wallet.computeKeyPairBalance(false, keyPair));
         pendingBalance.set(wallet.computeKeyPairBalance(true, keyPair));
+        immatureMiningReward.set(wallet.computeImmatureCoinbase(keyPair));
     }
 }
