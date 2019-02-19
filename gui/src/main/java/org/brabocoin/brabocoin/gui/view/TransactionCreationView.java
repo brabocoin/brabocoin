@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -62,6 +63,8 @@ import tornadofx.SmartResizeKt;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -96,6 +99,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     @FXML public Button buttonRemoveSignature;
     @FXML public Button buttonCreateChange;
     @FXML public Button buttonValidate;
+    @FXML public Label messageLabel;
 
     public TransactionCreationView(State state,
                                    TransactionCreationWindow transactionCreationWindow) {
@@ -117,6 +121,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        messageLabel.getStyleClass().add("error");
+        hideErrorLabel();
+
         outputTableView.setEditable(true);
         outputTableView.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 
@@ -346,6 +353,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void findInputs(ActionEvent event) {
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
+
+        List<EditableTableInputEntry> foundInputs = new ArrayList<>();
+
         for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getCompositeUtxoSet()) {
             if (inputSum > outputSum) {
                 break;
@@ -380,8 +390,16 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             entry.setAddress(info.getValue().getAddress());
             entry.setAmount(info.getValue().getAmount());
 
-            inputTableView.getItems().add(entry);
+            foundInputs.add(entry);
         }
+
+        if (inputSum <= outputSum) {
+            setError("Insufficient input to match output");
+            return;
+        }
+
+        hideErrorLabel();
+        inputTableView.getItems().addAll(foundInputs);
     }
 
     @FXML
@@ -591,5 +609,15 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         alert.setContentText(message);
 
         alert.showAndWait();
+    }
+
+
+    void setError(String message) {
+        messageLabel.setVisible(true);
+        messageLabel.setText(message);
+    }
+
+    void hideErrorLabel() {
+        messageLabel.setVisible(false);
     }
 }
