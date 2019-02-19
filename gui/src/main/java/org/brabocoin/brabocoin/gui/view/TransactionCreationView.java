@@ -19,7 +19,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
-import javafx.util.converter.LongStringConverter;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -28,6 +27,7 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.converter.Base58StringConverter;
+import org.brabocoin.brabocoin.gui.converter.DoubleToCoinStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HashStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HexBigIntegerStringConverter;
 import org.brabocoin.brabocoin.gui.dialog.FeeDialog;
@@ -164,10 +164,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         inputAddress.setEditable(false);
         inputAddress.getStyleClass().add("column-fixed");
 
-        TableColumn<EditableTableInputEntry, Long> inputAmount = new TableColumn<>(
+        TableColumn<EditableTableInputEntry, Double> inputAmount = new TableColumn<>(
             "Amount");
         inputAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        inputAmount.setCellFactory(l -> new TextFieldTableCell<>(new LongStringConverter()));
+        inputAmount.setCellFactory(l -> new TextFieldTableCell<>(new DoubleToCoinStringConverter()));
         inputAmount.setEditable(false);
         inputAmount.getStyleClass().add("column-fixed");
 
@@ -193,9 +193,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         address.setEditable(true);
         SmartResizeKt.remainingWidth(address);
 
-        TableColumn<EditableTableOutputEntry, Long> amount = new TableColumn<>("Amount");
+        TableColumn<EditableTableOutputEntry, Double> amount = new TableColumn<>("Amount");
         amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amount.setCellFactory(EditCell.forTableColumn(new LongStringConverter()));
+        amount.setCellFactory(EditCell.forTableColumn(new DoubleToCoinStringConverter()));
         amount.setOnEditCommit(event -> commitEdit(
             event, EditableTableOutputEntry::setAmount, outputTableView
         ));
@@ -306,7 +306,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 0
             ), outputTableView.getItems().size(),
             new Hash(ByteString.EMPTY),
-            0L
+            0.0
         );
         inputTableView.getItems().add(
             entry
@@ -514,11 +514,13 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private long getAmountSum(boolean inputs) {
         return inputs ? inputTableView.getItems()
             .stream()
-            .mapToLong(EditableTableInputEntry::getAmount)
+            .mapToDouble(EditableTableInputEntry::getAmount)
+            .mapToLong(d -> (long)(d * Consensus.COIN))
             .sum()
             : outputTableView.getItems()
                 .stream()
-                .mapToLong(EditableTableOutputEntry::getAmount)
+                .mapToDouble(EditableTableOutputEntry::getAmount)
+                .mapToLong(d -> (long)(d * Consensus.COIN))
                 .sum();
     }
 

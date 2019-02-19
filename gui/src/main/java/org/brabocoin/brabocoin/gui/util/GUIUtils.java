@@ -48,4 +48,8 @@ public class GUIUtils {
 
         return formattedValue;
     }
+
+    public static String formatValue(double value) {
+        return DECIMAL_FORMAT.format(value);
+    }
 }
