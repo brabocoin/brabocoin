@@ -62,7 +62,7 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
      * @param unsignedTransaction
      *     Unsigned Transaction to copy
      */
-    private UnsignedTransaction(UnsignedTransaction unsignedTransaction) {
+    protected UnsignedTransaction(UnsignedTransaction unsignedTransaction) {
         this(unsignedTransaction.inputs, unsignedTransaction.outputs);
     }
 
@@ -100,7 +100,6 @@ public class UnsignedTransaction implements ProtoModel<UnsignedTransaction> {
         }
         return hash;
     }
-
 
     public @NotNull ByteString getRawData() {
         return ProtoConverter.toProto(

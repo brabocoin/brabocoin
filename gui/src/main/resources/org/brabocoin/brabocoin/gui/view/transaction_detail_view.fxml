@@ -2,6 +2,8 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -11,6 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import java.lang.Double?>
+<?import javafx.scene.control.ToolBar?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -23,8 +26,16 @@
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Label text="Transaction" styleClass="side-pane-title"/>
-            <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
-            <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
+            <ToolBar styleClass="detail-toolbar">
+                <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
+                <MenuButton text="Show data">
+                    <items>
+                        <MenuItem fx:id="menuShowUnsignedTx" text="Unsigned transaction" onAction="#showUnsignedData"/>
+                        <MenuItem fx:id="menuShowSignedTx" text="Signed transaction" onAction="#showSignedData"/>
+                    </items>
+                </MenuButton>
+                <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
+            </ToolBar>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
@@ -58,11 +69,6 @@
                     </placeholder>
                 </TableView>
             </TitledPane>
-
-            <HBox alignment="BASELINE_RIGHT">
-                <Button onAction="#copyUnsignedData" text="Copy unsigned data"/>
-            </HBox>
-
             <TitledPane text="Signatures" collapsible="false">
                 <TableView fx:id="signatureTableView" fixedCellSize="24">
                     <columns>
