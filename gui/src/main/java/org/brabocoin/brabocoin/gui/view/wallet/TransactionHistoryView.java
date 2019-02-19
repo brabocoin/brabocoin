@@ -136,8 +136,8 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
             }
         });
 
-        confirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getConfirmedTransactions()));
-        unconfirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getUnconfirmedTransactions()));
+        confirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getConfirmedTransactions().values()));
+        unconfirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getUnconfirmedTransactions().values()));
     }
 
     @Override

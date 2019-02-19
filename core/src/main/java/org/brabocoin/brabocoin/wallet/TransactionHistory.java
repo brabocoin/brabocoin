@@ -12,13 +12,11 @@ import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Transaction history for wallet.
@@ -68,12 +66,12 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
         listeners.remove(listener);
     }
 
-    public Collection<ConfirmedTransaction> getConfirmedTransactions() {
-        return Collections.unmodifiableCollection(confirmedTransactions.values());
+    public Map<Hash, ConfirmedTransaction> getConfirmedTransactions() {
+        return Collections.unmodifiableMap(confirmedTransactions);
     }
 
-    public Collection<UnconfirmedTransaction> getUnconfirmedTransactions() {
-        return Collections.unmodifiableCollection(unconfirmedTransactions.values());
+    public Map<Hash, UnconfirmedTransaction> getUnconfirmedTransactions() {
+        return Collections.unmodifiableMap(unconfirmedTransactions);
     }
 
     /**
@@ -164,34 +162,27 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
     @ProtoClass(BrabocoinStorageProtos.TransactionHistory.class)
     public static class Builder implements ProtoBuilder<TransactionHistory> {
 
-        @ProtoField
-        private Map<Hash.Builder, ConfirmedTransaction.Builder> confirmedTransactions;
+        @ProtoField(converter = ConfirmedTransactionMapEntryConverter.class)
+        private Map<Hash, ConfirmedTransaction> confirmedTransactions;
 
-        @ProtoField
-        private Map<Hash.Builder, UnconfirmedTransaction.Builder> unconfirmedTransactions;
+        @ProtoField(converter = UnconfirmedTransactionMapEntryConverter.class)
+        private Map<Hash, UnconfirmedTransaction> unconfirmedTransactions;
 
         public Builder setConfirmedTransactions(
-            Map<Hash.Builder, ConfirmedTransaction.Builder> confirmedTransactions) {
+            Map<Hash, ConfirmedTransaction> confirmedTransactions) {
             this.confirmedTransactions = confirmedTransactions;
             return this;
         }
 
         public Builder setUnconfirmedTransactions(
-            Map<Hash.Builder, UnconfirmedTransaction.Builder> unconfirmedTransactions) {
+            Map<Hash, UnconfirmedTransaction> unconfirmedTransactions) {
             this.unconfirmedTransactions = unconfirmedTransactions;
             return this;
         }
 
         @Override
         public TransactionHistory build() {
-            return new TransactionHistory(
-                confirmedTransactions.entrySet().stream().collect(
-                    Collectors.toMap(e -> e.getKey().build(), e -> e.getValue().build())
-                ),
-                unconfirmedTransactions.entrySet().stream().collect(
-                    Collectors.toMap(e -> e.getKey().build(), e -> e.getValue().build())
-                )
-            );
+            return new TransactionHistory(confirmedTransactions, unconfirmedTransactions);
         }
     }
 
