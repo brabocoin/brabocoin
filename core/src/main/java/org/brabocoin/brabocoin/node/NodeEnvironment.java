@@ -300,7 +300,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         networkMessageListeners.remove(listener);
     }
 
-    public synchronized SortedSet<NetworkMessage> getNetworkMessages() {
+    public SortedSet<NetworkMessage> getNetworkMessages() {
         return Collections.unmodifiableSortedSet(networkMessages);
     }
 
