@@ -85,8 +85,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private final List<NetworkMessageListener> networkMessageListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
-    private SortedSet<NetworkMessage> receivedMessages;
-    private SortedSet<NetworkMessage> sentMessages;
+    private SortedSet<NetworkMessage> networkMessages;
 
     /*
      * Processors
@@ -116,9 +115,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         blockListeners = new ArrayList<>();
         transactionListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        receivedMessages =
-            Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
-        sentMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
+        networkMessages = Collections.synchronizedSortedSet(new TreeSet<>(NetworkMessage::compareTo));
 
         peerProcessor.addPeerSetChangedListener(this);
         networkMessageListeners.add(this.peerProcessor);
@@ -292,18 +289,14 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         networkMessageListeners.remove(listener);
     }
 
-    public synchronized Iterable<NetworkMessage> getReceivedMessages() {
-        return Collections.unmodifiableSortedSet(receivedMessages);
-    }
-
-    public Iterable<NetworkMessage> getSentMessages() {
-        return Collections.unmodifiableSortedSet(sentMessages);
+    public synchronized SortedSet<NetworkMessage> getNetworkMessages() {
+        return Collections.unmodifiableSortedSet(networkMessages);
     }
 
     @Override
     public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
         if (!isUpdate) {
-            receivedMessages.add(message);
+            networkMessages.add(message);
         }
         networkMessageListeners.forEach(l -> l.onIncomingMessage(message, isUpdate));
     }
@@ -311,7 +304,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
         if (!isUpdate) {
-            sentMessages.add(message);
+            networkMessages.add(message);
         }
         networkMessageListeners.forEach(l -> l.onOutgoingMessage(message, isUpdate));
     }
