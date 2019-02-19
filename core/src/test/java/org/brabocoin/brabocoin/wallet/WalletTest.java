@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,8 +126,9 @@ class WalletTest {
     }
 
     @Test
-    void signTransactionValidEncryptedDuplicateInput() throws DatabaseException, DestructionException,
-                                                CipherException {
+    void signTransactionValidEncryptedDuplicateInput() throws DatabaseException,
+                                                              DestructionException,
+                                                              CipherException {
         State state = new TestState(defaultConfig);
 
         Wallet wallet = state.getWallet();
@@ -261,7 +263,8 @@ class WalletTest {
         state.getBlockchain().storeBlock(block, false);
         state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
 
-        assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
+        assertNotNull(wallet.getTransactionHistory()
+            .findConfirmedTransaction(coinbaseTx.getHash()));
     }
 
     @Test
@@ -273,7 +276,13 @@ class WalletTest {
             Simulation.randomHash(), state.getConsensus().getBlockReward()
         ), 1);
 
-        wallet.getTransactionHistory().addUnconfirmedTransaction(coinbaseTx);
+        wallet.getTransactionHistory().addUnconfirmedTransaction(
+            new UnconfirmedTransaction(
+                coinbaseTx,
+                Instant.now().getEpochSecond(),
+                state.getConsensus().getBlockReward()
+            )
+        );
 
         Block block = new Block(
             Simulation.randomHash(),
@@ -288,7 +297,8 @@ class WalletTest {
         state.getBlockchain().storeBlock(block, false);
         state.getBlockchain().pushTopBlock(state.getBlockchain().getIndexedBlock(block.getHash()));
 
-        assertNotNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
+        assertNotNull(wallet.getTransactionHistory()
+            .findConfirmedTransaction(coinbaseTx.getHash()));
         assertNull(wallet.getTransactionHistory().findUnconfirmedTransaction(coinbaseTx.getHash()));
     }
 
@@ -317,6 +327,7 @@ class WalletTest {
         state.getBlockchain().popTopBlock();
 
         assertNull(wallet.getTransactionHistory().findConfirmedTransaction(coinbaseTx.getHash()));
-        assertNotNull(wallet.getTransactionHistory().findUnconfirmedTransaction(coinbaseTx.getHash()));
+        assertNotNull(wallet.getTransactionHistory()
+            .findUnconfirmedTransaction(coinbaseTx.getHash()));
     }
 }
