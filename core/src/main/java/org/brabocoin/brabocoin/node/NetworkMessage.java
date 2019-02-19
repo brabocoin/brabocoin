@@ -8,14 +8,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class NetworkMessage implements Comparable<NetworkMessage> {
-
+    private final boolean incoming;
     private final Peer peer;
     private List<MessageArtifact> requestMessages = new ArrayList<>();
     private List<MessageArtifact> responseMessages = new ArrayList<>();
     private MethodDescriptor<?, ?> methodDescriptor;
 
-    public NetworkMessage(Peer peer) {
+    public NetworkMessage(Peer peer, boolean incoming)
+    {
         this.peer = peer;
+        this.incoming = incoming;
     }
 
     public Peer getPeer() {
@@ -52,5 +54,9 @@ public class NetworkMessage implements Comparable<NetworkMessage> {
 
     public void addResponseMessage(MessageArtifact artifact) {
         responseMessages.add(artifact);
+    }
+
+    public boolean isIncoming() {
+        return incoming;
     }
 }

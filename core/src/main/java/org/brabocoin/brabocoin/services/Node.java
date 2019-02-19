@@ -89,7 +89,7 @@ public class Node {
                 catch (MalformedSocketException e) {
                     // ignore
                 }
-                NetworkMessage networkMessage = new NetworkMessage(peer);
+                NetworkMessage networkMessage = new NetworkMessage(peer, true);
                 networkMessage.setMethodDescriptor(call.getMethodDescriptor());
                 return createCallListener(next.startCall(
                     new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
