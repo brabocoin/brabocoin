@@ -27,6 +27,7 @@ import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
+import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
@@ -34,9 +35,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
 
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -195,45 +194,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @FXML
     private void saveWallet(ActionEvent event) {
-        UnlockDialog<Object> passwordDialog = new UnlockDialog<>(
-            false,
-            (d) -> {
-                try {
-                    state.getWalletIO().getCipher().decyrpt(
-                        Files.readAllBytes(state.getWalletFile().toPath()),
-                        d.getReference().get()
-                    );
-                } catch (CipherException | IOException e) {
-                    try {
-                        d.destruct();
-                    }
-                    catch (DestructionException e1) {
-                        // ignore
-                    }
-                    return null;
-                }
-
-                try {
-                    state.getWalletIO().write(
-                        state.getWallet(),
-                        state.getWalletFile(),
-                        state.getTxHistoryFile(),
-                        d
-                    );
-                    d.destruct();
-                }
-                catch (IOException | DestructionException | CipherException e) {
-                    return null;
-                }
-                return new Object();
-            },
-            "Ok"
-        );
-
-        passwordDialog.setTitle("Wallet password");
-        passwordDialog.setHeaderText("Enter a password to encrypt your wallet");
-
-        passwordDialog.showAndWait();
+        WalletUtils.saveWallet(state);
     }
 
     @Override
