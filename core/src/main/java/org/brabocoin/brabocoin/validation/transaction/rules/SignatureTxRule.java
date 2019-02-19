@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
  * <p>
  * All signatures of the input must be valid.
  */
-@ValidationRule(name="Valid signatures", description = "All signatures of the transaction are valid.")
+@ValidationRule(name="Valid signatures", failedName = "Transaction contains invalid signature", description = "All signatures of the transaction are valid.")
 public class SignatureTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

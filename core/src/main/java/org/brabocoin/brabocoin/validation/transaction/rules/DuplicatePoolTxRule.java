@@ -9,7 +9,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * Transactions that exist in the transaction pool are invalid.
  */
-@ValidationRule(name="Transaction not already stored", description = "The transaction should not already be stored in the transaction pool.")
+@ValidationRule(name="Transaction not already stored", failedName = "Transaction was already stored", description = "The transaction should not already be stored in the transaction pool.")
 public class DuplicatePoolTxRule extends TransactionRule {
 
     private TransactionPool transactionPool;

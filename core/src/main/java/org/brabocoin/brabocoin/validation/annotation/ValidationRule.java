@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidationRule {
     String name();
+    String failedName() default "";
     String description() default "";
     boolean composite() default false;
 }

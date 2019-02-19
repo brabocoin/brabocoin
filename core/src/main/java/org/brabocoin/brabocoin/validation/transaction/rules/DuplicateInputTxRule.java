@@ -12,7 +12,7 @@ import java.util.Set;
  * <p>
  * Transactions can not contain duplicate inputs.
  */
-@ValidationRule(name="No duplicate inputs", description = "The transaction does not contain duplicate inputs.")
+@ValidationRule(name="No duplicate inputs", failedName = "Transaction contains duplicate inputs", description = "The transaction does not contain duplicate inputs.")
 public class DuplicateInputTxRule extends TransactionRule {
 
     public boolean isValid() {

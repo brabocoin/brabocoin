@@ -13,7 +13,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * The amount of the referenced output of the input must be positive,
  * and the sum of these amounts must be smaller than the max transaction range decided by consensus.
  */
-@ValidationRule(name="Legal input value", description = "The sum of all inputs is within the allowed range, and does not overflow.")
+@ValidationRule(name="Legal input value", failedName = "Value of sum of inputs is illegal", description = "The sum of all inputs is within the allowed range, and does not overflow.")
 public class InputValueRangeTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

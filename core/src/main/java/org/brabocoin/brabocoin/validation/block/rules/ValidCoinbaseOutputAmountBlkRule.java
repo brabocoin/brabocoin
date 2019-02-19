@@ -9,7 +9,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
 
 import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
 
-@ValidationRule(name="Valid coinbase transaction output", description = "The coinbase transaction output is smaller than, or equal to, the maximum block reward defined in consensus, plus the sum of all transaction fees.")
+@ValidationRule(name="Valid coinbase transaction output", failedName = "Invalid coinbase transaction output", description = "The coinbase transaction output is smaller than, or equal to, the maximum block reward defined in consensus, plus the sum of all transaction fees.")
 public class ValidCoinbaseOutputAmountBlkRule extends BlockRule {
 
     private ReadonlyUTXOSet utxoSet;
