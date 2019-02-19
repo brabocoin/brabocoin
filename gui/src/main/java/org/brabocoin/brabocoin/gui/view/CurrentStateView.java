@@ -61,6 +61,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
+    private IndexedBlock previouslySelectedItem = null;
+
     public CurrentStateView(@NotNull State state) {
         super();
         this.state = state;
@@ -187,6 +189,16 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
                 }
                 masterDetailPane.setShowDetailNode(true);
             });
+
+        blockchainTable.setOnMouseClicked(event -> {
+            IndexedBlock selectedItem = blockchainTable.getSelectionModel().getSelectedItem();
+
+            if (previouslySelectedItem == selectedItem) {
+                masterDetailPane.setShowDetailNode(!masterDetailPane.isShowDetailNode());
+            }
+
+            previouslySelectedItem = selectedItem;
+        });
     }
 
     private void loadMainChain() {
