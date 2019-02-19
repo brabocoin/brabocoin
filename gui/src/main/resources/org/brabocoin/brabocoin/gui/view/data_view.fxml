@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
+<?import java.lang.Double?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.DataView">
+    <fx:define>
+        <Double fx:id="vgap" fx:value="15"/>
+        <Double fx:id="hgap" fx:value="15"/>
+    </fx:define>
+
+    <HBox style="-fx-padding: 0 0 1em 0">
+        <Label text="Object name: "/>
+        <SelectableLabel fx:id="objectName"/>
+    </HBox>
+    <TitledPane text="JSON format" collapsible="false">
+        <TextArea fx:id="jsonTextArea" editable="false"/>
+    </TitledPane>
+    <TitledPane text="Raw hex data" collapsible="false">
+        <TextArea fx:id="hexDataTextArea" editable="false" wrapText="true"/>
+    </TitledPane>
+    <TitledPane text="Hashes" collapsible="false">
+        <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;" VBox.vgrow="NEVER">
+            <Label text="SHA-256:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <SelectableLabel fx:id="hashSHA256" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+            <Label text="Double SHA-256:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <SelectableLabel fx:id="hashDoubleSHA256" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+        </GridPane>
+    </TitledPane>
+</fx:root>

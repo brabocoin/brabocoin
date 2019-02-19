@@ -9,7 +9,11 @@ import org.brabocoin.brabocoin.model.Hash;
 public class AddressTableCell<T> extends CopyableTableCell<T, Hash> {
 
     public AddressTableCell() {
-        super();
+        this(true);
+    }
+
+    public AddressTableCell(boolean copyable) {
+        super(!copyable);
         getStyleClass().add("hash");
     }
 

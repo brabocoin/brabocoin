@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.gui.view;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -15,14 +16,18 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.util.Duration;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
@@ -40,11 +45,13 @@ import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
+import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -55,6 +62,7 @@ import java.util.stream.StreamSupport;
 public class WalletView extends TabPane implements BraboControl, Initializable, KeyPairListener,
                                                    BalanceListener {
 
+    public static final int PRIVATE_KEY_RADIX = 16;
     private final State state;
 
     @FXML public Button buttonCreateTransaction;
@@ -82,6 +90,25 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Make private key copyable
+        keyPairsTableView.setRowFactory(param -> {
+            final TableRow<TableKeyPairEntry> row = new TableRow<>();
+
+            final ContextMenu rowMenu = new ContextMenu();
+            MenuItem copyAddress = new MenuItem("Copy address");
+            copyAddress.setOnAction(this::copyAddress);
+            MenuItem copyPrivateKey = new MenuItem("Copy private key");
+            copyPrivateKey.setOnAction(this::copyPrivateKey);
+            rowMenu.getItems().addAll(copyAddress, copyPrivateKey);
+
+            // only display context menu for non-null items:
+            row.contextMenuProperty().bind(
+                Bindings.when(Bindings.isNotNull(row.itemProperty()))
+                    .then(rowMenu)
+                    .otherwise((ContextMenu)null));
+            return row;
+        });
+
         keyPairsTableView.setEditable(false);
 
         TableColumn<TableKeyPairEntry, Integer> indexColumn = new TableColumn<>(
@@ -97,7 +124,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         TableColumn<TableKeyPairEntry, Hash> addressColumn = new TableColumn<>(
             "Address");
         addressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
-        addressColumn.setCellFactory(col -> new AddressTableCell<>());
+        addressColumn.setCellFactory(col -> new AddressTableCell<>(false));
 
         TableColumn<TableKeyPairEntry, Long> confirmedBalance = new TableColumn<>(
             "Confirmed balance (BRC)");
@@ -291,5 +318,79 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     @Override
     public void onBalanceChanged() {
         updateBalances();
+    }
+
+    private void copyString(String data) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+
+        try {
+            content.putString(data);
+            clipboard.setContent(content);
+        }
+        catch (Exception e) {
+            // ignore
+        }
+    }
+
+    private void copyAddress(ActionEvent event) {
+        TableKeyPairEntry entry = keyPairsTableView.getSelectionModel().getSelectedItem();
+        if (entry == null) {
+            return;
+        }
+
+        copyString(entry.getPublicKey().getBase58Address());
+    }
+
+    private void copyPrivateKey(ActionEvent event) {
+        TableKeyPairEntry entry = keyPairsTableView.getSelectionModel().getSelectedItem();
+        if (entry == null) {
+            return;
+        }
+
+        PrivateKey privateKey = entry.getPrivateKey();
+        BigInteger integer = BigInteger.ZERO;
+        if (!privateKey.isEncrypted()) {
+            try {
+                integer = privateKey.getKey().getReference().get();
+            }
+            catch (DestructionException e) {
+                // ignored
+            }
+        }
+        else {
+            UnlockDialog<Object> privateKeyUnlockDialog = new UnlockDialog<>(
+                false,
+                (d) -> {
+                    try {
+                        privateKey.unlock(d);
+                    }
+                    catch (CipherException | DestructionException e) {
+                        return null;
+                    }
+
+                    return new Object();
+                }
+            );
+
+            privateKeyUnlockDialog.setTitle("Unlock private key");
+            privateKeyUnlockDialog.setHeaderText("Enter password to copy private key data"
+                + ".");
+
+            Optional<Object> unlockResult = privateKeyUnlockDialog.showAndWait();
+
+            if (!unlockResult.isPresent() || !privateKey.isUnlocked()) {
+                return;
+            }
+
+            try {
+                integer = privateKey.getKey().getReference().get();
+            }
+            catch (DestructionException e) {
+                // ignored
+            }
+        }
+
+        copyString(integer.toString(PRIVATE_KEY_RADIX));
     }
 }

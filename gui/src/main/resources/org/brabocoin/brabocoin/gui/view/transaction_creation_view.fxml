@@ -56,7 +56,8 @@
     </VBox>
     <Separator styleClass="action-table-padding"/>
     <HBox styleClass="table-action-box,action-table-padding" alignment="CENTER_RIGHT">
-        <Button fx:id="buttonCopyJSON" text="Copy to JSON format" onAction="#copyJSON"/>
+        <Button text="Copy to JSON format" onAction="#copyJSON"/>
+        <Button text="Copy unsigned data" onAction="#copyUnsignedData"/>
         <Pane HBox.hgrow="ALWAYS"/>
         <Button fx:id="buttonValidate" text="Validate" onAction="#validateTransaction"/>
         <Button fx:id="buttonSendTransaction" text="Send" onAction="#sendTransaction"/>
