@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -13,8 +14,11 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class DuplicatePoolTxRule extends TransactionRule {
 
     private TransactionPool transactionPool;
+    @DescriptionField
+    private boolean duplicatePool;
 
     public boolean isValid() {
-        return !transactionPool.contains(transaction.getHash());
+        duplicatePool = transactionPool.contains(transaction.getHash());
+        return !duplicatePool;
     }
 }

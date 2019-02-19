@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -11,7 +12,15 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 @ValidationRule(name="Non-empty inputs and output lists", description = "The transaction has at least one input and one output.")
 public class InputOutputNotEmptyTxRule extends TransactionRule {
 
+    @DescriptionField
+    private int inputCount;
+    @DescriptionField
+    private int outputCount;
+
     public boolean isValid() {
-        return transaction.getInputs().size() > 0 && transaction.getOutputs().size() > 0;
+        inputCount = transaction.getInputs().size();
+        outputCount = transaction.getOutputs().size();
+
+        return inputCount > 0 && outputCount > 0;
     }
 }

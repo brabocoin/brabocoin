@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -20,6 +21,9 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
     private IndexedChain mainChain;
+
+    @DescriptionField
+
 
     public boolean isValid() {
         try {

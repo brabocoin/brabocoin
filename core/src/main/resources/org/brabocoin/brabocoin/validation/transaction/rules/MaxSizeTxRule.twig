@@ -1,0 +1,7 @@
+This rule checks whether the transaction's size is smaller than the maximum transaction size defined in consensus.
+If not, this transaction is invalid and should be rejected.<br>
+<br>
+Transaction size: {{ size }} <br>
+Consensus maximum size: {{ consensusSize }} <br>
+<br>
+Check: {{ size }} <= {{ consensusSize }}
