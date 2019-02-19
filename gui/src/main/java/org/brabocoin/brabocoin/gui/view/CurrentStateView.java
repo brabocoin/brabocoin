@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
@@ -174,6 +175,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             boolean minedByMe = features.getValue().getBlockInfo().isMinedByMe();
             return new ReadOnlyObjectWrapper<>(minedByMe);
         });
+        minedByColumn.setCellFactory(col -> new BooleanTextTableCell<>());
 
         blockchainTable.getSelectionModel()
             .selectedItemProperty()
