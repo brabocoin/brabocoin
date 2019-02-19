@@ -9,6 +9,7 @@ import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.table.ColoredBalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
@@ -100,11 +101,13 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
             long amount = features.getValue().getAmount();
             return new ReadOnlyObjectWrapper<>(amount);
         });
+        amountConfColumn.setCellFactory(col -> new ColoredBalanceTableCell<>());
 
         amountUnconfColumn.setCellValueFactory(features -> {
             long amount = features.getValue().getAmount();
             return new ReadOnlyObjectWrapper<>(amount);
         });
+        amountUnconfColumn.setCellFactory(col -> new ColoredBalanceTableCell<>());
 
         confirmedTable.getSelectionModel().selectedItemProperty().addListener((obs, old, tx) -> {
             if (tx != null) {

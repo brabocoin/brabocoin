@@ -11,7 +11,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
-import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -21,7 +20,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -38,6 +36,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
+import org.brabocoin.brabocoin.gui.control.table.ColoredBalanceTableCell;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
@@ -143,20 +142,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         TableColumn<TableKeyPairEntry, Long> pendingBalance = new TableColumn<>(
             "Pending balance (BRC)");
         pendingBalance.setCellValueFactory(new PropertyValueFactory<>("pendingBalance"));
-        pendingBalance.setCellFactory(col -> new TableCell<TableKeyPairEntry, Long>() {
-            @Override
-            protected void updateItem(Long item, boolean empty) {
-                setAlignment(Pos.CENTER_RIGHT);
-                if (empty) {
-                    setText(null);
-                }
-                else {
-                    setText((item > 0 ? "+" : "") +
-                            GUIUtils.formatValue(item, false));
-                    setStyle(getPendingStyle(item));
-                }
-            }
-        });
+        pendingBalance.setCellFactory(col -> new ColoredBalanceTableCell<>());
 
         TableColumn<TableKeyPairEntry, Long> immatureMiningRewardColumn = new TableColumn<>(
             "Immature mining reward (BRC)");
@@ -212,18 +198,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         }
     }
 
-    private String getPendingStyle(long difference) {
-        String textColor = "black";
-        if (difference > 0) {
-            textColor = "green";
-        }
-        else if (difference < 0) {
-            textColor = "red";
-        }
-
-        return "-fx-text-fill: " + textColor;
-    }
-
     private void updateBalances() {
         long confirmedBalance = state.getWallet().computeBalance(false);
         long pendingBalance = state.getWallet().computeBalance(true);
@@ -240,7 +214,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                     GUIUtils.formatValue(difference, true)
             );
 
-            pendingBalanceLabel.setStyle(getPendingStyle(difference));
+            pendingBalanceLabel.setStyle(WalletUtils.getPendingStyle(difference));
 
             workingBalanceLabel.textProperty().setValue(
                 GUIUtils.formatValue(pendingBalance, true)
