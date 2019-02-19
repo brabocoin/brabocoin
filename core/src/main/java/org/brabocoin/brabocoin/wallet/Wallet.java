@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.text.MessageFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -398,26 +400,43 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     public void onTopBlockConnected(@NotNull IndexedBlock indexedBlock) {
         Block block = getBlock(indexedBlock);
 
-        // Find transactions that use an address contained in this wallet
-        block.getTransactions().stream()
-            .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
-            .forEach(t -> {
-                transactionHistory.removeUnconfirmedTransaction(t.getHash());
-                transactionHistory.addConfirmedTransaction(
-                    new ConfirmedTransaction(t, block.getBlockHeight())
-                );
-            });
-
         // Find my transactions that might be confirmed now
         // Actually we want to find transactions that use an address in this wallet for an input
         // Because this information is already removed from the UTXO set
         // The below implementation is the best-we-can-get
         block.getTransactions().stream()
-            .filter(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()) != null)
+            .map(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()))
+            .filter(Objects::nonNull)
             .forEach(t -> {
                 transactionHistory.removeUnconfirmedTransaction(t.getHash());
                 transactionHistory.addConfirmedTransaction(
-                    new ConfirmedTransaction(t, block.getBlockHeight())
+                    new ConfirmedTransaction(
+                        t.getTransaction(),
+                        block.getBlockHeight(),
+                        t.getTimeReceived(),
+                        t.getAmount()
+                    )
+                );
+            });
+
+        // Find transactions that use an address contained in this wallet
+        block.getTransactions().stream()
+            .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
+            .forEach(t -> {
+                // Note that we do not need to remove from unconfirmed, because these would have
+                // been removed above
+
+                // Note that in this case, when one of the inputs is ours, these can no longer be
+                // discovered (as they have disappeared from the UTXO sets)
+                // Therefore, this might fail if someone is using your private key
+                // But this should not happen.
+                transactionHistory.addConfirmedTransaction(
+                    new ConfirmedTransaction(
+                        t,
+                        block.getBlockHeight(),
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(t)
+                    )
                 );
             });
 
@@ -430,12 +449,18 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
         // Demote matching transactions in history from confirmed to unconfirmed
         block.getTransactions().stream()
-            .filter(t -> transactionHistory.findConfirmedTransaction(t.getHash()) != null)
+            .map(t -> transactionHistory.findConfirmedTransaction(t.getHash()))
+            .filter(Objects::nonNull)
             .forEach(t -> {
                 transactionHistory.removeConfirmedTransaction(t.getHash());
-                transactionHistory.addUnconfirmedTransaction(t);
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        t.getTransaction(),
+                        t.getTimeReceived(),
+                        t.getAmount()
+                    )
+                );
             });
-
 
         balanceListeners.forEach(BalanceListener::onBalanceChanged);
     }
@@ -444,7 +469,15 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     public void onTransactionAddedToPool(@NotNull Transaction transaction) {
         // Add to unconfirmed transactions if an output matches and address from the wallet
         if (transaction.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress()))) {
-            transactionHistory.addUnconfirmedTransaction(transaction);
+            if (transactionHistory.findUnconfirmedTransaction(transaction.getHash()) == null) {
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        transaction,
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(transaction)
+                    )
+                );
+            }
         }
 
 
@@ -465,8 +498,48 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
             return info != null && hasAddress(info.getAddress());
         })) {
-            transactionHistory.addUnconfirmedTransaction(transaction);
+            if (transactionHistory.findUnconfirmedTransaction(transaction.getHash()) == null) {
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        transaction,
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(transaction)
+                    )
+                );
+            }
         }
+    }
+
+    private long computeNetAmount(@NotNull Transaction transaction) {
+        long out = transaction.getOutputs().stream()
+            .filter(o -> hasAddress(o.getAddress()))
+            .mapToLong(Output::getAmount)
+            .sum();
+
+        long in = transaction.getInputs().stream()
+            .map(i -> {
+                UnspentOutputInfo info;
+                try {
+                    info = chainUtxo.findUnspentOutputInfo(i);
+                    if (info == null) {
+                        info = poolUtxo.findUnspentOutputInfo(i);
+                    }
+                }
+                catch (DatabaseException e) {
+                    return null;
+                }
+
+                if (info != null && hasAddress(info.getAddress())) {
+                    return info;
+                }
+
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .mapToLong(UnspentOutputInfo::getAmount)
+            .sum();
+
+        return out - in;
     }
 
     private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {

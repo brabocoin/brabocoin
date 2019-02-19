@@ -4,11 +4,10 @@ import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
 import org.brabocoin.brabocoin.listeners.TransactionHistoryListener;
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.proto.ConfirmedTransactionMapEntryConverter;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
 import org.brabocoin.brabocoin.model.proto.ProtoModel;
-import org.brabocoin.brabocoin.model.proto.TransactionMapEntryConverter;
+import org.brabocoin.brabocoin.model.proto.UnconfirmedTransactionMapEntryConverter;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,8 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      * Unconfirmed transactions are known transactions, but are not recorded in a block on the
      * main chain.
      */
-    @ProtoField(converter = TransactionMapEntryConverter.class)
-    private final @NotNull Map<Hash, Transaction> unconfirmedTransactions;
+    @ProtoField(converter = UnconfirmedTransactionMapEntryConverter.class)
+    private final @NotNull Map<Hash, UnconfirmedTransaction> unconfirmedTransactions;
 
     /**
      * Create a new transaction history from the given confirmed and unconfirmed transactions.
@@ -55,7 +54,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     Index of unconfirmed transactions.
      */
     public TransactionHistory(@NotNull Map<Hash, ConfirmedTransaction> confirmedTransactions,
-                              @NotNull Map<Hash, Transaction> unconfirmedTransactions) {
+                              @NotNull Map<Hash, UnconfirmedTransaction> unconfirmedTransactions) {
         this.listeners = new HashSet<>();
         this.confirmedTransactions = new HashMap<>(confirmedTransactions);
         this.unconfirmedTransactions = new HashMap<>(unconfirmedTransactions);
@@ -73,7 +72,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
         return Collections.unmodifiableCollection(confirmedTransactions.values());
     }
 
-    public Collection<Transaction> getUnconfirmedTransactions() {
+    public Collection<UnconfirmedTransaction> getUnconfirmedTransactions() {
         return Collections.unmodifiableCollection(unconfirmedTransactions.values());
     }
 
@@ -97,7 +96,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      * @return The unconfirmed transaction, or {@code null} if the transaction is not present in
      * the unconfirmed transaction index.
      */
-    public @Nullable Transaction findUnconfirmedTransaction(@NotNull Hash hash) {
+    public @Nullable UnconfirmedTransaction findUnconfirmedTransaction(@NotNull Hash hash) {
         return unconfirmedTransactions.get(hash);
     }
 
@@ -122,7 +121,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      * @param transaction
      *     The transaction to add.
      */
-    public void addUnconfirmedTransaction(@NotNull Transaction transaction) {
+    public void addUnconfirmedTransaction(@NotNull UnconfirmedTransaction transaction) {
         if (unconfirmedTransactions.containsKey(transaction.getHash())) {
             return;
         }
@@ -151,7 +150,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
      *     The hash of the transaction to remove.
      */
     public void removeUnconfirmedTransaction(@NotNull Hash hash) {
-        Transaction transaction = unconfirmedTransactions.remove(hash);
+        UnconfirmedTransaction transaction = unconfirmedTransactions.remove(hash);
         if(transaction != null) {
             listeners.forEach(l -> l.onUnconfirmedTransactionRemoved(transaction));
         }
@@ -169,7 +168,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
         private Map<Hash.Builder, ConfirmedTransaction.Builder> confirmedTransactions;
 
         @ProtoField
-        private Map<Hash.Builder, Transaction.Builder> unconfirmedTransactions;
+        private Map<Hash.Builder, UnconfirmedTransaction.Builder> unconfirmedTransactions;
 
         public Builder setConfirmedTransactions(
             Map<Hash.Builder, ConfirmedTransaction.Builder> confirmedTransactions) {
@@ -178,7 +177,7 @@ public class TransactionHistory implements ProtoModel<TransactionHistory> {
         }
 
         public Builder setUnconfirmedTransactions(
-            Map<Hash.Builder, Transaction.Builder> unconfirmedTransactions) {
+            Map<Hash.Builder, UnconfirmedTransaction.Builder> unconfirmedTransactions) {
             this.unconfirmedTransactions = unconfirmedTransactions;
             return this;
         }

@@ -17,10 +17,10 @@
             <TitledPane text="Confirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
                 <TableView fx:id="confirmedTable">
                     <columns>
-                        <TableColumn fx:id="dateConfColumn" text="Date"/>
-                        <TableColumn fx:id="blockHeightConfColumn" text="Block #"/>
+                        <TableColumn fx:id="dateConfColumn" text="Time received"/>
+                        <TableColumn fx:id="blockHeightConfColumn" text="Block height"/>
                         <TableColumn fx:id="hashConfColumn" sortable="false" text="Transaction hash"/>
-                        <TableColumn fx:id="amountConfColumn" sortable="false" text="Amount"/>
+                        <TableColumn fx:id="amountConfColumn" sortable="false" text="Net amount"/>
                     </columns>
                     <placeholder>
                         <VBox alignment="CENTER" spacing="5">
@@ -32,9 +32,9 @@
             <TitledPane text="Unconfirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
                 <TableView fx:id="unconfirmedTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="dateUnconfColumn" text="Date"/>
+                        <TableColumn fx:id="dateUnconfColumn" text="Time received"/>
                         <TableColumn fx:id="hashUnconfColumn" sortable="false" text="Transaction hash"/>
-                        <TableColumn fx:id="amountUnconfColumn" sortable="false" text="Amount"/>
+                        <TableColumn fx:id="amountUnconfColumn" sortable="false" text="Net amount"/>
                     </columns>
                     <placeholder>
                         <VBox alignment="CENTER" spacing="5">
