@@ -51,4 +51,16 @@ public class WalletUtils {
 
         return passwordDialog.showAndWait();
     }
+
+    public static String getPendingStyle(long difference) {
+        String textColor = "black";
+        if (difference > 0) {
+            textColor = "green";
+        }
+        else if (difference < 0) {
+            textColor = "red";
+        }
+
+        return "-fx-text-fill: " + textColor;
+    }
 }
