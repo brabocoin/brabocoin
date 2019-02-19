@@ -13,6 +13,7 @@ public class NetworkMessage implements Comparable<NetworkMessage> {
     private List<MessageArtifact> requestMessages = new ArrayList<>();
     private List<MessageArtifact> responseMessages = new ArrayList<>();
     private MethodDescriptor<?, ?> methodDescriptor;
+    private long accumulatedSize = 0;
 
     public NetworkMessage(Peer peer, boolean incoming)
     {
@@ -50,13 +51,19 @@ public class NetworkMessage implements Comparable<NetworkMessage> {
 
     public void addRequestMessage(MessageArtifact artifact) {
         requestMessages.add(artifact);
+        accumulatedSize += artifact.getMessage().getSerializedSize();
     }
 
     public void addResponseMessage(MessageArtifact artifact) {
         responseMessages.add(artifact);
+        accumulatedSize += artifact.getMessage().getSerializedSize();
     }
 
     public boolean isIncoming() {
         return incoming;
+    }
+
+    public long getAccumulatedSize() {
+        return accumulatedSize;
     }
 }
