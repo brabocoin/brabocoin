@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.gui.view;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import io.grpc.MethodDescriptor;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -23,9 +22,11 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
+import org.brabocoin.brabocoin.gui.control.table.BooleanIconTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
@@ -67,8 +68,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private static final int CELL_SIZE = 25;
     private static final double IP_TABLE_INITIAL_HEIGHT = 100.0;
     private static final double IP_TABLE_HEIGHT_OFFSET = 1.50;
-    public static final int REFRESH_ICON_SIZE = 14;
-    public static final double SERVICE_INFO_HBOX_SPACING = 10.0;
+    private static final int REFRESH_ICON_SIZE = 14;
+    private static final double SERVICE_INFO_HBOX_SPACING = 10.0;
     private final State state;
     private final TaskManager taskManager;
     private SimpleStringProperty externalIp = new SimpleStringProperty();
@@ -91,27 +92,20 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     @FXML private TableColumn<IpData, String> ipHostnameColumn;
     @FXML private Label ipTablePlaceholderLabel;
 
-    @FXML private MasterDetailPane incomingMasterPane;
+    @FXML private MasterDetailPane messageMasterPane;
     @FXML private MasterDetailPane outgoingMasterPane;
 
-    @FXML private TableView<NetworkMessage> incomingMessagesTable;
-    @FXML private TableColumn<NetworkMessage, Peer> incomingPeerColumn;
-    @FXML private TableColumn<NetworkMessage, MethodDescriptor> incomingMethod;
-    @FXML private TableColumn<NetworkMessage, LocalDateTime> incomingTimeReceived;
-    @FXML private TableColumn<NetworkMessage, Double> incomingSizeColumn;
+    @FXML private TableView<NetworkMessage> messageTable;
+    @FXML private TableColumn<NetworkMessage, Boolean> incomingColumn;
+    @FXML private TableColumn<NetworkMessage, Peer> peerColumn;
+    @FXML private TableColumn<NetworkMessage, MethodDescriptor> methodColumn;
+    @FXML private TableColumn<NetworkMessage, LocalDateTime> timeReceivedColumn;
+    @FXML private TableColumn<NetworkMessage, Double> sizeColumn;
 
-    @FXML private TableView<NetworkMessage> outgoingMessagesTable;
-    @FXML private TableColumn<NetworkMessage, Peer> outgoingPeerColumn;
-    @FXML private TableColumn<NetworkMessage, MethodDescriptor> outgoingMethod;
-    @FXML private TableColumn<NetworkMessage, LocalDateTime> outgoingTimeSent;
-    @FXML private TableColumn<NetworkMessage, Double> outgoingSizeColumn;
-
-    private ObservableList<NetworkMessage> incomingMessages = FXCollections.observableArrayList();
-    private ObservableList<NetworkMessage> outgoingMessages = FXCollections.observableArrayList();
-    private NetworkMessageDetailView incomingMessageDetailView;
-    private NetworkMessageDetailView outgoingMessageDetailView;
+    private ObservableList<NetworkMessage> messages = FXCollections.observableArrayList();
 
     private ObservableList<Peer> peers = FXCollections.observableArrayList();
+    private NetworkMessageDetailView messageDetailView;
 
     public NetworkView(State state, TaskManager taskManager) {
         super();
@@ -129,14 +123,10 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         loadMessageTable();
 
         state.getEnvironment().addNetworkMessageListener(this);
-        incomingMessages.setAll(Lists.newArrayList(state.getEnvironment().getReceivedMessages()));
-        outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment().getSentMessages()));
+        messages.setAll(state.getEnvironment().getNetworkMessages());
 
-        incomingMessageDetailView = new NetworkMessageDetailView();
-        incomingMasterPane.setDetailNode(incomingMessageDetailView);
-
-        outgoingMessageDetailView = new NetworkMessageDetailView();
-        outgoingMasterPane.setDetailNode(outgoingMessageDetailView);
+        messageDetailView = new NetworkMessageDetailView();
+        messageMasterPane.setDetailNode(messageDetailView);
 
         externalIpLabel.textProperty().bind(externalIp);
     }
@@ -144,6 +134,11 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
         TableColumn.CellDataFeatures<NetworkMessage, LocalDateTime> f) {
         return new ReadOnlyObjectWrapper<>(f.getValue().getRequestMessages().get(0).getTime());
+    }
+
+    private static ObservableValue<Boolean> readOnlyIncomingFeature(
+        TableColumn.CellDataFeatures<NetworkMessage, Boolean> f) {
+        return new ReadOnlyObjectWrapper<>(f.getValue().isIncoming());
     }
 
     private static ObservableValue<Peer> readOnlyPeerFeature(
@@ -308,70 +303,50 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     }
 
     private void loadMessageTable() {
-        incomingMessagesTable.setItems(incomingMessages);
-        outgoingMessagesTable.setItems(outgoingMessages);
+        messageTable.setItems(messages);
 
-        incomingMessagesTable.getSelectionModel().selectedItemProperty().addListener(
+        messageTable.getSelectionModel().selectedItemProperty().addListener(
             (observable, oldValue, newValue) -> {
                 if (newValue != null) {
-                    incomingMessageDetailView.setNetworkMessage(newValue);
+                    messageDetailView.setNetworkMessage(newValue);
                 }
-                incomingMasterPane.setShowDetailNode(true);
-            });
-        outgoingMessagesTable.getSelectionModel().selectedItemProperty().addListener(
-            (observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    outgoingMessageDetailView.setNetworkMessage(newValue);
-                }
-                outgoingMasterPane.setShowDetailNode(true);
+                messageMasterPane.setShowDetailNode(true);
             });
 
-        incomingMessagesTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY()
-            .call(f));
-        outgoingMessagesTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY()
-            .call(f));
+        incomingColumn.setCellValueFactory(NetworkView::readOnlyIncomingFeature);
+        incomingColumn.setCellFactory(col -> new BooleanIconTableCell<>(
+            BraboGlyph.Icon.ARROW_DOWN_FAT, BraboGlyph.Icon.ARROW_UP_FAT, Color.RED, Color.GREEN
+        ));
 
-        incomingPeerColumn.setCellValueFactory(NetworkView::readOnlyPeerFeature);
-        incomingPeerColumn.setCellFactory(col -> new PeerTableCell<>());
-        outgoingPeerColumn.setCellValueFactory(NetworkView::readOnlyPeerFeature);
-        outgoingPeerColumn.setCellFactory(col -> new PeerTableCell<>());
+        peerColumn.setCellValueFactory(NetworkView::readOnlyPeerFeature);
+        peerColumn.setCellFactory(col -> new PeerTableCell<>());
 
-        incomingMethod.setCellValueFactory(NetworkView::readOnlyMethodFeature);
-        incomingMethod.setCellFactory(col -> new MethodDescriptorTableCell<>());
-        outgoingMethod.setCellValueFactory(NetworkView::readOnlyMethodFeature);
-        outgoingMethod.setCellFactory(col -> new MethodDescriptorTableCell<>());
+        methodColumn.setCellValueFactory(NetworkView::readOnlyMethodFeature);
+        methodColumn.setCellFactory(col -> new MethodDescriptorTableCell<>());
 
-        incomingTimeReceived.setCellValueFactory(NetworkView::readOnlyTimeFeature);
-        incomingTimeReceived.setCellFactory(col -> new DateTimeTableCell<>());
-        outgoingTimeSent.setCellValueFactory(NetworkView::readOnlyTimeFeature);
-        outgoingTimeSent.setCellFactory(col -> new DateTimeTableCell<>());
+        timeReceivedColumn.setCellValueFactory(NetworkView::readOnlyTimeFeature);
+        timeReceivedColumn.setCellFactory(col -> new DateTimeTableCell<>());
 
-        incomingSizeColumn.setCellValueFactory(NetworkView::readOnlyMessageSizeFeature);
-        incomingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0"
-            + ".00")));
-        outgoingSizeColumn.setCellValueFactory(NetworkView::readOnlyMessageSizeFeature);
-        outgoingSizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0"
+        sizeColumn.setCellValueFactory(NetworkView::readOnlyMessageSizeFeature);
+        sizeColumn.setCellFactory(col -> new DecimalTableCell<>(new DecimalFormat("0"
             + ".00")));
     }
 
     @Override
     public void onIncomingMessage(NetworkMessage message, boolean isUpdate) {
-        Platform.runLater(() -> {
-            incomingMessages.setAll(Lists.newArrayList(state.getEnvironment()
-                .getReceivedMessages()));
-
-            incomingMessagesTable.refresh();
-            peerTable.refresh();
-        });
+        updateMessages();
     }
 
     @Override
     public void onOutgoingMessage(NetworkMessage message, boolean isUpdate) {
-        Platform.runLater(() -> {
-            outgoingMessages.setAll(Lists.newArrayList(state.getEnvironment()
-                .getSentMessages()));
+        updateMessages();
+    }
 
-            outgoingMessagesTable.refresh();
+    private void updateMessages() {
+        Platform.runLater(() -> {
+            messages.setAll(state.getEnvironment().getNetworkMessages());
+
+            messageTable.refresh();
             peerTable.refresh();
         });
     }

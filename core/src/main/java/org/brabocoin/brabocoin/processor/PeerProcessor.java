@@ -59,7 +59,8 @@ public class PeerProcessor implements NetworkMessageListener {
         this.peers.addListener((SetChangeListener<Peer>)change -> {
             if (change.wasAdded()) {
                 peerSetChangedListeners.forEach(l -> l.onPeerAdded(change.getElementAdded()));
-            } else {
+            }
+            else {
                 peerSetChangedListeners.forEach(l -> l.onPeerRemoved(change.getElementRemoved()));
             }
         });
@@ -139,6 +140,8 @@ public class PeerProcessor implements NetworkMessageListener {
             HandshakeResponse response = handshake(handshakePeer);
             if (response == null || config.networkId() != response.getNetworkId()) {
                 handshakePeers.remove(0);
+                // Also remove from peer list (to remove unresponsive peers)
+                peers.remove(handshakePeer);
                 continue;
             }
 
@@ -312,10 +315,10 @@ public class PeerProcessor implements NetworkMessageListener {
     public void updatePeers() {
         LOGGER.fine("Updating peers.");
         discoverPeers(
-            Stream.concat(
+            new ArrayList<>(Stream.concat(
                 copyPeersList().stream(),
                 getBootstrapPeers().stream()
-            ).collect(Collectors.toList())
+            ).collect(Collectors.toSet()))
         );
     }
 

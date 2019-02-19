@@ -89,7 +89,9 @@ public class BraboGlyph extends Glyph {
     public enum Icon {
         ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME_SOLID, '\uf103'),
         ARROW_DOWN(Font.FONT_AWESOME_SOLID, '\uf063'),
+        ARROW_DOWN_FAT(Font.FONT_AWESOME_SOLID, '\uf354'),
         ARROW_UP(Font.FONT_AWESOME_SOLID, '\uf062'),
+        ARROW_UP_FAT(Font.FONT_AWESOME_SOLID, '\uf357'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
         BROADCAST_TOWER(Font.FONT_AWESOME_SOLID, '\uf519'),
         CHECK(Font.FONT_AWESOME_SOLID, '\uf058'),
