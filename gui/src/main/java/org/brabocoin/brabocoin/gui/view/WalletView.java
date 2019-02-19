@@ -19,6 +19,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -42,6 +43,7 @@ import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.gui.util.WalletUtils;
+import org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
@@ -65,6 +67,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     public static final int PRIVATE_KEY_RADIX = 16;
     private final State state;
 
+    @FXML private Tab txHistoryTab;
     @FXML public Button buttonCreateTransaction;
     @FXML public TableView<TableKeyPairEntry> keyPairsTableView;
     @FXML public Button buttonCreateKeyPair;
@@ -108,6 +111,11 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                     .otherwise((ContextMenu)null));
             return row;
         });
+
+        txHistoryTab.setContent(new TransactionHistoryView(
+            state.getWallet().getTransactionHistory(),
+            state.getTransactionValidator()
+        ));
 
         keyPairsTableView.setEditable(false);
 

@@ -8,6 +8,8 @@ import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.dal.UTXOSetListener;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -16,6 +18,8 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.text.MessageFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -47,7 +52,7 @@ import java.util.stream.Collectors;
  * The wallet data structure.
  */
 public class Wallet implements Iterable<KeyPair>, BlockchainListener,
-                               BlockProcessorListener {
+                               BlockProcessorListener, TransactionPoolListener {
 
     private static final Logger LOGGER = Logger.getLogger(Wallet.class.getName());
 
@@ -113,7 +118,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     private final @NotNull Blockchain blockchain;
 
-
     /**
      * Cached mining address.
      */
@@ -131,15 +135,14 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     /**
      * Create a wallet for a given public to private key map.
-     *
-     * @param keyPairs
+     *  @param keyPairs
      *     Key map
      * @param chainUtxo
      *     The chain UTXO set to watch for changes to the chain UTXO to update the wallet UTXO
      *     and used inputs.
      * @param poolUtxo
-     *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
-     *     and used inputs.
+ *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
+     * @param transactionPool
      */
     public Wallet(@NotNull List<KeyPair> keyPairs,
                   @NotNull TransactionHistory transactionHistory,
@@ -150,7 +153,8 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                   @NotNull UTXODatabase walletPoolUtxoSet,
                   @NotNull ReadonlyUTXOSet chainUtxo,
                   @NotNull ReadonlyUTXOSet poolUtxo,
-                  @NotNull Blockchain blockchain) {
+                  @NotNull Blockchain blockchain,
+                  @NotNull TransactionPool transactionPool) {
         this.keyPairs = new ArrayList<>(keyPairs);
         this.transactionHistory = transactionHistory;
         this.consensus = consensus;
@@ -168,6 +172,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         this.poolUtxo.addListener(new PoolListener());
         this.chainUtxo.addListener(new ChainListener());
         this.blockchain.addListener(this);
+        transactionPool.addListener(this);
         this.walletCompositeUtxoSet = new CompositeReadonlyUTXOSet(walletChainUtxoSet, walletPoolUtxoSet);
     }
 
@@ -395,20 +400,43 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     public void onTopBlockConnected(@NotNull IndexedBlock indexedBlock) {
         Block block = getBlock(indexedBlock);
 
-        // Find transactions that pay to an address contained in this wallet
-        block.getTransactions().stream()
-            .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
-            .forEach(t -> transactionHistory.addConfirmedTransaction(
-                new ConfirmedTransaction(t, block.getBlockHeight())
-            ));
-
         // Find my transactions that might be confirmed now
+        // Actually we want to find transactions that use an address in this wallet for an input
+        // Because this information is already removed from the UTXO set
+        // The below implementation is the best-we-can-get
         block.getTransactions().stream()
-            .filter(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()) != null)
+            .map(t -> transactionHistory.findUnconfirmedTransaction(t.getHash()))
+            .filter(Objects::nonNull)
             .forEach(t -> {
                 transactionHistory.removeUnconfirmedTransaction(t.getHash());
                 transactionHistory.addConfirmedTransaction(
-                    new ConfirmedTransaction(t, block.getBlockHeight())
+                    new ConfirmedTransaction(
+                        t.getTransaction(),
+                        block.getBlockHeight(),
+                        t.getTimeReceived(),
+                        t.getAmount()
+                    )
+                );
+            });
+
+        // Find transactions that use an address contained in this wallet
+        block.getTransactions().stream()
+            .filter(t -> t.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress())))
+            .forEach(t -> {
+                // Note that we do not need to remove from unconfirmed, because these would have
+                // been removed above
+
+                // Note that in this case, when one of the inputs is ours, these can no longer be
+                // discovered (as they have disappeared from the UTXO sets)
+                // Therefore, this might fail if someone is using your private key
+                // But this should not happen.
+                transactionHistory.addConfirmedTransaction(
+                    new ConfirmedTransaction(
+                        t,
+                        block.getBlockHeight(),
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(t)
+                    )
                 );
             });
 
@@ -421,14 +449,97 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
         // Demote matching transactions in history from confirmed to unconfirmed
         block.getTransactions().stream()
-            .filter(t -> transactionHistory.findConfirmedTransaction(t.getHash()) != null)
+            .map(t -> transactionHistory.findConfirmedTransaction(t.getHash()))
+            .filter(Objects::nonNull)
             .forEach(t -> {
                 transactionHistory.removeConfirmedTransaction(t.getHash());
-                transactionHistory.addUnconfirmedTransaction(t);
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        t.getTransaction(),
+                        t.getTimeReceived(),
+                        t.getAmount()
+                    )
+                );
             });
 
-
         balanceListeners.forEach(BalanceListener::onBalanceChanged);
+    }
+
+    @Override
+    public void onTransactionAddedToPool(@NotNull Transaction transaction) {
+        // Add to unconfirmed transactions if an output matches and address from the wallet
+        if (transaction.getOutputs().stream().anyMatch(o -> hasAddress(o.getAddress()))) {
+            if (transactionHistory.findUnconfirmedTransaction(transaction.getHash()) == null) {
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        transaction,
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(transaction)
+                    )
+                );
+            }
+        }
+
+
+        // Add to unconfirmed transactions if an input matches and address from the wallet
+        // Note that the tx is valid because it is present in the pool, thus the inputs are present
+        // in either the chain or pool UTXO
+        if (transaction.getInputs().stream().anyMatch(i -> {
+            UnspentOutputInfo info;
+            try {
+                info = chainUtxo.findUnspentOutputInfo(i);
+                if (info == null) {
+                    info = poolUtxo.findUnspentOutputInfo(i);
+                }
+            }
+            catch (DatabaseException e) {
+                return false;
+            }
+
+            return info != null && hasAddress(info.getAddress());
+        })) {
+            if (transactionHistory.findUnconfirmedTransaction(transaction.getHash()) == null) {
+                transactionHistory.addUnconfirmedTransaction(
+                    new UnconfirmedTransaction(
+                        transaction,
+                        Instant.now().getEpochSecond(),
+                        computeNetAmount(transaction)
+                    )
+                );
+            }
+        }
+    }
+
+    private long computeNetAmount(@NotNull Transaction transaction) {
+        long out = transaction.getOutputs().stream()
+            .filter(o -> hasAddress(o.getAddress()))
+            .mapToLong(Output::getAmount)
+            .sum();
+
+        long in = transaction.getInputs().stream()
+            .map(i -> {
+                UnspentOutputInfo info;
+                try {
+                    info = chainUtxo.findUnspentOutputInfo(i);
+                    if (info == null) {
+                        info = poolUtxo.findUnspentOutputInfo(i);
+                    }
+                }
+                catch (DatabaseException e) {
+                    return null;
+                }
+
+                if (info != null && hasAddress(info.getAddress())) {
+                    return info;
+                }
+
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .mapToLong(UnspentOutputInfo::getAmount)
+            .sum();
+
+        return out - in;
     }
 
     private @NotNull Block getBlock(@NotNull IndexedBlock indexedBlock) {
