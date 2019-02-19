@@ -358,9 +358,18 @@ public class BlockProcessor {
                 toHexString(revertTargetBlock.getHash().getValue())
             ));
 
+            // Check if we have at least one disconnect top
+            boolean isForkSwitched = false;
+
             // Revert chain state to target block by disconnecting top blocks
             while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
+                isForkSwitched = true;
                 disconnectTop();
+            }
+
+            if (isForkSwitched) {
+                notificationListeners.forEach(l -> l.forkSwitched(revertTargetBlock.getBlockInfo()
+                    .getBlockHeight()));
             }
 
             // Connect the blocks in the new fork
@@ -375,8 +384,6 @@ public class BlockProcessor {
                     continue reorganization;
                 }
             }
-
-            notificationListeners.forEach(l -> l.forkSwitched(revertTargetBlock.getBlockInfo().getBlockHeight()));
 
             LOGGER.info("Main chain is updated with new top block.");
             LOGGER.finest(MessageFormat.format(
