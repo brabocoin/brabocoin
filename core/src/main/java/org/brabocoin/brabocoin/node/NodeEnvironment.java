@@ -4,6 +4,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.Context;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
@@ -174,8 +175,14 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         while (!messageQueue.isEmpty()) {
             try {
                 messageQueue.remove().run();
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
+                    LOGGER.finest("Peer did not respond or is unavailable for request.");
+                } else {
+                    LOGGER.log(Level.WARNING, e, () -> "Peer request failed.");
+                }
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e, () -> "Exception in message queue loop");
+                LOGGER.log(Level.SEVERE, e, () -> "Exception in message queue loop.");
             }
         }
     }
