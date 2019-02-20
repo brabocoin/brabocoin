@@ -134,3 +134,7 @@
     -fx-spacing: 10px;
     -fx-background-color: transparent;
 }
+
+.glyph-font .text {
+    -fx-font-smoothing-type: gray;
+}
