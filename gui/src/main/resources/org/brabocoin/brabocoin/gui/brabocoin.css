@@ -46,7 +46,7 @@
     -fx-text-fill: derive(-fx-text-inner-color, 110%);
 }
 
-.hash {
+.hash, .monospace {
     -fx-font-family: monospace;
 }
 

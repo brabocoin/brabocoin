@@ -22,17 +22,17 @@
         <SelectableLabel fx:id="objectName"/>
     </HBox>
     <TitledPane text="JSON format" collapsible="false">
-        <TextArea fx:id="jsonTextArea" editable="false"/>
+        <TextArea fx:id="jsonTextArea" styleClass="monospace" editable="false"/>
     </TitledPane>
     <TitledPane text="Raw hex data" collapsible="false">
-        <TextArea fx:id="hexDataTextArea" editable="false" wrapText="true"/>
+        <TextArea fx:id="hexDataTextArea" styleClass="monospace" editable="false" wrapText="true"/>
     </TitledPane>
     <TitledPane text="Hashes" collapsible="false">
         <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;" VBox.vgrow="NEVER">
             <Label text="SHA-256:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <SelectableLabel fx:id="hashSHA256" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+            <SelectableLabel fx:id="hashSHA256" styleClass="hash" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
             <Label text="Double SHA-256:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <SelectableLabel fx:id="hashDoubleSHA256" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+            <SelectableLabel fx:id="hashDoubleSHA256" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
         </GridPane>
     </TitledPane>
 </fx:root>
