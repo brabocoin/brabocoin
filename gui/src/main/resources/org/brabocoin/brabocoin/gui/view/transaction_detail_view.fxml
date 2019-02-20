@@ -14,6 +14,7 @@
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import java.lang.Double?>
 <?import javafx.scene.control.ToolBar?>
+<?import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -25,8 +26,9 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label text="Transaction" styleClass="side-pane-title"/>
-            <ToolBar styleClass="detail-toolbar">
+            <!-- Note: -Infinity is actually USE_PREF_SIZE -->
+            <Label text="Transaction" HBox.hgrow="NEVER" minWidth="-Infinity" styleClass="side-pane-title"/>
+            <HiddenItemsToolBar HBox.hgrow="ALWAYS" styleClass="detail-toolbar">
                 <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
                 <MenuButton text="Show data">
                     <items>
@@ -35,7 +37,7 @@
                     </items>
                 </MenuButton>
                 <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
-            </ToolBar>
+            </HiddenItemsToolBar>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>

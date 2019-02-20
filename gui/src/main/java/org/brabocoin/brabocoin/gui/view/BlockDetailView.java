@@ -8,12 +8,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.ToolBar;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane;
@@ -45,7 +45,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     @Nullable private BlockValidator validator;
     private final NodeEnvironment nodeEnvironment;
 
-    @FXML private ToolBar buttonToolbar;
+    @FXML private HiddenItemsToolBar buttonToolbar;
 
     @FXML private BlockHeaderPane blockHeaderPane;
     @FXML private BlockDetailsPane blockDetailsPane;

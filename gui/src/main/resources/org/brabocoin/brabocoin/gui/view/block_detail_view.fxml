@@ -12,6 +12,7 @@
 <?import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane?>
 <?import java.lang.Double?>
+<?import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.BlockDetailView">
@@ -22,12 +23,13 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;" VBox.vgrow="NEVER">
         <HBox spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label fx:id="titleLabel" styleClass="side-pane-title"/>
-            <ToolBar fx:id="buttonToolbar" styleClass="detail-toolbar">
+            <!-- Note: -Infinity is actually USE_PREF_SIZE -->
+            <Label fx:id="titleLabel" HBox.hgrow="NEVER" minWidth="-Infinity" styleClass="side-pane-title"/>
+            <HiddenItemsToolBar fx:id="buttonToolbar" HBox.hgrow="ALWAYS" styleClass="detail-toolbar">
                 <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
                 <Button fx:id="buttonShowData" text="Show data" onAction="#showData"/>
                 <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
-            </ToolBar>
+            </HiddenItemsToolBar>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>

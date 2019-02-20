@@ -79,7 +79,7 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     @FXML private SelectableLabel hashField;
     @FXML private HBox header;
     @FXML private Button buttonValidate;
-    @FXML public Button buttonPropagate;
+    @FXML private Button buttonPropagate;
 
     public TransactionDetailView(Transaction transaction,
                                  @Nullable TransactionValidator validator) {
