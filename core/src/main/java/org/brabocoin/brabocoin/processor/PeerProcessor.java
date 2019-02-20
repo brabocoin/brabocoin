@@ -118,7 +118,11 @@ public class PeerProcessor implements NetworkMessageListener {
      * @return True if the peer passes the filter.
      */
     protected synchronized boolean filterPeer(Peer peer) {
-        return !peer.isLocal() && !peer.getAddress().isMulticastAddress();
+        boolean filterLocal = true;
+        if (!config.allowLocalPeers()) {
+            filterLocal = !peer.isLocal();
+        }
+        return filterLocal && !peer.getAddress().isMulticastAddress();
     }
 
     /**
