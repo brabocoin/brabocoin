@@ -26,6 +26,7 @@ import javafx.stage.WindowEvent;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.util.WalletUtils;
@@ -69,6 +70,7 @@ public class BrabocoinGUI extends Application {
         // Set exception dialog handler
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             ExceptionDialog dialog = new ExceptionDialog(e);
+            BraboDialog.setBraboStyling(dialog.getDialogPane());
             Platform.runLater(dialog::showAndWait);
         });
 
