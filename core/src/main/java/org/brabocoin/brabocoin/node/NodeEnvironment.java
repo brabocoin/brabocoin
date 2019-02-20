@@ -3,7 +3,6 @@ package org.brabocoin.brabocoin.node;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
-import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -175,13 +174,16 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         while (!messageQueue.isEmpty()) {
             try {
                 messageQueue.remove().run();
-            } catch (StatusRuntimeException e) {
+            }
+            catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
                     LOGGER.finest("Peer did not respond or is unavailable for request.");
-                } else {
+                }
+                else {
                     LOGGER.log(Level.WARNING, e, () -> "Peer request failed.");
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e, () -> "Exception in message queue loop.");
             }
         }
@@ -602,12 +604,15 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         final CountDownLatch latch = new CountDownLatch(peers.size());
 
         for (Peer peer : peers) {
-            Context.CancellableContext cancellableContext = Context.current().withCancellation();
-
             StreamObserver<BrabocoinProtos.Block> blockStreamObserver =
                 new StreamObserver<BrabocoinProtos.Block>() {
+                    boolean cancelled = false;
+
                     @Override
                     public void onNext(BrabocoinProtos.Block value) {
+                        if (cancelled) {
+                            return;
+                        }
                         LOGGER.log(Level.FINEST, () -> {
                             try {
                                 return MessageFormat.format(
@@ -638,8 +643,12 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
                         }
                         if (hashes.contains(receivedBlock.getHash())) {
                             if (!onReceiveBlock(receivedBlock, peers, propagate)) {
-                                cancellableContext.cancel(new Throwable(
-                                    "Invalid block received, cancelling context."));
+                                cancelled = true;
+                                LOGGER.log(
+                                    Level.WARNING,
+                                    "Ignoring future stream artifacts, due to invalid receival of"
+                                        + " invalid block"
+                                );
                             }
                         }
                         else {
@@ -658,31 +667,27 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
                             t.getMessage()
                         );
                         latch.countDown();
-                        cancellableContext.close();
                     }
 
                     @Override
                     public void onCompleted() {
                         LOGGER.log(Level.FINE, "Peer block stream completed.");
                         latch.countDown();
-                        cancellableContext.close();
                     }
                 };
 
 
-            cancellableContext.run(() -> {
-                StreamObserver<BrabocoinProtos.Hash> hashStreamObserver = peer.getAsyncStub()
-                    .getBlocks(blockStreamObserver);
+            StreamObserver<BrabocoinProtos.Hash> hashStreamObserver = peer.getAsyncStub()
+                .getBlocks(blockStreamObserver);
 
-                for (Hash hash : hashes) {
-                    BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(
-                        hash,
-                        BrabocoinProtos.Hash.class
-                    );
-                    hashStreamObserver.onNext(protoBlockHash);
-                }
-                hashStreamObserver.onCompleted();
-            });
+            for (Hash hash : hashes) {
+                BrabocoinProtos.Hash protoBlockHash = ProtoConverter.toProto(
+                    hash,
+                    BrabocoinProtos.Hash.class
+                );
+                hashStreamObserver.onNext(protoBlockHash);
+            }
+            hashStreamObserver.onCompleted();
 
             if (blocking) {
                 latch.await();

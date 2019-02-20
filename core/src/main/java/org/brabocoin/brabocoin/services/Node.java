@@ -40,7 +40,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -137,7 +136,6 @@ public class Node {
 
     public Node(NodeEnvironment environment, int servicePort, int networkId) {
         this.server = ServerBuilder.forPort(servicePort)
-            .executor(Executors.newFixedThreadPool(4))
             .addService(
                 ServerInterceptors.intercept(
                     new NodeService(),
