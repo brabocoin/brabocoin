@@ -14,6 +14,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -28,7 +29,6 @@ import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
-import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.view.MainView;
 import org.brabocoin.brabocoin.node.state.State;
@@ -181,9 +181,8 @@ public class BrabocoinGUI extends Application {
     }
 
     private void showSplash(Stage primaryStage, Task<?> task, Runnable completionHandler) {
-        BraboGlyph icon = new BraboGlyph(BraboGlyph.Icon.BITCOIN);
-        icon.setFontSize(50);
-        icon.setTextFill(Color.WHITE);
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("icon/icon-h50.png")));
+        icon.setCache(true);
         Label text = new Label("Brabocoin");
         text.setFont(Font.font(30));
         text.setTextFill(Color.WHITE);
