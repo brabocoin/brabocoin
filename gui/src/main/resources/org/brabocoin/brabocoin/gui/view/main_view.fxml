@@ -56,11 +56,6 @@
                                     <BraboGlyph icon="DATABASE" fontSize="$mainNavIconSize"/>
                                 </graphic>
                             </ToggleButton>
-                            <ToggleButton fx:id="validationToggleButton" toggleGroup="$toggleGroupMainNav" text="Validation sandbox">
-                                <graphic>
-                                    <BraboGlyph icon="TASKS" fontSize="$mainNavIconSize"/>
-                                </graphic>
-                            </ToggleButton>
                             <ToggleButton fx:id="walletToggleButton" toggleGroup="$toggleGroupMainNav" text="Wallet">
                                 <graphic>
                                     <BraboGlyph icon="WALLET" fontSize="$mainNavIconSize"/>
