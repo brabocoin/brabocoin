@@ -43,6 +43,10 @@
                         <Label text="Port:"/>
                         <SelectableLabel fx:id="portLabel"/>
                     </HBox>
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="Network id:"/>
+                        <SelectableLabel fx:id="networkIdLabel"/>
+                    </HBox>
                 </VBox>
             </TitledPane>
             <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">

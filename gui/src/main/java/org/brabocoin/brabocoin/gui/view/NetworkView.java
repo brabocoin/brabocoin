@@ -72,6 +72,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     private SimpleStringProperty externalIp = new SimpleStringProperty();
     private Task<String> externalIpTask;
     private Task<List<IpData>> ipDataTask;
+    @FXML private SelectableLabel networkIdLabel;
     @FXML private SelectableLabel externalIpLabel;
     @FXML private TitledPane serviceInfoTitledPane;
 
@@ -126,6 +127,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         messageMasterPane.setDetailNode(messageDetailView);
 
         externalIpLabel.textProperty().bind(externalIp);
+
     }
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
@@ -219,6 +221,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         });
 
         portLabel.setText(Integer.toString(state.getConfig().servicePort()));
+        networkIdLabel.setText(Integer.toString(state.getConfig().networkId()));
+
         taskManager.runTask(ipDataTask);
         taskManager.runTask(externalIpTask);
     }
