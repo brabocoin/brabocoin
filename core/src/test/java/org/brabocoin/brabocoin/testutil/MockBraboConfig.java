@@ -122,4 +122,9 @@ public class MockBraboConfig implements BraboConfig {
     public Hash targetValue() {
         return delegator.targetValue();
     }
+
+    @Override
+    public boolean allowLocalPeers() {
+        return delegator.allowLocalPeers();
+    }
 }

@@ -107,4 +107,9 @@ public interface BraboConfig {
      * @return The block target value.
      */
     Hash targetValue();
+
+    /**
+     * Whether or not to allow local peers.
+     */
+    boolean allowLocalPeers();
 }
