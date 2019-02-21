@@ -79,9 +79,6 @@
                     </left>
                 </BorderPane>
             </content>
-            <bottom>
-                <LogPane fx:id="logPane"/>
-            </bottom>
         </HiddenSidesPane>
     </center>
 </fx:root>

@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -86,9 +87,6 @@ public class BrabocoinGUI extends Application {
             return;
         }
 
-        // Set log level
-        LoggingUtil.setLogLevel(arguments.getLogLevel());
-
         // Expensive startup task
         Task<Stage> startupTask = new Task<Stage>() {
             @Override
@@ -104,6 +102,12 @@ public class BrabocoinGUI extends Application {
                     walletUnlocker
                 );
 
+                // Set log level
+                Level levelSet = LoggingUtil.setLogLevel(arguments.getLogLevel());
+                if (levelSet == null) {
+                    levelSet = Level.INFO;
+                }
+
                 updateMessage("Starting network node...");
 
                 application.start();
@@ -112,8 +116,9 @@ public class BrabocoinGUI extends Application {
 
                 CountDownLatch latch = new CountDownLatch(1);
                 AtomicReference<Stage> mainStage = new AtomicReference<>();
+                final Level finalLevelSet = levelSet;
                 Platform.runLater(() -> {
-                    MainView mainView = new MainView(application.getState());
+                    MainView mainView = new MainView(application.getState(), finalLevelSet);
                     Scene scene = new Scene(mainView);
 
                     // Add base stylesheet

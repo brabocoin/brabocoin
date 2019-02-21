@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 public class LoggingUtil {
     private static final Logger LOGGER = Logger.getLogger(LoggingUtil.class.getName());
 
-    public static void setLogLevel(String logLevel) {
+    public static Level setLogLevel(String logLevel) {
         if (logLevel != null) {
             Logger rootLogger = Logger.getLogger("org.brabocoin.brabocoin");
             ConsoleHandler consoleHandler = new ConsoleHandler();
@@ -37,6 +37,8 @@ public class LoggingUtil {
                     Platform.exit();
             }
             consoleHandler.setLevel(rootLogger.getLevel());
+            return rootLogger.getLevel();
         }
+        return null;
     }
 }
