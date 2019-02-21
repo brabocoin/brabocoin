@@ -17,6 +17,9 @@ public class LoggingUtil {
                 consoleHandler
             );
             switch (logLevel.toLowerCase()) {
+                case "off":
+                    rootLogger.setLevel(Level.OFF);
+                    break;
                 case "all":
                     rootLogger.setLevel(Level.ALL);
                     break;

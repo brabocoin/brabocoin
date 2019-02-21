@@ -194,7 +194,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     private synchronized void updateBlockchain() {
         Set<Peer> peers = getPeers();
-        updateBlockchain(peers.toArray(new Peer[peers.size()]));
+        updateBlockchain(peers.toArray(new Peer[0]));
     }
 
     /**
@@ -569,7 +569,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      * @param propagate
      *     Whether or not to propagate an announce message to all peers.
      */
-    public synchronized void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
+    public void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
                                               boolean propagate) {
         try {
             getBlocksRequest(hashes, peers, propagate, false);
