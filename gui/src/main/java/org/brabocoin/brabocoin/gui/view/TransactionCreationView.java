@@ -7,9 +7,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -22,9 +20,8 @@ import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.PublicKey;
-import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.exceptions.InsufficientInputException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.converter.Base58StringConverter;
@@ -32,12 +29,12 @@ import org.brabocoin.brabocoin.gui.converter.DoubleToCoinStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HashStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HexBigIntegerStringConverter;
 import org.brabocoin.brabocoin.gui.dialog.FeeDialog;
-import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.tableentry.EditCell;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableInputEntry;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableOutputEntry;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableSignatureEntry;
 import org.brabocoin.brabocoin.gui.tableentry.ValidatedEditCell;
+import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Hash;
@@ -45,7 +42,6 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
-import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
@@ -53,8 +49,6 @@ import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
-import org.brabocoin.brabocoin.validation.ValidationStatus;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.TransactionSigningResult;
 import org.brabocoin.brabocoin.wallet.TransactionSigningStatus;
@@ -64,8 +58,6 @@ import tornadofx.SmartResizeKt;
 
 import java.math.BigInteger;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -354,55 +346,23 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
 
-        List<EditableTableInputEntry> foundInputs = new ArrayList<>();
-
-        for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getCompositeUtxoSet()) {
-            if (inputSum > outputSum) {
-                break;
-            }
-
-            Input input = info.getKey();
-
-            // Prevent using used inputs
-            if (wallet.getUsedInputs().contains(input)) {
-                continue;
-            }
-
-            // Prevent coinbase maturity failure
-            if (consensus.immatureCoinbase(
-                blockchain.getMainChain().getHeight(),
-                info.getValue()
-            )) {
-                continue;
-            }
-
-            // Prevent duplicates
-            if (inputTableView.getItems().stream().anyMatch(
-                i -> i.getReferencedTransaction()
-                    .equals(input.getReferencedTransaction()) &&
-                    i.getReferencedOutputIndex() == input.getReferencedOutputIndex()
-            )) {
-                continue;
-            }
-
-            inputSum += info.getValue().getAmount();
-            EditableTableInputEntry entry = new EditableTableInputEntry(
-                input,
-                inputTableView.getItems().size()
+        Map<Input, UnspentOutputInfo> inputs;
+        try {
+            inputs = wallet.findInputs(outputSum, inputSum,
+                inputTableView.getItems().stream().map(EditableTableInputEntry::toInput).collect(
+                    Collectors.toList())
             );
-            entry.setAddress(info.getValue().getAddress());
-            entry.setAmount(info.getValue().getAmount());
-
-            foundInputs.add(entry);
         }
-
-        if (inputSum <= outputSum) {
+        catch (InsufficientInputException e) {
             setError("Insufficient input to match output");
             return;
         }
 
+        inputs.forEach((input, outputInfo) -> inputTableView.getItems().add(
+            new EditableTableInputEntry(input, inputTableView.getItems().size())
+        ));
+
         hideErrorLabel();
-        inputTableView.getItems().addAll(foundInputs);
     }
 
     @FXML
@@ -420,45 +380,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             fade.play();
         });
 
-        TransactionSigningResult result = null;
-        do {
-            try {
-                result = wallet.signTransaction(buildUnsignedTransaction());
-            }
-            catch (DatabaseException | DestructionException e) {
-                errorDialog("Transaction signing failed due to database or destruction error.");
-                break;
-            }
-
-            if (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED) {
-                KeyPair lockedKeyPair = result.getLockedKeyPair();
-
-                UnlockDialog<Object> privateKeyUnlockDialog = new UnlockDialog<>(
-                    false,
-                    (d) -> {
-                        try {
-                            lockedKeyPair.getPrivateKey().unlock(d);
-                        }
-                        catch (CipherException | DestructionException e) {
-                            return null;
-                        }
-
-                        return new Object();
-                    }
-                );
-
-                privateKeyUnlockDialog.setTitle("Unlock private key");
-                privateKeyUnlockDialog.setHeaderText("Enter password for address: " + lockedKeyPair.getPublicKey()
-                    .getBase58Address());
-
-                Optional<Object> unlockResult = privateKeyUnlockDialog.showAndWait();
-
-                if (!unlockResult.isPresent()) {
-                    break;
-                }
-            }
-        }
-        while (result.getStatus() == TransactionSigningStatus.PRIVATE_KEY_LOCKED);
+        TransactionSigningResult result = WalletUtils.signTransaction(
+            buildUnsignedTransaction(),
+            wallet
+        );
 
         if (result != null && result.getStatus() == TransactionSigningStatus.SIGNED) {
             Transaction signedTransaction = result.getTransaction();
@@ -474,38 +399,14 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @FXML
     private void sendTransaction(ActionEvent event) {
-        Transaction transaction = buildTransaction();
-        TransactionValidationResult validationResult = transactionValidator.validate(
-            transaction,
-            TransactionValidator.ALL,
-            true
-        );
-
-        Alert alert = new Alert(
-            validationResult.getStatus() == ValidationStatus.VALID
-                ? Alert.AlertType.CONFIRMATION
-                : Alert.AlertType.WARNING
-        );
-        alert.setTitle("Send transaction");
-        alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
-        alert.setContentText("Are you sure you want to send the transaction to your peers?");
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (!result.isPresent()) {
-            return;
+        if (WalletUtils.sendTransaction(
+            buildTransaction(),
+            transactionValidator,
+            environment,
+            wallet
+        )) {
+            transactionCreationWindow.close();
         }
-
-        if (result.get() != ButtonType.OK) {
-            return;
-        }
-
-        ValidationStatus status = this.environment.processNewlyCreatedTransaction(transaction);
-
-        if (status == ValidationStatus.VALID) {
-            transaction.getInputs().forEach(wallet::addUsedInput);
-        }
-        transactionCreationWindow.close();
     }
 
 
@@ -619,15 +520,6 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 s -> s.toSignature(consensus.getCurve())
             ).collect(Collectors.toList())
         );
-    }
-
-    private void errorDialog(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error occurred");
-        alert.setHeaderText("Transaction creation error");
-        alert.setContentText(message);
-
-        alert.showAndWait();
     }
 
 

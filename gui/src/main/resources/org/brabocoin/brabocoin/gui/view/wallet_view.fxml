@@ -3,6 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TableView?>
@@ -21,7 +23,12 @@
         <BorderPane>
             <top>
                 <ToolBar>
-                    <Button fx:id="buttonCreateTransaction" text="Create transaction" onAction="#createTransaction"/>
+                    <MenuButton fx:id="buttonCreateTransaction" text="Create transaction">
+                        <items>
+                            <MenuItem text="Simple" onAction="#createSimpleTransaction"/>
+                            <MenuItem text="Advanced" onAction="#createTransaction"/>
+                        </items>
+                    </MenuButton>
                     <Button fx:id="buttonCreateKeyPair" text="Create key pair" onAction="#createKeyPair"/>
                     <Separator/>
                     <Button fx:id="buttonSaveWallet" text="Save" onAction="#saveWallet"/>

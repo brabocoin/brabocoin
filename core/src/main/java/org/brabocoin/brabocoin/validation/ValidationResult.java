@@ -45,6 +45,6 @@ public abstract class ValidationResult extends RuleBookResult {
 
     @Override
     public String toString() {
-        return status == ValidationStatus.VALID ? "valid" : "invalid";
+        return getStatus() == ValidationStatus.VALID ? "valid" : "invalid";
     }
 }
