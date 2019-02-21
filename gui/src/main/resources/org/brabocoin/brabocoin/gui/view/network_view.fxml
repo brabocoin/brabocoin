@@ -81,7 +81,7 @@
                     <columns>
                         <TableColumn fx:id="incomingColumn" sortable="false" text="Type"/>
                         <TableColumn fx:id="peerColumn" sortable="false" text="Peer"/>
-                        <TableColumn fx:id="methodColumn" sortable="false" text="Method"/>
+                        <TableColumn fx:id="methodColumn" sortable="false" text="Message"/>
                         <TableColumn fx:id="timeReceivedColumn" sortable="false" text="Time received"/>
                         <TableColumn fx:id="sizeColumn" sortable="false" text="Size (kB)"/>
                     </columns>

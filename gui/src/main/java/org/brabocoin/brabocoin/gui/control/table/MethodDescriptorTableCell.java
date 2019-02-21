@@ -14,7 +14,7 @@ public class MethodDescriptorTableCell<T> extends TableCell<T, MethodDescriptor>
             setText(null);
         }
         else {
-            setText(item.getFullMethodName());
+            setText(item.getFullMethodName().split("/", 2)[1]);
         }
     }
 }
