@@ -14,11 +14,10 @@ import java.util.stream.IntStream;
 /**
  * Transaction rule
  * <p>
- * All signatures of the input must be valid.
+ * All signatures of the transaction must contain the right public key
  */
-@ValidationRule(name = "Valid signatures", failedName = "Transaction contains invalid signature",
-                description = "All signatures of the transaction are valid.")
-public class SignatureTxRule extends TransactionRule {
+@ValidationRule(name="Valid public keys in signatures", failedName = "Transaction contains signature with the wrong public key", description = "All signatures of the transaction have the right public key.")
+public class SignaturePublicKeyTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
 
@@ -31,12 +30,19 @@ public class SignatureTxRule extends TransactionRule {
 
         return IntStream.range(0, transaction.getInputs().size())
             .allMatch(i -> {
+                Input input = transaction.getInputs().get(i);
                 Signature signature = transaction.getSignatures().get(i);
 
-                return signer.verifySignature(
-                    signature,
-                    transaction.getSignableTransactionData()
-                );
+                try {
+                    return signer.verifySignaturePublicKey(
+                        signature,
+                        Objects.requireNonNull(utxoSet.findUnspentOutputInfo(input)).getAddress()
+                    );
+                }
+                catch (DatabaseException e) {
+                    e.printStackTrace();
+                    return false;
+                }
             });
     }
 }
