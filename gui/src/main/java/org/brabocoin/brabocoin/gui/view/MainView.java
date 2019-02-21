@@ -74,7 +74,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     public void initialize(URL location, ResourceBundle resources) {
         // Set log pane
         LogPane logPane = new LogPane(initLogLevel);
-        this.setBottom(logPane);
+        sidesPane.setBottom(logPane);
 
         // Initialize task manager
         taskManager = new TaskManager(statusBar);
