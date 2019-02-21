@@ -23,6 +23,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.control.TransactionDataMenuButton;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
+import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BigIntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
@@ -68,7 +69,7 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     @FXML private TableView<Output> outputTableView;
     @FXML private TableColumn<Output, Integer> outputIndexColumn;
     @FXML private TableColumn<Output, Hash> outputAddressColumn;
-    @FXML private TableColumn<Output, Integer> outputAmountColumn;
+    @FXML private TableColumn<Output, Long> outputAmountColumn;
 
     @FXML private TableView<Signature> signatureTableView;
     @FXML private TableColumn<Signature, Integer> sigIndexColumn;
@@ -143,6 +144,7 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         outputAddressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
         outputAddressColumn.setCellFactory(col -> new AddressTableCell<>());
         outputAmountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        outputAmountColumn.setCellFactory(col -> new BalanceTableCell<>());
 
         // Signature table
         sigIndexColumn.setCellFactory(col -> new NumberedTableCell<>());

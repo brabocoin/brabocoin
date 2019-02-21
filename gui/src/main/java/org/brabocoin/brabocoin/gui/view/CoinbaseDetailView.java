@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
+import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Output;
@@ -41,7 +42,7 @@ public class CoinbaseDetailView extends VBox implements BraboControl, Initializa
     @FXML private TableView<Output> outputTableView;
     @FXML private TableColumn<Output, Integer> outputIndexColumn;
     @FXML private TableColumn<Output, Hash> outputAddressColumn;
-    @FXML private TableColumn<Output, Integer> outputAmountColumn;
+    @FXML private TableColumn<Output, Long> outputAmountColumn;
 
     @FXML private SelectableLabel hashField;
     @FXML private Label titleLabel;
@@ -78,6 +79,7 @@ public class CoinbaseDetailView extends VBox implements BraboControl, Initializa
         outputAddressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
         outputAddressColumn.setCellFactory(col -> new AddressTableCell<>());
         outputAmountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        outputAmountColumn.setCellFactory(col -> new BalanceTableCell<>());
     }
 
     private void fitTableRowContent(TableView<?> tableView, int minRowsVisible) {
