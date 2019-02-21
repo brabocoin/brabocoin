@@ -248,7 +248,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      * @param port
      *     The port of the Client
      */
-    public synchronized void addClientPeer(InetAddress address, int port) {
+    public void addClientPeer(InetAddress address, int port) {
         if (getPeers().stream()
             .anyMatch(p -> p.getAddress().equals(address) && p.getPort() == port)) {
             return;
@@ -696,7 +696,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      * @param block
      *     The block to announce.
      */
-    public synchronized void announceBlockRequest(Block block) {
+    public void announceBlockRequest(Block block) {
         LOGGER.info("Announcing block to peers.");
         Hash blockHash = block.getHash();
         LOGGER.log(Level.FINEST, "Hash: {0}", ByteUtil.toHexString(blockHash.getValue()));
@@ -1027,7 +1027,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      * @throws DatabaseException
      *     If the block could not be processed.
      */
-    public synchronized ValidationStatus processNewlyMinedBlock(
+    public ValidationStatus processNewlyMinedBlock(
         @NotNull Block block) throws DatabaseException {
         ValidationStatus status = blockProcessor.processNewBlock(block, true).getStatus();
         if (status == ValidationStatus.VALID) {
@@ -1150,7 +1150,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *
      * @return Top block height.
      */
-    public synchronized int getTopBlockHeight() {
+    public int getTopBlockHeight() {
         LOGGER.fine("Top block height requested.");
         int height = blockchain.getMainChain().getHeight();
         LOGGER.log(Level.FINEST, () -> MessageFormat.format("Top height: {0}", height));

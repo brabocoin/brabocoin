@@ -136,6 +136,7 @@ public class Node {
 
     public Node(NodeEnvironment environment, int servicePort, int networkId) {
         this.server = ServerBuilder.forPort(servicePort)
+//            .executor(Executors.newFixedThreadPool(4))
             .addService(
                 ServerInterceptors.intercept(
                     new NodeService(),
