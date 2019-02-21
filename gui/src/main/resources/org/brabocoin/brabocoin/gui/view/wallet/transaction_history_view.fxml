@@ -14,7 +14,7 @@
          showDetailNode="false">
     <masterNode>
         <VBox>
-            <TitledPane text="Confirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
+            <TitledPane text="Confirmed transactions" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <TableView fx:id="confirmedTable">
                     <columns>
                         <TableColumn fx:id="dateConfColumn" text="Time received"/>
@@ -29,7 +29,7 @@
                     </placeholder>
                 </TableView>
             </TitledPane>
-            <TitledPane text="Unconfirmed transactions" collapsible="false" VBox.vgrow="ALWAYS">
+            <TitledPane text="Unconfirmed transactions" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <TableView fx:id="unconfirmedTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="dateUnconfColumn" text="Time received"/>

@@ -14,7 +14,7 @@
          showDetailNode="false">
     <masterNode>
         <VBox>
-            <TitledPane fx:id="independentPane" collapsible="false" VBox.vgrow="ALWAYS">
+            <TitledPane fx:id="independentPane" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <TableView fx:id="independentTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="hashIndepColumn" sortable="false" text="Hash"/>
@@ -26,7 +26,7 @@
                     </placeholder>
                 </TableView>
             </TitledPane>
-            <TitledPane fx:id="dependentPane" collapsible="false" VBox.vgrow="ALWAYS">
+            <TitledPane fx:id="dependentPane" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <TableView fx:id="dependentTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="hashDepColumn" sortable="false" text="Hash"/>
