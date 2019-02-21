@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.brabocoin.brabocoin.gui.control.PersistentToggleGroup?>
 <?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
-<?import org.brabocoin.brabocoin.gui.view.LogPane?>
 <?import org.controlsfx.control.HiddenSidesPane?>
 <?import org.controlsfx.control.SegmentedButton?>
 <?import org.controlsfx.control.StatusBar?>

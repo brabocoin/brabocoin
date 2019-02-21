@@ -45,7 +45,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @FXML private ToggleButton networkToggleButton;
 
     @FXML private StatusBar statusBar;
-    @FXML private LogPane logPane;
 
     private @NotNull TaskManager taskManager;
 
@@ -74,7 +73,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Set log pane
-        this.setBottom(new LogPane(initLogLevel));
+        LogPane logPane = new LogPane(initLogLevel);
+        this.setBottom(logPane);
 
         // Initialize task manager
         taskManager = new TaskManager(statusBar);
