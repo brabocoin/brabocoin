@@ -141,6 +141,7 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
     private double getTextAreaTextHeight(TextArea textArea) {
         StringBuilder sb = new StringBuilder();
         textArea.getParagraphs().forEach(p -> sb.append("W\n"));
+        sb.append("W\nW");
         Text helper = new Text();
         helper.setText(sb.toString());
         helper.setFont(textArea.getFont());
