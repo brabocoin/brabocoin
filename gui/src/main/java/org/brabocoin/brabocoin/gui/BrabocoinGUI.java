@@ -34,6 +34,7 @@ import org.brabocoin.brabocoin.gui.view.MainView;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
+import org.brabocoin.brabocoin.util.LoggingUtil;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
 
@@ -84,6 +85,9 @@ public class BrabocoinGUI extends Application {
             Platform.exit();
             return;
         }
+
+        // Set log level
+        LoggingUtil.setLogLevel(arguments.getLogLevel());
 
         // Expensive startup task
         Task<Stage> startupTask = new Task<Stage>() {
