@@ -70,16 +70,20 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
         addArtifacts(responseMessages, responseArtifactPane, responseTitledPane);
     }
 
+    private void resetTitledPane(TitledPane titledPane) {
+        if (titledPane.getGraphic() != null) {
+            titledPane.setText(
+                extractTitleFromTitledArtifactPane(titledPane)
+            );
+            titledPane.setGraphic(null);
+        }
+    }
+
     private void addArtifacts(List<MessageArtifact> artifacts, VBox destinationBox,
                               TitledPane titledPane) {
         destinationBox.getChildren().clear();
         if (artifacts.size() > 1) {
-            if (titledPane.getGraphic() != null) {
-                titledPane.setText(
-                    extractTitleFromTitledArtifactPane(titledPane)
-                );
-                titledPane.setGraphic(null);
-            }
+            resetTitledPane(titledPane);
             for (int i = 0; i < artifacts.size(); i++) {
                 MessageArtifact artifact = artifacts.get(i);
                 TitledPane artifactPane = createMessageArtifactTitledPane(artifact, i);
@@ -104,6 +108,7 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
             titledPane.setText("");
         }
         else {
+            resetTitledPane(titledPane);
             Label label = new Label("No messages found.");
             label.setPadding(new Insets(3, 7, 3, 7));
             destinationBox.getChildren().add(label);
