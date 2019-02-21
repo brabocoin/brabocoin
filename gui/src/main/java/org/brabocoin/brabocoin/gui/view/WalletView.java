@@ -305,7 +305,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void onBalanceChanged() {
-        updateBalances();
+        new Thread(this::updateBalances).start();
     }
 
     private void copyString(String data) {
