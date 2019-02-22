@@ -2,8 +2,6 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
@@ -29,20 +27,23 @@ public class SignatureTxRule extends TransactionRule {
     private boolean sigValid;
 
     public boolean isValid() {
-        if (transaction.getSignatures().stream().anyMatch(Objects::isNull)) {
-            sigValid = false;
-            return sigValid;
+        if (transaction.isCoinbase()) {
+            sigValid = true;
         }
+        else if (transaction.getSignatures().stream().anyMatch(Objects::isNull)) {
+            sigValid = false;
+        }
+        else {
+            sigValid = IntStream.range(0, transaction.getInputs().size())
+                .allMatch(i -> {
+                    Signature signature = transaction.getSignatures().get(i);
 
-        sigValid = IntStream.range(0, transaction.getInputs().size())
-            .allMatch(i -> {
-                Signature signature = transaction.getSignatures().get(i);
-
-                return signer.verifySignature(
-                    signature,
-                    transaction.getSignableTransactionData()
-                );
-            });
+                    return signer.verifySignature(
+                        signature,
+                        transaction.getSignableTransactionData()
+                    );
+                });
+        }
 
         return sigValid;
     }

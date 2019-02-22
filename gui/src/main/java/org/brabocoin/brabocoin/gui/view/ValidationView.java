@@ -195,7 +195,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                         transactionItemMap.put(txItem, tx);
 
                         if (tx.isCoinbase()) {
-                            txItem.setValue("Coinbase");
+                            txItem.setValue("Coinbase transaction");
                             txItem.setGraphic(createIcon(RuleState.SKIPPED));
                             txItem.setExpanded(false);
                             addRules(txItem, composite, true);
@@ -238,6 +238,9 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private void createDescriptionNode() {
         WebView browser = new WebView();
         descriptionWebEngine = browser.getEngine();
+        descriptionWebEngine.setUserStyleSheetLocation(
+            this.getClass().getResource("validation_description.css").toExternalForm()
+        );
 
         masterDetailNode.setDetailNode(browser);
     }
@@ -284,17 +287,15 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         new Thread(() -> {
             loadRules();
 
-            Platform.runLater(() -> {
-                ruleView.getSelectionModel()
-                    .selectedItemProperty()
-                    .addListener((observable, oldValue, newValue) -> {
-                        String data = "This rule was not executed.";
-                        if (descriptionItemMap.containsKey(newValue)) {
-                            data = descriptionItemMap.get(newValue);
-                        }
-                        descriptionWebEngine.loadContent(data);
-                    });
-            });
+            Platform.runLater(() -> ruleView.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observable, oldValue, newValue) -> {
+                    String data = "This rule was not executed.";
+                    if (descriptionItemMap.containsKey(newValue)) {
+                        data = descriptionItemMap.get(newValue);
+                    }
+                    descriptionWebEngine.loadContent(data);
+                }));
 
             synchronized (validator) {
                 validator.addListener(this);
@@ -323,12 +324,26 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
         try {
-            return template.render(JtwigModel.newModel());
+            return renderWithTitle(template.render(JtwigModel.newModel()), ruleClass);
         }
         catch (
             ResourceNotFoundException e) {
             return "Could not find rule description template.";
         }
+    }
+
+    private String renderWithTitle(String rendered, Class<? extends Rule> ruleClass) {
+        String title = null;
+        ValidationRule annotation = ruleClass.getAnnotation(ValidationRule.class);
+        if (annotation != null) {
+            title = annotation.name();
+        }
+
+        String output = rendered;
+        if (title != null) {
+            return MessageFormat.format("<h3>{0}</h3>{1}", title, rendered);
+        }
+        return output;
     }
 
     private String deriveSkippedDescription(Rule rule, boolean success) {
@@ -361,25 +376,14 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             MessageFormat.format("<code>{0}</code>", success ? "passed" : "failed")
         );
 
-        String title = null;
-        ValidationRule annotation = rule.getClass().getAnnotation(ValidationRule.class);
-        if (annotation != null) {
-            title = annotation.name();
-        }
 
-        String rendered;
         try {
-            rendered = template.render(model);
+            return renderWithTitle(template.render(model), rule.getClass());
         }
         catch (
             ResourceNotFoundException e) {
             return "Could not find rule description template.";
         }
-
-        if (title != null) {
-            return MessageFormat.format("<h3>{0}</h3>{1}", title, rendered);
-        }
-        return rendered;
     }
 
     @Override

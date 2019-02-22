@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Valid network id", failedName = "Invalid network id", description = "The network id of the block is equal to the network id defined in configuration.")
+@ValidationRule(name="Valid network ID", failedName = "Invalid network ID", description = "The network ID of the block is equal to the network ID defined in configuration.")
 public class ValidNetworkIdBlkRule extends BlockRule {
     private BraboConfig config;
 
