@@ -1,4 +1,6 @@
 This rule checks whether the transaction pool does not already contain this transaction.
 If so, this transaction instance is invalid.<br>
 <br>
-Pool already contains this transaction: {{ duplicatePool }}<br>
+Note that we can only check this rule once, when the transaction is first received.
+After that, the transaction is stored in the transaction pool, and we cannot check this rule anymore.
+Therefore, this validation rule is skipped.<br>

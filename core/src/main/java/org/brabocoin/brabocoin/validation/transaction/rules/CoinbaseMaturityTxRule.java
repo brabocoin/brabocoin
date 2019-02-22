@@ -16,7 +16,7 @@ import static org.brabocoin.brabocoin.util.LambdaExceptionUtil.rethrowFunction;
  * <p>
  * Reject if the spent coinbase it not mature enough.
  */
-@ValidationRule(name="Coinbase maturity check", failedName = "Immature coinbase was used", description = "All coinbase transactions defined by this transaction's inputs have a depth larger than the coinbase maturity depth defined in consensus.")
+@ValidationRule(name="Coinbase maturity check", failedName = "Immature coinbase was used", description = "All coinbase transactions spent by this transaction's inputs have a depth larger than the coinbase maturity depth defined in consensus.")
 public class CoinbaseMaturityTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

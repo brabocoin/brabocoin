@@ -1,1 +1,8 @@
-skipped
+This rule checks that all coinbase transactions spent by this transaction's inputs have a depth larger than the coinbase maturity depth defined in consensus.
+If not, the transaction is invalid.<br>
+<br>
+In order to check this, we need to find the outputs referenced by the inputs of this transaction.
+When the transaction is first received, these are all present in the UTXO set, which means they are easy to find.<br>
+<br>
+At this point in time, however, the UTXO set might have changed already, which means we cannot find all spent outputs anymore.
+This means we cannot check this rule anymore, and therefore, the validation rule is skipped.<br>
