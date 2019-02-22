@@ -195,6 +195,9 @@ public class TransactionProcessor {
             ));
             transactionPool.removeValidatedTransaction(hash);
 
+            // Remove from orphans
+            transactionPool.removeOrphan(hash);
+
             // Set UTXO from pool as spent
             LOGGER.finest("Set outputs of transaction as spent in UTXO from pool.");
             for (int i = 0; i < transaction.getOutputs().size(); i++) {

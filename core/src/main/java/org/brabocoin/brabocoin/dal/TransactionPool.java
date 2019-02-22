@@ -334,6 +334,20 @@ public class TransactionPool implements Iterable<Transaction> {
     }
 
     /**
+     * Remove the transaction from the orphan pool.
+     *
+     * @param hash
+     *     The hash of the transaction.
+     */
+    public synchronized void removeOrphan(@NotNull Hash hash) {
+        Transaction transaction = orphanTransactions.removeKey(hash);
+        if (transaction != null) {
+            LOGGER.fine("Removed orphan transaction.");
+            listeners.forEach(l -> l.onTransactionRemovedAsOrphan(transaction));
+        }
+    }
+
+    /**
      * Remove all orphans descending from the given parent when the orphan is valid according to
      * {@code orphanValidator}.
      *
