@@ -86,7 +86,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     @FXML public Button buttonSaveWallet;
     @FXML public Label confirmedBalanceLabel;
     @FXML public Label pendingBalanceLabel;
-    @FXML public Label workingBalanceLabel;
+    @FXML public Label spendableBalanceLabel;
     @FXML public Label immatureMiningReward;
     @FXML public BraboGlyph immatureMiningRewardInfo;
 
@@ -187,7 +187,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
         GridPane.setHalignment(confirmedBalanceLabel, HPos.RIGHT);
         GridPane.setHalignment(pendingBalanceLabel, HPos.RIGHT);
-        GridPane.setHalignment(workingBalanceLabel, HPos.RIGHT);
+        GridPane.setHalignment(spendableBalanceLabel, HPos.RIGHT);
         GridPane.setHalignment(immatureMiningReward, HPos.RIGHT);
 
         Tooltip infoTooltip = new Tooltip(
@@ -195,7 +195,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                 + "are already mined in a block in the blockchain.\n"
                 + "'Pending' is the user's additional balance, based on the transactions that are"
                 + " in the transaction pool.\n"
-                + "Together, these form the user's 'working balance', the amount of brabocoins "
+                + "Together, these form the user's 'spendable balance', the amount of brabocoins "
                 + "the user can actually spend.\n"
                 + "'Immature mining reward' consists of the user's mining rewards, which will be "
                 + "spendable after there are "
@@ -244,7 +244,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
             pendingBalanceLabel.setStyle(WalletUtils.getPendingStyle(difference));
 
-            workingBalanceLabel.textProperty().setValue(
+            spendableBalanceLabel.textProperty().setValue(
                 GUIUtils.formatValue(pendingBalance, true)
             );
 

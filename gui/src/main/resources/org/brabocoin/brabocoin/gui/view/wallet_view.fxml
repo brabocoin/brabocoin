@@ -43,9 +43,9 @@
                             <Label text="Pending:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
                             <Label style="-fx-padding: 0 0 0 1em" fx:id="pendingBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                             <Separator GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                            <Label style="-fx-font-weight: bold" text="Working balance:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                            <Label style="-fx-font-weight: bold" text="Spendable balance:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
                             <Label style="-fx-padding: 0 0 0 1em; -fx-font-weight: bold"
-                                   fx:id="workingBalanceLabel"
+                                   fx:id="spendableBalanceLabel"
                                    GridPane.columnIndex="1"
                                    GridPane.rowIndex="3"/>
                             <Label GridPane.columnIndex="0" GridPane.rowIndex="4"/>
