@@ -9,6 +9,7 @@ public class DataWindow extends BraboDialog {
         super();
 
         this.setTitle("Data view");
+        this.setResizable(true);
 
         this.getDialogPane().setContent(new DataView(message));
     }

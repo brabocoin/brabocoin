@@ -21,11 +21,11 @@
         <Label text="Object name: "/>
         <SelectableLabel fx:id="objectName"/>
     </HBox>
-    <TitledPane text="JSON format" collapsible="false">
-        <TextArea fx:id="jsonTextArea" styleClass="monospace" editable="false"/>
+    <TitledPane text="JSON format" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity" maxWidth="Infinity">
+        <TextArea fx:id="jsonTextArea" styleClass="monospace" editable="false" maxHeight="Infinity" maxWidth="Infinity"/>
     </TitledPane>
-    <TitledPane text="Raw hex data" collapsible="false">
-        <TextArea fx:id="hexDataTextArea" styleClass="monospace" editable="false" wrapText="true"/>
+    <TitledPane text="Raw hex data" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity" maxWidth="Infinity">
+        <TextArea fx:id="hexDataTextArea" styleClass="monospace" editable="false" wrapText="true" maxHeight="Infinity" maxWidth="Infinity"/>
     </TitledPane>
     <TitledPane text="Hashes" collapsible="false">
         <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;" VBox.vgrow="NEVER">
