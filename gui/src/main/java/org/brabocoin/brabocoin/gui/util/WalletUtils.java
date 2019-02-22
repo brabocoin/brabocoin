@@ -5,6 +5,7 @@ import javafx.scene.control.ButtonType;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
@@ -92,6 +93,7 @@ public class WalletUtils {
                 alert.setHeaderText("Transaction creation error");
                 alert.setContentText(
                     "Transaction signing failed due to database or destruction error.");
+                BraboDialog.setBraboStyling(alert.getDialogPane());
 
                 alert.showAndWait();
                 break;
@@ -147,6 +149,7 @@ public class WalletUtils {
         if (!valid) {
             alert.getButtonTypes().add(ButtonType.CANCEL);
         }
+        BraboDialog.setBraboStyling(alert.getDialogPane());
 
         alert.setTitle("Send transaction");
         alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
