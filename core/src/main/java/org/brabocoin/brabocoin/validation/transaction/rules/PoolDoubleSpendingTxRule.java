@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -16,6 +17,9 @@ public class PoolDoubleSpendingTxRule extends TransactionRule {
 
     private TransactionPool transactionPool;
 
+    @DescriptionField
+    private boolean noDoubleSpending;
+
     public boolean isValid() {
         for (Transaction poolTransaction : transactionPool) {
             /*
@@ -26,11 +30,13 @@ public class PoolDoubleSpendingTxRule extends TransactionRule {
             if (poolTransaction.getInputs()
                 .stream()
                 .anyMatch(i -> hasMatchingOutputReference(i, transaction))) {
-                return false;
+                noDoubleSpending = false;
+                return noDoubleSpending;
             }
         }
 
-        return true;
+        noDoubleSpending = true;
+        return noDoubleSpending;
     }
 
     /**

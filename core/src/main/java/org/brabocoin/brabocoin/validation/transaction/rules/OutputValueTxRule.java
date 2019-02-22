@@ -18,11 +18,12 @@ public class OutputValueTxRule extends TransactionRule {
 
     @DescriptionField
     private long maxMoneyValue;
+    @DescriptionField
+    private long sum;
 
     public boolean isValid() {
         maxMoneyValue = consensus.getMaxMoneyValue();
-
-        long sum = 0L;
+        sum = 0L;
         for (Output output : transaction.getOutputs()) {
             if (output.getAmount() <= 0) {
                 return false;

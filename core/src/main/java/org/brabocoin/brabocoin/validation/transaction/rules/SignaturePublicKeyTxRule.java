@@ -5,6 +5,7 @@ import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.Signature;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -23,12 +24,16 @@ public class SignaturePublicKeyTxRule extends TransactionRule {
 
     private Signer signer;
 
+    @DescriptionField
+    private boolean validPubKeys;
+
     public boolean isValid() {
         if (transaction.getSignatures().stream().anyMatch(Objects::isNull)) {
-            return false;
+            validPubKeys = false;
+            return validPubKeys;
         }
 
-        return IntStream.range(0, transaction.getInputs().size())
+        validPubKeys = IntStream.range(0, transaction.getInputs().size())
             .allMatch(i -> {
                 Input input = transaction.getInputs().get(i);
                 Signature signature = transaction.getSignatures().get(i);
@@ -44,5 +49,7 @@ public class SignaturePublicKeyTxRule extends TransactionRule {
                     return false;
                 }
             });
+
+        return validPubKeys;
     }
 }

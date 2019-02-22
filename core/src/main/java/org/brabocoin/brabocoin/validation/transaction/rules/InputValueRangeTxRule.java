@@ -1,9 +1,11 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
+import com.sun.org.glassfish.gmbal.Description;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -18,8 +20,14 @@ public class InputValueRangeTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
 
+    @DescriptionField
+    private long consensusMaxMoneyValue;
+    @DescriptionField
+    private long sum;
+
     public boolean isValid() {
-        long sum = 0L;
+        consensusMaxMoneyValue = consensus.getMaxMoneyValue();
+        sum = 0L;
         for (Input input : transaction.getInputs()) {
             UnspentOutputInfo unspentOutputInfo;
             try {
@@ -46,7 +54,7 @@ public class InputValueRangeTxRule extends TransactionRule {
                 return false;
             }
 
-            if (sum > consensus.getMaxMoneyValue()) {
+            if (sum > consensusMaxMoneyValue) {
                 return false;
             }
         }
