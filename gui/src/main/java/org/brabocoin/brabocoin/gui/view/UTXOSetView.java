@@ -21,6 +21,7 @@ import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
+import org.brabocoin.brabocoin.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -40,13 +41,16 @@ public class UTXOSetView extends VBox implements BraboControl, Initializable, UT
     @FXML private TableColumn<Map.Entry<Input, UnspentOutputInfo>, Hash> addressColumn;
     @FXML private TableColumn<Map.Entry<Input, UnspentOutputInfo>, Long> amountColumn;
     @FXML private TableColumn<Map.Entry<Input, UnspentOutputInfo>, Boolean> coinbaseColumn;
+    @FXML private TableColumn<Map.Entry<Input, UnspentOutputInfo>, Boolean> inMyWalletColumn;
 
     private final @NotNull ReadonlyUTXOSet utxoSet;
+    private final @NotNull Wallet wallet;
     private ObservableList<Map.Entry<Input, UnspentOutputInfo>> observableEntries = FXCollections.observableArrayList();
 
-    public UTXOSetView(@NotNull ReadonlyUTXOSet utxoSet) {
+    public UTXOSetView(@NotNull ReadonlyUTXOSet utxoSet, @NotNull Wallet wallet) {
         super();
         this.utxoSet = utxoSet;
+        this.wallet = wallet;
 
         BraboControlInitializer.initialize(this);
     }
@@ -102,6 +106,12 @@ public class UTXOSetView extends VBox implements BraboControl, Initializable, UT
             return new ReadOnlyObjectWrapper<>(coinbase);
         });
         coinbaseColumn.setCellFactory(col -> new BooleanTextTableCell<>("Yes", "No"));
+
+        inMyWalletColumn.setCellValueFactory(features -> {
+            Hash address = features.getValue().getValue().getAddress();
+            return new ReadOnlyObjectWrapper<>(wallet.hasAddress(address));
+        });
+        inMyWalletColumn.setCellFactory(col -> new BooleanTextTableCell<>("Yes", "No"));
 
         utxoTable.getSortOrder().add(heightColumn);
         utxoTable.getSortOrder().add(txHashColumn);

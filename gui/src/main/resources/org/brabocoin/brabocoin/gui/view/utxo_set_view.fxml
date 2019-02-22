@@ -22,6 +22,7 @@
                 <TableColumn fx:id="addressColumn" text="Address"/>
                 <TableColumn fx:id="amountColumn" text="Amount"/>
                 <TableColumn fx:id="coinbaseColumn" text="Coinbase"/>
+                <TableColumn fx:id="inMyWalletColumn" text="In my wallet"/>
             </columns>
             <placeholder>
                 <VBox alignment="CENTER" spacing="5">
