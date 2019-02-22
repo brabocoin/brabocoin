@@ -13,15 +13,23 @@ import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
 
+import java.util.function.Supplier;
+
 public class EditCell<S, T> extends TextFieldTableCell<S, T> {
 
     private TextField textField;
     private boolean escapePressed = false;
-    private TablePosition<S,
-        ?> tablePos = null;
+    private TablePosition<S, ?> tablePos = null;
+    private final Supplier<TextField> textFieldSupplier;
+
+
+    public EditCell(final StringConverter<T> converter, Supplier<TextField> textFieldSupplier) {
+        super(converter);
+        this.textFieldSupplier = textFieldSupplier;
+    }
 
     public EditCell(final StringConverter<T> converter) {
-        super(converter);
+        this(converter, TextField::new);
     }
 
     public static <S> Callback<TableColumn<S,
@@ -34,6 +42,11 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
     public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(
         final StringConverter<T> converter) {
         return list -> new EditCell<>(converter);
+    }
+
+    public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(
+        final StringConverter<T> converter, Supplier<TextField> textFieldSupplier) {
+        return list -> new EditCell<>(converter, textFieldSupplier);
     }
 
     @Override
@@ -114,7 +127,8 @@ public class EditCell<S, T> extends TextFieldTableCell<S, T> {
             return textField;
         }
 
-        final TextField textField = new TextField(getItemText());
+        final TextField textField = textFieldSupplier.get();
+        textField.setText(getItemText());
         // Use onAction here rather than onKeyReleased (with check for Enter),
         textField.setOnAction(event -> {
             if (getConverter() == null) {

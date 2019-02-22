@@ -3,8 +3,8 @@ package org.brabocoin.brabocoin.gui.dialog;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import org.brabocoin.brabocoin.crypto.PublicKey;
+import org.brabocoin.brabocoin.gui.control.DecimalTextField;
 import org.brabocoin.brabocoin.gui.control.KeyDropDown;
-import org.brabocoin.brabocoin.gui.control.NumberTextField;
 import org.brabocoin.brabocoin.wallet.Wallet;
 
 import java.util.AbstractMap;
@@ -19,7 +19,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
 
         grid.add(messageLabel, 0, 0, 2, 1);
 
-        NumberTextField feeField = new NumberTextField();
+        DecimalTextField feeField = new DecimalTextField();
         KeyDropDown dropDown = new KeyDropDown(wallet);
 
         feeField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -28,7 +28,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
                 return;
             }
 
-            long fee = Long.parseLong(feeField.getText());
+            long fee = feeField.getCents();
             long changeValue = inputSum - outputSum - fee;
             if (changeValue <= 0) {
                 setError("Insufficient input for fee");
@@ -40,7 +40,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
             hideErrorLabel();
         });
 
-        grid.add(new Label("Fee value in cents:"), 0, 1);
+        grid.add(new Label("Fee:"), 0, 1);
         grid.add(feeField, 1, 1);
         grid.add(new Label("Output address:"), 0, 2);
         grid.add(dropDown, 1, 2);
@@ -50,7 +50,7 @@ public class FeeDialog extends BraboValidatedDialog<Map.Entry<Long, PublicKey>> 
         this.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 return new AbstractMap.SimpleEntry<>(
-                    Long.parseLong(feeField.getText()),
+                    feeField.getCents(),
                     dropDown.getSelectionModel().getSelectedItem()
                 );
             }

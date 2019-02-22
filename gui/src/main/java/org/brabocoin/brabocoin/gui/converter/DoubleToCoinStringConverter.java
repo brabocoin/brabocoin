@@ -18,6 +18,7 @@ public class DoubleToCoinStringConverter extends StringConverter<Double> {
         if (string == null) {
             return 0.0;
         }
+        string = string.replace(',', '.');
         double d;
         try {
             d = Double.parseDouble(string);

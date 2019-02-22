@@ -24,11 +24,11 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.InsufficientInputException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.DecimalTextField;
 import org.brabocoin.brabocoin.gui.converter.Base58StringConverter;
 import org.brabocoin.brabocoin.gui.converter.DoubleToCoinStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HashStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HexBigIntegerStringConverter;
-import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.FeeDialog;
 import org.brabocoin.brabocoin.gui.tableentry.EditCell;
 import org.brabocoin.brabocoin.gui.tableentry.EditableTableInputEntry;
@@ -171,7 +171,6 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         inputAmount.setEditable(false);
         inputAmount.getStyleClass().add("column-fixed");
 
-
         inputTableView.getColumns().addAll(
             inputIndex, refTxHash, refOutputIndex, inputAddress, inputAmount
         );
@@ -195,7 +194,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
         TableColumn<EditableTableOutputEntry, Double> amount = new TableColumn<>("Amount");
         amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amount.setCellFactory(EditCell.forTableColumn(new DoubleToCoinStringConverter()));
+        amount.setCellFactory(EditCell.forTableColumn(
+            new DoubleToCoinStringConverter(),
+            DecimalTextField::new
+        ));
         amount.setOnEditCommit(event -> commitEdit(
             event, EditableTableOutputEntry::setAmount, outputTableView
         ));
@@ -359,9 +361,14 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             return;
         }
 
-        inputs.forEach((input, outputInfo) -> inputTableView.getItems().add(
-            new EditableTableInputEntry(input, inputTableView.getItems().size())
-        ));
+        inputs.forEach((input, outputInfo) -> {
+            EditableTableInputEntry entry =
+                new EditableTableInputEntry(input, inputTableView.getItems().size());
+            inputTableView.getItems().add(entry);
+
+            entry.setAddress(outputInfo.getAddress());
+            entry.setAmount(outputInfo.getAmount());
+        });
 
         hideErrorLabel();
     }

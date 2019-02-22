@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.gui.control;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.util.converter.DoubleStringConverter;
+import org.brabocoin.brabocoin.validation.Consensus;
 
 import java.util.regex.Pattern;
 
@@ -32,5 +33,9 @@ public class DecimalTextField extends TextField {
     @Override
     public String getText(int start, int end) {
         return super.getText(start, end);
+    }
+
+    public long getCents() {
+        return (long) (Double.parseDouble(getText()) * Consensus.COIN);
     }
 }

@@ -160,8 +160,8 @@ public class SimpleTransactionCreationDialog extends BraboDialog<SimpleTransacti
                 return new SimpleTransactionCreationResult(
                     PublicKey.getHashFromBase58Address(addressField.getText()),
                     changeAddress.getSelectionModel().getSelectedItem().getHash(),
-                    (long)(Double.parseDouble(amountField.getText()) * Consensus.COIN),
-                    (long)(Double.parseDouble(feeField.getText()) * Consensus.COIN)
+                    amountField.getCents(),
+                    feeField.getCents()
                 );
             }
 
