@@ -5,6 +5,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.MasterDetailPane?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.RecentRejectTxView"
@@ -12,7 +13,7 @@
          showDetailNode="false">
     <masterNode>
         <VBox>
-            <TableView fx:id="txsTable" VBox.vgrow="ALWAYS">
+            <AutoResizeTableView fx:id="txsTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
                     <TableColumn fx:id="ruleColumn" sortable="false" text="Failed validation rule"/>
@@ -22,7 +23,7 @@
                         <Label text="No recently rejected transactions received"/>
                     </VBox>
                 </placeholder>
-            </TableView>
+            </AutoResizeTableView>
         </VBox>
     </masterNode>
 </fx:root>

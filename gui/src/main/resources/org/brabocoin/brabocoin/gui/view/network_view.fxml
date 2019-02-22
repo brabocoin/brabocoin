@@ -3,7 +3,6 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
-<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -11,6 +10,7 @@
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
@@ -26,7 +26,7 @@
                         <SelectableLabel fx:id="externalIpLabel" alignment="CENTER_LEFT"/>
                     </HBox>
                     <Label text="Local IP addresses:"/>
-                    <TableView fx:id="ipTable">
+                    <AutoResizeTableView fx:id="ipTable">
                         <columns>
                             <TableColumn fx:id="ipNameColumn" sortable="false" text="Name"/>
                             <TableColumn fx:id="ipValueColumn" sortable="false" text="IP"/>
@@ -38,7 +38,7 @@
                                 <Label fx:id="ipTablePlaceholderLabel" text="Loading data..."/>
                             </VBox>
                         </placeholder>
-                    </TableView>
+                    </AutoResizeTableView>
                     <HBox spacing="5" alignment="CENTER_LEFT">
                         <Label text="Port:"/>
                         <SelectableLabel fx:id="portLabel"/>
@@ -51,7 +51,7 @@
             </TitledPane>
             <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
                 <VBox VBox.vgrow="ALWAYS">
-                    <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
+                    <AutoResizeTableView fx:id="peerTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
                             <TableColumn fx:id="peerHostnameColumn" sortable="false" text="Hostname"/>
@@ -64,7 +64,7 @@
                                 <Label text="No connected peers."/>
                             </VBox>
                         </placeholder>
-                    </TableView>
+                    </AutoResizeTableView>
                     <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
                         <Button text="Discover peers" onAction="#discoverPeers"/>
                         <Button text="+" onAction="#addPeer"/>
@@ -77,7 +77,7 @@
     <Tab closable="false" text="Messages">
         <MasterDetailPane fx:id="messageMasterPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
-                <TableView fx:id="messageTable">
+                <AutoResizeTableView fx:id="messageTable">
                     <columns>
                         <TableColumn fx:id="incomingColumn" sortable="false" text="Type"/>
                         <TableColumn fx:id="peerColumn" sortable="false" text="Peer"/>
@@ -91,7 +91,7 @@
                             <Label text="Waiting for message to be sent or received."/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </masterNode>
         </MasterDetailPane>
     </Tab>

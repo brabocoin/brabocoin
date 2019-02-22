@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.gui.util;
 
 import com.sun.javafx.scene.control.skin.TableViewSkin;
-import javafx.collections.ListChangeListener;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -26,15 +25,15 @@ public class GUIUtils {
     }
 
     public static void autoFitTable(TableView tableView) {
-        tableView.getItems().addListener((ListChangeListener<Object>)c -> {
-            for (Object column : tableView.getColumns()) {
-                try {
-                    columnToFitMethod.invoke(tableView.getSkin(), column, -1);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+        if (tableView.getSkin() == null) return;
+
+        for (Object column : tableView.getColumns()) {
+            try {
+                columnToFitMethod.invoke(tableView.getSkin(), column, 1);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
             }
-        });
+        }
     }
 
     public static String formatValue(long value, boolean addSuffix) {

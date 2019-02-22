@@ -2,8 +2,8 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -11,7 +11,7 @@
          dividerPosition="0.65"
          showDetailNode="false">
     <masterNode>
-        <TableView fx:id="orphanTable" VBox.vgrow="ALWAYS">
+        <AutoResizeTableView fx:id="orphanTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
             </columns>
@@ -20,6 +20,6 @@
                     <Label text="No orphan transactions"/>
                 </VBox>
             </placeholder>
-        </TableView>
+        </AutoResizeTableView>
     </masterNode>
 </fx:root>

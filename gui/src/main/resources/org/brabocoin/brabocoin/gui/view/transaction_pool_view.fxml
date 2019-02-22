@@ -3,10 +3,10 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.VBox?>
-<?import org.controlsfx.control.MasterDetailPane?>
-<?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
+<?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.TransactionPoolView"
@@ -15,7 +15,7 @@
     <masterNode>
         <VBox>
             <TitledPane fx:id="independentPane" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
-                <TableView fx:id="independentTable" VBox.vgrow="ALWAYS">
+                <AutoResizeTableView fx:id="independentTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="hashIndepColumn" sortable="false" text="Hash"/>
                     </columns>
@@ -24,10 +24,10 @@
                             <Label text="No independent transactions in transaction pool"/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </TitledPane>
             <TitledPane fx:id="dependentPane" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
-                <TableView fx:id="dependentTable" VBox.vgrow="ALWAYS">
+                <AutoResizeTableView fx:id="dependentTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="hashDepColumn" sortable="false" text="Hash"/>
                     </columns>
@@ -36,7 +36,7 @@
                             <Label text="No dependent transactions in transaction pool"/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </TitledPane>
         </VBox>
     </masterNode>
