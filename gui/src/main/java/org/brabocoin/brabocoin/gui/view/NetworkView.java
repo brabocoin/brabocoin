@@ -30,7 +30,6 @@ import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.IntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.MethodDescriptorTableCell;
-import org.brabocoin.brabocoin.gui.control.table.PeerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.StringTableCell;
 import org.brabocoin.brabocoin.gui.dialog.PeerCreationDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
@@ -95,7 +94,9 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @FXML private TableView<NetworkMessage> messageTable;
     @FXML private TableColumn<NetworkMessage, Boolean> incomingColumn;
-    @FXML private TableColumn<NetworkMessage, Peer> peerColumn;
+    @FXML private TableColumn<NetworkMessage, String> hostnameColumn;
+    @FXML private TableColumn<NetworkMessage, String> ipColumn;
+    @FXML private TableColumn<NetworkMessage, Integer> portColumn;
     @FXML private TableColumn<NetworkMessage, MethodDescriptor> methodColumn;
     @FXML private TableColumn<NetworkMessage, LocalDateTime> timeReceivedColumn;
     @FXML private TableColumn<NetworkMessage, Double> sizeColumn;
@@ -140,9 +141,19 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         return new ReadOnlyObjectWrapper<>(f.getValue().isIncoming());
     }
 
-    private static ObservableValue<Peer> readOnlyPeerFeature(
-        TableColumn.CellDataFeatures<NetworkMessage, Peer> f) {
-        return new ReadOnlyObjectWrapper<>(f.getValue().getPeer());
+    private static ObservableValue<String> readOnlyIPFeature(
+        TableColumn.CellDataFeatures<NetworkMessage, String> f) {
+        return new ReadOnlyStringWrapper(f.getValue().getPeer().getAddress().getHostAddress());
+    }
+
+    private static ObservableValue<String> readOnlyHostnameFeature(
+        TableColumn.CellDataFeatures<NetworkMessage, String> f) {
+        return new ReadOnlyStringWrapper(f.getValue().getPeer().getAddress().getHostName());
+    }
+
+    private static ObservableValue<Integer> readOnlyPortFeature(
+        TableColumn.CellDataFeatures<NetworkMessage, Integer> f) {
+        return new ReadOnlyObjectWrapper<>(f.getValue().getPeer().getPort());
     }
 
     private static ObservableValue<MethodDescriptor> readOnlyMethodFeature(
@@ -310,8 +321,14 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             BraboGlyph.Icon.ARROW_DOWN_FAT, BraboGlyph.Icon.ARROW_UP_FAT, Color.RED, Color.GREEN
         ));
 
-        peerColumn.setCellValueFactory(NetworkView::readOnlyPeerFeature);
-        peerColumn.setCellFactory(col -> new PeerTableCell<>());
+        hostnameColumn.setCellValueFactory(NetworkView::readOnlyHostnameFeature);
+        hostnameColumn.setCellFactory(col -> new StringTableCell<>());
+
+        ipColumn.setCellValueFactory(NetworkView::readOnlyIPFeature);
+        ipColumn.setCellFactory(col -> new StringTableCell<>());
+
+        portColumn.setCellValueFactory(NetworkView::readOnlyPortFeature);
+        portColumn.setCellFactory(col -> new IntegerTableCell<>());
 
         methodColumn.setCellValueFactory(NetworkView::readOnlyMethodFeature);
         methodColumn.setCellFactory(col -> new MethodDescriptorTableCell<>());

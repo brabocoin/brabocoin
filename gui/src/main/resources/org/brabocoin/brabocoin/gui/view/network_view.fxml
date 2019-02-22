@@ -53,8 +53,8 @@
                 <VBox VBox.vgrow="ALWAYS">
                     <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
                             <TableColumn fx:id="peerHostnameColumn" sortable="false" text="Hostname"/>
+                            <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
                             <TableColumn fx:id="peerPortColumn" sortable="false" text="Port"/>
                             <TableColumn fx:id="peerIncomingMessageCountColumn" sortable="false" text="Incoming messages"/>
                             <TableColumn fx:id="peerOutgoingMessageCountColumn" sortable="false" text="Outgoing messages"/>
@@ -80,7 +80,9 @@
                 <TableView fx:id="messageTable">
                     <columns>
                         <TableColumn fx:id="incomingColumn" sortable="false" text="Type"/>
-                        <TableColumn fx:id="peerColumn" sortable="false" text="Peer"/>
+                        <TableColumn fx:id="hostnameColumn" sortable="false" text="Hostname"/>
+                        <TableColumn fx:id="ipColumn" sortable="false" text="IP"/>
+                        <TableColumn fx:id="portColumn" sortable="false" text="Port"/>
                         <TableColumn fx:id="methodColumn" sortable="false" text="Method"/>
                         <TableColumn fx:id="timeReceivedColumn" sortable="false" text="Time received"/>
                         <TableColumn fx:id="sizeColumn" sortable="false" text="Size (kB)"/>
