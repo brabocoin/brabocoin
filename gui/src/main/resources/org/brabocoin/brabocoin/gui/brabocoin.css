@@ -138,3 +138,7 @@
 .glyph-font .text {
     -fx-font-smoothing-type: gray;
 }
+
+.table-view:focused .table-row-cell:filled:selected .table-cell, .table-view:focused .table-row-cell:filled:selected .table-cell .text {
+    -fx-text-fill: white !important;
+}
