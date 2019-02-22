@@ -3,8 +3,10 @@ package org.brabocoin.brabocoin.gui.view;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -65,6 +67,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private WebEngine descriptionWebEngine;
     private TreeItem<String> root;
     @FXML private MasterDetailPane masterDetailNode;
+    @FXML private VBox treeViewPlaceHolder;
 
     private final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
     private final BraboGlyph.Icon ICON_SKIPPED = BraboGlyph.Icon.CIRCLEMINUS;
@@ -124,7 +127,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     private void loadRules() {
         root = new TreeItem<>();
-        ruleView.setShowRoot(false);
+        Platform.runLater(() -> ruleView.setShowRoot(false));
 
         RuleList ruleList;
         if (isForBlock()) {
@@ -134,7 +137,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             ruleList = transactionRules;
         }
         addRules(root, ruleList, false);
-        ruleView.setRoot(root);
+        Platform.runLater(() -> {
+            ruleView.setManaged(true);
+            ruleView.setVisible(true);
+            ruleView.setRoot(root);
+            treeViewPlaceHolder.setManaged(false);
+            treeViewPlaceHolder.setVisible(false);
+        });
     }
 
     private boolean isSkippedRuleClass(Class<? extends Rule> rule) {
@@ -182,6 +191,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                     for (int i = 0; i < transactions.size(); i++) {
                         Transaction tx = transactions.get(i);
                         TreeItem<String> txItem = new TreeItem<>();
+                        descriptionItemMap.put(txItem, "");
                         transactionItemMap.put(txItem, tx);
 
                         if (tx.isCoinbase()) {
@@ -238,6 +248,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
         ruleTreeItemMap = new HashMap<>();
         transactionItemMap = new HashMap<>();
+        descriptionItemMap = new HashMap<>();
         this.transaction = transaction;
         this.validator = validator;
 
@@ -245,7 +256,6 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.setDetailNode(transactionDetailView);
 
         BraboControlInitializer.initialize(this);
-        descriptionItemMap = new HashMap<>();
     }
 
     public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
@@ -254,6 +264,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
         ruleTreeItemMap = new HashMap<>();
         transactionItemMap = new HashMap<>();
+        descriptionItemMap = new HashMap<>();
         this.block = block;
         this.validator = validator;
 
@@ -261,7 +272,6 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         this.setDetailNode(blockDetailView);
 
         BraboControlInitializer.initialize(this);
-        descriptionItemMap = new HashMap<>();
     }
 
     private boolean isForBlock() {
@@ -271,44 +281,45 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         createDescriptionNode();
-        loadRules();
+        new Thread(() -> {
+            loadRules();
 
-        ruleView.getSelectionModel()
-            .selectedItemProperty()
-            .addListener((observable, oldValue, newValue) -> {
-                String data = "This rule was not executed.";
-                if (descriptionItemMap.containsKey(newValue)) {
-                    data = descriptionItemMap.get(newValue);
-                }
-                descriptionWebEngine.loadContent(data);
+            Platform.runLater(() -> {
+                ruleView.getSelectionModel()
+                    .selectedItemProperty()
+                    .addListener((observable, oldValue, newValue) -> {
+                        String data = "This rule was not executed.";
+                        if (descriptionItemMap.containsKey(newValue)) {
+                            data = descriptionItemMap.get(newValue);
+                        }
+                        descriptionWebEngine.loadContent(data);
+                    });
             });
 
-        ValidationView me = this;
-        Platform.runLater(() -> {
             synchronized (validator) {
                 validator.addListener(this);
                 // Run validator
                 if (isForBlock()) {
-                    BlockValidator validator = (BlockValidator)me.validator;
+                    BlockValidator blockValidator = (BlockValidator)validator;
 
                     List<Class<? extends Rule>> rules = blockRules.getRules();
                     rules.removeAll(skippedBlockRules.getRules());
-                    validator.validate(block, new RuleList(rules));
+                    blockValidator.validate(block, new RuleList(rules));
                 }
                 else {
-                    TransactionValidator validator = (TransactionValidator)me.validator;
+                    TransactionValidator transactionValidator = (TransactionValidator)validator;
 
                     List<Class<? extends Rule>> rules = transactionRules.getRules();
                     rules.removeAll(skippedTransactionRules.getRules());
-                    validator.validate(transaction, new RuleList(rules), true);
+                    transactionValidator.validate(transaction, new RuleList(rules), true);
                 }
                 validator.removeListener(this);
             }
-        });
+        }).start();
     }
 
-    private String deriveDescription(Class<? extends Rule> ruleClass) {
-        String templatePath = ruleClass.getName().replace('.', '/') + ".twig";
+    private String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
+        String templatePath = ruleClass.getName().replace('.', '/') + ".skipped.twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
         try {
@@ -320,7 +331,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         }
     }
 
-    private String deriveDescription(Rule rule) {
+    private String deriveSkippedDescription(Rule rule, boolean success) {
         String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
@@ -345,100 +356,136 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             }
         }
 
+        model.with(
+            "result",
+            MessageFormat.format("<code>{0}</code>", success ? "passed" : "failed")
+        );
+
+        String title = null;
+        ValidationRule annotation = rule.getClass().getAnnotation(ValidationRule.class);
+        if (annotation != null) {
+            title = annotation.name();
+        }
+
+        String rendered;
         try {
-            return template.render(model);
+            rendered = template.render(model);
         }
         catch (
             ResourceNotFoundException e) {
             return "Could not find rule description template.";
         }
+
+        if (title != null) {
+            return MessageFormat.format("<h3>{0}</h3>{1}", title, rendered);
+        }
+        return rendered;
     }
 
     @Override
     public void onRuleValidation(Rule rule, RuleBookResult result, RuleBook ruleBook) {
-        List<TreeItem<String>> treeItems = ruleTreeItemMap.get(rule.getClass());
+        Platform.runLater(() -> {
+            List<TreeItem<String>> treeItems = ruleTreeItemMap.get(rule.getClass());
 
-        TreeItem<String> item;
-        if (rule instanceof TransactionRule) {
-            if (isForBlock()) {
-                FactMap map = ruleBook.getFacts();
-                Transaction tx = (Transaction)map.get("transaction");
+            TreeItem<String> item;
+            if (rule instanceof TransactionRule) {
+                if (isForBlock()) {
+                    FactMap map = ruleBook.getFacts();
+                    Transaction tx = (Transaction)map.get("transaction");
 
-                List<TreeItem<String>> treeItemParents = treeItems.stream().map(
-                    TreeItem::getParent
-                ).collect(Collectors.toList());
+                    List<TreeItem<String>> treeItemParents = treeItems.stream().map(
+                        TreeItem::getParent
+                    ).collect(Collectors.toList());
 
-                TreeItem<String> parent = treeItemParents.stream()
-                    .filter(t -> transactionItemMap.get(t).getHash().equals(tx.getHash()))
-                    .findFirst()
-                    .orElse(null);
+                    TreeItem<String> parent = treeItemParents.stream()
+                        .filter(t -> transactionItemMap.get(t).getHash().equals(tx.getHash()))
+                        .findFirst()
+                        .orElse(null);
 
-                item = treeItems.stream()
-                    .filter(t -> t.getParent().equals(parent))
-                    .findFirst()
-                    .orElse(null);
+                    item = treeItems.stream()
+                        .filter(t -> t.getParent().equals(parent))
+                        .findFirst()
+                        .orElse(null);
 
+                }
+                else {
+                    if (treeItems.size() != 1) {
+                        throw new IllegalStateException(
+                            "Found not exactly one rule tree items for transactions");
+                    }
+
+                    item = treeItems.get(0);
+                }
             }
-            else {
+            else if (rule instanceof BlockRule) {
                 if (treeItems.size() != 1) {
                     throw new IllegalStateException(
-                        "Found not exactly one rule tree items for transactions");
+                        "Found not exactly one rule tree items for blocks");
                 }
 
                 item = treeItems.get(0);
             }
-        }
-        else if (rule instanceof BlockRule) {
-            if (treeItems.size() != 1) {
-                throw new IllegalStateException("Found not exactly one rule tree items for blocks");
+            else {
+                throw new IllegalStateException("Rule of invalid type");
             }
 
-            item = treeItems.get(0);
-        }
-        else {
-            throw new IllegalStateException("Rule of invalid type");
-        }
+            descriptionItemMap.put(item, deriveSkippedDescription(rule, result.isPassed()));
 
-        descriptionItemMap.put(item, deriveDescription(rule));
+            if (item == null) {
+                return;
+            }
 
-        if (item == null) {
-            return;
-        }
+            if (result.isPassed()) {
+                Platform.runLater(() -> {
+                    item.setGraphic(createIcon(RuleState.SUCCESS));
 
-        if (result.isPassed()) {
-            Platform.runLater(() -> {
-                item.setGraphic(createIcon(RuleState.SUCCESS));
+                    if (item.getParent()
+                        .getChildren()
+                        .stream()
+                        .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
+                            .equals(ICON_SUCCESS))) {
+                        item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
+                    }
+                });
+            }
+            else {
+                item.setGraphic(createIcon(RuleState.FAIL));
+            }
 
-                if (item.getParent()
-                    .getChildren()
-                    .stream()
-                    .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
-                        .equals(ICON_SUCCESS))) {
-                    item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
-                }
-            });
-        }
-        else {
-            Platform.runLater(() -> item.setGraphic(createIcon(RuleState.FAIL)));
-        }
-
-        Platform.runLater(() -> ruleView.refresh());
+            ruleView.refresh();
+        });
     }
 
     @Override
     public void onValidationStarted(FactMap facts) {
-        setSkippedRuleDescriptions(root, facts);
+        Platform.runLater(() -> setSkippedRuleDescriptions(root));
     }
 
-    private void setSkippedRuleDescriptions(TreeItem<String> root, FactMap factMap) {
+    private void setSkippedRuleDescriptions(TreeItem<String> root) {
         Class<? extends Rule> inverseSearch = inverseSearchRule(root);
 
-        if (inverseSearch != null && isSkippedRuleClass(inverseSearch)) {
-            descriptionItemMap.put(root, deriveDescription(inverseSearch));
+        if (inverseSearch != null && (isSkippedRuleClass(inverseSearch) || isSkippedDescendant(root))) {
+            descriptionItemMap.put(root, deriveSkippedDescription(inverseSearch));
         }
 
         for (TreeItem<String> child : root.getChildren()) {
-            setSkippedRuleDescriptions(child, factMap);
+            setSkippedRuleDescriptions(child);
+        }
+    }
+
+    private boolean isSkippedDescendant(TreeItem<String> descendant) {
+        Node graphic = descendant.getGraphic();
+        if (graphic != null && ((BraboGlyph)graphic).getIcon()
+            .equals(ICON_SKIPPED)) {
+            return true;
+        }
+        else {
+            if (descendant.getParent() != null) {
+                return isSkippedDescendant(descendant.getParent());
+            }
+            else {
+                return false;
+            }
         }
     }
 

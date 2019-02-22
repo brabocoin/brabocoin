@@ -1,9 +1,14 @@
 This rule checks whether the validated block's hash is smaller than the target value of the block.
-If not, the block is invalid and should be rejected.<br>
+If not, the block is invalid.<br>
 <br>
-Block hash: {{blockHash}} <br>
-Block target value: {{targetValue}} <br>
+Block hash: {{ blockHash }} <br>
+Block target value: {{ targetValue }} <br>
 <br>
 Check: <br>
-<code>{{blockHash}} < <br>
-{{targetValue}}</code>
+<br>
+<code>
+    {{ blockHash }} < <br>
+    {{ targetValue }}
+</code>
+<br>
+Result: {{ result }}

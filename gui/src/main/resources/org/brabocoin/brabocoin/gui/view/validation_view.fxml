@@ -14,7 +14,13 @@
     <masterNode>
         <MasterDetailPane fx:id="masterDetailNode" detailSide="BOTTOM">
             <masterNode>
-                <TreeView fx:id="ruleView"/>
+                <VBox>
+                    <TreeView fx:id="ruleView" visible="false" managed="false" VBox.vgrow="ALWAYS"/>
+                    <VBox alignment="CENTER" spacing="5" fx:id="treeViewPlaceHolder" VBox.vgrow="ALWAYS">
+                        <ProgressIndicator maxHeight="20"/>
+                        <Label text="Loading data..."/>
+                    </VBox>
+                </VBox>
             </masterNode>
         </MasterDetailPane>
     </masterNode>

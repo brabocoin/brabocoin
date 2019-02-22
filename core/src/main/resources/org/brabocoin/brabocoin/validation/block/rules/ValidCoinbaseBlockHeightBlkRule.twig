@@ -1,7 +1,9 @@
 This rule checks whether the block height defined in the coinbase transaction of the block is the same as the block height defined in the block header.
-If not, the block is invalid and should be rejected.<br>
+If not, the block is invalid.<br>
 <br>
 Coinbase transaction block height: {{ coinbaseBlockHeight }}<br>
 Actual block height: {{ blockHeight }}<br>
 <br>
-Check: <code>{{ coinbaseBlockHeight }} = {{ blockHeight }}</code>
+Check: <code>{{ coinbaseBlockHeight }} = {{ blockHeight }}</code><br>
+<br>
+Result: {{ result }}

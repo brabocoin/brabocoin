@@ -1,7 +1,9 @@
 This rule checks whether the number of signatures in the transactions is equal to the number of inputs in the transaction.
-If not, the transaction is invalid and should be rejected.<br>
+If not, the transaction is invalid.<br>
 <br>
 Input count: {{inputCount}}<br>
 Signature count: {{signatureCount}}
 <br>
-Check: {{ inputCount }} = {{ signatureCount }}
+Check: {{ inputCount }} = {{ signatureCount }}<br>
+<br>
+Result: {{ result }}

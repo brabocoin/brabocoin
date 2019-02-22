@@ -1,0 +1,9 @@
+This rule checks whether the total sum of all transaction fees in the block is within the legal money range.
+If not, the block is invalid.<br>
+<br>
+In order to compute the total sum of transaction fees, we need to calculate the fee of each invidivual transaction.
+We can only compute these if we the referenced outputs of the inputs of the transactions, which are stored in the UTXO set at the time the block is  first received.<br>
+<br>
+At this point in time, however, the UTXO set has (probably) changed already, which means we cannot execute this rule anymore.
+We can only check this rule once when the block is first received.
+Therefore, this validation rule is skipped.
