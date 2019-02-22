@@ -108,7 +108,7 @@ public class UnlockDialog<T> extends BraboDialog<T> {
 
     private void attemptUnlock(ActionEvent event) {
         T object = unlocker.apply(
-            new Destructible<>(() ->passwordField.getText().toCharArray())
+            new Destructible<>(() -> passwordField.getText().toCharArray())
         );
 
         if (object == null) {

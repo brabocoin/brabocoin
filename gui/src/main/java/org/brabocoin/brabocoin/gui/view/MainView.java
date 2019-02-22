@@ -96,7 +96,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         // Set log pane close binding
         logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
-        walletView = new WalletView(state);
+        walletView = new WalletView(state, taskManager);
         networkView = new NetworkView(state, taskManager);
 
         toggleToViewMap = new HashMap<>();

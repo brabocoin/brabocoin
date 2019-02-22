@@ -7,6 +7,7 @@ import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -45,6 +46,7 @@ import org.brabocoin.brabocoin.gui.dialog.SimpleTransactionCreationDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
+import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView;
@@ -57,6 +59,7 @@ import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
 import org.brabocoin.brabocoin.wallet.TransactionSigningResult;
@@ -78,6 +81,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     public static final int PRIVATE_KEY_RADIX = 16;
     private final State state;
+    private final TaskManager taskManager;
 
     @FXML private Tab txHistoryTab;
     @FXML public MenuButton buttonCreateTransaction;
@@ -93,9 +97,10 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     private ObservableList<TableKeyPairEntry> keyPairObservableList =
         FXCollections.observableArrayList();
 
-    public WalletView(State state) {
+    public WalletView(State state, TaskManager taskManager) {
         super();
         this.state = state;
+        this.taskManager = taskManager;
 
         this.state.getWallet().addKeyPairListener(this);
         this.state.getWallet().addBalanceListener(this);
@@ -344,25 +349,32 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
             }
         }
         else if (result.get() == buttonEncrypted) {
-            UnlockDialog<Object> passwordDialog = new UnlockDialog<>(
+            UnlockDialog<Destructible<char[]>> passwordDialog = new UnlockDialog<>(
                 true,
-                (d) -> {
-                    try {
-                        state.getWallet().generateEncryptedKeyPair(d);
-                        d.destruct();
-                    }
-                    catch (DestructionException | CipherException e) {
-                        return null;
-                    }
-                    return new Object();
-                },
+                (d) -> d,
                 "Ok"
             );
 
             passwordDialog.setTitle("Key pair password");
             passwordDialog.setHeaderText("Enter a password to encrypt the private key");
 
-            passwordDialog.showAndWait();
+            Optional<Destructible<char[]>> optionalDestructible = passwordDialog.showAndWait();
+
+            optionalDestructible.ifPresent(destructible -> taskManager.runTask(new Task<Void>() {
+                @Override
+                protected Void call() {
+                    updateTitle("Generating encrypted private key");
+                    try {
+                        state.getWallet().generateEncryptedKeyPair(
+                            destructible
+                        );
+                    }
+                    catch (DestructionException | CipherException e) {
+                        // ignore
+                    }
+                    return null;
+                }
+            }));
         }
     }
 
