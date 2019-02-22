@@ -71,7 +71,8 @@ public class TransactionValidator implements Validator<Transaction> {
     public static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
         SignatureCountTxRule.class,
         InputOutputNotEmptyTxRule.class,
-        OutputValueTxRule.class
+        OutputValueTxRule.class,
+        SignatureTxRule.class
     );
 
     public static final RuleList BLOCK_CONTEXTUAL = new RuleList(
@@ -79,8 +80,7 @@ public class TransactionValidator implements Validator<Transaction> {
         CoinbaseMaturityTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
-        SignaturePublicKeyTxRule.class,
-        SignatureTxRule.class
+        SignaturePublicKeyTxRule.class
     );
 
     public static final RuleList ORPHAN = new RuleList(

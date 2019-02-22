@@ -1,0 +1,14 @@
+body {
+    font-family: Segoe UI, Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    background-color: white;
+}
+
+h3 {
+    /*
+     * Should be equal to the -fx-text-fill, but this is dynamically derived and
+     * this is since this is normal web CSS, we cannot find or derive the color.
+     * Hence we just use the value of -fx-accent ...?
+     */
+    color: #256B9C;
+}
