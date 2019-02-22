@@ -107,7 +107,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
         TransactionPoolView poolView = new TransactionPoolView(
             state.getTransactionPool(),
-            state.getTransactionValidator()
+            state.getTransactionValidator(),
+            state.getEnvironment()
         );
         txPoolTab.setContent(poolView);
         txPoolTab.textProperty().bind(

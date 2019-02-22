@@ -20,6 +20,7 @@ import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public class TransactionPoolView extends CollapsibleMasterDetailPane implements 
 
     private final @NotNull TransactionPool pool;
     private final @NotNull TransactionValidator validator;
+    private final @NotNull NodeEnvironment nodeEnvironment;
 
     @FXML private TitledPane independentPane;
     @FXML private TitledPane dependentPane;
@@ -48,10 +50,11 @@ public class TransactionPoolView extends CollapsibleMasterDetailPane implements 
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public TransactionPoolView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
+    public TransactionPoolView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator, @NotNull NodeEnvironment nodeEnvironment) {
         super();
         this.pool = pool;
         this.validator = validator;
+        this.nodeEnvironment = nodeEnvironment;
         BraboControlInitializer.initialize(this);
 
         this.pool.addListener(this);
@@ -59,7 +62,7 @@ public class TransactionPoolView extends CollapsibleMasterDetailPane implements 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        detailView = new TransactionDetailView(null, validator);
+        detailView = new TransactionDetailView(null, nodeEnvironment, validator);
         setDetailNode(detailView);
 
         independentPane.textProperty().bind(

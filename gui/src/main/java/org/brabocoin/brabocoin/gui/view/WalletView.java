@@ -4,6 +4,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -93,6 +95,9 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     @FXML public Label spendableBalanceLabel;
     @FXML public Label immatureMiningReward;
     @FXML public BraboGlyph immatureMiningRewardInfo;
+
+    private volatile boolean queuedBalanceCalculation;
+    private ObjectProperty<Thread> balanceThread = new SimpleObjectProperty<>();
 
     private ObservableList<TableKeyPairEntry> keyPairObservableList =
         FXCollections.observableArrayList();
@@ -232,6 +237,8 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     }
 
     private void updateBalances() {
+        queuedBalanceCalculation = false;
+
         long confirmedBalance = state.getWallet().computeBalance(false);
         long pendingBalance = state.getWallet().computeBalance(true);
         long immatureCoinbase = state.getWallet().computeImmatureCoinbase();
@@ -261,6 +268,10 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         keyPairObservableList.forEach(TableKeyPairEntry::updateBalances);
 
         keyPairsTableView.refresh();
+
+        if (queuedBalanceCalculation) {
+            updateBalances();
+        }
     }
 
     @FXML
@@ -391,7 +402,14 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void onBalanceChanged() {
-        new Thread(this::updateBalances).start();
+        if (balanceThread.get() != null && balanceThread.get().isAlive()) {
+            queuedBalanceCalculation = true;
+            return;
+        }
+
+        Thread thread = new Thread(this::updateBalances);
+        balanceThread.set(thread);
+        thread.start();
     }
 
     private void copyString(String data) {
