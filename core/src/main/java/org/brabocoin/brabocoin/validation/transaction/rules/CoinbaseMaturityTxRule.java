@@ -23,14 +23,16 @@ public class CoinbaseMaturityTxRule extends TransactionRule {
     private IndexedChain mainChain;
 
     @DescriptionField
+    private boolean coinbaseMature;
 
 
     public boolean isValid() {
         try {
-            return transaction.getInputs().stream()
+            coinbaseMature = transaction.getInputs().stream()
                 .map(rethrowFunction(utxoSet::findUnspentOutputInfo))
                 .filter(Objects::nonNull)
                 .noneMatch(u -> consensus.immatureCoinbase(mainChain.getHeight(), u));
+            return coinbaseMature;
         }
         catch (DatabaseException e) {
             e.printStackTrace();

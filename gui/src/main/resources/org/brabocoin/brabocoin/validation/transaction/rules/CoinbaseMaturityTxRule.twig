@@ -1,5 +1,8 @@
 {% extends "../../Rule.twig" %}
 
 {% block description %}
-    Test niet skipped.
+    This rule checks that all coinbase transactions spent by this transaction's inputs have a depth larger than the coinbase maturity depth defined in consensus.
+    If not, the transaction is invalid.<br>
+    <br>
+    All spent coinbase transactions are mature enough: {{ coinbaseMature }} <br>
 {% endblock %}
