@@ -4,11 +4,15 @@ import javafx.scene.control.TableView;
 import org.controlsfx.control.MasterDetailPane;
 
 public class CollapsibleMasterDetailPane extends MasterDetailPane {
+
     private Object previouslySelectedItem;
 
     public void registerTableView(TableView tableView) {
         tableView.setOnMouseClicked(event -> {
             Object selectedItem = tableView.getSelectionModel().getSelectedItem();
+            if (selectedItem == null) {
+                return;
+            }
 
             if (previouslySelectedItem == selectedItem) {
                 this.setShowDetailNode(!this.isShowDetailNode());
