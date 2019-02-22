@@ -16,11 +16,11 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 /**
  * View of the transaction pool.
  */
-public class TransactionPoolView extends MasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
+public class TransactionPoolView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
 
     private final @NotNull TransactionPool pool;
     private final @NotNull TransactionValidator validator;
@@ -110,6 +110,9 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
             Bindings.size(independentTable.getItems()),
             Bindings.size(dependentTable.getItems())
         ));
+
+        this.registerTableView(independentTable);
+        this.registerTableView(dependentTable);
     }
 
     @Override

@@ -32,7 +32,7 @@
             </HiddenItemsToolBar>
         </HBox>
 
-        <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
+        <Label text="Header hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
         <SelectableLabel fx:id="hashField" styleClass="hash" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
     </GridPane>
 

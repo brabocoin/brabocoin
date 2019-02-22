@@ -17,11 +17,11 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.BlockchainListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 /**
  * View to display a collection of blocks, with detail view.
  */
-public class OrphanBlocksView extends MasterDetailPane implements BraboControl, Initializable, BlockchainListener {
+public class OrphanBlocksView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, BlockchainListener {
 
     private BlockDetailView blockDetailView;
 
@@ -63,6 +63,7 @@ public class OrphanBlocksView extends MasterDetailPane implements BraboControl, 
         blockchain.addListener(this);
 
         count.bind(Bindings.size(observableBlocks));
+        this.registerTableView(blocksTable);
     }
 
     private void loadTable() {

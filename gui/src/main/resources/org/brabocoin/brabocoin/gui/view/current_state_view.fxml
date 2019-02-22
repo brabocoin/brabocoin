@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.ToolBar?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
-<?import org.controlsfx.control.MasterDetailPane?>
+<?import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.CurrentStateView">
     <Tab closable="false" text="Blockchain">
-        <MasterDetailPane fx:id="masterDetailPane" dividerPosition="0.65" showDetailNode="false">
+        <CollapsibleMasterDetailPane fx:id="masterDetailPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
                 <VBox>
                     <TableView fx:id="blockchainTable" VBox.vgrow="ALWAYS">
@@ -37,7 +32,7 @@
                     </TableView>
                 </VBox>
             </masterNode>
-        </MasterDetailPane>
+        </CollapsibleMasterDetailPane>
     </Tab>
     <Tab fx:id="txPoolTab" closable="false"/>
     <Tab fx:id="blkOrphansTab" closable="false"/>

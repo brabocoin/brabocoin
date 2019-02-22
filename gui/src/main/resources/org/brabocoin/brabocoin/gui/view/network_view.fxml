@@ -13,6 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import org.controlsfx.control.MasterDetailPane?>
+<?import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -75,7 +76,7 @@
         </VBox>
     </Tab>
     <Tab closable="false" text="Messages">
-        <MasterDetailPane fx:id="messageMasterPane" dividerPosition="0.65" showDetailNode="false">
+        <CollapsibleMasterDetailPane fx:id="messageMasterPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
                 <TableView fx:id="messageTable">
                     <columns>
@@ -95,6 +96,6 @@
                     </placeholder>
                 </TableView>
             </masterNode>
-        </MasterDetailPane>
+        </CollapsibleMasterDetailPane>
     </Tab>
 </fx:root>

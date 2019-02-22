@@ -3,11 +3,10 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.VBox?>
-<?import org.controlsfx.control.MasterDetailPane?>
-<?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.TitledPane?>
-<fx:root type="org.controlsfx.control.MasterDetailPane"
+<?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane?>
+<fx:root type="org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.TransactionPoolView"
          dividerPosition="0.65"

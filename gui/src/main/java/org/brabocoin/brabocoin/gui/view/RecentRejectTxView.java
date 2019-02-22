@@ -17,6 +17,7 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.gui.control.table.RuleTableCell;
 import org.brabocoin.brabocoin.model.Hash;
@@ -26,7 +27,6 @@ import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -35,7 +35,7 @@ import java.util.ResourceBundle;
 /**
  * View for recently rejected transactions.
  */
-public class RecentRejectTxView extends MasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
+public class RecentRejectTxView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
 
     private TransactionDetailView transactionDetailView;
 
@@ -70,6 +70,7 @@ public class RecentRejectTxView extends MasterDetailPane implements BraboControl
         pool.addListener(this);
 
         count.bind(Bindings.size(txsTable.getItems()));
+        this.registerTableView(txsTable);
     }
 
     private void loadTable() {

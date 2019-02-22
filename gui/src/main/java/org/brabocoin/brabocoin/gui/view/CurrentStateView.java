@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
@@ -25,7 +26,6 @@ import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -48,7 +48,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private Tab blkOrphansTab;
     @FXML private Tab utxoTab;
 
-    @FXML private MasterDetailPane masterDetailPane;
+    @FXML private CollapsibleMasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
 
     @FXML private TableView<IndexedBlock> blockchainTable;
@@ -63,8 +63,6 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
 
-    private IndexedBlock previouslySelectedItem = null;
-
     public CurrentStateView(@NotNull State state) {
         super();
         this.state = state;
@@ -77,6 +75,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
+        masterDetailPane.registerTableView(blockchainTable);
 
         blockDetailView = new BlockDetailView(blockchain, null, validator);
         masterDetailPane.setDetailNode(blockDetailView);
@@ -196,16 +195,6 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
                 }
                 masterDetailPane.setShowDetailNode(true);
             });
-
-        blockchainTable.setOnMouseClicked(event -> {
-            IndexedBlock selectedItem = blockchainTable.getSelectionModel().getSelectedItem();
-
-            if (previouslySelectedItem == selectedItem) {
-                masterDetailPane.setShowDetailNode(!masterDetailPane.isShowDetailNode());
-            }
-
-            previouslySelectedItem = selectedItem;
-        });
     }
 
     private void loadMainChain() {

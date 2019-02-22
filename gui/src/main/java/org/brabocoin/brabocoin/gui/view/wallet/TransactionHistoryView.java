@@ -9,6 +9,7 @@ import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.ColoredBalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
@@ -22,7 +23,6 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.ConfirmedTransaction;
 import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.brabocoin.brabocoin.wallet.UnconfirmedTransaction;
-import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import java.util.ResourceBundle;
 /**
  * Transaction history in the wallet.
  */
-public class TransactionHistoryView extends MasterDetailPane implements BraboControl, Initializable, TransactionHistoryListener {
+public class TransactionHistoryView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionHistoryListener {
 
     private final @NotNull TransactionHistory transactionHistory;
     private final @Nullable TransactionValidator validator;
@@ -138,6 +138,9 @@ public class TransactionHistoryView extends MasterDetailPane implements BraboCon
 
         confirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getConfirmedTransactions().values()));
         unconfirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getUnconfirmedTransactions().values()));
+
+        this.registerTableView(confirmedTable);
+        this.registerTableView(unconfirmedTable);
     }
 
     @Override

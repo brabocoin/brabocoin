@@ -24,6 +24,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.control.table.BooleanIconTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
@@ -41,7 +42,6 @@ import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.util.IpData;
 import org.brabocoin.brabocoin.util.NetworkUtil;
-import org.controlsfx.control.MasterDetailPane;
 import tornadofx.SmartResize;
 
 import java.awt.*;
@@ -89,8 +89,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
     @FXML private TableColumn<IpData, String> ipHostnameColumn;
     @FXML private Label ipTablePlaceholderLabel;
 
-    @FXML private MasterDetailPane messageMasterPane;
-    @FXML private MasterDetailPane outgoingMasterPane;
+    @FXML private CollapsibleMasterDetailPane messageMasterPane;
 
     @FXML private TableView<NetworkMessage> messageTable;
     @FXML private TableColumn<NetworkMessage, Boolean> incomingColumn;
@@ -128,7 +127,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         messageMasterPane.setDetailNode(messageDetailView);
 
         externalIpLabel.textProperty().bind(externalIp);
-
+        messageMasterPane.registerTableView(messageTable);
     }
 
     private static ObservableValue<LocalDateTime> readOnlyTimeFeature(
