@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.node.config;
+package org.brabocoin.brabocoin.config;
 
 import com.github.drapostolos.typeparser.Parser;
 import com.github.drapostolos.typeparser.ParserHelper;

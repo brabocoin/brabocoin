@@ -1,11 +1,10 @@
 package org.brabocoin.brabocoin.validation.block;
 
-import javafx.fxml.FXML;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -38,7 +37,6 @@ import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.event.ActionEvent;
 import java.util.logging.Logger;
 
 /**

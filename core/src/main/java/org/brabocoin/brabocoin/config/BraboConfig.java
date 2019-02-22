@@ -1,11 +1,13 @@
-package org.brabocoin.brabocoin.node.config;
+package org.brabocoin.brabocoin.config;
 
+import org.brabocoin.brabocoin.config.annotations.BraboPref;
 import org.brabocoin.brabocoin.model.Hash;
 
 import java.util.List;
 
 public interface BraboConfig {
 
+    @BraboPref(group = BraboPreferencesTree.Test.TestGroup1.class)
     int networkId();
 
     int loopInterval();

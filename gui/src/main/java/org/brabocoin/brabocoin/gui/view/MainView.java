@@ -20,6 +20,7 @@ import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.ActionEvent;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,5 +115,10 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
         // Create notification manager
         notificationManager = new NotificationManager(state);
+    }
+
+    @FXML
+    private void openSettings(ActionEvent event) {
+
     }
 }
