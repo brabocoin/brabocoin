@@ -15,7 +15,6 @@ dependencies {
     compile('io.grpc:grpc-protobuf:1.15.0')
     compile('io.grpc:grpc-stub:1.15.0')
     compile('io.grpc:grpc-services:1.15.0')
-    compile('io.grpc:grpc-testing:1.15.0')
     compile('com.google.api.grpc:googleapis-common-protos:0.0.3')
     compile('org.fusesource.leveldbjni:leveldbjni-all:1.8')
     compile('org.cfg4j:cfg4j-core:4.4.0')
@@ -58,19 +57,9 @@ clean {
     delete protobuf.generatedFilesBaseDir
 }
 
-task fatCapsule(type: FatCapsule) {
-    applicationClass 'org.brabocoin.brabocoin.BrabocoinApplication'
-    baseName 'brabocoin'
-    classifier 'headless'
-    reallyExecutable
-
-    capsuleManifest {
-        minJavaVersion = '1.8.0'
-        applicationId = 'org.brabocoin.core'
-        applicationName = 'Brabocoin'
-    }
-}
-
-artifacts {
-    archives fatCapsule
+jfx {
+    verbose = true
+    mainClass = 'org.brabocoin.brabocoin.BrabocoinApplication'
+    vendor = 'Brabocoin'
+    appName = 'Brabocoin'
 }

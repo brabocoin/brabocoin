@@ -10,19 +10,15 @@ dependencies {
     compile project(':core')
 }
 
-task fatCapsule(type: FatCapsule) {
-    applicationClass 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
-    baseName 'brabocoin'
-    classifier null
-    reallyExecutable
-
-    capsuleManifest {
-        minJavaVersion = '1.8.0'
-        applicationId = 'org.brabocoin.gui'
-        applicationName = 'Brabocoin'
-    }
+task copyDeploymentIcons(type: Copy) {
+    from('src/main/resources/org/brabocoin/brabocoin/gui/icon/48.ico')
+    into('src/main/deploy/package/windows/')
+    rename('48.ico', 'Brabocoin.ico')
 }
 
-artifacts {
-    archives fatCapsule
+jfx {
+    verbose = true
+    mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    vendor = 'Brabocoin'
+    appName = 'Brabocoin'
 }
