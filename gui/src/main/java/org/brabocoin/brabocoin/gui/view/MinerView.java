@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -20,6 +21,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.config.MiningConfig;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.MiningConfigurationDialog;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane;
@@ -81,6 +83,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     @FXML private TextField iterationsField;
     @FXML private TextField targetValueField;
     @FXML private TextField bestHashField;
+
+    private boolean miningDisabled = false;
 
     public MinerView(@NotNull State state,
                      @NotNull TaskManager taskManager) {
@@ -202,6 +206,19 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
     }
 
     private void initiateMining() {
+        if (miningDisabled) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+
+            BraboDialog.setBraboStyling(alert.getDialogPane());
+
+            alert.setTitle("Mining is disabled");
+            alert.setHeaderText("Mining is disabled.");
+            alert.setContentText("Due to your logging level, mining is disabled.");
+
+            alert.showAndWait();
+            return;
+        }
+
         if (miningTask != null && !miningTask.isDone()) {
             return;
         }
@@ -327,5 +344,9 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             }
         }
         return true;
+    }
+
+    public void setMiningDisabled(boolean miningDisabled) {
+        this.miningDisabled = miningDisabled;
     }
 }

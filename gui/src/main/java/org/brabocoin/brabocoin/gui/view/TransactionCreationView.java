@@ -31,6 +31,7 @@ import org.brabocoin.brabocoin.gui.converter.Base58StringConverter;
 import org.brabocoin.brabocoin.gui.converter.DoubleToCoinStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HashStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HexBigIntegerStringConverter;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.FeeDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.tableentry.EditCell;
@@ -490,6 +491,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         alert.setHeaderText(String.format("Your transaction is %s.", validationResult.toString()));
         alert.setContentText("Are you sure you want to send the transaction to your peers?");
 
+        BraboDialog.setBraboStyling(alert.getDialogPane());
+
         Optional<ButtonType> result = alert.showAndWait();
 
         if (!result.isPresent()) {
@@ -626,6 +629,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         alert.setTitle("Error occurred");
         alert.setHeaderText("Transaction creation error");
         alert.setContentText(message);
+
+        BraboDialog.setBraboStyling(alert.getDialogPane());
 
         alert.showAndWait();
     }

@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 public class LogPane extends BorderPane implements BraboControl, Initializable {
 
     private final Level initLogLevel;
+    private final MinerView minerView;
     @FXML private ToolBar paneBar;
     @FXML private ComboBox<Level> logLevelComboBox;
 
@@ -52,6 +53,8 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
     @FXML private ToggleButton wordWrapToggleButton;
     @FXML private ToggleButton scrollToEndToggleButton;
     @FXML private ToggleButton findToggleButton;
+
+    private final static Level MIN_MINING_LOG_LEVEL = Level.FINE;
 
     /**
      * Called when the log pane wants to close itself. This should be set by the parent element
@@ -64,9 +67,10 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
     /**
      * Create a new log pane.
      */
-    public LogPane(Level initLogLevel) {
+    public LogPane(Level initLogLevel, MinerView minerView) {
         super();
         this.initLogLevel = initLogLevel;
+        this.minerView = minerView;
         BraboControlInitializer.initialize(this);
     }
 
@@ -86,7 +90,9 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
                     setText(null);
                 }
                 else {
-                    setText(level.toString().toUpperCase().charAt(0) + level.toString().toLowerCase().substring(1));
+                    setText(level.toString().toUpperCase().charAt(0) + level.toString()
+                        .toLowerCase()
+                        .substring(1));
                 }
             }
         };
@@ -120,7 +126,10 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
         // Bind log level combo box to log handler
         rootLogger.setLevel(initLogLevel);
         logLevelComboBox.setValue(rootLogger.getLevel());
-        logLevelComboBox.valueProperty().addListener((obs, old, val) -> rootLogger.setLevel(val));
+        logLevelComboBox.valueProperty().addListener((obs, old, val) -> {
+            minerView.setMiningDisabled(val.intValue() <= MIN_MINING_LOG_LEVEL.intValue());
+            rootLogger.setLevel(val);
+        });
 
         // Bind word wrap toggle
         wordWrapToggleButton.selectedProperty().bindBidirectional(logTextArea.wrapTextProperty());
@@ -179,7 +188,30 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
             }
         });
 
-        logTextArea.appendText("Connected to the target VM, address: '127.0.0.1:51973', transport: 'socket'\n" + "nov 04, 2018 1:50:39 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:50:43 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:50:50 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:51:09 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\nConnected to the target VM, address: '127.0.0.1:51973', transport: 'socket'\n" + "nov 04, 2018 1:50:39 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:50:43 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:50:50 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:51:09 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n");
+        logTextArea.appendText(
+            "Connected to the target VM, address: '127.0.0.1:51973', transport: 'socket'\n" +
+                "nov 04, 2018 1:50:39 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" +
+                "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX "
+                + "runtime of version 8.0.121\n" + "nov 04, 2018 1:50:43 PM javafx.fxml"
+                + ".FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document "
+                + "with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0.121\n" +
+                "nov 04, 2018 1:50:50 PM javafx.fxml.FXMLLoader$ValueElement processValue\n" +
+                "WARNING: Loading FXML document with JavaFX API of version 8.0.171 by JavaFX "
+                + "runtime of version 8.0.121\n" + "nov 04, 2018 1:51:09 PM javafx.fxml"
+                + ".FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML document "
+                + "with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0"
+                + ".121\nConnected to the target VM, address: '127.0.0.1:51973', transport: "
+                + "'socket'\n" + "nov 04, 2018 1:50:39 PM javafx.fxml.FXMLLoader$ValueElement "
+                + "processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8"
+                + ".0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:50:43 PM "
+                + "javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML "
+                + "document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0"
+                + ".121\n" + "nov 04, 2018 1:50:50 PM javafx.fxml.FXMLLoader$ValueElement "
+                + "processValue\n" + "WARNING: Loading FXML document with JavaFX API of version 8"
+                + ".0.171 by JavaFX runtime of version 8.0.121\n" + "nov 04, 2018 1:51:09 PM "
+                + "javafx.fxml.FXMLLoader$ValueElement processValue\n" + "WARNING: Loading FXML "
+                + "document with JavaFX API of version 8.0.171 by JavaFX runtime of version 8.0"
+                + ".121\n");
     }
 
     @FXML
@@ -195,7 +227,8 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
      * The handler is when the log pane wants to close itself. This should be set by the parent
      * element that can actually close this pane.
      *
-     * @param closeRequest The close request handler.
+     * @param closeRequest
+     *     The close request handler.
      */
     public void setOnCloseRequest(@Nullable Runnable closeRequest) {
         this.onCloseRequest = closeRequest;

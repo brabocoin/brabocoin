@@ -72,10 +72,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Set log pane
-        LogPane logPane = new LogPane(initLogLevel);
-        sidesPane.setBottom(logPane);
-
         // Initialize task manager
         taskManager = new TaskManager(statusBar);
 
@@ -86,15 +82,19 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         );
         sidesPane.pinnedSideProperty().bind(paneSideBinding);
 
-        // Set log pane close binding
-        logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
-
         // Initialize menu view mapping
         currentStateView = new CurrentStateView(state);
         minerView = new MinerView(
             state,
             taskManager
         );
+
+        // Set log pane
+        LogPane logPane = new LogPane(initLogLevel, minerView);
+        sidesPane.setBottom(logPane);
+
+        // Set log pane close binding
+        logPane.setOnCloseRequest(() -> logPaneToggleButton.setSelected(false));
 
         walletView = new WalletView(state);
         networkView = new NetworkView(state, taskManager);

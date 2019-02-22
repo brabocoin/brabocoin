@@ -175,6 +175,8 @@ public class BrabocoinGUI extends Application {
             alert.setHeaderText("Your wallet is not saved.");
             alert.setContentText("Your wallet has unsaved changes, are you sure you want to exit?");
 
+            BraboDialog.setBraboStyling(alert.getDialogPane());
+
             Optional<ButtonType> alertResult = alert.showAndWait();
 
             if (alertResult.isPresent()) {
