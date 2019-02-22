@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.HBox?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.brabocoin.brabocoin.gui.view.UTXOSetView">
+        <HBox spacing="10" style="-fx-padding: 1em;">
+            <BraboGlyph icon="INFO" styleClass="text-primary"/>
+            <Label text="The UTXO set maintains the list of outputs of transactions in the blockchain that are unspent. Every row represents such an output."/>
+        </HBox>
+        <TableView fx:id="utxoTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="heightColumn" text="Block height"/>
+                <TableColumn fx:id="txHashColumn" text="Transaction"/>
+                <TableColumn fx:id="outputColumn" text="Output index" styleClass="right-separator"/>
+                <TableColumn fx:id="addressColumn" text="Address"/>
+                <TableColumn fx:id="amountColumn" text="Amount"/>
+                <TableColumn fx:id="coinbaseColumn" text="Coinbase"/>
+            </columns>
+            <placeholder>
+                <VBox alignment="CENTER" spacing="5">
+                    <Label text="No unspent outputs in UTXO set"/>
+                </VBox>
+            </placeholder>
+        </TableView>
+</fx:root>

@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.processor;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
@@ -16,8 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +35,7 @@ public class BlockProcessor {
     private static final Logger LOGGER = Logger.getLogger(BlockProcessor.class.getName());
 
     private final @NotNull Set<BlockProcessorListener> listeners;
+    private final @NotNull List<NotificationListener> notificationListeners;
 
     /**
      * UTXO processor.
@@ -82,6 +86,7 @@ public class BlockProcessor {
         this.consensus = consensus;
         this.blockValidator = blockValidator;
         this.listeners = new HashSet<>();
+        notificationListeners = new ArrayList<>();
     }
 
     /**
@@ -164,7 +169,7 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public synchronized ValidationStatus processNewBlock(@NotNull Block block, boolean minedByMe)
+    public synchronized BlockValidationResult processNewBlock(@NotNull Block block, boolean minedByMe)
         throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
@@ -183,14 +188,14 @@ public class BlockProcessor {
                 Level.INFO,
                 MessageFormat.format("New block is invalid, rulebook result: {0}", result)
             );
-            return ValidationStatus.INVALID;
-        }
-
-        if (status == ValidationStatus.ORPHAN) {
+            return result;
+        } else if (status == ValidationStatus.ORPHAN) {
             LOGGER.info("New block is added as orphan.");
             blockchain.addOrphan(block);
-            return ValidationStatus.ORPHAN;
+            return result;
         }
+
+        assert status == ValidationStatus.VALID;
 
         // Store the block on disk
         IndexedBlock indexedBlock = storeBlock(block, minedByMe);
@@ -206,7 +211,7 @@ public class BlockProcessor {
 
         listeners.forEach(l -> l.onValidBlockProcessed(block));
 
-        return ValidationStatus.VALID;
+        return result;
     }
 
     /**
@@ -257,11 +262,11 @@ public class BlockProcessor {
 
             // For every descendant, check if it is valid now
             for (Block descendant : descendants) {
-                ValidationStatus status = blockValidator.validate(
+                BlockValidationResult result = blockValidator.validate(
                     descendant,
                     BlockValidator.AFTER_ORPHAN
-                )
-                    .getStatus();
+                );
+                ValidationStatus status = result.getStatus();
 
                 // Re-add to orphans if not status is orphan again (should not happen)
                 if (status == ValidationStatus.ORPHAN) {
@@ -282,6 +287,11 @@ public class BlockProcessor {
                         "Added orphan {0} as top candidate.",
                         toHexString(indexedDescendant.getHash().getValue())
                     ));
+                }
+
+                if (status == ValidationStatus.INVALID) {
+                    // Mark as rejected
+                    blockchain.addRejected(descendant, result);
                 }
             }
         }
@@ -342,15 +352,24 @@ public class BlockProcessor {
 
 
             // Get block at up to which the main chain needs to be reverted
-            IndexedBlock revertTargetBlock = fork.pop();
+            final IndexedBlock revertTargetBlock = fork.pop();
             LOGGER.finest(() -> MessageFormat.format(
                 "Target block to revert main chain to {0}.",
                 toHexString(revertTargetBlock.getHash().getValue())
             ));
 
+            // Check if we have at least one disconnect top
+            boolean isForkSwitched = false;
+
             // Revert chain state to target block by disconnecting top blocks
             while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
+                isForkSwitched = true;
                 disconnectTop();
+            }
+
+            if (isForkSwitched) {
+                notificationListeners.forEach(l -> l.forkSwitched(revertTargetBlock.getBlockInfo()
+                    .getBlockHeight()));
             }
 
             // Connect the blocks in the new fork
@@ -486,7 +505,14 @@ public class BlockProcessor {
         Block block = blockchain.getBlock(top.getHash());
         assert block != null;
 
-        if (!blockValidator.validate(block, BlockValidator.CONNECT_TO_CHAIN).isPassed()) {
+        BlockValidationResult result = blockValidator.validate(
+            block,
+            BlockValidator.CONNECT_TO_CHAIN
+        );
+
+        if (!result.isPassed()) {
+            // Add to the recent rejects
+            blockchain.addRejected(block, result);
             return false;
         }
 
@@ -504,4 +530,11 @@ public class BlockProcessor {
         return true;
     }
 
+    public void addNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.add(notificationListener);
+    }
+
+    public void removeNotificationListener(NotificationListener notificationListener) {
+        this.notificationListeners.remove(notificationListener);
+    }
 }

@@ -90,7 +90,7 @@ class NodeMessageTest {
         responder.start();
         greeter.start();
 
-        assertEquals(3, greeter.getEnvironment().getPeers().size());
+        assertTrue(greeter.getEnvironment().getPeers().size() >= 3);
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();

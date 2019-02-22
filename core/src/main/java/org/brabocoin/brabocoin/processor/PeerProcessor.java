@@ -59,7 +59,8 @@ public class PeerProcessor implements NetworkMessageListener {
         this.peers.addListener((SetChangeListener<Peer>)change -> {
             if (change.wasAdded()) {
                 peerSetChangedListeners.forEach(l -> l.onPeerAdded(change.getElementAdded()));
-            } else {
+            }
+            else {
                 peerSetChangedListeners.forEach(l -> l.onPeerRemoved(change.getElementRemoved()));
             }
         });
@@ -117,7 +118,11 @@ public class PeerProcessor implements NetworkMessageListener {
      * @return True if the peer passes the filter.
      */
     protected synchronized boolean filterPeer(Peer peer) {
-        return !peer.isLocal() && !peer.getAddress().isMulticastAddress();
+        boolean filterLocal = true;
+        if (!config.allowLocalPeers()) {
+            filterLocal = !peer.isLocal();
+        }
+        return filterLocal && !peer.getAddress().isMulticastAddress();
     }
 
     /**
@@ -139,6 +144,8 @@ public class PeerProcessor implements NetworkMessageListener {
             HandshakeResponse response = handshake(handshakePeer);
             if (response == null || config.networkId() != response.getNetworkId()) {
                 handshakePeers.remove(0);
+                // Also remove from peer list (to remove unresponsive peers)
+                peers.remove(handshakePeer);
                 continue;
             }
 
@@ -312,10 +319,10 @@ public class PeerProcessor implements NetworkMessageListener {
     public void updatePeers() {
         LOGGER.fine("Updating peers.");
         discoverPeers(
-            Stream.concat(
+            new ArrayList<>(Stream.concat(
                 copyPeersList().stream(),
                 getBootstrapPeers().stream()
-            ).collect(Collectors.toList())
+            ).collect(Collectors.toSet()))
         );
     }
 

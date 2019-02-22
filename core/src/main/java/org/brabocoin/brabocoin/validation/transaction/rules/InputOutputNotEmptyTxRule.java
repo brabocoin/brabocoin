@@ -9,7 +9,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * Inputs can only be empty on a coinbase transaction, empty output is never allowed.
  */
-@ValidationRule(name="Non-empty inputs and output lists", description = "The transaction has at least one input and one output.")
+@ValidationRule(name="Non-empty input and output lists", failedName = "Empty input or output list", description = "The transaction has at least one input and one output.")
 public class InputOutputNotEmptyTxRule extends TransactionRule {
 
     @DescriptionField

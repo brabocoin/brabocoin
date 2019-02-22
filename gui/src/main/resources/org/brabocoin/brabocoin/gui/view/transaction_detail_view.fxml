@@ -9,7 +9,9 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
+<?import org.brabocoin.brabocoin.gui.control.TransactionDataMenuButton?>
 <?import java.lang.Double?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns="http://javafx.com/javafx/8.0.172-ea"
@@ -22,9 +24,13 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label text="Transaction" styleClass="side-pane-title"/>
-            <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
-            <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
+            <!-- Note: -Infinity is actually USE_PREF_SIZE -->
+            <Label text="Transaction" HBox.hgrow="NEVER" minWidth="-Infinity" styleClass="side-pane-title"/>
+            <HiddenItemsToolBar HBox.hgrow="ALWAYS" styleClass="detail-toolbar">
+                <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
+                <TransactionDataMenuButton fx:id="transactionDataMenuButton"/>
+                <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
+            </HiddenItemsToolBar>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>
@@ -58,7 +64,6 @@
                     </placeholder>
                 </TableView>
             </TitledPane>
-
             <TitledPane text="Signatures" collapsible="false">
                 <TableView fx:id="signatureTableView" fixedCellSize="24">
                     <columns>
@@ -72,6 +77,7 @@
                     </placeholder>
                 </TableView>
             </TitledPane>
+            <TransactionDataMenuButton fx:id="transactionDataMenuButtonBottom"/>
         </VBox>
     </ScrollPane>
 </fx:root>

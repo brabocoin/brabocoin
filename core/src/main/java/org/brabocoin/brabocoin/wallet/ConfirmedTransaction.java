@@ -2,10 +2,8 @@ package org.brabocoin.brabocoin.wallet;
 
 import net.badata.protobuf.converter.annotation.ProtoClass;
 import net.badata.protobuf.converter.annotation.ProtoField;
-import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.proto.ProtoBuilder;
-import org.brabocoin.brabocoin.model.proto.ProtoModel;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,13 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Record of a transaction part of the transaction history in the wallet.
  */
 @ProtoClass(BrabocoinStorageProtos.ConfirmedTransaction.class)
-public class ConfirmedTransaction implements ProtoModel<ConfirmedTransaction> {
-
-    /**
-     * The transaction.
-     */
-    @ProtoField
-    private final @NotNull Transaction transaction;
+public class ConfirmedTransaction extends UnconfirmedTransaction {
 
     /**
      * The block height the transaction is recorded at.
@@ -33,10 +25,15 @@ public class ConfirmedTransaction implements ProtoModel<ConfirmedTransaction> {
      * @param transaction
      *     The transaction to record.
      * @param blockHeight
-     *     The block height the transaction is recorded at.
+     *     The height of the block in the main chain this transaction is part of.
+     * @param timeReceived
+     *     The time the transaction has been received by the node.
+     * @param amount
+     *     Net amount spent by this user (over all addresses).
      */
-    public ConfirmedTransaction(@NotNull Transaction transaction, int blockHeight) {
-        this.transaction = transaction;
+    public ConfirmedTransaction(@NotNull Transaction transaction, int blockHeight,
+                                long timeReceived, long amount) {
+        super(transaction, timeReceived, amount);
         this.blockHeight = blockHeight;
     }
 
@@ -45,23 +42,15 @@ public class ConfirmedTransaction implements ProtoModel<ConfirmedTransaction> {
         return Builder.class;
     }
 
-    public @NotNull Hash getHash() {
-        return transaction.getHash();
+    public int getBlockHeight() {
+        return blockHeight;
     }
 
     @ProtoClass(BrabocoinStorageProtos.ConfirmedTransaction.class)
-    public static class Builder implements ProtoBuilder<ConfirmedTransaction> {
-
-        @ProtoField
-        private Transaction.Builder transaction;
+    public static class Builder extends UnconfirmedTransaction.Builder {
 
         @ProtoField
         private int blockHeight;
-
-        public Builder setTransaction(@NotNull Transaction.Builder transaction) {
-            this.transaction = transaction;
-            return this;
-        }
 
         public Builder setBlockHeight(int blockHeight) {
             this.blockHeight = blockHeight;
@@ -70,7 +59,7 @@ public class ConfirmedTransaction implements ProtoModel<ConfirmedTransaction> {
 
         @Override
         public ConfirmedTransaction build() {
-            return new ConfirmedTransaction(transaction.build(), blockHeight);
+            return new ConfirmedTransaction(transaction.build(), blockHeight, timeReceived, amount);
         }
     }
 }

@@ -5,10 +5,10 @@ import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
+import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
-import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.proto.dal.BrabocoinStorageProtos;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
@@ -21,16 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class WalletIO {
 
@@ -50,8 +46,9 @@ public class WalletIO {
                        @NotNull UTXODatabase walletPoolUtxoSet,
                        @NotNull ReadonlyUTXOSet chainUtxo,
                        @NotNull ReadonlyUTXOSet poolUtxo,
-                       @NotNull Blockchain blockchain) throws IOException, CipherException,
-                                                              DestructionException {
+                       @NotNull Blockchain blockchain,
+                       @NotNull TransactionPool transactionPool) throws IOException, CipherException,
+                                                                        DestructionException {
         if (!keysFile.exists()) {
             throw new IllegalArgumentException("Keys file does not exist.");
         }
@@ -118,7 +115,8 @@ public class WalletIO {
             walletPoolUtxoSet,
             chainUtxo,
             poolUtxo,
-            blockchain
+            blockchain,
+            transactionPool
         );
     }
 

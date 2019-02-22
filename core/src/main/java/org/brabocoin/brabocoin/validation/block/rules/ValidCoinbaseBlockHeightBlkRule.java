@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Valid coinbase block height", description = "The block height defined in the coinbase transaction is equal to the block height defined in the block header.")
+@ValidationRule(name="Valid coinbase block height", failedName = "Invalid coinbase block height", description = "The block height defined in the coinbase transaction is equal to the block height defined in the block header.")
 public class ValidCoinbaseBlockHeightBlkRule extends BlockRule {
 
     @DescriptionField

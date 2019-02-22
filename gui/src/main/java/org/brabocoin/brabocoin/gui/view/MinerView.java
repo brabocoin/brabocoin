@@ -155,7 +155,8 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
             await()
                 .atMost(Duration.TWO_SECONDS)
                 .until(() -> miner.getMiningBlock() != null);
-        } catch (ConditionTimeoutException e) {
+        }
+        catch (ConditionTimeoutException e) {
             LOGGER.warning("Could not get mining block to display in UI element.");
         }
 
@@ -239,21 +240,23 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
                 .text("New block at height #" + block.getBlockHeight())
                 .showConfirm();
 
-            try {
-                ValidationStatus status = nodeEnvironment.processNewlyMinedBlock(block);
+            new Thread(() -> {
+                try {
+                    ValidationStatus status = nodeEnvironment.processNewlyMinedBlock(block);
 
-                if (!updateConfigParentBlock(block)) {
-                    return;
-                }
+                    if (!updateConfigParentBlock(block)) {
+                        return;
+                    }
 
-                // Continue mining if setting is enabled and the mined block was valid
-                if (isMiningContinuously && status == ValidationStatus.VALID) {
-                    initiateMining();
+                    // Continue mining if setting is enabled and the mined block was valid
+                    if (isMiningContinuously && status == ValidationStatus.VALID) {
+                        Platform.runLater(this::initiateMining);
+                    }
                 }
-            }
-            catch (DatabaseException e) {
-                e.printStackTrace();
-            }
+                catch (DatabaseException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         });
 
         miningTask.stateProperty().addListener((obs, old, state) -> {

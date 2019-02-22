@@ -10,7 +10,7 @@ plugins {
 
 allprojects {
     group 'org.brabocoin'
-    version '0.1-SNAPSHOT'
+    version '0.2'
 }
 
 subprojects {    

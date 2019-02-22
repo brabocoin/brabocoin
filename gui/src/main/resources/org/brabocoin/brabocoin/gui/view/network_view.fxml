@@ -43,6 +43,10 @@
                         <Label text="Port:"/>
                         <SelectableLabel fx:id="portLabel"/>
                     </HBox>
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="Network id:"/>
+                        <SelectableLabel fx:id="networkIdLabel"/>
+                    </HBox>
                 </VBox>
             </TitledPane>
             <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
@@ -71,47 +75,24 @@
         </VBox>
     </Tab>
     <Tab closable="false" text="Messages">
-        <SplitPane dividerPositions="0.5" orientation="VERTICAL">
-            <TitledPane text="Incoming messages" collapsible="false">
-                <MasterDetailPane fx:id="incomingMasterPane" dividerPosition="0.65" showDetailNode="false">
-                    <masterNode>
-                        <TableView fx:id="incomingMessagesTable">
-                            <columns>
-                                <TableColumn fx:id="incomingPeerColumn" sortable="false" text="Peer"/>
-                                <TableColumn fx:id="incomingMethod" sortable="false" text="Method"/>
-                                <TableColumn fx:id="incomingTimeReceived" sortable="false" text="Time received"/>
-                                <TableColumn fx:id="incomingSizeColumn" sortable="false" text="Size (kB)"/>
-                            </columns>
-                            <placeholder>
-                                <VBox alignment="CENTER" spacing="5">
-                                    <ProgressIndicator maxHeight="20"/>
-                                    <Label text="Waiting for message to be received."/>
-                                </VBox>
-                            </placeholder>
-                        </TableView>
-                    </masterNode>
-                </MasterDetailPane>
-            </TitledPane>
-            <TitledPane text="Outgoing messages" collapsible="false">
-                <MasterDetailPane fx:id="outgoingMasterPane" dividerPosition="0.65" showDetailNode="false">
-                    <masterNode>
-                        <TableView fx:id="outgoingMessagesTable">
-                            <columns>
-                                <TableColumn fx:id="outgoingPeerColumn" sortable="false" text="Peer"/>
-                                <TableColumn fx:id="outgoingMethod" sortable="false" text="Method"/>
-                                <TableColumn fx:id="outgoingTimeSent" sortable="false" text="Time sent"/>
-                                <TableColumn fx:id="outgoingSizeColumn" sortable="false" text="Size (kB)"/>
-                            </columns>
-                            <placeholder>
-                                <VBox alignment="CENTER" spacing="5">
-                                    <ProgressIndicator maxHeight="20"/>
-                                    <Label text="Waiting for messages to be sent."/>
-                                </VBox>
-                            </placeholder>
-                        </TableView>
-                    </masterNode>
-                </MasterDetailPane>
-            </TitledPane>
-        </SplitPane>
+        <MasterDetailPane fx:id="messageMasterPane" dividerPosition="0.65" showDetailNode="false">
+            <masterNode>
+                <TableView fx:id="messageTable">
+                    <columns>
+                        <TableColumn fx:id="incomingColumn" sortable="false" text="Type"/>
+                        <TableColumn fx:id="peerColumn" sortable="false" text="Peer"/>
+                        <TableColumn fx:id="methodColumn" sortable="false" text="Method"/>
+                        <TableColumn fx:id="timeReceivedColumn" sortable="false" text="Time received"/>
+                        <TableColumn fx:id="sizeColumn" sortable="false" text="Size (kB)"/>
+                    </columns>
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="5">
+                            <ProgressIndicator maxHeight="20"/>
+                            <Label text="Waiting for message to be sent or received."/>
+                        </VBox>
+                    </placeholder>
+                </TableView>
+            </masterNode>
+        </MasterDetailPane>
     </Tab>
 </fx:root>

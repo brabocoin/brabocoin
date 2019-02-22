@@ -277,7 +277,7 @@ public class BlockDatabase {
             info.getSizeInFile(),
             offsetInUndoFile,
             undoSize,
-            false
+            info.isMinedByMe()
         );
 
         ByteString key = getBlockKey(block.getHash());
@@ -354,7 +354,7 @@ public class BlockDatabase {
             info.getSizeInFile(),
             info.getOffsetInUndoFile(),
             info.getSizeInUndoFile(),
-            false
+            info.isMinedByMe()
         );
 
         ByteString value = ProtoConverter.toProtoBytes(

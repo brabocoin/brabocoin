@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Correct target value", description = "Block target value equals consensus target value.")
+@ValidationRule(name="Correct target value", failedName = "Incorrect target value", description = "Block target value equals consensus target value.")
 public class CorrectTargetValueBlkRule extends BlockRule {
 
     private BraboConfig config;

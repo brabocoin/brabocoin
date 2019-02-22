@@ -11,7 +11,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionUtil;
  * <p>
  * The sum of inputs must be greater than the sum of outputs.
  */
-@ValidationRule(name="Sufficient transaction fee", description = "The transaction fee is larger than the minimum transaction fee defined in consensus.")
+@ValidationRule(name="Sufficient transaction fee", failedName = "Insufficient transaction fee", description = "The transaction fee is larger than the minimum transaction fee defined in consensus.")
 public class SufficientInputTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;

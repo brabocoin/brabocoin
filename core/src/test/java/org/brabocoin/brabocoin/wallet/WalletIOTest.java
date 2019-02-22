@@ -90,7 +90,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         WalletIO io = state.getWalletIO();
@@ -112,7 +113,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
@@ -145,7 +147,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         WalletIO io = state.getWalletIO();
@@ -168,7 +171,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         assertEquals(key, readWallet.getPrivateKeys().iterator().next());
@@ -201,7 +205,8 @@ class WalletIOTest {
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         WalletIO io = state.getWalletIO();
@@ -224,7 +229,8 @@ class WalletIOTest {
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
             new UTXODatabase(new HashMapDB()),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         ));
     }
 
@@ -252,7 +258,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         WalletIO io = state.getWalletIO();
@@ -275,7 +282,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         assertEquals(
@@ -322,7 +330,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         WalletIO io = state.getWalletIO();
@@ -345,7 +354,8 @@ class WalletIOTest {
             state.getWalletPoolUtxoDatabase(),
             state.getChainUTXODatabase(),
             state.getPoolUTXODatabase(),
-            state.getBlockchain()
+            state.getBlockchain(),
+            state.getTransactionPool()
         );
 
         assertEquals(

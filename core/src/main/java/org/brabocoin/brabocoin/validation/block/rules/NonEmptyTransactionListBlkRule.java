@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="non-empty transaction list", description = "The block contains at least one transaction.")
+@ValidationRule(name="Non-empty transaction list", failedName = "Empty transaction list", description = "The block contains at least one transaction.")
 public class NonEmptyTransactionListBlkRule extends BlockRule {
 
     @DescriptionField

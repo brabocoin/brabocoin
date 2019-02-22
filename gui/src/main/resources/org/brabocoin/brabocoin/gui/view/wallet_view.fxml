@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TitledPane?>
@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.Label?>
+<?import org.brabocoin.brabocoin.gui.glyph.BraboGlyph?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -33,15 +33,36 @@
                         <GridPane style="-fx-padding: 1em">
                             <Label text="Confirmed balance:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
                             <Label style="-fx-padding: 0 0 0 1em" fx:id="confirmedBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                            <Label text="Pending balance:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Label text="Pending:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
                             <Label style="-fx-padding: 0 0 0 1em" fx:id="pendingBalanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                            <Separator GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                            <Label style="-fx-font-weight: bold" text="Working balance:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                            <Label style="-fx-padding: 0 0 0 1em; -fx-font-weight: bold"
+                                   fx:id="workingBalanceLabel"
+                                   GridPane.columnIndex="1"
+                                   GridPane.rowIndex="3"/>
+                            <Label GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                            <Label text="Immature mining reward:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                            <Label style="-fx-padding: 0 0 0 1em" fx:id="immatureMiningReward" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                            <BraboGlyph fx:id="immatureMiningRewardInfo"
+                                        style="-fx-text-fill: -fx-accent"
+                                        icon="INFO"
+                                        fontSize="12"
+                                        GridPane.columnIndex="2"
+                                        GridPane.rowIndex="5"
+                                        GridPane.valignment="CENTER">
+                                <GridPane.margin>
+                                    <Insets left="7" bottom="1"/>
+                                </GridPane.margin>
+                            </BraboGlyph>
                         </GridPane>
                     </TitledPane>
                     <TitledPane collapsible="false" text="Key pairs" VBox.vgrow="ALWAYS" maxHeight="Infinity">
-                        <TableView fx:id="keyPairsTableView" />
+                        <TableView fx:id="keyPairsTableView"/>
                     </TitledPane>
                 </VBox>
             </center>
         </BorderPane>
     </Tab>
+    <Tab fx:id="txHistoryTab" closable="false" text="Transaction history"/>
 </fx:root>

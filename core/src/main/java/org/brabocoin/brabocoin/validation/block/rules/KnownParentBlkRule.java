@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Parent block is known", description = "The parent of the block is a known block.")
+@ValidationRule(name="Parent block is known", failedName = "Parent block is unknown", description = "The parent of the block is a known block.")
 public class KnownParentBlkRule extends BlockRule {
 
     private Blockchain blockchain;

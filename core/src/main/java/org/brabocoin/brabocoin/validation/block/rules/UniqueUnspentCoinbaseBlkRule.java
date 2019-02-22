@@ -5,7 +5,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="Unique coinbase transaction", description = "The coinbase transaction of the block is unique and not already present as unspent transaction output.")
+@ValidationRule(name="Unique coinbase transaction", failedName = "Coinbase transaction in block is not unique", description = "The coinbase transaction of the block is unique and not already present as unspent transaction output.")
 public class UniqueUnspentCoinbaseBlkRule extends BlockRule {
 
     private ReadonlyUTXOSet utxoSet;

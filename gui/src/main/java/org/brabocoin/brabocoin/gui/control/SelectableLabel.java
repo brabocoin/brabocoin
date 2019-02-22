@@ -37,6 +37,7 @@ public class SelectableLabel extends HBox implements BraboControl, Initializable
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         textField.textProperty().bind(text);
+        textField.focusTraversableProperty().bind(focusTraversableProperty());
 
         textField.skinProperty().addListener((obs, old, skin) -> {
             Text text = ((Text)((Pane)((TextFieldSkin)skin).getChildren()

@@ -16,7 +16,8 @@ import java.util.stream.IntStream;
  * <p>
  * All signatures of the input must be valid.
  */
-@ValidationRule(name="Valid signatures", description = "All signatures of the transaction are valid.")
+@ValidationRule(name = "Valid signatures", failedName = "Transaction contains invalid signature",
+                description = "All signatures of the transaction are valid.")
 public class SignatureTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
@@ -30,20 +31,12 @@ public class SignatureTxRule extends TransactionRule {
 
         return IntStream.range(0, transaction.getInputs().size())
             .allMatch(i -> {
-                Input input = transaction.getInputs().get(i);
                 Signature signature = transaction.getSignatures().get(i);
 
-                try {
-                    return signer.verifySignature(
-                        signature,
-                        Objects.requireNonNull(utxoSet.findUnspentOutputInfo(input)).getAddress(),
-                        transaction.getSignableTransactionData()
-                    );
-                }
-                catch (DatabaseException e) {
-                    e.printStackTrace();
-                    return false;
-                }
+                return signer.verifySignature(
+                    signature,
+                    transaction.getSignableTransactionData()
+                );
             });
     }
 }

@@ -89,7 +89,9 @@ public class BraboGlyph extends Glyph {
     public enum Icon {
         ANGLE_DOUBLE_DOWN(Font.FONT_AWESOME_SOLID, '\uf103'),
         ARROW_DOWN(Font.FONT_AWESOME_SOLID, '\uf063'),
+        ARROW_DOWN_FAT(Font.FONT_AWESOME_SOLID, '\uf354'),
         ARROW_UP(Font.FONT_AWESOME_SOLID, '\uf062'),
+        ARROW_UP_FAT(Font.FONT_AWESOME_SOLID, '\uf357'),
         BITCOIN(Font.FONT_AWESOME_BRANDS, '\uf379'),
         BROADCAST_TOWER(Font.FONT_AWESOME_SOLID, '\uf519'),
         CHECK(Font.FONT_AWESOME_SOLID, '\uf058'),
@@ -116,7 +118,8 @@ public class BraboGlyph extends Glyph {
         COPY(Font.FONT_AWESOME_SOLID, '\uf0c5'),
         REFRESH(Font.FONT_AWESOME_SOLID, '\uf2f1'),
         HAPPY(Font.FONT_AWESOME_SOLID, '\uf5b8'),
-        CRYSAD(Font.FONT_AWESOME_SOLID, '\uf5b3');
+        CRYSAD(Font.FONT_AWESOME_SOLID, '\uf5b3'),
+        INFO(Font.FONT_AWESOME_SOLID, '\uf05a');
 
         private final @NotNull Font font;
         private final char ch;

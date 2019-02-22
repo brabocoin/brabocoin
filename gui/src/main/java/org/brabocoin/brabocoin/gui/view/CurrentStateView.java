@@ -18,6 +18,7 @@ import org.brabocoin.brabocoin.chain.IndexedChain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
@@ -45,6 +46,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     @FXML private Tab txPoolTab;
     @FXML private Tab txOrphansTab;
     @FXML private Tab blkOrphansTab;
+    @FXML private Tab utxoTab;
 
     @FXML private MasterDetailPane masterDetailPane;
     private BlockDetailView blockDetailView;
@@ -60,6 +62,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
     private final @NotNull Blockchain blockchain;
     private final BlockValidator validator;
     private ObservableList<IndexedBlock> observableBlocks = FXCollections.observableArrayList();
+
+    private IndexedBlock previouslySelectedItem = null;
 
     public CurrentStateView(@NotNull State state) {
         super();
@@ -137,6 +141,10 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
                 orphanBlkView.countProperty()
             )
         );
+
+        UTXOSetView utxoView = new UTXOSetView(state.getChainUTXODatabase());
+        utxoTab.setContent(utxoView);
+        utxoTab.setText("UTXO set");
     }
 
     private void loadTable() {
@@ -172,6 +180,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             boolean minedByMe = features.getValue().getBlockInfo().isMinedByMe();
             return new ReadOnlyObjectWrapper<>(minedByMe);
         });
+        minedByColumn.setCellFactory(col -> new BooleanTextTableCell<>());
 
         blockchainTable.getSelectionModel()
             .selectedItemProperty()
@@ -187,6 +196,16 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
                 }
                 masterDetailPane.setShowDetailNode(true);
             });
+
+        blockchainTable.setOnMouseClicked(event -> {
+            IndexedBlock selectedItem = blockchainTable.getSelectionModel().getSelectedItem();
+
+            if (previouslySelectedItem == selectedItem) {
+                masterDetailPane.setShowDetailNode(!masterDetailPane.isShowDetailNode());
+            }
+
+            previouslySelectedItem = selectedItem;
+        });
     }
 
     private void loadMainChain() {

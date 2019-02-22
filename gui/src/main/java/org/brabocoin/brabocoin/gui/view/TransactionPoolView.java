@@ -24,6 +24,7 @@ import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.ResourceBundle;
 
 /**
@@ -64,14 +65,14 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
         independentPane.textProperty().bind(
             Bindings.createStringBinding(
                 () -> "Independent transactions (" + independentTable.getItems().size() + ")",
-                Bindings.size(independentTable.getItems())
+                independentTable.getItems()
             )
         );
 
         dependentPane.textProperty().bind(
             Bindings.createStringBinding(
                 () -> "Dependent transactions (" + dependentTable.getItems().size() + ")",
-                Bindings.size(dependentTable.getItems())
+                dependentTable.getItems()
             )
         );
 
@@ -128,6 +129,22 @@ public class TransactionPoolView extends MasterDetailPane implements BraboContro
         Platform.runLater(() -> {
             dependentTable.getItems().remove(transaction);
             independentTable.getItems().remove(transaction);
+        });
+    }
+
+    @Override
+    public void onDependentTransactionsPromoted(@NotNull Collection<Transaction> transactions) {
+        Platform.runLater(() -> {
+            dependentTable.getItems().removeAll(transactions);
+            independentTable.getItems().addAll(transactions);
+        });
+    }
+
+    @Override
+    public void onIndependentTransactionsDemoted(@NotNull Collection<Transaction> transactions) {
+        Platform.runLater(() -> {
+            independentTable.getItems().removeAll(transactions);
+            dependentTable.getItems().addAll(transactions);
         });
     }
 

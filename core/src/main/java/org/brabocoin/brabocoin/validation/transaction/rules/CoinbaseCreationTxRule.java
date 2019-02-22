@@ -9,7 +9,7 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
  * <p>
  * Reject if the transaction is a coinbase transaction.
  */
-@ValidationRule(name="Transaction is not coinbase", description = "The transaction is not a coinbase transaction.")
+@ValidationRule(name="Transaction is not coinbase", failedName = "Transaction is coinbase", description = "The transaction is not a coinbase transaction.")
 public class CoinbaseCreationTxRule extends TransactionRule {
 
     @DescriptionField

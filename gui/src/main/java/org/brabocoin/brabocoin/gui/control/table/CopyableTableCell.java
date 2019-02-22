@@ -13,7 +13,15 @@ import javafx.scene.input.ClipboardContent;
 public class CopyableTableCell<S, T> extends TableCell<S, T> {
 
     public CopyableTableCell() {
+        this(false);
+    }
+
+    public CopyableTableCell(boolean disable) {
         super();
+        if (disable) {
+            return;
+        }
+
         MenuItem copyItem = new MenuItem("Copy");
         copyItem.setOnAction(e -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();

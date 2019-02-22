@@ -27,7 +27,7 @@ public class PeerMessageInterceptor {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
                 MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-                NetworkMessage networkMessage = new NetworkMessage(peer);
+                NetworkMessage networkMessage = new NetworkMessage(peer, false);
                 networkMessage.setMethodDescriptor(method);
                 return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
                     next.newCall(method, callOptions)

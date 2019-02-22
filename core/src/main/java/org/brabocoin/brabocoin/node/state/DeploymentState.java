@@ -138,6 +138,7 @@ public class DeploymentState implements State {
     @NotNull public File getWalletFile() {
         return Paths.get(
             config.dataDirectory(),
+            Integer.toString(config.networkId()),
             config.walletStoreDirectory(),
             config.walletFile()
         ).toFile();
@@ -146,6 +147,7 @@ public class DeploymentState implements State {
     @NotNull public File getTxHistoryFile() {
         return Paths.get(
             config.dataDirectory(),
+            Integer.toString(config.networkId()),
             config.walletStoreDirectory(),
             config.transactionHistoryFile()
         ).toFile();
@@ -176,7 +178,8 @@ public class DeploymentState implements State {
                         walletPoolUtxoDatabase,
                         chainUTXODatabase,
                         poolUTXODatabase,
-                        blockchain
+                        blockchain,
+                        transactionPool
                     );
 
                     passphrase.destruct();
@@ -207,7 +210,8 @@ public class DeploymentState implements State {
                     walletPoolUtxoDatabase,
                     chainUTXODatabase,
                     poolUTXODatabase,
-                    blockchain
+                    blockchain,
+                    transactionPool
                 );
 
                 try {
@@ -263,6 +267,7 @@ public class DeploymentState implements State {
     protected KeyValueStore createWalletChainUtxoStorage() {
         return new LevelDB(Paths.get(
             config.dataDirectory(),
+            Integer.toString(config.networkId()),
             config.walletStoreDirectory(),
             config.databaseDirectory()
         ).toFile());

@@ -112,4 +112,13 @@ public class Transaction extends UnsignedTransaction {
         }
         return hash;
     }
+
+    /**
+     * Create an unsigned transaction from a signed transaction.
+     *
+     * @return A {@link UnsignedTransaction}.
+     */
+    public UnsignedTransaction getUnsignedTransaction() {
+        return new UnsignedTransaction(this);
+    }
 }

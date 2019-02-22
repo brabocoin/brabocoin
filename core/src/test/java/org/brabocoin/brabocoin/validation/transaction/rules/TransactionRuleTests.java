@@ -191,7 +191,7 @@ class TransactionRuleTests {
         List<Block> blockList = new ArrayList<Block>() {{
             add(block);
         }};
-        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5));
+        blockList.addAll(Simulation.randomBlockChainGenerator(100, block.getHash(), 2, 0, 5, false));
 
         for (Block b : blockList) {
             state.getBlockProcessor().processNewBlock(b, false);
@@ -1094,7 +1094,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -1157,7 +1158,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -1217,7 +1219,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();

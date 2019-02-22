@@ -13,14 +13,18 @@ import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
 import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane;
 import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane;
+import org.brabocoin.brabocoin.gui.window.DataWindow;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +45,14 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     @Nullable private BlockValidator validator;
     private final NodeEnvironment nodeEnvironment;
 
+    @FXML private HiddenItemsToolBar buttonToolbar;
+
     @FXML private BlockHeaderPane blockHeaderPane;
     @FXML private BlockDetailsPane blockDetailsPane;
     @FXML private BlockTransactionsPane blockTransactionsPane;
     @FXML private Button buttonPropagate;
+
+    @FXML private Button buttonShowData;
 
     @FXML private Label titleLabel;
     @FXML private Button buttonValidate;
@@ -93,6 +101,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
         titleLabel.setText("Block #" + block.getBlockHeight());
         buttonValidate.setVisible(hasActions);
+        buttonValidate.setManaged(hasActions);
         hashField.setText(ByteUtil.toHexString(block.getHash().getValue(), Constants.BLOCK_HASH_SIZE));
 
         blockHeaderPane.setBlock(block);
@@ -122,6 +131,15 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         );
 
         dialog.showAndWait();
+    }
+
+
+    @FXML
+    protected void showData(ActionEvent event) {
+        BrabocoinProtos.Block protoBlock = ProtoConverter.toProto(
+            block.get(), BrabocoinProtos.Block.class
+        );
+        new DataWindow(protoBlock).show();
     }
 
     @FXML

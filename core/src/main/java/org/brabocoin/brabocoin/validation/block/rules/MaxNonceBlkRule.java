@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 
 import java.math.BigInteger;
 
-@ValidationRule(name="Nonce smaller than max nonce", description = "The block nonce is smaller than the maximum nonce defined in consensus.")
+@ValidationRule(name="Nonce smaller than max nonce", failedName = "Nonce is larger than max nonce", description = "The block nonce is smaller than the maximum nonce defined in consensus.")
 public class MaxNonceBlkRule extends BlockRule {
 
     @DescriptionField

@@ -25,6 +25,7 @@ import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureCountTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.SignaturePublicKeyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SufficientInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
@@ -52,6 +53,7 @@ public class TransactionValidator implements Validator<Transaction> {
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
         SignatureCountTxRule.class,
+        SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
 
@@ -62,6 +64,7 @@ public class TransactionValidator implements Validator<Transaction> {
         OutputValueTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
+        SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
 
@@ -76,6 +79,7 @@ public class TransactionValidator implements Validator<Transaction> {
         CoinbaseMaturityTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
+        SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
 

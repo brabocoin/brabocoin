@@ -22,7 +22,7 @@
 
     <GridPane vgap="$vgap" hgap="$hgap" style="-fx-padding: 0.8em;">
         <HBox fx:id="header" spacing="20" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Label text="Coinbase transaction" styleClass="side-pane-title"/>
+            <Label text="Coinbase transaction" HBox.hgrow="NEVER" minWidth="-Infinity" styleClass="side-pane-title"/>
         </HBox>
 
         <Label text="Hash" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="NEVER"/>

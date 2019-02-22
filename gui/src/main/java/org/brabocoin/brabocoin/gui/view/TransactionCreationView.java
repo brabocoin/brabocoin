@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -18,7 +19,6 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.IntegerStringConverter;
-import javafx.util.converter.LongStringConverter;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.CipherException;
@@ -27,6 +27,7 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.converter.Base58StringConverter;
+import org.brabocoin.brabocoin.gui.converter.DoubleToCoinStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HashStringConverter;
 import org.brabocoin.brabocoin.gui.converter.HexBigIntegerStringConverter;
 import org.brabocoin.brabocoin.gui.dialog.FeeDialog;
@@ -48,6 +49,7 @@ import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
@@ -61,6 +63,8 @@ import tornadofx.SmartResizeKt;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,11 +96,11 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     @FXML public Button buttonSignTransaction;
     @FXML public VBox inputOutputVBox;
     @FXML public Button buttonSendTransaction;
-    @FXML public Button buttonCopyJSON;
     @FXML public Button buttonAddSignature;
     @FXML public Button buttonRemoveSignature;
     @FXML public Button buttonCreateChange;
     @FXML public Button buttonValidate;
+    @FXML public Label messageLabel;
 
     public TransactionCreationView(State state,
                                    TransactionCreationWindow transactionCreationWindow) {
@@ -118,6 +122,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        messageLabel.getStyleClass().add("error");
+        hideErrorLabel();
+
         outputTableView.setEditable(true);
         outputTableView.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 
@@ -165,10 +172,10 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         inputAddress.setEditable(false);
         inputAddress.getStyleClass().add("column-fixed");
 
-        TableColumn<EditableTableInputEntry, Long> inputAmount = new TableColumn<>(
+        TableColumn<EditableTableInputEntry, Double> inputAmount = new TableColumn<>(
             "Amount");
         inputAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        inputAmount.setCellFactory(l -> new TextFieldTableCell<>(new LongStringConverter()));
+        inputAmount.setCellFactory(l -> new TextFieldTableCell<>(new DoubleToCoinStringConverter()));
         inputAmount.setEditable(false);
         inputAmount.getStyleClass().add("column-fixed");
 
@@ -194,9 +201,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         address.setEditable(true);
         SmartResizeKt.remainingWidth(address);
 
-        TableColumn<EditableTableOutputEntry, Long> amount = new TableColumn<>("Amount");
+        TableColumn<EditableTableOutputEntry, Double> amount = new TableColumn<>("Amount");
         amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amount.setCellFactory(EditCell.forTableColumn(new LongStringConverter()));
+        amount.setCellFactory(EditCell.forTableColumn(new DoubleToCoinStringConverter()));
         amount.setOnEditCommit(event -> commitEdit(
             event, EditableTableOutputEntry::setAmount, outputTableView
         ));
@@ -307,7 +314,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
                 0
             ), outputTableView.getItems().size(),
             new Hash(ByteString.EMPTY),
-            0L
+            0.0
         );
         inputTableView.getItems().add(
             entry
@@ -347,6 +354,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void findInputs(ActionEvent event) {
         long outputSum = getAmountSum(false);
         long inputSum = getAmountSum(true);
+
+        List<EditableTableInputEntry> foundInputs = new ArrayList<>();
+
         for (Map.Entry<Input, UnspentOutputInfo> info : wallet.getCompositeUtxoSet()) {
             if (inputSum > outputSum) {
                 break;
@@ -384,8 +394,16 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             entry.setAddress(info.getValue().getAddress());
             entry.setAmount(info.getValue().getAmount());
 
-            inputTableView.getItems().add(entry);
+            foundInputs.add(entry);
         }
+
+        if (inputSum <= outputSum) {
+            setError("Insufficient input to match output");
+            return;
+        }
+
+        hideErrorLabel();
+        inputTableView.getItems().addAll(foundInputs);
     }
 
     @FXML
@@ -524,11 +542,13 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private long getAmountSum(boolean inputs) {
         return inputs ? inputTableView.getItems()
             .stream()
-            .mapToLong(EditableTableInputEntry::getAmount)
+            .mapToDouble(EditableTableInputEntry::getAmount)
+            .mapToLong(d -> (long)(d * Consensus.COIN))
             .sum()
             : outputTableView.getItems()
                 .stream()
-                .mapToLong(EditableTableOutputEntry::getAmount)
+                .mapToDouble(EditableTableOutputEntry::getAmount)
+                .mapToLong(d -> (long)(d * Consensus.COIN))
                 .sum();
     }
 
@@ -549,6 +569,22 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             );
 
             content.putString(JsonFormat.printer().print(protoTransaction));
+            clipboard.setContent(content);
+        }
+        catch (Exception e) {
+            // ignore
+        }
+    }
+
+
+    @FXML
+    private void copyUnsignedData(ActionEvent event) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+
+        try {
+            content.putString(
+                ByteUtil.toHexString(buildUnsignedTransaction().getRawData()));
             clipboard.setContent(content);
         }
         catch (Exception e) {
@@ -599,5 +635,15 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         alert.setContentText(message);
 
         alert.showAndWait();
+    }
+
+
+    void setError(String message) {
+        messageLabel.setVisible(true);
+        messageLabel.setText(message);
+    }
+
+    void hideErrorLabel() {
+        messageLabel.setVisible(false);
     }
 }
