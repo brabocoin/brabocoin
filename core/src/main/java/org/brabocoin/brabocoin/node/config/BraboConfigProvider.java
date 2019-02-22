@@ -5,8 +5,8 @@ import org.cfg4j.provider.ConfigurationProvider;
 import org.cfg4j.provider.ConfigurationProviderBuilder;
 import org.cfg4j.source.ConfigurationSource;
 import org.cfg4j.source.classpath.ClasspathConfigurationSource;
+import org.cfg4j.source.compose.MergeConfigurationSource;
 import org.cfg4j.source.context.environment.DefaultEnvironment;
-import org.cfg4j.source.context.environment.ImmutableEnvironment;
 import org.cfg4j.source.context.filesprovider.ConfigFilesProvider;
 import org.cfg4j.source.files.FilesConfigurationSource;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +24,7 @@ public class BraboConfigProvider {
     private final static String configFile = "application.yaml";
 
     public static ConfigurationProvider getConfig() {
-        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(
-            Paths.get(configFile)
-        );
-        final ConfigurationSource source = new ClasspathConfigurationSource(configFilesProvider);
+        final ConfigurationSource source = getClassPathSource();
 
         ConfigurationProvider provider = new ConfigurationProviderBuilder()
             .withConfigurationSource(source)
@@ -42,22 +39,30 @@ public class BraboConfigProvider {
 
     public static ConfigurationProvider getConfigFromFile(@NotNull String path) {
         Path p = new File(path).getAbsoluteFile().toPath();
+        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(p);
 
-        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(
-            p.getFileName()
-        );
         final ConfigurationSource source = new FilesConfigurationSource(configFilesProvider);
-        ImmutableEnvironment environment = new ImmutableEnvironment(p.getParent().toString());
+        final ConfigurationSource fallbackSource = getClassPathSource();
 
+        MergeConfigurationSource mergedSource = new MergeConfigurationSource(
+            fallbackSource,
+            source
+        );
         ConfigurationProvider provider = new ConfigurationProviderBuilder()
-            .withConfigurationSource(source)
-            .withEnvironment(environment)
+            .withConfigurationSource(mergedSource)
             .build();
 
         // Our provider with custom type parsing
-        CustomTypeConfigProvider ourProvider = new CustomTypeConfigProvider(source, environment, provider);
+        CustomTypeConfigProvider ourProvider = new CustomTypeConfigProvider(mergedSource, new DefaultEnvironment(), provider);
         ourProvider.addParser(Hash.class, new TargetValueParser());
 
         return ourProvider;
+    }
+
+    private static ConfigurationSource getClassPathSource() {
+        final ConfigFilesProvider configFilesProvider = () -> Collections.singletonList(
+            Paths.get(configFile)
+        );
+        return new ClasspathConfigurationSource(configFilesProvider);
     }
 }
