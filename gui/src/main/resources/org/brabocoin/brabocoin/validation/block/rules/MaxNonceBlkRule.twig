@@ -1,9 +1,11 @@
-This rule checks whether the nonce in the block is smaller than the maximum nonce defined in consensus.
-If not, the block is invalid.<br>
-<br>
-Block nonce: {{blockNonce}} <br>
-Consensus max nonce: {{consensusMaxNonce}} <br>
-<br>
-Check: <code>{{blockNonce}} < {{consensusMaxNonce}}</code><br>
-<br>
-Result: {{ result }}
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the nonce in the block is smaller than the maximum nonce defined in consensus.
+    If not, the block is invalid.<br>
+    <br>
+    Block nonce: {{blockNonce}} <br>
+    Consensus max nonce: {{consensusMaxNonce}} <br>
+    <br>
+    Check: <code>{{blockNonce}} < {{consensusMaxNonce}}</code><br>
+{% endblock %}

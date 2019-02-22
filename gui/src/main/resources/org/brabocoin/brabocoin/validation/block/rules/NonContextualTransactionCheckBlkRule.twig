@@ -1,5 +1,11 @@
-This rule checks each transaction in the block via a number of transaction rules.
-All these rules are non-contextual, meaning we can check them at any point in time to see if the transactions in the block are still valid.
-<br>
-<br>
-Click on one of the non-contextual transaction rules for more information on the non-contextual transaction validation.<br>
+{% extends "../../Rule.twig" %}
+
+{# TODO: composite rule to hide result? #}
+
+{% block description %}
+    This rule checks each transaction in the block via a number of transaction rules.
+    All these rules are non-contextual, meaning we can check them at any point in time to see if the transactions in the block are still valid.
+    <br>
+    <br>
+    Click on one of the non-contextual transaction rules for more information on the non-contextual transaction validation.<br>
+{% endblock %}

@@ -1,9 +1,11 @@
-This rule checks whether the validated block's size is smaller than the maximum block size defined in consensus.
-If not, the block is invalid.<br>
-<br>
-Block's size: {{blockSize}} <br>
-Consensus max block size: {{consensusBlockSize}} <br>
-<br>
-Check: <code>{{blockSize}} < {{consensusBlockSize}}</code><br>
-<br>
-Result: {{ result }}
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the validated block's size is smaller than the maximum block size defined in consensus.
+    If not, the block is invalid.<br>
+    <br>
+    Block's size: {{blockSize}} <br>
+    Consensus max block size: {{consensusBlockSize}} <br>
+    <br>
+    Check: <code>{{blockSize}} < {{consensusBlockSize}}</code><br>
+{% endblock %}

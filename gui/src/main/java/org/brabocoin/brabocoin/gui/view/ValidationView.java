@@ -322,9 +322,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
         String templatePath = ruleClass.getName().replace('.', '/') + ".skipped.twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
+        JtwigModel model = JtwigModel.newModel();
+
+        ValidationRule annotation = ruleClass.getAnnotation(ValidationRule.class);
+        model.with("title", annotation.name());
 
         try {
-            return renderWithTitle(template.render(JtwigModel.newModel()), ruleClass);
+            return template.render(model);
         }
         catch (
             ResourceNotFoundException e) {
@@ -332,21 +336,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         }
     }
 
-    private String renderWithTitle(String rendered, Class<? extends Rule> ruleClass) {
-        String title = null;
-        ValidationRule annotation = ruleClass.getAnnotation(ValidationRule.class);
-        if (annotation != null) {
-            title = annotation.name();
-        }
-
-        String output = rendered;
-        if (title != null) {
-            return MessageFormat.format("<h3>{0}</h3>{1}", title, rendered);
-        }
-        return output;
-    }
-
-    private String deriveSkippedDescription(Rule rule, boolean success) {
+    private String deriveDescription(Rule rule, boolean success) {
         String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
@@ -371,14 +361,13 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
             }
         }
 
-        model.with(
-            "result",
-            MessageFormat.format("<code>{0}</code>", success ? "passed" : "failed")
-        );
+        model.with("result", success);
 
+        ValidationRule annotation = rule.getClass().getAnnotation(ValidationRule.class);
+        model.with("title", annotation.name());
 
         try {
-            return renderWithTitle(template.render(model), rule.getClass());
+            return template.render(model);
         }
         catch (
             ResourceNotFoundException e) {
@@ -433,7 +422,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                 throw new IllegalStateException("Rule of invalid type");
             }
 
-            descriptionItemMap.put(item, deriveSkippedDescription(rule, result.isPassed()));
+            descriptionItemMap.put(item, deriveDescription(rule, result.isPassed()));
 
             if (item == null) {
                 return;

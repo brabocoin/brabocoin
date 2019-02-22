@@ -1,6 +1,8 @@
-This rule checks whether any of the inputs in the transactions within the block occur in more than one transaction.
-If so, the block is invalid.<br>
-<br>
-Block has no duplicate inputs: {{ hasDuplicates }}<br>
-<br>
-Result: {{ result }}
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether any of the inputs in the transactions within the block occur in more than one transaction.
+    If so, the block is invalid.<br>
+    <br>
+    Block has no duplicate inputs: {{ hasDuplicates }}<br>
+{% endblock %}

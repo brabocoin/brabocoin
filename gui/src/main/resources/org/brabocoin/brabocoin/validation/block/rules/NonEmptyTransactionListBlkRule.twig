@@ -1,8 +1,10 @@
-This rule checks whether the validated block contains at least one transaction.
-If not, the block is invalid.<br>
-<br>
-Number of transactions: {{transactionsSize}} <br>
-<br>
-Check: <code>{{transactionsSize}} > 0 </code><br>
-<br>
-Result: {{ result }}
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the validated block contains at least one transaction.
+    If not, the block is invalid.<br>
+    <br>
+    Number of transactions: {{transactionsSize}} <br>
+    <br>
+    Check: <code>{{transactionsSize}} > 0 </code><br>
+{% endblock %}

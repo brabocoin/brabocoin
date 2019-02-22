@@ -1,9 +1,11 @@
-This rule checks whether the transaction's size is smaller than the maximum transaction size defined in consensus.
-If not, this transaction is invalid.<br>
-<br>
-Transaction size: {{ size }} <br>
-Consensus maximum size: {{ consensusSize }} <br>
-<br>
-Check: {{ size }} <= {{ consensusSize }}<br>
-<br>
-Result: {{ result }}
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the transaction's size is smaller than the maximum transaction size defined in consensus.
+    If not, this transaction is invalid.<br>
+    <br>
+    Transaction size: {{ size }} <br>
+    Consensus maximum size: {{ consensusSize }} <br>
+    <br>
+    Check: {{ size }} <= {{ consensusSize }}<br>
+{% endblock %}

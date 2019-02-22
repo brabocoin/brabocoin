@@ -1,8 +1,12 @@
-This rule checks that the outputs referenced by the inputs of the transaction are unspent.
-If not, the transaction is invalid.<br>
-<br>
-The inputs are unspent if their referenced outputs are present in the UTXO set.
-Note that we can only check this rule once when the block is first received.
-This is because, at this point in time, the UTXO set has (probably) changed already, which means we cannot find these referenced outputs anymore.
-Therefore, this validation rule is skipped.<br>
+{% extends "../../SkippedRule.twig" %}
+
+{% block description %}
+    This rule checks that the outputs referenced by the inputs of the transaction are unspent.
+    If not, the transaction is invalid.<br>
+    <br>
+    The inputs are unspent if their referenced outputs are present in the UTXO set.
+    Note that we can only check this rule once when the block is first received.
+    This is because, at this point in time, the UTXO set has (probably) changed already, which means we cannot find these referenced outputs anymore.
+    Therefore, this validation rule is skipped.<br>
+{% endblock %}
 
