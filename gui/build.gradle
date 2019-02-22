@@ -11,9 +11,14 @@ dependencies {
 }
 
 task copyDeploymentIcons(type: Copy) {
-    from('src/main/resources/org/brabocoin/brabocoin/gui/icon/48.ico')
+    from('src/main/resources/org/brabocoin/brabocoin/gui/icon/') {
+        include('48.ico')
+        include('48.bmp')
+    }
     into('src/main/deploy/package/windows/')
+
     rename('48.ico', 'Brabocoin.ico')
+    rename('48.bmp', 'Brabocoin-setup-icon.bmp')
 }
 
 jfx {
@@ -21,4 +26,9 @@ jfx {
     mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
     vendor = 'Brabocoin'
     appName = 'Brabocoin'
+    nativeReleaseVersion = version
+    needShortcut = true
+    needMenu = true
 }
+
+tasks.jfxNative.dependsOn(copyDeploymentIcons)

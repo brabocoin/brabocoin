@@ -68,9 +68,5 @@ end;
 
 function InitializeSetup(): Boolean;
 begin
-// Possible future improvements:
-//   if version less or same => just launch app
-//   if upgrade => check if same app is running and wait for it to exit
-//   Add pack200/unpack200 support?
   Result := True;
 end;
