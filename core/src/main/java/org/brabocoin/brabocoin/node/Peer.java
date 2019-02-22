@@ -282,7 +282,7 @@ public class Peer implements NetworkMessageListener {
      * @return Socket string in {ip}:{port} format.
      */
     public String toSocketString() {
-        return String.format("%s:%d", socket.getAddress().getHostAddress(), socket.getPort());
+        return String.format("%s:%d", socket.getHostName(), socket.getPort());
     }
 
     @Override
