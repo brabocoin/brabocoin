@@ -169,7 +169,8 @@ public class BlockProcessor {
      * @throws DatabaseException
      *     When the block database is not available.
      */
-    public synchronized BlockValidationResult processNewBlock(@NotNull Block block, boolean minedByMe)
+    public synchronized BlockValidationResult processNewBlock(@NotNull Block block,
+                                                              boolean minedByMe)
         throws DatabaseException {
         LOGGER.fine("Processing new block.");
 
@@ -189,7 +190,8 @@ public class BlockProcessor {
                 MessageFormat.format("New block is invalid, rulebook result: {0}", result)
             );
             return result;
-        } else if (status == ValidationStatus.ORPHAN) {
+        }
+        else if (status == ValidationStatus.ORPHAN) {
             LOGGER.info("New block is added as orphan.");
             blockchain.addOrphan(block);
             return result;
@@ -497,8 +499,8 @@ public class BlockProcessor {
     private synchronized boolean connectTopBlock(
         @NotNull IndexedBlock top) throws DatabaseException {
         LOGGER.finest(() -> MessageFormat.format(
-            "Connecting block {0}",
-            toHexString(top.getHash().getValue())
+            "Connecting block {0}, height {1}",
+            toHexString(top.getHash().getValue()), top.getBlockInfo().getBlockHeight()
         ));
 
         // Read block from disk

@@ -18,11 +18,13 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 
 /**
  * Main view for the Brabocoin application.
@@ -30,6 +32,7 @@ import java.util.ResourceBundle;
 public class MainView extends BorderPane implements BraboControl, Initializable {
 
     private final @NotNull State state;
+    private final Level initLogLevel;
 
     @FXML private ToggleButton logPaneToggleButton;
     @FXML private HiddenSidesPane sidesPane;
@@ -42,7 +45,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
     @FXML private ToggleButton networkToggleButton;
 
     @FXML private StatusBar statusBar;
-    @FXML private LogPane logPane;
 
     private @NotNull TaskManager taskManager;
 
@@ -60,15 +62,20 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
      * @param state
      *     The application state.
      */
-    public MainView(@NotNull State state) {
+    public MainView(@NotNull State state, @Nullable Level initLogLevel) {
         super();
         this.state = state;
+        this.initLogLevel = initLogLevel;
 
         BraboControlInitializer.initialize(this);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Set log pane
+        LogPane logPane = new LogPane(initLogLevel);
+        sidesPane.setBottom(logPane);
+
         // Initialize task manager
         taskManager = new TaskManager(statusBar);
 

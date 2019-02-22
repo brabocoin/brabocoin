@@ -119,6 +119,8 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
             }).start();
         });
 
+        portTextField.setOnAction(event -> checkButton.fire());
+
         ipTextField.textProperty().addListener(listener);
         portTextField.textProperty().addListener(listener);
 
@@ -142,5 +144,7 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
             }
             return null;
         });
+
+        this.setOnShowing(event -> ipTextField.requestFocus());
     }
 }

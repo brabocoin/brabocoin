@@ -2,7 +2,6 @@ package org.brabocoin.brabocoin;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.collect.Sets;
-import javafx.application.Platform;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -13,6 +12,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
+import org.brabocoin.brabocoin.util.LoggingUtil;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -115,34 +114,7 @@ public class BrabocoinApplication {
             return;
         }
 
-        if (arguments.getLogLevel() != null) {
-            Logger rootLogger = Logger.getLogger("org.brabocoin.brabocoin");
-            ConsoleHandler consoleHandler = new ConsoleHandler();
-            rootLogger.addHandler(
-                consoleHandler
-            );
-            switch (arguments.getLogLevel().toLowerCase()) {
-                case "all":
-                    rootLogger.setLevel(Level.ALL);
-                    break;
-                case "finest":
-                    rootLogger.setLevel(Level.FINEST);
-                    break;
-                case "finer":
-                    rootLogger.setLevel(Level.FINER);
-                    break;
-                case "fine":
-                    rootLogger.setLevel(Level.FINE);
-                    break;
-                case "warning":
-                    rootLogger.setLevel(Level.WARNING);
-                    break;
-                default:
-                    LOGGER.severe("Could not parse config level");
-                    Platform.exit();
-            }
-            consoleHandler.setLevel(rootLogger.getLevel());
-        }
+        LoggingUtil.setLogLevel(arguments.getLogLevel());
 
         BraboConfig config = getConfig(arguments.getConfig());
 

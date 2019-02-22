@@ -385,7 +385,9 @@ public class NodeTest {
 
 
         await().atMost(50, TimeUnit.SECONDS)
-            .until(() -> stateB.getBlockchain().getMainChain().getHeight() == mockConsensus.getCoinbaseMaturityDepth() + 1);
+            .until(() -> stateB.getBlockchain()
+                .getMainChain()
+                .getHeight() == mockConsensus.getCoinbaseMaturityDepth() + 1);
 
         stateA.getTransactionProcessor().processNewTransaction(tx);
 
@@ -1031,172 +1033,176 @@ public class NodeTest {
         stateB.getNode().stopAndBlock();
     }
 
-        /**
-         * <em>Setup:</em>
-         * Three nodes A, B and C.
-         * B's blockchain is in sync with A's blockchain.
-         * C's blockchain is empty and only consists of the genesis block and only has peer B.
-         * A also has a fork that is one blockheight less than the main chain.
-         *
-         *
-         * <em>Expected result:</em>
-         * When we mine two blocks on top of the fork, only announcing the second block, B
-     should sync with this fork, requesting both blocks.
-         * Then, after announcing another two blocks on the other fork (what used to be the
-     main chain), B should again switch the main chain.
-         */
-        @Test
-        void forkSwitchingPropagated() throws DatabaseException, IOException,
-     InterruptedException {
-            // Create a blockchain with a block mined on top of genesis block.
+    /**
+     * <em>Setup:</em>
+     * Three nodes A, B and C.
+     * B's blockchain is in sync with A's blockchain.
+     * C's blockchain is empty and only consists of the genesis block and only has peer B.
+     * A also has a fork that is one blockheight less than the main chain.
+     *
+     *
+     * <em>Expected result:</em>
+     * When we mine two blocks on top of the fork, only announcing the second block, B
+     * should sync with this fork, requesting both blocks.
+     * Then, after announcing another two blocks on the other fork (what used to be the
+     * main chain), B should again switch the main chain.
+     */
+    @Test
+    void forkSwitchingPropagated() throws DatabaseException, IOException,
+                                          InterruptedException {
+        // Create a blockchain with a block mined on top of genesis block.
 
-            State stateA = new TestState(new MockBraboConfig(defaultConfig) {
-                @Override
+        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
             }
 
-                @Override
-                public int servicePort() {
-                    return 8090;
-                }
-
-                @Override
-                public int targetPeerCount() {
-                    return 1;
-                }
-            }) {
-                @Override
-                protected Consensus createConsensus() {
-                    return mockConsensus;
-                }
-            };
-
-            Miner minerA = stateA.getMiner();
-            IndexedBlock previousBlock = stateA.getBlockchain().getMainChain().getGenesisBlock();
-
-            for (int i = 0; i < 20; i++) {
-                Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-                stateA.getBlockProcessor().processNewBlock(newBlock, false);
-
-                previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+            @Override
+            public int servicePort() {
+                return 8090;
             }
 
-            IndexedBlock mainChainTop = previousBlock;
-
-            previousBlock = stateA.getBlockchain().getMainChain().getBlockAtHeight(10);
-
-            for (int i = 0; i < 9; i++) {
-                Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-                stateA.getBlockProcessor().processNewBlock(newBlock, false);
-
-                previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+            @Override
+            public int targetPeerCount() {
+                return 1;
             }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
 
-            State stateB = new TestState(new MockBraboConfig(defaultConfig) {
-                @Override
+        Miner minerA = stateA.getMiner();
+        IndexedBlock previousBlock = stateA.getBlockchain().getMainChain().getGenesisBlock();
+
+        for (int i = 0; i < 20; i++) {
+            Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
+
+            previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+        }
+
+        IndexedBlock mainChainTop = previousBlock;
+
+        previousBlock = stateA.getBlockchain().getMainChain().getBlockAtHeight(10);
+
+        for (int i = 0; i < 9; i++) {
+            Block newBlock = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
+            stateA.getBlockProcessor().processNewBlock(newBlock, false);
+
+            previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
+        }
+
+        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
             }
 
-                @Override
-                public List<String> bootstrapPeers() {
-                    return Collections.singletonList(
-                        "localhost:8090"
-                    );
-                }
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList(
+                    "localhost:8090"
+                );
+            }
 
-                @Override
-                public int servicePort() {
-                    return 8091;
-                }
-            }) {
-                @Override
-                protected Consensus createConsensus() {
-                    return mockConsensus;
-                }
-            };
+            @Override
+            public int servicePort() {
+                return 8091;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
 
 
-            State stateC = new TestState(new MockBraboConfig(defaultConfig) {
-                @Override
+        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+            @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
             }
 
-                @Override
-                public int servicePort() {
-                    return 8092;
-                }
+            @Override
+            public int servicePort() {
+                return 8092;
+            }
 
-                @Override
-                public List<String> bootstrapPeers() {
-                    return Collections.singletonList("localhost:8091");
-                }
+            @Override
+            public List<String> bootstrapPeers() {
+                return Collections.singletonList("localhost:8091");
+            }
 
-                @Override
-                public int targetPeerCount() {
-                    return 1;
-                }
-            }) {
-                @Override
-                protected Consensus createConsensus() {
-                    return mockConsensus;
-                }
-            };
+            @Override
+            public int targetPeerCount() {
+                return 1;
+            }
+        }) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
 
-            stateA.getNode().start();
-            stateB.getNode().start();
-            stateC.getNode().start();
+        stateA.getNode().start();
+        stateB.getNode().start();
+        stateC.getNode().start();
 
-            assertEquals(stateA.getEnvironment().getTopBlockHeight(), stateB.getEnvironment()
-     .getTopBlockHeight());
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateB.getEnvironment()
+                .getTopBlockHeight());
 
-            // Mine two block on top of fork of A
-            Block forkBlock1 = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(forkBlock1, false);
-            IndexedBlock forkBlock1Indexed = stateA.getBlockchain()
-                .getIndexedBlock(forkBlock1.getHash());
+        // Mine two block on top of fork of A
+        Block forkBlock1 = minerA.mineNewBlock(previousBlock, Simulation.randomHash());
+        stateA.getBlockProcessor().processNewBlock(forkBlock1, false);
+        IndexedBlock forkBlock1Indexed = stateA.getBlockchain()
+            .getIndexedBlock(forkBlock1.getHash());
 
-            Block forkBlock2 = minerA.mineNewBlock(forkBlock1Indexed, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(forkBlock2, false);
+        Block forkBlock2 = minerA.mineNewBlock(forkBlock1Indexed, Simulation.randomHash());
+        stateA.getBlockProcessor().processNewBlock(forkBlock2, false);
 
-            assert forkBlock2.getBlockHeight() == stateA.getBlockchain().getMainChain().getHeight();
+        assert forkBlock2.getBlockHeight() == stateA.getBlockchain().getMainChain().getHeight();
 
-            stateA.getEnvironment().announceBlockRequest(forkBlock2);
+        stateA.getEnvironment().announceBlockRequest(forkBlock2);
 
-            await().atMost(60, TimeUnit.SECONDS)
-                    .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateC.getEnvironment().getTopBlockHeight());
+        await().atMost(60, TimeUnit.SECONDS)
+            .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateC.getEnvironment()
+                .getTopBlockHeight());
 
-            assertEquals(
-                    stateA.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0),
-                    stateC.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0));
+        assertEquals(
+            stateA.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0),
+            stateC.getEnvironment().getBlocksAbove(forkBlock1.getHash()).get(0)
+        );
 
-            // Mine two block on top of new fork of A, what used to be the main chain
-            Block fork2Block1 = minerA.mineNewBlock(mainChainTop, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(fork2Block1, false);
-            IndexedBlock fork2Block1Indexed = stateA.getBlockchain()
-                .getIndexedBlock(fork2Block1.getHash());
+        // Mine two block on top of new fork of A, what used to be the main chain
+        Block fork2Block1 = minerA.mineNewBlock(mainChainTop, Simulation.randomHash());
+        stateA.getBlockProcessor().processNewBlock(fork2Block1, false);
+        IndexedBlock fork2Block1Indexed = stateA.getBlockchain()
+            .getIndexedBlock(fork2Block1.getHash());
 
-            Block fork2Block2 = minerA.mineNewBlock(fork2Block1Indexed, Simulation.randomHash());
-            stateA.getBlockProcessor().processNewBlock(fork2Block2, false);
+        Block fork2Block2 = minerA.mineNewBlock(fork2Block1Indexed, Simulation.randomHash());
+        stateA.getBlockProcessor().processNewBlock(fork2Block2, false);
 
-            assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
+        assert fork2Block2.getBlockHeight() > forkBlock2.getBlockHeight();
 
-            stateA.getEnvironment().announceBlockRequest(fork2Block2);
+        stateA.getEnvironment().announceBlockRequest(fork2Block2);
 
-            await().atMost(30, TimeUnit.SECONDS)
-                    .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateC
-     .getEnvironment().getTopBlockHeight());
+        await().atMost(30, TimeUnit.SECONDS)
+            .until(() -> stateA.getEnvironment().getTopBlockHeight() == stateC
+                .getEnvironment().getTopBlockHeight());
 
-            assertEquals(
-                    stateA.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0),
-                    stateC.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0));
+        assertEquals(
+            stateA.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0),
+            stateC.getEnvironment().getBlocksAbove(fork2Block1.getHash()).get(0)
+        );
 
-            stateA.getNode().stopAndBlock();
-            stateB.getNode().stopAndBlock();
-            stateC.getNode().stopAndBlock();
-        }
+        stateA.getNode().stopAndBlock();
+        stateB.getNode().stopAndBlock();
+        stateC.getNode().stopAndBlock();
+    }
 
 
     /**

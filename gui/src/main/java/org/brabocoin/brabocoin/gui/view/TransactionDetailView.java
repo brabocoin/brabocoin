@@ -21,12 +21,12 @@ import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.control.SelectableLabel;
+import org.brabocoin.brabocoin.gui.control.TransactionDataMenuButton;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BigIntegerTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.gui.control.table.NumberedTableCell;
 import org.brabocoin.brabocoin.gui.control.table.PublicKeyTableCell;
-import org.brabocoin.brabocoin.gui.window.DataWindow;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
@@ -34,9 +34,7 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
-import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +55,8 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     private final NodeEnvironment nodeEnvironment;
     private @Nullable TransactionValidator validator;
 
+    @FXML private TransactionDataMenuButton transactionDataMenuButtonBottom;
+    @FXML private TransactionDataMenuButton transactionDataMenuButton;
     @FXML private MenuItem menuShowUnsignedTx;
     @FXML private MenuItem menuShowSignedTx;
 
@@ -127,6 +127,9 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
         header.managedProperty().bind(showHeader);
         header.visibleProperty().bind(showHeader);
 
+        transactionDataMenuButtonBottom.managedProperty().bind(showHeader.not());
+        transactionDataMenuButtonBottom.visibleProperty().bind(showHeader.not());
+
         // Input table
         inputIndexColumn.setCellFactory(col -> new NumberedTableCell<>());
         inputReferencedTxColumn.setCellValueFactory(new PropertyValueFactory<>(
@@ -176,14 +179,12 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     public void setTransaction(Transaction value) {
         transaction.setValue(value);
+        transactionDataMenuButton.setTransaction(this.transaction.get());
+        transactionDataMenuButtonBottom.setTransaction(this.transaction.get());
     }
 
     public void setShowHeader(boolean value) {
         showHeader.set(value);
-    }
-
-    public boolean isShowHeader() {
-        return showHeader.get();
     }
 
     public BooleanProperty showHeaderProperty() {
@@ -194,22 +195,6 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
     protected void validate(ActionEvent event) {
         Dialog dialog = new ValidationWindow(transaction.get(), validator);
         dialog.showAndWait();
-    }
-
-    @FXML
-    protected void showUnsignedData(ActionEvent event) {
-        BrabocoinProtos.UnsignedTransaction protoTx = ProtoConverter.toProto(
-            transaction.get().getUnsignedTransaction(), BrabocoinProtos.UnsignedTransaction.class
-        );
-        new DataWindow(protoTx).show();
-    }
-
-    @FXML
-    protected void showSignedData(ActionEvent event) {
-        BrabocoinProtos.Transaction protoTx = ProtoConverter.toProto(
-            transaction.get(), BrabocoinProtos.Transaction.class
-        );
-        new DataWindow(protoTx).show();
     }
 
     @FXML

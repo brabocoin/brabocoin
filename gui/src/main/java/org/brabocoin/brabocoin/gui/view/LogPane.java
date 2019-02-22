@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  */
 public class LogPane extends BorderPane implements BraboControl, Initializable {
 
+    private final Level initLogLevel;
     @FXML private ToolBar paneBar;
     @FXML private ComboBox<Level> logLevelComboBox;
 
@@ -63,8 +64,9 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
     /**
      * Create a new log pane.
      */
-    public LogPane() {
+    public LogPane(Level initLogLevel) {
         super();
+        this.initLogLevel = initLogLevel;
         BraboControlInitializer.initialize(this);
     }
 
@@ -116,7 +118,7 @@ public class LogPane extends BorderPane implements BraboControl, Initializable {
         logLevelComboBox.setItems(logLevels);
 
         // Bind log level combo box to log handler
-        rootLogger.setLevel(Level.INFO);
+        rootLogger.setLevel(initLogLevel);
         logLevelComboBox.setValue(rootLogger.getLevel());
         logLevelComboBox.valueProperty().addListener((obs, old, val) -> rootLogger.setLevel(val));
 

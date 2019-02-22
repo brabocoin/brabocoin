@@ -173,7 +173,12 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         GridPane.setHalignment(immatureMiningReward, HPos.RIGHT);
 
         Tooltip infoTooltip = new Tooltip(
-            "INSERT TEXT HERE! :)"
+            "Tne 'confirmed balance' is the user's balance, based only on the transactions that are already mined in a block in the blockchain.\n"
+                + "'Pending' is the user's additional balance, based on the transactions that are in the transaction pool.\n"
+                + "Together, these form the user's 'working balance', the amount of brabocoins the user can actually spend.\n"
+                + "'Immature mining reward' consists of the user's mining rewards, which will be spendable after there are "
+                + state.getConsensus().getCoinbaseMaturityDepth()
+                + " blocks mined on top of the user's mined blocks."
         );
         tooltipStartTimer(infoTooltip, 100);
         immatureMiningRewardInfo.setTooltip(infoTooltip);
@@ -300,7 +305,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @Override
     public void onBalanceChanged() {
-        updateBalances();
+        new Thread(this::updateBalances).start();
     }
 
     private void copyString(String data) {
