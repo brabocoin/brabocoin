@@ -7,8 +7,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.gui.control.NumberTextField;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
@@ -47,21 +47,25 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
         okButtonNode = this.getDialogPane().lookupButton(ButtonType.OK);
 
         TextField ipTextField = new TextField();
+        ipTextField.setMaxWidth(Double.POSITIVE_INFINITY);
+        GridPane.setHgrow(ipTextField, Priority.ALWAYS);
+
         TextField portTextField = new NumberTextField();
+        portTextField.setMaxWidth(Double.POSITIVE_INFINITY);
+        GridPane.setHgrow(portTextField, Priority.ALWAYS);
+
         Button checkButton = new Button("Connect");
+
         StatusBar statusBar = new StatusBar();
         statusBar.setText("");
+        statusBar.setMaxWidth(Double.POSITIVE_INFINITY);
+        GridPane.setHgrow(statusBar, Priority.ALWAYS);
 
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setPrefSize(PROGRESS_INDICATOR_SIZE, PROGRESS_INDICATOR_SIZE);
 
         grid.setHgap(10);
         grid.setVgap(10);
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(50);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(50);
-        grid.getColumnConstraints().addAll(col1, col2);
 
         okButtonNode.setDisable(true);
         grid.add(new Label("IP or hostname:"), 0, 0, 1, 1);
