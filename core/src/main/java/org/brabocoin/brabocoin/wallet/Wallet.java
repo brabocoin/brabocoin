@@ -15,6 +15,7 @@ import org.brabocoin.brabocoin.dal.UTXOSetListener;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.exceptions.InsufficientInputException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
@@ -37,6 +38,8 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -135,13 +138,14 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
 
     /**
      * Create a wallet for a given public to private key map.
-     *  @param keyPairs
+     *
+     * @param keyPairs
      *     Key map
      * @param chainUtxo
      *     The chain UTXO set to watch for changes to the chain UTXO to update the wallet UTXO
      *     and used inputs.
      * @param poolUtxo
- *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
+     *     The pool UTXO set to watch for changes to the pool UTXO to update the wallet UTXO
      * @param transactionPool
      */
     public Wallet(@NotNull List<KeyPair> keyPairs,
@@ -173,7 +177,10 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         this.chainUtxo.addListener(new ChainListener());
         this.blockchain.addListener(this);
         transactionPool.addListener(this);
-        this.walletCompositeUtxoSet = new CompositeReadonlyUTXOSet(walletChainUtxoSet, walletPoolUtxoSet);
+        this.walletCompositeUtxoSet = new CompositeReadonlyUTXOSet(
+            walletChainUtxoSet,
+            walletPoolUtxoSet
+        );
     }
 
     /**
@@ -561,31 +568,31 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     }
 
     /**
-     * Computes the confirmed or pending balance in the chain, using the wallet UTXO set and the
+     * Computes the confirmed or spendable balance in the chain, using the wallet UTXO set and the
      * {@link #usedInputs}.
      *
-     * @param pending
-     *     Whether to compute the confirmed or pending balance.
+     * @param spendable
+     *     Whether to compute the confirmed or spendable balance.
      * @return Confirmed balance
      */
-    public long computeBalance(boolean pending) {
-        return computeKeyPairBalance(pending, null);
+    public long computeBalance(boolean spendable) {
+        return computeKeyPairBalance(spendable, null);
     }
 
     /**
-     * Computes the confirmed or pending balance for a given key pair, using the wallet UTXO set
+     * Computes the confirmed or spendable balance for a given key pair, using the wallet UTXO set
      * and the {@link #usedInputs}.
      *
-     * @param pending
-     *     Whether to compute the confirmed or pending balance.
+     * @param spendable
+     *     Whether to compute the confirmed or spendable balance.
      * @param keyPair
      *     The key pair to calculate the balance for.
      * @return Confirmed balance
      */
-    public long computeKeyPairBalance(boolean pending, KeyPair keyPair) {
+    public long computeKeyPairBalance(boolean spendable, KeyPair keyPair) {
         long sum = 0;
 
-        ReadonlyUTXOSet balanceUtxo = pending ? walletCompositeUtxoSet : walletChainUtxoSet;
+        ReadonlyUTXOSet balanceUtxo = spendable ? walletCompositeUtxoSet : walletChainUtxoSet;
 
         for (Map.Entry<Input, UnspentOutputInfo> entry : balanceUtxo) {
             UnspentOutputInfo info = entry.getValue();
@@ -601,7 +608,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
                 continue;
             }
 
-            if (pending) {
+            if (spendable) {
                 if (!usedInputs.contains(entry.getKey())) {
                     sum += info.getAmount();
                 }
@@ -626,7 +633,8 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     /**
      * Computes the immature pending coinbase block reward for a given keypair.
      *
-     * @param keyPair The keypair to calculate the balance for.
+     * @param keyPair
+     *     The keypair to calculate the balance for.
      * @return Immature coinbase balance.
      */
     public long computeImmatureCoinbase(KeyPair keyPair) {
@@ -640,7 +648,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             }
 
             if (consensus.immatureCoinbase(blockchain.getMainChain()
-                .getHeight(), info))  {
+                .getHeight(), info)) {
                 sum += info.getAmount();
             }
         }
@@ -743,5 +751,57 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             LOGGER.log(Level.SEVERE, "Wallet UTXO set could not be updated.", e);
             throw new RuntimeException("Wallet UTXO set could not be updated.", e);
         }
+    }
+
+    public Map<Input, UnspentOutputInfo> findInputs(long output) throws InsufficientInputException {
+        return findInputs(output, 0, Collections.emptyList());
+    }
+
+    public Map<Input, UnspentOutputInfo> findInputs(long targetOutput, long startInput,
+                                                    Collection<Input> skippedInputs) throws InsufficientInputException {
+        long inputSum = startInput;
+        Map<Input, UnspentOutputInfo> foundInputs = new HashMap<>();
+
+        for (Map.Entry<Input, UnspentOutputInfo> info : getCompositeUtxoSet()) {
+            if (inputSum > targetOutput) {
+                break;
+            }
+
+            Input input = info.getKey();
+
+            // Prevent using used inputs
+            if (getUsedInputs().contains(input)) {
+                continue;
+            }
+
+            // Prevent duplicates
+            if (skippedInputs.contains(input)) {
+                continue;
+            }
+
+            // Prevent coinbase maturity failure
+            if (consensus.immatureCoinbase(
+                blockchain.getMainChain().getHeight(),
+                info.getValue()
+            )) {
+                continue;
+            }
+
+            inputSum += info.getValue().getAmount();
+
+            foundInputs.put(info.getKey(), info.getValue());
+        }
+
+        if (inputSum <= targetOutput) {
+            throw new InsufficientInputException(
+                MessageFormat.format(
+                    "Could only gather {0} while trying to match {1}",
+                    inputSum,
+                    targetOutput
+                )
+            );
+        }
+
+        return foundInputs;
     }
 }

@@ -17,6 +17,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -31,13 +32,16 @@ import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
+import org.brabocoin.brabocoin.exceptions.InsufficientInputException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.auxil.SimpleTransactionCreationResult;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.ColoredBalanceTableCell;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
+import org.brabocoin.brabocoin.gui.dialog.SimpleTransactionCreationDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.tableentry.TableKeyPairEntry;
@@ -46,15 +50,23 @@ import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView;
 import org.brabocoin.brabocoin.gui.window.TransactionCreationWindow;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.Input;
+import org.brabocoin.brabocoin.model.Output;
+import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
+import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
+import org.brabocoin.brabocoin.wallet.TransactionSigningResult;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -68,13 +80,13 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
     private final State state;
 
     @FXML private Tab txHistoryTab;
-    @FXML public Button buttonCreateTransaction;
+    @FXML public MenuButton buttonCreateTransaction;
     @FXML public TableView<TableKeyPairEntry> keyPairsTableView;
     @FXML public Button buttonCreateKeyPair;
     @FXML public Button buttonSaveWallet;
     @FXML public Label confirmedBalanceLabel;
     @FXML public Label pendingBalanceLabel;
-    @FXML public Label workingBalanceLabel;
+    @FXML public Label spendableBalanceLabel;
     @FXML public Label immatureMiningReward;
     @FXML public BraboGlyph immatureMiningRewardInfo;
 
@@ -146,11 +158,17 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
         TableColumn<TableKeyPairEntry, Long> immatureMiningRewardColumn = new TableColumn<>(
             "Immature mining reward (BRC)");
-        immatureMiningRewardColumn.setCellValueFactory(new PropertyValueFactory<>("immatureMiningReward"));
+        immatureMiningRewardColumn.setCellValueFactory(new PropertyValueFactory<>(
+            "immatureMiningReward"));
         immatureMiningRewardColumn.setCellFactory(col -> new BalanceTableCell<>());
 
         keyPairsTableView.getColumns().addAll(
-            indexColumn, encryptedColumn, addressColumn, confirmedBalance, pendingBalance, immatureMiningRewardColumn
+            indexColumn,
+            encryptedColumn,
+            addressColumn,
+            confirmedBalance,
+            pendingBalance,
+            immatureMiningRewardColumn
         );
 
         keyPairObservableList.addListener((ListChangeListener<TableKeyPairEntry>)c ->
@@ -169,14 +187,18 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
         GridPane.setHalignment(confirmedBalanceLabel, HPos.RIGHT);
         GridPane.setHalignment(pendingBalanceLabel, HPos.RIGHT);
-        GridPane.setHalignment(workingBalanceLabel, HPos.RIGHT);
+        GridPane.setHalignment(spendableBalanceLabel, HPos.RIGHT);
         GridPane.setHalignment(immatureMiningReward, HPos.RIGHT);
 
         Tooltip infoTooltip = new Tooltip(
-            "Tne 'confirmed balance' is the user's balance, based only on the transactions that are already mined in a block in the blockchain.\n"
-                + "'Pending' is the user's additional balance, based on the transactions that are in the transaction pool.\n"
-                + "Together, these form the user's 'working balance', the amount of brabocoins the user can actually spend.\n"
-                + "'Immature mining reward' consists of the user's mining rewards, which will be spendable after there are "
+            "Tne 'confirmed balance' is the user's balance, based only on the transactions that "
+                + "are already mined in a block in the blockchain.\n"
+                + "'Pending' is the user's additional balance, based on the transactions that are"
+                + " in the transaction pool.\n"
+                + "Together, these form the user's 'spendable balance', the amount of brabocoins "
+                + "the user can actually spend.\n"
+                + "'Immature mining reward' consists of the user's mining rewards, which will be "
+                + "spendable after there are "
                 + state.getConsensus().getCoinbaseMaturityDepth()
                 + " blocks mined on top of the user's mined blocks."
         );
@@ -194,11 +216,12 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
             Field fieldTimer = objBehavior.getClass().getDeclaredField("activationTimer");
             fieldTimer.setAccessible(true);
-            Timeline objTimer = (Timeline) fieldTimer.get(objBehavior);
+            Timeline objTimer = (Timeline)fieldTimer.get(objBehavior);
 
             objTimer.getKeyFrames().clear();
             objTimer.getKeyFrames().add(new KeyFrame(new Duration(millis)));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -221,7 +244,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
             pendingBalanceLabel.setStyle(WalletUtils.getPendingStyle(difference));
 
-            workingBalanceLabel.textProperty().setValue(
+            spendableBalanceLabel.textProperty().setValue(
                 GUIUtils.formatValue(pendingBalance, true)
             );
 
@@ -233,6 +256,57 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         keyPairObservableList.forEach(TableKeyPairEntry::updateBalances);
 
         keyPairsTableView.refresh();
+    }
+
+    @FXML
+    private void createSimpleTransaction(ActionEvent event) {
+        Optional<SimpleTransactionCreationResult> optionalResult =
+            new SimpleTransactionCreationDialog(state)
+                .showAndWait();
+
+        if (optionalResult.isPresent()) {
+            SimpleTransactionCreationResult result = optionalResult.get();
+
+            Map<Input, UnspentOutputInfo> inputs;
+            try {
+                inputs = state.getWallet().findInputs(
+                    result.getAmount()
+                );
+            }
+            catch (InsufficientInputException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Could not create transaction");
+                alert.setHeaderText("Insufficient input.");
+
+                alert.setContentText("Could not collect sufficient input to match output value.");
+
+                alert.showAndWait();
+                return;
+            }
+
+            long inputSum = inputs.values().stream().mapToLong(UnspentOutputInfo::getAmount).sum();
+            long changeValue = inputSum - result.getAmount() - result.getFee();
+
+            UnsignedTransaction unsignedTransaction = new UnsignedTransaction(
+                new ArrayList<>(inputs.keySet()),
+                Arrays.asList(
+                    new Output(result.getAddress(), result.getAmount()),
+                    new Output(result.getChangeAddress(), changeValue)
+                )
+            );
+
+            TransactionSigningResult signingResult = WalletUtils.signTransaction(
+                unsignedTransaction,
+                state.getWallet()
+            );
+
+            WalletUtils.sendTransaction(
+                signingResult.getTransaction(),
+                state.getTransactionValidator(),
+                state.getEnvironment(),
+                state.getWallet()
+            );
+        }
     }
 
     @FXML
