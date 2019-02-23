@@ -1,8 +1,8 @@
 package org.brabocoin.brabocoin.gui.control;
 
 import com.sun.javafx.scene.control.skin.TableViewSkin;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import org.brabocoin.brabocoin.gui.util.GUIUtils;
 
 /**
  * Table view skin automatically resizing columns on item update.
@@ -19,6 +19,8 @@ public class AutoResizeTableSkin<T> extends TableViewSkin<T> {
     @Override
     protected void updateRowCount() {
         super.updateRowCount();
-        GUIUtils.autoFitTable(tableView);
+        for (TableColumn<T, ?> col : tableView.getColumns()) {
+            this.resizeColumnToFitContent(col, 1);
+        }
     }
 }
