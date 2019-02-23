@@ -2,19 +2,8 @@ package org.brabocoin.brabocoin.gui.view;
 
 import com.dlsc.preferencesfx.PreferencesFx;
 import com.dlsc.preferencesfx.PreferencesFxEvent;
-import com.dlsc.preferencesfx.model.Category;
-import com.dlsc.preferencesfx.model.Group;
-import com.dlsc.preferencesfx.model.Setting;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -24,27 +13,21 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.IllegalConfigMappingException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
-import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.gui.NotificationManager;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
-import org.brabocoin.brabocoin.gui.util.BraboConfigUtil;
+import org.brabocoin.brabocoin.gui.util.BraboConfigPreferencesFX;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -141,25 +124,35 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @FXML
     private void openSettings() {
+        BraboConfigPreferencesFX braboConfigPreferencesFX = new BraboConfigPreferencesFX();
+
         PreferencesFx preferencesFx;
         try {
-            preferencesFx = BraboConfigUtil.getConfigPreferences(state.getConfig());
+            preferencesFx = braboConfigPreferencesFX.getConfigPreferences(state.getConfig());
         }
         catch (IllegalConfigMappingException e) {
             return;
         }
 
+        EventHandler<PreferencesFxEvent> handler = event -> {
+            braboConfigPreferencesFX.updateConfig(state.getConfigAdapter());
+            try {
+                braboConfigPreferencesFX.writeConfig(state.getConfig(), state.getConfigPath());
+            }
+            catch (IllegalConfigMappingException | IOException e) {
+                // TODO: log
+            }
+        };
+
         preferencesFx.addEventHandler(
             PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
-            event -> {
-                BraboConfigUtil.updateConfig(state.getConfigAdapter());
-                try {
-                    BraboConfigUtil.writeConfig(state.getConfig(), state.getConfigPath());
-                }
-                catch (IllegalConfigMappingException | IOException e) {
-                    // TODO: log
-                }
-            }
+            handler
+        );
+
+
+        preferencesFx.addEventHandler(
+            PreferencesFxEvent.EVENT_PREFERENCES_NOT_SAVED,
+            handler
         );
 
         preferencesFx.show(true);

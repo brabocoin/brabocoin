@@ -4,6 +4,9 @@ import org.brabocoin.brabocoin.model.Hash;
 
 import java.util.List;
 
+/**
+ * Wraps a {@link BraboConfig} in another {@link BraboConfig}, delegating every call.
+ */
 public class BraboConfigAdapter implements BraboConfig {
 
     private BraboConfig delegator;
