@@ -11,6 +11,10 @@ public class BraboConfigAdapter implements BraboConfig {
 
     private BraboConfig delegator;
 
+    public BraboConfig getDelegator() {
+        return delegator;
+    }
+
     public void setDelegator(BraboConfig delegator) {
         this.delegator = delegator;
     }

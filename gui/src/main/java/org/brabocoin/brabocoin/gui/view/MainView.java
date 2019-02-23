@@ -13,9 +13,11 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.IllegalConfigMappingException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.gui.NotificationManager;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.gui.util.BraboConfigPreferencesFX;
@@ -31,6 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * Main view for the Brabocoin application.
@@ -124,6 +128,16 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @FXML
     private void openSettings() {
+        /**
+         * Clear PreferencesFX storage
+         */
+        try {
+            Preferences preferences = Preferences.userNodeForPackage(BrabocoinGUI.class);
+            preferences.clear();
+        } catch (BackingStoreException e) {
+            // ignored
+        }
+
         BraboConfigPreferencesFX braboConfigPreferencesFX = new BraboConfigPreferencesFX();
 
         PreferencesFx preferencesFx;
@@ -134,25 +148,45 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             return;
         }
 
-        EventHandler<PreferencesFxEvent> handler = event -> {
-            braboConfigPreferencesFX.updateConfig(state.getConfigAdapter());
-            try {
-                braboConfigPreferencesFX.writeConfig(state.getConfig(), state.getConfigPath());
-            }
-            catch (IllegalConfigMappingException | IOException e) {
-                // TODO: log
-            }
-        };
-
-        preferencesFx.addEventHandler(
-            PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
-            handler
-        );
-
+        /**
+         * IMPORTANT NOTE:
+         *
+         * PreferencesFx has a bug causing the {@link PreferencesFxEvent.EVENT_PREFERENCES_SAVED}
+         * event to be fired even though the dialog cancel button was pressed, see the open issue
+         * <a href="https://github.com/dlemmermann/PreferencesFX/issues/13>here</a>
+         *
+         * However, the {@link PreferencesFxEvent.EVENT_PREFERENCES_NOT_SAVED} is also fired when
+         * cancelled, so we can recover the old config after the new config has been saved.
+         * Because the relevant methods are private in {@link PreferencesFx} and
+         * {@link com.dlsc.preferencesfx.view.PreferencesFxDialog}, this is the best hack we can
+         * do until the issue is patched.
+         */
+        BraboConfig previousDelegate = state.getConfigAdapter().getDelegator();
 
         preferencesFx.addEventHandler(
             PreferencesFxEvent.EVENT_PREFERENCES_NOT_SAVED,
-            handler
+            event -> {
+                state.getConfigAdapter().setDelegator(previousDelegate);
+                try {
+                    braboConfigPreferencesFX.writeConfig(state.getConfig(), state.getConfigPath());
+                }
+                catch (IllegalConfigMappingException | IOException e) {
+                    // TODO: Alert to user
+                }
+            }
+        );
+
+        preferencesFx.addEventHandler(
+            PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
+            event -> {
+                braboConfigPreferencesFX.updateConfig(state.getConfigAdapter());
+                try {
+                    braboConfigPreferencesFX.writeConfig(state.getConfig(), state.getConfigPath());
+                }
+                catch (IllegalConfigMappingException | IOException e) {
+                    // TODO: Alert to user
+                }
+            }
         );
 
         preferencesFx.show(true);
