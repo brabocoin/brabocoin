@@ -1558,7 +1558,7 @@ class BlockRuleTests {
     void ValidNetworkIdBlkRuleSuccess() {
         BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
-            public int networkId() {
+            public Integer networkId() {
                 return 666;
             }
         };
@@ -1589,7 +1589,7 @@ class BlockRuleTests {
     void ValidNetworkIdBlkRuleFailed() {
         BraboConfig config = new MockBraboConfig(defaultConfig) {
             @Override
-            public int networkId() {
+            public Integer networkId() {
                 return 667;
             }
         };

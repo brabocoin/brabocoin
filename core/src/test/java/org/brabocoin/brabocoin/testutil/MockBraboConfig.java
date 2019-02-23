@@ -18,22 +18,22 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int networkId() {
+    public Integer networkId() {
         return this.delegator.networkId();
     }
 
     @Override
-    public int loopInterval() {
+    public Integer loopInterval() {
         return delegator.loopInterval();
     }
 
     @Override
-    public int targetPeerCount() {
+    public Integer targetPeerCount() {
         return delegator.targetPeerCount();
     }
 
     @Override
-    public int handshakeDeadline() {
+    public Integer handshakeDeadline() {
         return delegator.handshakeDeadline();
     }
 
@@ -48,7 +48,7 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int updatePeerInterval() {
+    public Integer updatePeerInterval() {
         return delegator.updatePeerInterval();
     }
 
@@ -73,37 +73,37 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int maxBlockFileSize() {
+    public Integer maxBlockFileSize() {
         return delegator.maxBlockFileSize();
     }
 
     @Override
-    public int maxTransactionPoolSize() {
+    public Integer maxTransactionPoolSize() {
         return delegator.maxTransactionPoolSize();
     }
 
     @Override
-    public int maxOrphanTransactions() {
+    public Integer maxOrphanTransactions() {
         return delegator.maxOrphanTransactions();
     }
 
     @Override
-    public int maxOrphanBlocks() {
+    public Integer maxOrphanBlocks() {
         return delegator.maxOrphanBlocks();
     }
 
     @Override
-    public int maxRecentRejectBlocks() {
+    public Integer maxRecentRejectBlocks() {
         return delegator.maxRecentRejectBlocks();
     }
 
     @Override
-    public int maxRecentRejectTransactions() {
+    public Integer maxRecentRejectTransactions() {
         return delegator.maxRecentRejectTransactions();
     }
 
     @Override
-    public int servicePort() {
+    public Integer servicePort() {
         return delegator.servicePort();
     }
 
@@ -118,7 +118,7 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public int maxSequentialOrphanBlocks() {
+    public Integer maxSequentialOrphanBlocks() {
         return delegator.maxSequentialOrphanBlocks();
     }
 
@@ -128,7 +128,7 @@ public class MockBraboConfig implements BraboConfig {
     }
 
     @Override
-    public boolean allowLocalPeers() {
+    public Boolean allowLocalPeers() {
         return delegator.allowLocalPeers();
     }
 }

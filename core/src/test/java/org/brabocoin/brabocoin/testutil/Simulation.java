@@ -190,7 +190,7 @@ public class Simulation {
                                     BlockDatabase providedBlockDatabase) throws DatabaseException {
         BraboConfig mockConfig = new MockBraboConfig(config) {
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return port;
             }
         };

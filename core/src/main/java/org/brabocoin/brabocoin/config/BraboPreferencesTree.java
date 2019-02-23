@@ -1,15 +1,22 @@
 package org.brabocoin.brabocoin.config;
 
-import org.brabocoin.brabocoin.config.annotations.BraboPrefCategory;
-import org.brabocoin.brabocoin.config.annotations.BraboPrefGroup;
+import org.brabocoin.brabocoin.config.annotation.BraboPrefCategory;
+import org.brabocoin.brabocoin.config.annotation.BraboPrefGroup;
 
-public class BraboPreferencesTree {
+abstract class BraboPreferencesTree {
 
-    @BraboPrefCategory(name = "Test")
-    public class Test {
+    @BraboPrefCategory(name = "Toplevel")
+    abstract class TopLevel {
+        @BraboPrefGroup(name = "Group level 1")
+        abstract class GroupLevel1 {
 
-        @BraboPrefGroup(name = "Test group 1")
-        public class TestGroup1 {
+        }
+    }
+
+    @BraboPrefCategory(name = "Categorty level 1")
+    abstract class CategoryLevel1 {
+        @BraboPrefGroup(name = "Group level 3")
+        abstract class GroupLevel3 {
 
         }
     }

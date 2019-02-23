@@ -1,26 +1,30 @@
 package org.brabocoin.brabocoin.config;
 
-import org.brabocoin.brabocoin.config.annotations.BraboPref;
+import org.brabocoin.brabocoin.config.annotation.BraboPref;
 import org.brabocoin.brabocoin.model.Hash;
 
 import java.util.List;
 
 public interface BraboConfig {
+    String braboConfigSection = "brabo";
 
-    @BraboPref(group = BraboPreferencesTree.Test.TestGroup1.class)
-    int networkId();
+    @BraboPref(name = "Network ID", group = BraboPreferencesTree.TopLevel.GroupLevel1.class)
+    Integer networkId();
 
-    int loopInterval();
 
-    int targetPeerCount();
+    @BraboPref(name = "Loop interval", group =
+        BraboPreferencesTree.CategoryLevel1.GroupLevel3.class)
+    Integer loopInterval();
 
-    int handshakeDeadline();
+    Integer targetPeerCount();
+
+    Integer handshakeDeadline();
 
     List<String> bootstrapPeers();
 
     String dataDirectory();
 
-    int updatePeerInterval();
+    Integer updatePeerInterval();
 
     String databaseDirectory();
 
@@ -35,49 +39,49 @@ public interface BraboConfig {
      *
      * @return The maximum file size.
      */
-    int maxBlockFileSize();
+    Integer maxBlockFileSize();
 
     /**
      * Maximum size of the transaction pool in number of transactions.
      *
      * @return The maximum transaction pool size.
      */
-    int maxTransactionPoolSize();
+    Integer maxTransactionPoolSize();
 
     /**
      * Maximum number of orphan transactions kept in memory.
      *
      * @return The maximum number of orphan transactions.
      */
-    int maxOrphanTransactions();
+    Integer maxOrphanTransactions();
 
     /**
      * Maximum number of orphan blocks kept in memory.
      *
      * @return The maximum number of orphan blocks.
      */
-    int maxOrphanBlocks();
+    Integer maxOrphanBlocks();
 
     /**
      * Maximum number of recently rejected blocks in memory.
      *
      * @return The maximum number of recently rejected blocks.
      */
-    int maxRecentRejectBlocks();
+    Integer maxRecentRejectBlocks();
 
     /**
      * Maximum number of recently rejected transactions in memory.
      *
      * @return The maximum number of recently rejected transactions.
      */
-    int maxRecentRejectTransactions();
+    Integer maxRecentRejectTransactions();
 
     /**
      * Port on which the application listens for messages on the network.
      *
      * @return The port number.
      */
-    int servicePort();
+    Integer servicePort();
 
     /**
      * File in which the wallet is stored.
@@ -93,7 +97,7 @@ public interface BraboConfig {
      */
     String transactionHistoryFile();
 
-    int maxSequentialOrphanBlocks();
+    Integer maxSequentialOrphanBlocks();
 
     /**
      * The target value for blocks.
@@ -113,5 +117,5 @@ public interface BraboConfig {
     /**
      * Whether or not to allow local peers.
      */
-    boolean allowLocalPeers();
+    Boolean allowLocalPeers();
 }

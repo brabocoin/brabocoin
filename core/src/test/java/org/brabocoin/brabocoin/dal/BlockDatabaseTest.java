@@ -238,7 +238,7 @@ class BlockDatabaseTest {
     void createNewFileWhenSizeExceeds() throws DatabaseException {
         BraboConfig smallConfig = new MockBraboConfig(config) {
             @Override
-            public int maxBlockFileSize() {
+            public Integer maxBlockFileSize() {
                 return 1;
             }
         };

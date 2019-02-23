@@ -369,7 +369,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeChildOnly() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 2;
             }
         };
@@ -427,7 +427,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeParentFirst() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 1;
             }
         };
@@ -486,7 +486,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeIndependent() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 1;
             }
         };
@@ -542,7 +542,7 @@ class TransactionPoolTest {
     void maxOrphanTransactions() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxOrphanTransactions() {
+            public Integer maxOrphanTransactions() {
                 return 2;
             }
         };

@@ -110,7 +110,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -124,7 +124,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -138,7 +138,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -173,12 +173,12 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         });
@@ -465,7 +465,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -534,7 +534,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -603,7 +603,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -654,7 +654,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -709,7 +709,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };

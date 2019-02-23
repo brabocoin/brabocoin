@@ -32,6 +32,8 @@ public interface State {
 
     @NotNull BraboConfig getConfig();
 
+    @NotNull String getConfigPath();
+
     @NotNull BraboConfigAdapter getConfigAdapter();
 
     @NotNull Consensus getConsensus();

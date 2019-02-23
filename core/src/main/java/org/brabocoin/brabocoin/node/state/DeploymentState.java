@@ -48,6 +48,7 @@ import java.util.Random;
 public class DeploymentState implements State {
 
     protected final @NotNull BraboConfigAdapter config;
+    protected final @NotNull String configPath;
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
@@ -75,8 +76,10 @@ public class DeploymentState implements State {
     protected final @NotNull Node node;
 
     public DeploymentState(@NotNull BraboConfig config,
+                           @NotNull String configPath,
                            @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
         this.config = new BraboConfigAdapter(config);
+        this.configPath = configPath;
 
         unsecureRandom = createUnsecureRandom();
 
@@ -525,5 +528,9 @@ public class DeploymentState implements State {
     @Override
     public @NotNull WalletIO getWalletIO() {
         return walletIO;
+    }
+
+    public String getConfigPath() {
+        return configPath;
     }
 }
