@@ -162,6 +162,6 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             }
         );
 
-        preferencesFx.show();
+        preferencesFx.show(true);
     }
 }

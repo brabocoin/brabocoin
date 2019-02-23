@@ -5,15 +5,12 @@ import org.brabocoin.brabocoin.config.annotation.BraboPrefGroup;
 
 abstract class BraboPreferencesTree {
 
-    @BraboPrefCategory(name = "Toplevel")
-    abstract class TopLevel {
-        @BraboPrefGroup(name = "Group level 1")
-        abstract class GroupLevel1 {
+    @BraboPrefCategory(name = "Network", order = 1)
+    abstract class NetworkCategory {
 
-        }
     }
 
-    @BraboPrefCategory(name = "Categorty level 1")
+    @BraboPrefCategory(name = "Categorty level 1", order = 2)
     abstract class CategoryLevel1 {
         @BraboPrefGroup(name = "Group level 3")
         abstract class GroupLevel3 {

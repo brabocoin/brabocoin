@@ -4,6 +4,8 @@ import com.dlsc.preferencesfx.PreferencesFx;
 import com.dlsc.preferencesfx.model.Category;
 import com.dlsc.preferencesfx.model.Group;
 import com.dlsc.preferencesfx.model.Setting;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import javafx.beans.property.Property;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.config.BraboConfig;
@@ -17,11 +19,8 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -32,10 +31,14 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class BraboConfigUtil {
 
@@ -70,6 +73,27 @@ public class BraboConfigUtil {
         return instantiatePreferences(preferencesMap);
     }
 
+    private static Comparator<Class> getComparator(
+        Class<? extends Annotation> annotationClass) throws IllegalConfigMappingException {
+        if (annotationClass.equals(BraboPref.class)) {
+            return Comparator.comparingInt(o -> ((BraboPref)o
+                .getAnnotation(annotationClass)).order());
+        }
+        else if (annotationClass.equals(BraboPrefGroup.class)) {
+            return Comparator.comparingInt(o -> ((BraboPrefGroup)o
+                .getAnnotation(annotationClass)).order());
+        }
+        else if (annotationClass.equals(BraboPrefCategory.class)) {
+            return Comparator.comparingInt(o -> ((BraboPrefCategory)o
+                .getAnnotation(annotationClass)).order());
+        }
+
+        throw new IllegalConfigMappingException(String.format(
+            "Could not find comparator for annotation '%s'",
+            annotationClass
+        ));
+    }
+
     private static List<Class> getTopLevelClasses(Class child) {
         Class parent = child;
         while (parent.getDeclaringClass() != null) {
@@ -83,24 +107,27 @@ public class BraboConfigUtil {
         PreferencesMap preferencesMap) throws IllegalConfigMappingException {
         Map<Class, Group> instantiatedGroups = buildGroupMap(preferencesMap);
         Map<Class, Category> instantiatedCategories = new HashMap<>();
+        List<Setting> instantiatedSettings = preferencesMap.getSettings();
 
         while (preferencesMap.getCategoryMap().size() > 0) {
-            Collection<Class> instantiatedSections = new ArrayList<>(instantiatedGroups.keySet());
-            instantiatedSections.addAll(instantiatedCategories.keySet());
+            Collection<Object> instantiatedObjects = new ArrayList<>(instantiatedGroups.keySet());
+            instantiatedObjects.addAll(instantiatedCategories.keySet());
+            instantiatedObjects.addAll(instantiatedSettings);
 
-            for (Iterator<Map.Entry<Class, List<Class>>> it = preferencesMap.getCategoryMap()
+            for (Iterator<Map.Entry<Class, List<Object>>> it = preferencesMap.getCategoryMap()
                 .entrySet()
                 .iterator(); it.hasNext(); ) {
-                Map.Entry<Class, List<Class>> categoryMap = it.next();
+                Map.Entry<Class, List<Object>> categoryMap = it.next();
                 Class categoryClass = categoryMap.getKey();
-                List<Class> childClasses = categoryMap.getValue();
+                List<Object> children = categoryMap.getValue();
 
                 // All children have been instantiated, instantiate category
-                if (instantiatedSections.containsAll(childClasses)) {
+                if (instantiatedObjects.containsAll(children)) {
                     instantiatedCategories.put(
                         categoryClass,
-                        deductCategory(categoryClass, childClasses,
-                            instantiatedGroups, instantiatedCategories
+                        deductCategory(categoryClass, children,
+                            instantiatedGroups, instantiatedCategories,
+                            preferencesMap
                         )
                     );
                     it.remove();
@@ -113,34 +140,58 @@ public class BraboConfigUtil {
         return PreferencesFx.of(
             BrabocoinGUI.class,
             getTopLevelClasses(anyGroup).stream()
-                .map(instantiatedCategories::get).toArray(Category[]::new)
+                .sorted(getComparator(BraboPrefCategory.class))
+                .map(instantiatedCategories::get)
+                .toArray(Category[]::new)
         );
     }
 
-    private static Category deductCategory(Class categoryClass, List<Class> children,
+    private static Category deductCategory(Class categoryClass, List<Object> children,
                                            Map<Class, Group> instantiatedGroups,
-                                           Map<Class, Category> instantiatedCategories) {
+                                           Map<Class, Category> instantiatedCategories,
+                                           PreferencesMap preferencesMap) throws IllegalConfigMappingException {
         Category category = null;
 
         BraboPrefCategory braboPrefCategory = (BraboPrefCategory)categoryClass.getAnnotation(
             BraboPrefCategory.class);
 
-        if (children.stream().anyMatch(instantiatedGroups::containsKey)) {
-            // Create category with groups
-            category = Category.of(braboPrefCategory.name(), children.stream()
-                .filter(instantiatedGroups::containsKey)
-                .map(instantiatedGroups::get).toArray(Group[]::new));
-        }
-        if (children.stream().anyMatch(instantiatedCategories::containsKey)) {
-            Category[] subcategories = children.stream()
-                .filter(instantiatedCategories::containsKey)
-                .map(instantiatedCategories::get).toArray(Category[]::new);
-
-            if (category == null) {
-                category = Category.of(braboPrefCategory.name());
+        if (children.stream().allMatch(o -> o instanceof Class)) {
+            List<Class> childerenClasses = children.stream()
+                .map(o -> (Class)o)
+                .collect(Collectors.toList());
+            if (childerenClasses.stream().anyMatch(instantiatedGroups::containsKey)) {
+                // Create category with groups
+                category = Category.of(braboPrefCategory.name(), childerenClasses.stream()
+                    .filter(instantiatedGroups::containsKey)
+                    .sorted(getComparator(BraboPrefGroup.class))
+                    .map(instantiatedGroups::get).toArray(Group[]::new));
             }
+            if (childerenClasses.stream().anyMatch(instantiatedCategories::containsKey)) {
+                Category[] subcategories = childerenClasses.stream()
+                    .filter(instantiatedCategories::containsKey)
+                    .sorted(getComparator(BraboPrefCategory.class))
+                    .map(instantiatedCategories::get).toArray(Category[]::new);
 
-            category = category.subCategories(subcategories);
+                if (category == null) {
+                    category = Category.of(braboPrefCategory.name());
+                }
+
+                category = category.subCategories(subcategories);
+            }
+        }
+        else if (children.stream().allMatch(o -> o instanceof Setting)) {
+            Setting[] settings = children.stream()
+                .map(o -> (Setting)o)
+                .map(s -> preferencesMap.getPrefMap().get(s))
+                .sorted(Comparator.comparingInt(BraboPref::order))
+                .map(p -> preferencesMap.getPrefMap().inverse().get(p))
+                .toArray(Setting[]::new);
+            category = Category.of(
+                braboPrefCategory.name(), settings
+            );
+        }
+        else {
+            throw new IllegalConfigMappingException("Children of class '%s' contains mixed types.");
         }
 
         return category;
@@ -182,20 +233,40 @@ public class BraboConfigUtil {
                                       PreferencesMap preferencesMap,
                                       BraboConfig config) throws IllegalConfigMappingException {
         BraboPref pref = method.getAnnotation(BraboPref.class);
+        Setting setting = deductSetting(method, pref, config);
+        preferencesMap.getPrefMap().put(setting, pref);
 
-        if (!preferencesMap.getGroupMap().containsKey(pref.group())) {
-            preferencesMap.getGroupMap().put(pref.group(), new ArrayList<>());
+        if (pref.destination().getAnnotation(BraboPrefGroup.class) != null) {
+            if (!preferencesMap.getGroupMap().containsKey(pref.destination())) {
+                preferencesMap.getGroupMap().put(pref.destination(), new ArrayList<>());
 
-            deductCategories(pref.group(), preferencesMap);
+                fillCategoryMap(pref.destination(), preferencesMap);
+            }
+
+            preferencesMap.getGroupMap().get(pref.destination()).add(
+                setting
+            );
+
+            preferencesMap.getGroupMap().get(pref.destination()).sort(
+                Comparator.comparingInt(s -> preferencesMap.getPrefMap().get(s).order())
+            );
+        }
+        else if (pref.destination().getAnnotation(BraboPrefCategory.class) != null) {
+            if (!preferencesMap.getCategoryMap().containsKey(pref.destination())) {
+                preferencesMap.getCategoryMap().put(pref.destination(), new ArrayList<>());
+
+                fillCategoryMap(pref.destination(), preferencesMap);
+            }
+
+            preferencesMap.getCategoryMap().get(pref.destination()).add(
+                setting
+            );
         }
 
-        preferencesMap.getGroupMap().get(pref.group()).add(
-            deductSetting(method, pref, config)
-        );
     }
 
-    private static void deductCategories(Class child,
-                                         PreferencesMap preferencesMap) {
+    private static void fillCategoryMap(Class child,
+                                        PreferencesMap preferencesMap) {
         Class parentClass = child.getDeclaringClass();
 
         if (parentClass == null || parentClass.getAnnotation(BraboPrefCategory.class) == null) {
@@ -203,10 +274,10 @@ public class BraboConfigUtil {
         }
 
         if (!preferencesMap.getCategoryMap().containsKey(parentClass)) {
-            List<Class> childList = new ArrayList<>();
+            List<Object> childList = new ArrayList<>();
             childList.add(child);
             preferencesMap.getCategoryMap().put(parentClass, childList);
-            deductCategories(parentClass, preferencesMap);
+            fillCategoryMap(parentClass, preferencesMap);
             return;
         }
 
@@ -365,15 +436,31 @@ public class BraboConfigUtil {
 
     private static class PreferencesMap {
 
-        private Map<Class, List<Class>> categoryMap = new HashMap<>();
+        private Map<Class, List<Object>> categoryMap = new HashMap<>();
         private Map<Class, List<Setting>> groupMap = new HashMap<>();
+        private BiMap<Setting, BraboPref> prefMap = HashBiMap.create();
 
         Map<Class, List<Setting>> getGroupMap() {
             return groupMap;
         }
 
-        Map<Class, List<Class>> getCategoryMap() {
+        Map<Class, List<Object>> getCategoryMap() {
             return categoryMap;
+        }
+
+        public BiMap<Setting, BraboPref> getPrefMap() {
+            return prefMap;
+        }
+
+        List<Setting> getSettings() {
+            return Stream.concat(
+                categoryMap.values()
+                    .stream()
+                    .flatMap(List::stream)
+                    .filter(o -> o instanceof Setting)
+                    .map(o -> (Setting)o),
+                groupMap.values().stream().flatMap(List::stream)
+            ).collect(Collectors.toList());
         }
     }
 

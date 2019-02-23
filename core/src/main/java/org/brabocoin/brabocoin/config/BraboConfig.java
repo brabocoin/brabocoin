@@ -8,14 +8,14 @@ import java.util.List;
 public interface BraboConfig {
     String braboConfigSection = "brabo";
 
-    @BraboPref(name = "Network ID", group = BraboPreferencesTree.TopLevel.GroupLevel1.class)
+    @BraboPref(name = "Network ID", destination = BraboPreferencesTree.NetworkCategory.class, order = 1)
     Integer networkId();
 
-
-    @BraboPref(name = "Loop interval", group =
+    @BraboPref(name = "Loop interval", destination =
         BraboPreferencesTree.CategoryLevel1.GroupLevel3.class)
     Integer loopInterval();
 
+    @BraboPref(name = "Target peer count", destination = BraboPreferencesTree.NetworkCategory.class, order = 0)
     Integer targetPeerCount();
 
     Integer handshakeDeadline();

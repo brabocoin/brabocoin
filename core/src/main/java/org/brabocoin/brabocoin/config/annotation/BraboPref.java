@@ -9,8 +9,6 @@ import java.util.function.Supplier;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BraboPref {
     String name();
-    Class group();
-    int min() default Integer.MIN_VALUE;
-    int max() default Integer.MAX_VALUE;
-    int precision() default Integer.MIN_VALUE;
+    Class destination();
+    int order() default 0;
 }

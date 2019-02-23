@@ -6,4 +6,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BraboPrefGroup {
     String name() default "";
+    int order() default 0;
 }
