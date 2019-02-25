@@ -142,7 +142,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
             )
         );
 
-        UTXOSetView utxoView = new UTXOSetView(state.getChainUTXODatabase());
+        UTXOSetView utxoView = new UTXOSetView(state.getChainUTXODatabase(), state.getWallet());
         utxoTab.setContent(utxoView);
         utxoTab.setText("UTXO set");
     }
