@@ -1,0 +1,11 @@
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the block height of the block is valid, i.e. if the block height is one higher than the parent block height.
+    If not, the block is invalid.<br>
+    <br>
+    Parent block height: {{ heightFromParent }}<br>
+    Current block height: {{ blockHeight }}<br>
+    <br>
+    Check: <code>{{ heightFromParent }} + 1 = {{ blockHeight }}</code><br>
+{% endblock %}

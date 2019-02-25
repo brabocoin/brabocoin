@@ -1094,7 +1094,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -1157,7 +1158,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();
@@ -1217,7 +1219,8 @@ class TransactionRuleTests {
         );
 
         RuleBook ruleBook = new RuleBook(new RuleList(
-            Collections.singletonList(SignatureTxRule.class)
+            Arrays.asList(SignatureTxRule.class,
+                SignaturePublicKeyTxRule.class)
         ));
 
         FactMap facts = new FactMap();

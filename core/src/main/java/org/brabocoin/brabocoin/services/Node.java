@@ -58,7 +58,7 @@ public class Node {
 
     private final int servicePort;
     /**
-     * The network id of this node
+     * The network ID of this node
      */
     private final int networkId;
 

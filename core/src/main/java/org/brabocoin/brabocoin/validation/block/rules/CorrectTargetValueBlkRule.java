@@ -1,6 +1,8 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
@@ -8,9 +10,16 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class CorrectTargetValueBlkRule extends BlockRule {
 
     private BraboConfig config;
+    @DescriptionField
+    private Hash blockTargetValue;
+    @DescriptionField
+    private Hash configTargetValue;
 
     @Override
     public boolean isValid() {
-        return block.getTargetValue().equals(config.targetValue());
+        blockTargetValue = block.getTargetValue();
+        configTargetValue = config.targetValue();
+
+        return blockTargetValue.equals(configTargetValue);
     }
 }

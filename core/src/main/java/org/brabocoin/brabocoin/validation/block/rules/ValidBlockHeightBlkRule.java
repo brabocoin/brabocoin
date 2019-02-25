@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
@@ -9,15 +10,21 @@ import org.brabocoin.brabocoin.validation.block.BlockRule;
 public class ValidBlockHeightBlkRule extends BlockRule {
 
     private Blockchain blockchain;
+    @DescriptionField
+    private int heightFromParent;
+    @DescriptionField
+    private int blockHeight;
 
     @Override
     public boolean isValid() {
         try {
-            int heightFromParent = blockchain.getIndexedBlock(block.getPreviousBlockHash())
+            heightFromParent = blockchain.getIndexedBlock(block.getPreviousBlockHash())
                 .getBlockInfo()
-                .getBlockHeight() + 1;
+                .getBlockHeight();
 
-            return heightFromParent == block.getBlockHeight();
+            blockHeight = block.getBlockHeight();
+
+            return heightFromParent + 1 == blockHeight ;
         }
         catch (DatabaseException e) {
             e.printStackTrace();

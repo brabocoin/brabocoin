@@ -2,9 +2,8 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
-import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.crypto.Signature;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -16,34 +15,36 @@ import java.util.stream.IntStream;
  * <p>
  * All signatures of the input must be valid.
  */
-@ValidationRule(name="Valid signatures", failedName = "Transaction contains invalid signature", description = "All signatures of the transaction are valid.")
+@ValidationRule(name = "Valid signatures", failedName = "Transaction contains invalid signature",
+                description = "All signatures of the transaction are valid.")
 public class SignatureTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
 
     private Signer signer;
 
+    @DescriptionField
+    private boolean sigValid;
+
     public boolean isValid() {
-        if (transaction.getSignatures().stream().anyMatch(Objects::isNull)) {
-            return false;
+        if (transaction.isCoinbase()) {
+            sigValid = true;
         }
+        else if (transaction.getSignatures().stream().anyMatch(Objects::isNull)) {
+            sigValid = false;
+        }
+        else {
+            sigValid = IntStream.range(0, transaction.getInputs().size())
+                .allMatch(i -> {
+                    Signature signature = transaction.getSignatures().get(i);
 
-        return IntStream.range(0, transaction.getInputs().size())
-            .allMatch(i -> {
-                Input input = transaction.getInputs().get(i);
-                Signature signature = transaction.getSignatures().get(i);
-
-                try {
                     return signer.verifySignature(
                         signature,
-                        Objects.requireNonNull(utxoSet.findUnspentOutputInfo(input)).getAddress(),
                         transaction.getSignableTransactionData()
                     );
-                }
-                catch (DatabaseException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-            });
+                });
+        }
+
+        return sigValid;
     }
 }

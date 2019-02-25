@@ -25,6 +25,7 @@ import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.OutputValueTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureCountTxRule;
+import org.brabocoin.brabocoin.validation.transaction.rules.SignaturePublicKeyTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SignatureTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.SufficientInputTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
@@ -36,6 +37,7 @@ import java.util.logging.Logger;
  * Validation rules for transactions.
  */
 public class TransactionValidator implements Validator<Transaction> {
+
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
     public static final RuleList ALL = new RuleList(
@@ -51,6 +53,7 @@ public class TransactionValidator implements Validator<Transaction> {
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
         SignatureCountTxRule.class,
+        SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
 
@@ -61,13 +64,15 @@ public class TransactionValidator implements Validator<Transaction> {
         OutputValueTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
+        SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
 
     public static final RuleList BLOCK_NONCONTEXTUAL = new RuleList(
         SignatureCountTxRule.class,
         InputOutputNotEmptyTxRule.class,
-        OutputValueTxRule.class
+        OutputValueTxRule.class,
+        SignatureTxRule.class
     );
 
     public static final RuleList BLOCK_CONTEXTUAL = new RuleList(
@@ -75,7 +80,7 @@ public class TransactionValidator implements Validator<Transaction> {
         CoinbaseMaturityTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
-        SignatureTxRule.class
+        SignaturePublicKeyTxRule.class
     );
 
     public static final RuleList ORPHAN = new RuleList(
@@ -118,13 +123,21 @@ public class TransactionValidator implements Validator<Transaction> {
         return facts;
     }
 
-    public TransactionValidationResult validate(@NotNull Transaction transaction, @NotNull RuleList ruleList, boolean useCompositeUTXO) {
+    public TransactionValidationResult validate(@NotNull Transaction transaction,
+                                                @NotNull RuleList ruleList,
+                                                boolean useCompositeUTXO) {
         RuleBook ruleBook = new RuleBook(ruleList);
 
         ruleBook.addListener(this);
 
-        return TransactionValidationResult.from(ruleBook.run(createFactMap(transaction,
-            useCompositeUTXO ? compositeUTXO : chainUTXODatabase)));
+        FactMap factMap = createFactMap(
+            transaction,
+            useCompositeUTXO ? compositeUTXO : chainUTXODatabase
+        );
+
+        validationListeners.forEach(l -> l.onValidationStarted(factMap));
+
+        return TransactionValidationResult.from(ruleBook.run(factMap));
     }
 
     @Override

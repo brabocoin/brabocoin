@@ -1,11 +1,15 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 
-@ValidationRule(name="First transaction coinbase", failedName = "First transaction is not coinbase", description = "The first transaction in the block is a coinbase transaction.")
+@ValidationRule(name="First transaction is coinbase", failedName = "First transaction is not coinbase", description = "The first transaction in the block is a coinbase transaction.")
 public class HasCoinbaseBlkRule extends BlockRule {
+
+    @DescriptionField
+    private boolean isCoinbase;
 
     @Override
     public boolean isValid() {
@@ -13,6 +17,8 @@ public class HasCoinbaseBlkRule extends BlockRule {
         if (coinbase == null) {
             return false;
         }
-        return coinbase.isCoinbase();
+
+        isCoinbase = coinbase.isCoinbase();
+        return isCoinbase;
     }
 }

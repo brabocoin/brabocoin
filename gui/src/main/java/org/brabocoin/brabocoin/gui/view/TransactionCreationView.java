@@ -2,8 +2,8 @@ package org.brabocoin.brabocoin.gui.view;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.JsonFormat;
-import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,7 +16,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.PublicKey;
@@ -59,12 +58,16 @@ import tornadofx.SmartResizeKt;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TransactionCreationView extends VBox implements BraboControl, Initializable {
 
@@ -377,32 +380,36 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
     private void signTransaction(ActionEvent event) {
         signatureTableView.getItems().clear();
 
-        Platform.runLater(() -> {
-            FadeTransition fade = new FadeTransition();
-            fade.setDuration(Duration.millis(100));
-            fade.setFromValue(1);
-            fade.setToValue(0.1);
-            fade.setCycleCount(2);
-            fade.setAutoReverse(true);
-            fade.setNode(inputOutputVBox);
-            fade.play();
-        });
 
-        TransactionSigningResult result = WalletUtils.signTransaction(
+        Task<TransactionSigningResult> signingTask = new Task<TransactionSigningResult>() {
+            @Override
+            protected TransactionSigningResult call() {
+                TransactionSigningResult result = WalletUtils.signTransaction(
             buildUnsignedTransaction(),
             wallet
         );
 
-        if (result != null && result.getStatus() == TransactionSigningStatus.SIGNED) {
-            Transaction signedTransaction = result.getTransaction();
+                return result;
+            }
+        };
 
-            signedTransaction.getSignatures().forEach(
-                s -> signatureTableView.getItems().add(
-                    new EditableTableSignatureEntry(s, signatureTableView.getItems().size())
-                )
-            );
-            signatureTableView.refresh();
-        }
+        signingTask.setOnSucceeded(e -> {
+            TransactionSigningResult result = signingTask.getValue();
+
+            if (result != null && result.getStatus() == TransactionSigningStatus.SIGNED) {
+                Transaction signedTransaction = result.getTransaction();
+
+                List<EditableTableSignatureEntry> entries = IntStream.range(
+                    0,
+                    signedTransaction.getSignatures().size()
+                ).mapToObj(i -> new EditableTableSignatureEntry(signedTransaction.getSignatures()
+                    .get(i), i)).collect(Collectors.toList());
+
+                Platform.runLater(() -> signatureTableView.getItems().setAll(entries));
+            }
+        });
+
+        signingTask.run();
     }
 
     @FXML

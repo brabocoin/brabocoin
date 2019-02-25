@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.rule;
 
 import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.IgnoredFact;
 import org.brabocoin.brabocoin.validation.fact.CompositeRuleFailMarker;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
@@ -104,7 +105,8 @@ public class RuleBook {
                 boolean hasChildRuleFailMarkerFlag =
                     field.getAnnotation(CompositeRuleFailMarker.class) != null;
                 boolean isIgnored =
-                    field.getAnnotation(IgnoredFact.class) != null;
+                    field.getAnnotation(IgnoredFact.class) != null ||
+                    field.getAnnotation(DescriptionField.class) != null;
                 if (hasChildRuleFailMarkerFlag || isIgnored) {
                     continue;
                 }

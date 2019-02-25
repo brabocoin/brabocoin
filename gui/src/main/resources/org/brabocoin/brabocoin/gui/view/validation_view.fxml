@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.TreeView?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns="http://javafx.com/javafx/8.0.171"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.ValidationView">
     <masterNode>
-        <TreeView fx:id="ruleView"/>
+        <MasterDetailPane fx:id="masterDetailNode" detailSide="BOTTOM">
+            <masterNode>
+                <VBox>
+                    <TreeView fx:id="ruleView" visible="false" managed="false" VBox.vgrow="ALWAYS"/>
+                    <VBox alignment="CENTER" spacing="5" fx:id="treeViewPlaceHolder" VBox.vgrow="ALWAYS">
+                        <ProgressIndicator maxHeight="20"/>
+                        <Label text="Loading data..."/>
+                    </VBox>
+                </VBox>
+            </masterNode>
+        </MasterDetailPane>
     </masterNode>
 </fx:root>

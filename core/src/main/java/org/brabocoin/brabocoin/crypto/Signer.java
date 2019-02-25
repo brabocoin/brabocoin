@@ -94,30 +94,15 @@ public class Signer {
 
     /**
      * Verify a signature.
-     * <p>
-     * A signature is only valid if the public key in the signature corresponds to the given
-     * address.
      *
      * @param signature
      *     The signature to verify.
-     * @param publicKeyHash
-     *     The hash of the public key that is used in the signature.
      * @param message
      *     The message that is signed.
      * @return Whether the signature is valid.
      */
-    public synchronized boolean verifySignature(@NotNull Signature signature, @NotNull Hash publicKeyHash,
+    public synchronized boolean verifySignature(@NotNull Signature signature,
                                    @NotNull ByteString message) {
-        LOGGER.fine("Verifying a signature.");
-
-        LOGGER.fine("Checking if public key hash corresponds to public key in signature.");
-        if (!signature.getPublicKey().getHash().equals(publicKeyHash)) {
-            LOGGER.fine("Public key hash does not match signature public key: signature invalid.");
-            return false;
-        }
-
-        LOGGER.fine("Public key hash matches signature public key.");
-
         ECPoint publicKeyPoint = signature.getPublicKey().getPoint();
         CipherParameters parameters = new ECPublicKeyParameters(publicKeyPoint, curve.getDomain());
 
@@ -132,5 +117,26 @@ public class Signer {
             signature.getR(),
             signature.getS()
         );
+    }
+
+    /**
+     * Verify whether the public key in the signature corresponds to the given
+     * address.
+     *
+     * @param signature
+     *     The signature to verify.
+     * @param publicKeyHash
+     *     The hash of the public key that is used in the signature.
+     * @return Whether the signature is valid.
+     */
+    public synchronized boolean verifySignaturePublicKey(@NotNull Signature signature, @NotNull Hash publicKeyHash) {
+        LOGGER.fine("Checking if public key hash corresponds to public key in signature.");
+        if (!signature.getPublicKey().getHash().equals(publicKeyHash)) {
+            LOGGER.fine("Public key hash does not match signature public key: signature invalid.");
+            return false;
+        }
+
+        LOGGER.fine("Public key hash matches signature public key.");
+        return true;
     }
 }

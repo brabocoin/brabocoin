@@ -1,0 +1,11 @@
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks that the sum of all outputs in the transaction is within the allowed range.
+    If not, this transaction instance is invalid.<br>
+    <br>
+    Output sum: {{ sum }}<br>
+    Maximum money value: {{ maxMoneyValue }}<br>
+    <br>
+    Check: 0 <= {{ sum }} <= {{ maxMoneyValue }}<br>
+{% endblock %}

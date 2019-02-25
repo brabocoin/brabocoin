@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 
@@ -14,9 +15,11 @@ import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
 public class ValidInputUTXOTxRule extends TransactionRule {
 
     private ReadonlyUTXOSet utxoSet;
+    @DescriptionField
+    private boolean inputsUnspent;
 
     public boolean isValid() {
-        return transaction.getInputs()
+        inputsUnspent = transaction.getInputs()
             .stream()
             .allMatch(i -> {
                 try {
@@ -27,5 +30,6 @@ public class ValidInputUTXOTxRule extends TransactionRule {
                     return false;
                 }
             });
+        return inputsUnspent;
     }
 }

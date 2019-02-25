@@ -1,0 +1,8 @@
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the first transaction of the validated block is a coinbase transaction.
+    If not, the block is invalid.<br>
+    <br>
+    First transaction is coinbase: {{ isCoinbase }}<br>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the Merkle root defined in the block header is equal to the Merkle root computed with the transactions in the block.
+    If not, the block is invalid.<br>
+    <br>
+    Computed Merkle root: {{ computedRoot }}<br>
+    Block Merkle root: {{ blockRoot }}<br>
+    <br>
+    Check: <br>
+    <code>
+        {{ computedRoot }} =<Br>
+        {{ blockRoot }}
+    </code><br>
+{% endblock %}

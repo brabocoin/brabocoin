@@ -1,0 +1,19 @@
+{% extends "../../Rule.twig" %}
+
+{% block description %}
+    This rule checks whether the number of signatures in the transactions is equal to the number of inputs in the transaction.
+    If not, the transaction is invalid.<br>
+    <br>
+    {% if isCoinbase %}
+    Transaction is coinbase: {{ isCoinbase }}<br>
+    {% else %}
+    Input count: {{inputCount}}<br>
+    {% endif %}
+    Signature count: {{signatureCount}}<br>
+    <br>
+    {% if isCoinbase %}
+        Check: {{ signatureCount }} = 0<br>
+    {% else %}
+        Check: {{ signatureCount }} = {{ inputCount }}<br>
+    {% endif %}
+{% endblock %}

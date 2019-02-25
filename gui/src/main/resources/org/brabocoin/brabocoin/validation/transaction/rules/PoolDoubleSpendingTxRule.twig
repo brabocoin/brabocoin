@@ -1,0 +1,7 @@
+{% extends "../../SkippedRule.twig" %}
+
+{% block description %}
+    This rule checks whether the transaction does not double spend an input that was already spent by one of the transactions already in the transaction pool.
+    <br>
+    Pool does not already spend an input: {{ noDoubleSpending }}<br>
+{% endblock %}
