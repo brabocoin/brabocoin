@@ -32,12 +32,9 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
 
         CheckBox mineOnTopBlock = new CheckBox("Mine on top block");
         TextField parentBlockHashTextField = new TextField();
-        parentBlockHashTextField.setEditable(config.getParentBlock() != null);
         Label parentBlockHashLabel = new Label("Parent block hash:");
 
         mineOnTopBlock.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            parentBlockHashTextField.setDisable(newValue);
-            parentBlockHashLabel.setDisable(newValue);
             if (newValue) {
                 parentBlockHashTextField.setText("");
                 hideErrorLabel();
@@ -46,6 +43,10 @@ public class MiningConfigurationDialog extends BraboValidatedDialog<MiningConfig
                 parentBlockHashTextField.setText(parentBlockHashTextField.getText());
             }
         });
+
+        parentBlockHashTextField.disableProperty().bind(mineOnTopBlock.selectedProperty());
+        parentBlockHashLabel.disableProperty().bind(mineOnTopBlock.selectedProperty());
+
         mineOnTopBlock.setSelected(config.getParentBlock() == null);
 
         grid.add(mineOnTopBlock, 0, 1, 2, 1);
