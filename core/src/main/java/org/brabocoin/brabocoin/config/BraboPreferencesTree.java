@@ -42,17 +42,17 @@ abstract class BraboPreferencesTree {
 
         }
 
-        @BraboPrefGroup(name = "Wallet details", order = 3)
+        @BraboPrefGroup(name = "Wallet details", order = 1)
         abstract class Wallet {
 
         }
 
-        @BraboPrefGroup(name = "Transaction details", order = 1)
+        @BraboPrefGroup(name = "Transaction details", order = 2)
         abstract class Transaction {
 
         }
 
-        @BraboPrefGroup(name = "Block details", order = 2)
+        @BraboPrefGroup(name = "Block details", order = 3)
         abstract class Block {
 
         }
