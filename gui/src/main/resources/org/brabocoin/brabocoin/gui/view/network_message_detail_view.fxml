@@ -7,14 +7,14 @@
 <fx:root type="javafx.scene.control.SplitPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.NetworkMessageDetailView">
-    <TitledPane fx:id="requestTitledPane" text="Request JSON data" collapsible="false" maxHeight="Infinity">
+    <TitledPane fx:id="requestTitledPane" text="Request JSON data" collapsible="false" maxHeight="Infinity" minWidth="0">
         <ScrollPane fx:id="requestScrollPane" hbarPolicy="NEVER" fitToWidth="true" fitToHeight="true">
             <VBox fx:id="requestArtifactPane">
                 <!-- Dynamically loaded -->
             </VBox>
         </ScrollPane>
     </TitledPane>
-    <TitledPane fx:id="responseTitledPane" text="Response JSON data" collapsible="false" maxHeight="Infinity">
+    <TitledPane fx:id="responseTitledPane" text="Response JSON data" collapsible="false" maxHeight="Infinity" minWidth="0">
         <ScrollPane fx:id="responseScrollPane" hbarPolicy="NEVER" fitToWidth="true" fitToHeight="true">
             <VBox fx:id="responseArtifactPane">
                 <!-- Dynamically loaded -->
