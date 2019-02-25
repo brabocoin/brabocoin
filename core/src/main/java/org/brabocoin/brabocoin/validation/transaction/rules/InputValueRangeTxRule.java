@@ -1,6 +1,5 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
-import com.sun.org.glassfish.gmbal.Description;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
