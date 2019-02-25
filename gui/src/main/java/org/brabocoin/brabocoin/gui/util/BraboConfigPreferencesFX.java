@@ -233,24 +233,45 @@ public class BraboConfigPreferencesFX {
         BraboPrefCategory braboPrefCategory = (BraboPrefCategory)categoryClass.getAnnotation(
             BraboPrefCategory.class);
 
-        // Check if all children are class objects
-        if (children.stream().allMatch(o -> o instanceof Class)) {
+
+        // If any of the children are settings
+        if (children.stream().anyMatch(o -> o instanceof Setting)) {
+            // Get settings, and order them by their annotated order
+            Setting[] settings = children.stream()
+                .filter(o -> o instanceof Setting)
+                .map(o -> (Setting)o)
+                .map(s -> preferencesStructure.getPrefMap().get(s))
+                .sorted(Comparator.comparingInt(BraboPref::order))
+                .map(p -> preferencesStructure.getPrefMap().inverse().get(p))
+                .toArray(Setting[]::new);
+            category = Category.of(
+                braboPrefCategory.name(), settings
+            );
+        }
+
+        // If any of the children are class objects
+        if (children.stream().anyMatch(o -> o instanceof Class)) {
             // Get class objects
-            List<Class> childerenClasses = children.stream()
+            List<Class> classChildren = children.stream()
+                .filter(o -> o instanceof Class)
                 .map(o -> (Class)o)
                 .collect(Collectors.toList());
             // If any child is a group class
-            if (childerenClasses.stream().anyMatch(instantiatedGroups::containsKey)) {
+            if (classChildren.stream().anyMatch(instantiatedGroups::containsKey)) {
+                if (category != null) {
+                    throw new IllegalConfigMappingException(String.format(
+                        "Category '%s' cannot have both settings and groups.", categoryClass));
+                }
                 // Create category with groups
-                category = Category.of(braboPrefCategory.name(), childerenClasses.stream()
+                category = Category.of(braboPrefCategory.name(), classChildren.stream()
                     .filter(instantiatedGroups::containsKey)
                     .sorted(getComparator(BraboPrefGroup.class))
                     .map(instantiatedGroups::get).toArray(Group[]::new));
             }
             // If any child is a category class
-            if (childerenClasses.stream().anyMatch(instantiatedCategories::containsKey)) {
+            if (classChildren.stream().anyMatch(instantiatedCategories::containsKey)) {
                 // Get the instantiated child categories
-                Category[] subcategories = childerenClasses.stream()
+                Category[] subcategories = classChildren.stream()
                     .filter(instantiatedCategories::containsKey)
                     .sorted(getComparator(BraboPrefCategory.class))
                     .map(instantiatedCategories::get).toArray(Category[]::new);
@@ -264,21 +285,12 @@ public class BraboConfigPreferencesFX {
                 category = category.subCategories(subcategories);
             }
         }
-        // Else if the children are settings,
-        else if (children.stream().allMatch(o -> o instanceof Setting)) {
-            // Get settings, and order them by their annotated order
-            Setting[] settings = children.stream()
-                .map(o -> (Setting)o)
-                .map(s -> preferencesStructure.getPrefMap().get(s))
-                .sorted(Comparator.comparingInt(BraboPref::order))
-                .map(p -> preferencesStructure.getPrefMap().inverse().get(p))
-                .toArray(Setting[]::new);
-            category = Category.of(
-                braboPrefCategory.name(), settings
-            );
-        }
-        else {
-            throw new IllegalConfigMappingException("Children of class '%s' contains mixed types.");
+
+        if (category == null) {
+            throw new IllegalConfigMappingException(String.format(
+                "Children of class '%s' contains mixed types or no children.",
+                categoryClass
+            ));
         }
 
         return category;
@@ -433,6 +445,9 @@ public class BraboConfigPreferencesFX {
                                   BraboPref pref,
                                   BraboConfig config) throws IllegalConfigMappingException {
         Class returnType = method.getReturnType();
+        if (returnType.equals(Hash.class)) {
+            returnType = String.class;
+        }
 
         // Determine JavaFX property classes.
         Class<?> returnProperty = findPropertyClass(returnType, false);
@@ -471,6 +486,14 @@ public class BraboConfigPreferencesFX {
                 "Could not invoke method '%s' on config object.",
                 method
             ));
+        }
+
+        // Convert hash to string
+        if (configValue.getClass().equals(Hash.class)) {
+            configValue = ByteUtil.toHexString(
+                ((Hash)configValue).getValue(),
+                Constants.BLOCK_HASH_SIZE
+            );
         }
 
         // Instantiate simple property
@@ -533,6 +556,10 @@ public class BraboConfigPreferencesFX {
      */
     private Class findPropertyClass(Class type,
                                     boolean simple) throws IllegalConfigMappingException {
+        if (type.equals(Hash.class)) {
+            type = String.class;
+        }
+
         String propertyClassName = (simple ? "Simple" : "") + type.getSimpleName() + "Property";
 
         try {
@@ -647,14 +674,21 @@ public class BraboConfigPreferencesFX {
      * Proxy to dynamically instantiate the {@link BraboConfig} interface.
      */
     private class BraboConfigPropertyProxy implements InvocationHandler {
+        private Object mapObject(Method m, Object object) {
+            if (m.getReturnType().equals(Hash.class) && object.getClass().equals(String.class)) {
+                return new Hash(ByteUtil.fromHexString((String) object));
+            }
+
+            return object;
+        }
 
         public Object invoke(Object proxy, Method m,
                              Object[] args) throws IllegalConfigMappingException {
             if (methodPropertyMap.containsKey(m)) {
-                return methodPropertyMap.get(m).getValue();
+                return mapObject(m, methodPropertyMap.get(m).getValue());
             }
             else if (methodValueMap.containsKey(m)) {
-                return methodValueMap.get(m);
+                return mapObject(m, methodValueMap.get(m));
             }
             else {
                 throw new IllegalConfigMappingException(

@@ -15,17 +15,42 @@ import org.brabocoin.brabocoin.config.annotation.BraboPrefGroup;
  */
 abstract class BraboPreferencesTree {
 
-    @BraboPrefCategory(name = "Network", order = 1)
+    @BraboPrefCategory(name = "Network", order = 0)
     abstract class NetworkCategory {
+
+        @BraboPrefCategory(name = "Advanced", order = 0)
+        abstract class Advanced {
+
+        }
+    }
+
+    @BraboPrefCategory(name = "Consensus", order = 1)
+    abstract class Consensus {
 
     }
 
-    @BraboPrefCategory(name = "Categorty level 1", order = 2)
-    abstract class CategoryLevel1 {
+    @BraboPrefCategory(name = "Storage", order = 2)
+    abstract class StorageCategory {
 
-        @BraboPrefGroup(name = "Group level 3")
-        abstract class GroupLevel3 {
+        @BraboPrefGroup(name = "General", order = 0)
+        abstract class General {
 
         }
+
+        @BraboPrefGroup(name = "Block details", order = 1)
+        abstract class Block {
+
+        }
+
+        @BraboPrefGroup(name = "Transaction details", order = 1)
+        abstract class Transaction {
+
+        }
+
+        @BraboPrefGroup(name = "Wallet details", order = 1)
+        abstract class Wallet {
+
+        }
+
     }
 }

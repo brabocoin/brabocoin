@@ -4,7 +4,6 @@ import com.dlsc.preferencesfx.PreferencesFx;
 import com.dlsc.preferencesfx.PreferencesFxEvent;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
@@ -33,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -40,6 +40,7 @@ import java.util.prefs.Preferences;
  * Main view for the Brabocoin application.
  */
 public class MainView extends BorderPane implements BraboControl, Initializable {
+    private static final Logger LOGGER = Logger.getLogger(MainView.class.getName());
 
     private final @NotNull State state;
     private final Level initLogLevel;
@@ -145,6 +146,7 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
             preferencesFx = braboConfigPreferencesFX.getConfigPreferences(state.getConfig());
         }
         catch (IllegalConfigMappingException e) {
+            LOGGER.log(Level.SEVERE, "Could not create config dialog.", e);
             return;
         }
 
