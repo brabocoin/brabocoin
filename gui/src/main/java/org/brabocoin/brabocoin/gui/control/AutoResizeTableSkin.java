@@ -28,7 +28,7 @@ public class AutoResizeTableSkin<T> extends TableViewSkin<T> {
 
         for (TableColumn<T, ?> col : tableView.getColumns()) {
             if (this.getTableHeaderRow().getColumnHeaderFor(col) != null) {
-                this.resizeColumnToFitContent(col, lastVisibleCell.getIndex());
+                this.resizeColumnToFitContent(col, Math.max(1, lastVisibleCell.getIndex() + 1));
             }
         }
     }
