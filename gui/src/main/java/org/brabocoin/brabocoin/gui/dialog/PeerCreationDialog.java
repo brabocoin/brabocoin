@@ -14,7 +14,7 @@ import org.brabocoin.brabocoin.gui.control.NumberTextField;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.model.messages.HandshakeResponse;
 import org.brabocoin.brabocoin.node.Peer;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.controlsfx.control.StatusBar;
 

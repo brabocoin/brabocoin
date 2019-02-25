@@ -1,19 +1,25 @@
-package org.brabocoin.brabocoin.testutil;
+package org.brabocoin.brabocoin.config;
 
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.config.BraboConfig;
 
 import java.util.List;
 
-public class MockBraboConfig implements BraboConfig {
+/**
+ * Wraps a {@link BraboConfig} in another {@link BraboConfig}, delegating every call.
+ */
+public class BraboConfigAdapter implements BraboConfig {
 
     private BraboConfig delegator;
+
+    public BraboConfig getDelegator() {
+        return delegator;
+    }
 
     public void setDelegator(BraboConfig delegator) {
         this.delegator = delegator;
     }
 
-    public MockBraboConfig(BraboConfig delegator) {
+    public BraboConfigAdapter(BraboConfig delegator) {
         this.delegator = delegator;
     }
 
@@ -44,7 +50,7 @@ public class MockBraboConfig implements BraboConfig {
 
     @Override
     public String dataDirectory() {
-        return "src/test/resources/" + delegator.dataDirectory();
+        return delegator.dataDirectory();
     }
 
     @Override

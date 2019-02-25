@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.config.BraboConfigAdapter;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
@@ -18,7 +19,7 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
@@ -46,7 +47,8 @@ import java.util.Random;
  */
 public class DeploymentState implements State {
 
-    protected final @NotNull BraboConfig config;
+    protected final @NotNull BraboConfigAdapter config;
+    protected final @NotNull String configPath;
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
@@ -74,8 +76,10 @@ public class DeploymentState implements State {
     protected final @NotNull Node node;
 
     public DeploymentState(@NotNull BraboConfig config,
+                           @NotNull String configPath,
                            @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
-        this.config = config;
+        this.config = new BraboConfigAdapter(config);
+        this.configPath = configPath;
 
         unsecureRandom = createUnsecureRandom();
 
@@ -379,6 +383,11 @@ public class DeploymentState implements State {
         return config;
     }
 
+    @Override
+    public @NotNull BraboConfigAdapter getConfigAdapter() {
+        return config;
+    }
+
     @NotNull
     @Override
     public Consensus getConsensus() {
@@ -519,5 +528,9 @@ public class DeploymentState implements State {
     @Override
     public @NotNull WalletIO getWalletIO() {
         return walletIO;
+    }
+
+    public String getConfigPath() {
+        return configPath;
     }
 }

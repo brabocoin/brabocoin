@@ -4,8 +4,8 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.jetbrains.annotations.NotNull;
@@ -369,7 +369,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeChildOnly() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 2;
             }
         };
@@ -427,7 +427,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeParentFirst() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 1;
             }
         };
@@ -486,7 +486,7 @@ class TransactionPoolTest {
     void limitTransactionPoolSizeIndependent() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxTransactionPoolSize() {
+            public Integer maxTransactionPoolSize() {
                 return 1;
             }
         };
@@ -542,7 +542,7 @@ class TransactionPoolTest {
     void maxOrphanTransactions() {
         BraboConfig newConfig = new MockBraboConfig(config) {
             @Override
-            public int maxOrphanTransactions() {
+            public Integer maxOrphanTransactions() {
                 return 2;
             }
         };

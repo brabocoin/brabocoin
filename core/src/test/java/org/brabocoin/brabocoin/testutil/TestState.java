@@ -4,7 +4,7 @@ import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.Peer;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.util.Destructible;
@@ -19,7 +19,7 @@ import java.util.HashSet;
 public class TestState extends DeploymentState {
 
     public TestState(@NotNull BraboConfig config) throws DatabaseException {
-        super(config, (creation, creator) -> creator.apply(new Destructible<>("testpassphrase"::toCharArray)));
+        super(config, "", (creation, creator) -> creator.apply(new Destructible<>("testpassphrase"::toCharArray)));
     }
 
     @Override

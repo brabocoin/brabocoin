@@ -11,8 +11,8 @@ import org.brabocoin.brabocoin.model.messages.BlockHeight;
 import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
@@ -110,7 +110,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -124,7 +124,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -138,7 +138,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
         });
@@ -173,12 +173,12 @@ class NodeMessageTest {
             }
 
             @Override
-            public int updatePeerInterval() {
+            public Integer updatePeerInterval() {
                 return 3;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         });
@@ -465,7 +465,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -534,7 +534,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -603,7 +603,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -654,7 +654,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };
@@ -709,7 +709,7 @@ class NodeMessageTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         };

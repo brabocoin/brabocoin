@@ -11,8 +11,8 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
-import org.brabocoin.brabocoin.node.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.testutil.MockBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
@@ -107,7 +107,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -137,7 +137,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -188,12 +188,12 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -218,7 +218,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
 
@@ -240,7 +240,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8092;
             }
 
@@ -250,7 +250,7 @@ public class NodeTest {
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -301,7 +301,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -369,7 +369,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -429,12 +429,12 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -501,7 +501,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -525,12 +525,12 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8092;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -594,7 +594,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -661,7 +661,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -685,7 +685,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8092;
             }
         }) {
@@ -748,7 +748,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -784,7 +784,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -814,7 +814,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8092;
             }
         }) {
@@ -903,7 +903,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -939,7 +939,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -1059,12 +1059,12 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -1109,7 +1109,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {
@@ -1127,7 +1127,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8092;
             }
 
@@ -1137,7 +1137,7 @@ public class NodeTest {
             }
 
             @Override
-            public int targetPeerCount() {
+            public Integer targetPeerCount() {
                 return 1;
             }
         }) {
@@ -1223,7 +1223,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8090;
             }
         }) {
@@ -1387,7 +1387,7 @@ public class NodeTest {
             }
 
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return 8091;
             }
         }) {

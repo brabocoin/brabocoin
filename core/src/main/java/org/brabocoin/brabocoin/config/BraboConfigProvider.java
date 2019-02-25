@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.node.config;
+package org.brabocoin.brabocoin.config;
 
 import org.brabocoin.brabocoin.model.Hash;
 import org.cfg4j.provider.ConfigurationProvider;
@@ -53,6 +53,7 @@ public class BraboConfigProvider {
             .withConfigurationSource(source)
             .withEnvironment(environment)
             .build();
+
 
         // Our provider with custom type parsing
         CustomTypeConfigProvider ourProvider = new CustomTypeConfigProvider(source, environment, provider);

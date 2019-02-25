@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
 import org.brabocoin.brabocoin.model.Hash;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;

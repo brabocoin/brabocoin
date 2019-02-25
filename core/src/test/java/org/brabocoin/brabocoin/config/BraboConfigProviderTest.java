@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.node.config;
+package org.brabocoin.brabocoin.config;
 
 import org.cfg4j.provider.ConfigurationProvider;
 import org.junit.jupiter.api.Test;

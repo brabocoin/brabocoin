@@ -14,7 +14,7 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.node.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -190,7 +190,7 @@ public class Simulation {
                                     BlockDatabase providedBlockDatabase) throws DatabaseException {
         BraboConfig mockConfig = new MockBraboConfig(config) {
             @Override
-            public int servicePort() {
+            public Integer servicePort() {
                 return port;
             }
         };
