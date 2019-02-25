@@ -33,7 +33,7 @@ public interface BraboConfig {
     @BraboPref(name = "Target peer count", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 2)
     Integer targetPeerCount();
 
-    @BraboPref(name = "Update peer interval (ms)", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 3)
+    @BraboPref(name = "Update peer interval (s)", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 3)
     Integer updatePeerInterval();
 
     @BraboPref(name = "Allow local peers", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 4)
