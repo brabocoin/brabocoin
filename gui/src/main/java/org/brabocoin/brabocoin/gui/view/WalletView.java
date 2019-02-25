@@ -286,7 +286,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
             Map<Input, UnspentOutputInfo> inputs;
             try {
                 inputs = state.getWallet().findInputs(
-                    result.getAmount()
+                    result.getAmount() + result.getFee()
                 );
             }
             catch (InsufficientInputException e) {
