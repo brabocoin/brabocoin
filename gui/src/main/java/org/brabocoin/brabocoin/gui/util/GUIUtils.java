@@ -2,8 +2,10 @@ package org.brabocoin.brabocoin.gui.util;
 
 import com.sun.javafx.scene.control.skin.TableViewSkin;
 import javafx.collections.ListChangeListener;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.validation.Consensus;
 
 import java.lang.reflect.InvocationTargetException;
@@ -51,5 +53,16 @@ public class GUIUtils {
 
     public static String formatValue(double value) {
         return DECIMAL_FORMAT.format(value);
+    }
+
+    public static void displayErrorDialog(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        BraboDialog.setBraboStyling(alert.getDialogPane());
+
+        alert.showAndWait();
     }
 }

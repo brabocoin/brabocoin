@@ -7,6 +7,7 @@ import com.dlsc.preferencesfx.model.Setting;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleStringProperty;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.config.BraboConfigAdapter;
@@ -45,10 +46,12 @@ public class BraboConfigPreferencesFX {
     private final Package propertyPackage = propertyClass.getPackage();
     private final Map<Method, Property> methodPropertyMap;
     private final Map<Method, Object> methodValueMap;
+    private final Map<Method, Object> parentConfigValueMap;
 
     public BraboConfigPreferencesFX() {
         methodPropertyMap = new HashMap<>();
         methodValueMap = new HashMap<>();
+        parentConfigValueMap = new HashMap<>();
     }
 
     /**
@@ -73,6 +76,7 @@ public class BraboConfigPreferencesFX {
         // Clear the current method maps
         methodPropertyMap.clear();
         methodValueMap.clear();
+        parentConfigValueMap.clear();
 
         // Loop over declared methods in config
         for (Method method : BraboConfig.class.getDeclaredMethods()) {
@@ -496,6 +500,9 @@ public class BraboConfigPreferencesFX {
             );
         }
 
+        // Store previous config value
+        parentConfigValueMap.put(method, configValue);
+
         // Instantiate simple property
         Object simpleProperty;
         try {
@@ -594,12 +601,51 @@ public class BraboConfigPreferencesFX {
      *
      * @param braboConfigAdapter
      *     The config adapter to update.
+     * @return Whether the config has changed
      */
-    public void updateConfig(BraboConfigAdapter braboConfigAdapter) {
+    public boolean updateConfig(
+        BraboConfigAdapter braboConfigAdapter) throws IllegalConfigMappingException {
         if (methodPropertyMap.size() + methodValueMap.size() <= 0) {
             throw new IllegalStateException("Mappings are empty, model should be build first.");
         }
-        braboConfigAdapter.setDelegator(buildConfig());
+        BraboConfig config = buildConfig();
+
+        boolean changes;
+        try {
+            changes = !isEqualConfig(braboConfigAdapter, config);
+        }
+        catch (InvocationTargetException | IllegalAccessException e) {
+            throw new IllegalConfigMappingException("Could not get value in config", e);
+        }
+
+        braboConfigAdapter.setDelegator(config);
+
+        return changes;
+    }
+
+    /**
+     * Returns whether the given configs are equal.
+     *
+     * @param config1
+     *     The first config
+     * @param config2
+     *     The second config
+     * @return True when the configs are equal
+     * @throws InvocationTargetException
+     *     Thrown when the method in a config cannot be invoked.
+     * @throws IllegalAccessException
+     *     Thrown when a method in a config could not be accessed.
+     */
+    private boolean isEqualConfig(BraboConfig config1,
+                                  BraboConfig config2) throws InvocationTargetException,
+                                                              IllegalAccessException {
+        for (Method m : BraboConfig.class.getDeclaredMethods()) {
+            if (!m.invoke(config1).equals(m.invoke(config2))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -674,9 +720,36 @@ public class BraboConfigPreferencesFX {
      * Proxy to dynamically instantiate the {@link BraboConfig} interface.
      */
     private class BraboConfigPropertyProxy implements InvocationHandler {
+
         private Object mapObject(Method m, Object object) {
             if (m.getReturnType().equals(Hash.class) && object.getClass().equals(String.class)) {
-                return new Hash(ByteUtil.fromHexString((String) object));
+                try {
+                    return new Hash(ByteUtil.fromHexString((String)object));
+                }
+                catch (IllegalArgumentException e) {
+                    GUIUtils.displayErrorDialog(
+                        "Invalid config mapping.",
+                        String.format("Could not convert value for config '%s'", m.getName()),
+                        String.format(
+                            "Value '%s' is not a valid '%s', resetting to previous value.",
+                            object,
+                            m.getReturnType().getSimpleName()
+                        )
+                    );
+                    // Get old value
+                    String previousHash = (String)parentConfigValueMap.get(m);
+                    if (methodPropertyMap.containsKey(m)) {
+                        methodPropertyMap.put(m, new SimpleStringProperty(
+                            previousHash
+                        ));
+                    }
+                    else if (methodValueMap.containsKey(m)) {
+                        methodValueMap.put(m, new SimpleStringProperty(
+                            previousHash
+                        ));
+                    }
+                    return new Hash(ByteUtil.fromHexString(previousHash));
+                }
             }
 
             return object;

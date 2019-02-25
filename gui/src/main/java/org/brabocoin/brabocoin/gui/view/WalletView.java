@@ -290,13 +290,11 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
                 );
             }
             catch (InsufficientInputException e) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Could not create transaction");
-                alert.setHeaderText("Insufficient input.");
-
-                alert.setContentText("Could not collect sufficient input to match output value.");
-
-                alert.showAndWait();
+                GUIUtils.displayErrorDialog(
+                    "Could not create transaction",
+                    "Insufficient input.",
+                    "Could not collect sufficient input to match output value."
+                );
                 return;
             }
 

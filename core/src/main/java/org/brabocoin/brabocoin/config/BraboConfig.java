@@ -24,28 +24,28 @@ public interface BraboConfig {
     @BraboPref(name = "Target value", destination = BraboPreferencesTree.Consensus.class, order = 0)
     Hash targetValue();
 
-    @BraboPref(name = "Network ID", destination = BraboPreferencesTree.NetworkCategory.class, order = 0)
+    @BraboPref(name = "Network ID", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 0)
     Integer networkId();
 
-    @BraboPref(name = "Service port number", destination = BraboPreferencesTree.NetworkCategory.class, order = 1)
+    @BraboPref(name = "Service port number", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 1)
     Integer servicePort();
 
-    @BraboPref(name = "Target peer count", destination = BraboPreferencesTree.NetworkCategory.class, order = 2)
+    @BraboPref(name = "Target peer count", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 2)
     Integer targetPeerCount();
 
-    @BraboPref(name = "Update peer interval (ms)", destination = BraboPreferencesTree.NetworkCategory.class, order = 3)
+    @BraboPref(name = "Update peer interval (ms)", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 3)
     Integer updatePeerInterval();
 
-    @BraboPref(name = "Allow local peers", destination = BraboPreferencesTree.NetworkCategory.class, order = 4)
+    @BraboPref(name = "Allow local peers", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 4)
     Boolean allowLocalPeers();
 
-    @BraboPref(name = "Max sequential orphan blocks before synchronization", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 0)
+    @BraboPref(name = "Number of orphan blocks before syncing", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 0)
     Integer maxSequentialOrphanBlocks();
 
-    @BraboPref(name = "Message processing thread interval (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 1)
+    @BraboPref(name = "Message processing interval (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 1)
     Integer loopInterval();
 
-    @BraboPref(name = "Handshake message deadline (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 2)
+    @BraboPref(name = "Handshake response deadline (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 2)
     Integer handshakeDeadline();
 
     // Note: lists do not have a PreferencesFX control
@@ -95,7 +95,7 @@ public interface BraboConfig {
      *
      * @return The maximum transaction pool size.
      */
-    @BraboPref(name = "Maximum transaction pool size", destination = BraboPreferencesTree.StorageCategory.Transaction.class, order = 0)
+    @BraboPref(name = "Maximum transactions in pool", destination = BraboPreferencesTree.StorageCategory.Transaction.class, order = 0)
     Integer maxTransactionPoolSize();
 
     /**

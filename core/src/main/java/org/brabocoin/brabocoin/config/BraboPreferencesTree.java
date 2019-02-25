@@ -18,7 +18,12 @@ abstract class BraboPreferencesTree {
     @BraboPrefCategory(name = "Network", order = 0)
     abstract class NetworkCategory {
 
-        @BraboPrefCategory(name = "Advanced", order = 0)
+        @BraboPrefGroup(name = "General", order = 0)
+        abstract class General {
+
+        }
+
+        @BraboPrefGroup(name = "Advanced", order = 1)
         abstract class Advanced {
 
         }
@@ -37,8 +42,8 @@ abstract class BraboPreferencesTree {
 
         }
 
-        @BraboPrefGroup(name = "Block details", order = 1)
-        abstract class Block {
+        @BraboPrefGroup(name = "Wallet details", order = 3)
+        abstract class Wallet {
 
         }
 
@@ -47,10 +52,9 @@ abstract class BraboPreferencesTree {
 
         }
 
-        @BraboPrefGroup(name = "Wallet details", order = 1)
-        abstract class Wallet {
+        @BraboPrefGroup(name = "Block details", order = 2)
+        abstract class Block {
 
         }
-
     }
 }
