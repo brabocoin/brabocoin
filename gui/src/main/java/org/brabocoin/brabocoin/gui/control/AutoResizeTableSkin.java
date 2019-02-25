@@ -24,11 +24,12 @@ public class AutoResizeTableSkin<T> extends TableViewSkin<T> {
 
         VirtualFlow<?> virtualFlow = (VirtualFlow<?>)getChildren().get(1);
         IndexedCell lastVisibleCell = virtualFlow.getLastVisibleCell();
+        int count = lastVisibleCell != null ? (lastVisibleCell.getIndex() + 1) : 1;
         if (lastVisibleCell == null) return;
 
         for (TableColumn<T, ?> col : tableView.getColumns()) {
             if (this.getTableHeaderRow().getColumnHeaderFor(col) != null) {
-                this.resizeColumnToFitContent(col, Math.max(1, lastVisibleCell.getIndex() + 1));
+                this.resizeColumnToFitContent(col, Math.max(1, count));
             }
         }
     }
