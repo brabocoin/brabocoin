@@ -48,6 +48,7 @@ public class BooleanIconTableCell<S> extends TableCell<S, Boolean> {
 
         BraboGlyph glyph = new BraboGlyph(icon);
         glyph.setColor(item ? trueColor : falseColor);
+        glyph.getStyleClass().add("outline");
 
         setGraphic(glyph);
     }
