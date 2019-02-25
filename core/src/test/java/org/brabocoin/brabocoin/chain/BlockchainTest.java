@@ -210,7 +210,7 @@ class BlockchainTest {
                 block1.getMerkleRoot(),
                 block1.getTargetValue(),
                 block1.getNonce(),
-                0,
+                1,
                 block1.getTransactions(),
                 0);
 
