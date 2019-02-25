@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns="http://javafx.com/javafx/8.0.171"
@@ -25,7 +26,7 @@
                         <SelectableLabel fx:id="externalIpLabel" alignment="CENTER_LEFT"/>
                     </HBox>
                     <Label text="Local IP addresses:"/>
-                    <TableView fx:id="ipTable">
+                    <AutoResizeTableView fx:id="ipTable">
                         <columns>
                             <TableColumn fx:id="ipNameColumn" sortable="false" text="Name"/>
                             <TableColumn fx:id="ipValueColumn" sortable="false" text="IP"/>
@@ -37,7 +38,7 @@
                                 <Label fx:id="ipTablePlaceholderLabel" text="Loading data..."/>
                             </VBox>
                         </placeholder>
-                    </TableView>
+                    </AutoResizeTableView>
                     <HBox spacing="5" alignment="CENTER_LEFT">
                         <Label text="Port:"/>
                         <SelectableLabel fx:id="portLabel"/>
@@ -50,7 +51,7 @@
             </TitledPane>
             <TitledPane collapsible="false" text="Peers" VBox.vgrow="ALWAYS">
                 <VBox VBox.vgrow="ALWAYS">
-                    <TableView fx:id="peerTable" VBox.vgrow="ALWAYS">
+                    <AutoResizeTableView fx:id="peerTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="peerHostnameColumn" sortable="false" text="Hostname"/>
                             <TableColumn fx:id="peerIPColumn" sortable="false" text="IP"/>
@@ -63,7 +64,7 @@
                                 <Label text="No connected peers."/>
                             </VBox>
                         </placeholder>
-                    </TableView>
+                    </AutoResizeTableView>
                     <HBox styleClass="table-action-box" alignment="CENTER_RIGHT">
                         <Button text="Discover peers" onAction="#discoverPeers"/>
                         <Button text="+" onAction="#addPeer"/>
@@ -76,7 +77,7 @@
     <Tab closable="false" text="Messages">
         <CollapsibleMasterDetailPane fx:id="messageMasterPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
-                <TableView fx:id="messageTable">
+                <AutoResizeTableView fx:id="messageTable">
                     <columns>
                         <TableColumn fx:id="incomingColumn" sortable="false" text="Type"/>
                         <TableColumn fx:id="hostnameColumn" sortable="false" text="Hostname"/>
@@ -92,7 +93,7 @@
                             <Label text="Waiting for message to be sent or received."/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </masterNode>
         </CollapsibleMasterDetailPane>
     </Tab>

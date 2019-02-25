@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -13,7 +12,7 @@
          showDetailNode="false">
     <masterNode>
         <VBox>
-            <TableView fx:id="blocksTable" VBox.vgrow="ALWAYS">
+            <AutoResizeTableView fx:id="blocksTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="heightColumn" sortable="false" text="Height"/>
                     <TableColumn fx:id="hashColumn" sortable="false" text="Hash"/>
@@ -24,7 +23,7 @@
                         <Label text="No recently rejected blocks received"/>
                     </VBox>
                 </placeholder>
-            </TableView>
+            </AutoResizeTableView>
         </VBox>
     </masterNode>
 </fx:root>

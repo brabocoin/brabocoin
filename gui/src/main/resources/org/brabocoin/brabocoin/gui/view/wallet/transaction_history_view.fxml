@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.MasterDetailPane?>
 <?import javafx.scene.control.TitledPane?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <fx:root type="org.controlsfx.control.MasterDetailPane"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.wallet.TransactionHistoryView"
@@ -15,7 +16,7 @@
     <masterNode>
         <VBox>
             <TitledPane text="Confirmed transactions" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
-                <TableView fx:id="confirmedTable">
+                <AutoResizeTableView fx:id="confirmedTable">
                     <columns>
                         <TableColumn fx:id="dateConfColumn" text="Time received"/>
                         <TableColumn fx:id="blockHeightConfColumn" text="Block height"/>
@@ -27,10 +28,10 @@
                             <Label text="No confirmed transactions"/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </TitledPane>
             <TitledPane text="Unconfirmed transactions" collapsible="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
-                <TableView fx:id="unconfirmedTable" VBox.vgrow="ALWAYS">
+                <AutoResizeTableView fx:id="unconfirmedTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="dateUnconfColumn" text="Time received"/>
                         <TableColumn fx:id="hashUnconfColumn" sortable="false" text="Transaction hash"/>
@@ -41,7 +42,7 @@
                             <Label text="No unconfirmed transactions"/>
                         </VBox>
                     </placeholder>
-                </TableView>
+                </AutoResizeTableView>
             </TitledPane>
         </VBox>
     </masterNode>

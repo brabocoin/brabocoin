@@ -4,9 +4,9 @@
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.AutoResizeTableView?>
 <?import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane?>
 <fx:root type="javafx.scene.control.TabPane"
          xmlns:fx="http://javafx.com/fxml/1"
@@ -15,7 +15,7 @@
         <CollapsibleMasterDetailPane fx:id="masterDetailPane" dividerPosition="0.65" showDetailNode="false">
             <masterNode>
                 <VBox>
-                    <TableView fx:id="blockchainTable" VBox.vgrow="ALWAYS">
+                    <AutoResizeTableView fx:id="blockchainTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="heightColumn" sortable="false" text="Height"/>
                             <TableColumn fx:id="timeColumn" sortable="false" text="Time received"/>
@@ -29,7 +29,7 @@
                                 <Label text="Loading pool..."/>
                             </VBox>
                         </placeholder>
-                    </TableView>
+                    </AutoResizeTableView>
                 </VBox>
             </masterNode>
         </CollapsibleMasterDetailPane>
