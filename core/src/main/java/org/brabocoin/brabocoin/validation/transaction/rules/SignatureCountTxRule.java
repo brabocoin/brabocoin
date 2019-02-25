@@ -12,11 +12,15 @@ public class SignatureCountTxRule extends TransactionRule {
     @DescriptionField
     private int inputCount;
 
+    @DescriptionField
+    private boolean isCoinbase;
+
     @Override
     public boolean isValid() {
         signatureCount = transaction.getSignatures().size();
         inputCount = transaction.getInputs().size();
-        if (transaction.isCoinbase()) {
+        isCoinbase = transaction.isCoinbase();
+        if (isCoinbase) {
             return signatureCount == 0;
         }
 

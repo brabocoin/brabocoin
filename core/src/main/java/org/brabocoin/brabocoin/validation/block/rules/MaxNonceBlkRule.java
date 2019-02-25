@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.validation.block.rules;
 
+import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
@@ -10,14 +11,14 @@ import java.math.BigInteger;
 public class MaxNonceBlkRule extends BlockRule {
 
     @DescriptionField
-    private BigInteger blockNonce;
+    private String blockNonce;
     @DescriptionField
-    private BigInteger consensusMaxNonce;
+    private String consensusMaxNonce;
 
     @Override
     public boolean isValid() {
-        blockNonce = block.getNonce();
-        consensusMaxNonce = consensus.getMaxNonce();
-        return blockNonce.compareTo(consensusMaxNonce) < 0;
+        blockNonce = block.getNonce().toString(16);
+        consensusMaxNonce = consensus.getMaxNonce().toString(16);
+        return block.getNonce().compareTo(consensus.getMaxNonce()) < 0;
     }
 }

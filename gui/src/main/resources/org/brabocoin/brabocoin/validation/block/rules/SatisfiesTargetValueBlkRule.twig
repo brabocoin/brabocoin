@@ -1,15 +1,15 @@
 {% extends "../../Rule.twig" %}
 
 {% block description %}
-    This rule checks whether the validated block's hash is smaller than the target value of the block.
+    This rule checks whether the hash of the block header is not greater than the target value of the block.
     If not, the block is invalid.<br>
     <br>
-    Block hash: {{ blockHash }} <br>
+    Block header hash: {{ blockHash }} <br>
     Block target value: {{ targetValue }} <br>
     <br>
     Check: <br>
     <code>
-        {{ blockHash }} < <br>
+        {{ blockHash }} <= <br>
         {{ targetValue }}
     </code><br>
 {% endblock %}
