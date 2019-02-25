@@ -42,7 +42,6 @@ import org.brabocoin.brabocoin.node.Peer;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.util.IpData;
 import org.brabocoin.brabocoin.util.NetworkUtil;
-import tornadofx.SmartResize;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -269,8 +268,6 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
         ipTable.prefHeightProperty().set(IP_TABLE_INITIAL_HEIGHT);
         ipTable.minHeightProperty().bind(ipTable.prefHeightProperty());
         ipTable.maxHeightProperty().bind(ipTable.prefHeightProperty());
-
-        ipTable.setColumnResizePolicy((f) -> SmartResize.Companion.getPOLICY().call(f));
 
         refreshIPData();
     }
