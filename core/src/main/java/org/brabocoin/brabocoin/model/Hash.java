@@ -64,7 +64,7 @@ public class Hash implements ProtoModel<Hash>, Comparable<Hash> {
 
         Hash hash = (Hash)o;
 
-        return value.equals(hash.value);
+        return this.compareTo(hash) == 0;
     }
 
     @Override
