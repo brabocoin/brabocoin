@@ -45,7 +45,6 @@ import org.jtwig.resource.exceptions.ResourceNotFoundException;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -356,7 +355,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
                 model.with(
                     field.getName(),
-                    MessageFormat.format("<code>{0}</code>", value.toString())
+                    value
                 );
             }
         }

@@ -5,15 +5,15 @@
     If not, the transaction is invalid.<br>
     <br>
     {% if isCoinbase %}
-    Transaction is coinbase: {{ isCoinbase }}<br>
+    Transaction is coinbase: <code>{{ isCoinbase }}</code><br>
     {% else %}
-    Input count: {{inputCount}}<br>
+    Input count: <code>{{inputCount}}</code><br>
     {% endif %}
-    Signature count: {{signatureCount}}<br>
+    Signature count: <code>{{signatureCount}}</code><br>
     <br>
     {% if isCoinbase %}
-        Check: {{ signatureCount }} = 0<br>
+        Check: <code>{{ signatureCount }} = 0</code><br>
     {% else %}
-        Check: {{ signatureCount }} = {{ inputCount }}<br>
+        Check: <code>{{ signatureCount }} = {{ inputCount }}</code><br>
     {% endif %}
 {% endblock %}

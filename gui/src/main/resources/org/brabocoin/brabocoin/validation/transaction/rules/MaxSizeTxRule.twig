@@ -4,8 +4,8 @@
     This rule checks whether the transaction's size is not greater than the maximum transaction size defined in consensus.
     If not, this transaction is invalid.<br>
     <br>
-    Transaction size: {{ size }} <br>
-    Consensus maximum size: {{ consensusSize }} <br>
+    Transaction size: <code>{{ size }}</code> <br>
+    Consensus maximum size: <code>{{ consensusSize }}</code> <br>
     <br>
-    Check: {{ size }} <= {{ consensusSize }}<br>
+    Check: <code>{{ size }} <= {{ consensusSize }}</code><br>
 {% endblock %}
