@@ -16,8 +16,12 @@ public class InputOutputNotEmptyTxRule extends TransactionRule {
     private int inputCount;
     @DescriptionField
     private int outputCount;
+    @DescriptionField
+    private boolean isCoinbase;
 
     public boolean isValid() {
+        isCoinbase = transaction.isCoinbase();
+
         inputCount = transaction.getInputs().size();
         outputCount = transaction.getOutputs().size();
 

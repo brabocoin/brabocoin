@@ -3,9 +3,12 @@
 {% block description %}
     This rule checks that the transaction contains at least one input and one output.
     If not, the transaction is invalid.<br>
+    {% if isCoinbase %}
+    Note that a coinbase transaction has a hidden input containing the height of the block that includes this transaction.
+    {% endif %}
     <br>
     Input count: <code>{{ inputCount }}</code><br>
     Output count: <code>{{ outputCount }}</code><br>
     <br>
-    Check: <code>{{ inputCount }} > 0 </code> and <code>{{ outputCount }} > 0 </code><br>
+    Check: <code>{{ inputCount }} > 0</code> and <code>{{ outputCount }} > 0</code><br>
 {% endblock %}
