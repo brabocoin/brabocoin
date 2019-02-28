@@ -35,6 +35,7 @@ import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.logging.Logger;
@@ -88,13 +89,42 @@ public class BlockValidator implements Validator<Block> {
     private BraboConfig config;
 
     public BlockValidator(@NotNull State state) {
-        this.consensus = state.getConsensus();
-        this.transactionValidator = state.getTransactionValidator();
-        this.transactionProcessor = state.getTransactionProcessor();
-        this.blockchain = state.getBlockchain();
-        this.utxoSet = state.getChainUTXODatabase();
-        this.signer = state.getSigner();
-        this.config = state.getConfig();
+        this(
+            state.getConsensus(),
+            state.getTransactionValidator(),
+            state.getTransactionProcessor(),
+            state.getBlockchain(),
+            state.getChainUTXODatabase(),
+            state.getSigner(),
+            state.getConfig()
+        );
+    }
+
+    public BlockValidator(@NotNull Consensus consensus,
+                          @NotNull TransactionValidator transactionValidator,
+                          @NotNull TransactionProcessor transactionProcessor,
+                          @NotNull Blockchain blockchain, @NotNull ReadonlyUTXOSet utxoSet,
+                          @NotNull Signer signer, @NotNull BraboConfig config) {
+        this.consensus = consensus;
+        this.transactionValidator = transactionValidator;
+        this.transactionProcessor = transactionProcessor;
+        this.blockchain = blockchain;
+        this.utxoSet = utxoSet;
+        this.signer = signer;
+        this.config = config;
+    }
+
+    @Contract("_ -> new")
+    public @NotNull BlockValidator withUTXOSet(@NotNull ReadonlyUTXOSet utxoSet) {
+        return new BlockValidator(
+            this.consensus,
+            this.transactionValidator,
+            this.transactionProcessor,
+            this.blockchain,
+            utxoSet,
+            this.signer,
+            this.config
+        );
     }
 
     private FactMap createFactMap(@NotNull Block block) {

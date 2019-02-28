@@ -1,6 +1,10 @@
 package org.brabocoin.brabocoin.gui;
 
 import javafx.application.Platform;
+import javafx.geometry.Side;
+import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.util.Duration;
 import org.brabocoin.brabocoin.gui.window.ValidationWindow;
 import org.brabocoin.brabocoin.listeners.NotificationListener;
@@ -28,17 +32,40 @@ public class NotificationManager implements NotificationListener {
         Platform.runLater(() -> Notifications.create()
             .title("New block received!")
             .text("New block at height #" + block.getBlockHeight())
-            .action(new Action(
-                "Validate",
-                (a) -> {
-                    new ValidationWindow(
-                        state.getBlockchain(),
-                        block,
-                        state.getBlockValidator()
-                    ).show();
-                    a.consume();
-                }
-            ))
+
+            .action(
+                new Action(
+                    "Validate",
+                    (a) -> {
+                        MenuItem quick = new MenuItem("Quick");
+                        quick.setOnAction(e -> {
+                            new ValidationWindow(
+                                state.getBlockchain(),
+                                block,
+                                state.getBlockValidator(),
+                                state.getConsensus(),
+                                false
+                            ).show();
+                        });
+
+                        MenuItem complete = new MenuItem("Complete");
+                        complete.setOnAction(e -> {
+                            new ValidationWindow(
+                                state.getBlockchain(),
+                                block,
+                                state.getBlockValidator(),
+                                state.getConsensus(),
+                                true
+                            ).show();
+                        });
+
+                        ContextMenu menu = new ContextMenu(quick, complete);
+                        menu.show(((Node)a.getSource()), Side.BOTTOM, 0, 0);
+
+                        a.consume();
+                    }
+                )
+            )
             .hideAfter(Duration.seconds(8))
             .showInformation());
     }

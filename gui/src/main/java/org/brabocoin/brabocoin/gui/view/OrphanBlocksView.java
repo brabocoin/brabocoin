@@ -21,6 +21,7 @@ import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,15 +40,18 @@ public class OrphanBlocksView extends CollapsibleMasterDetailPane implements Bra
     @FXML private TableColumn<Block, Hash> hashColumn;
 
     private final @NotNull Blockchain blockchain;
+    private final Consensus consensus;
     private final BlockValidator validator;
     private ObservableList<Block> observableBlocks = FXCollections.observableArrayList();
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public OrphanBlocksView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator) {
+    public OrphanBlocksView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator, @NotNull
+                            Consensus consensus) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
+        this.consensus = consensus;
 
         BraboControlInitializer.initialize(this);
     }
@@ -56,7 +60,7 @@ public class OrphanBlocksView extends CollapsibleMasterDetailPane implements Bra
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        blockDetailView = new BlockDetailView(blockchain, null, validator);
+        blockDetailView = new BlockDetailView(blockchain, null, validator, consensus);
         setDetailNode(blockDetailView);
 
         loadOrphans();
