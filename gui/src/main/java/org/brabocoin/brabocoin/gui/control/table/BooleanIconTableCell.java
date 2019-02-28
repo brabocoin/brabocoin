@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.gui.control.table;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 
@@ -48,8 +49,11 @@ public class BooleanIconTableCell<S> extends TableCell<S, Boolean> {
 
         BraboGlyph glyph = new BraboGlyph(icon);
         glyph.setColor(item ? trueColor : falseColor);
-        glyph.getStyleClass().add("outline");
 
-        setGraphic(glyph);
+        BraboGlyph background = new BraboGlyph(icon);
+        background.setColor(Color.WHITE);
+        background.getStyleClass().add("outline");
+
+        setGraphic(new StackPane(background, glyph));
     }
 }

@@ -6,6 +6,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
@@ -71,26 +72,32 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
     protected abstract BiConsumer<T, RuleList> getValidator();
     protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule, RuleBook ruleBook);
 
-    protected BraboGlyph createIcon(RuleState state) {
+    protected Node createIcon(RuleState state) {
+        BraboGlyph glyph = null;
+
         switch (state) {
             case PENDING:
-                BraboGlyph glyphPending = new BraboGlyph(ICON_PENDING);
-                return glyphPending;
+                glyph = new BraboGlyph(ICON_PENDING);
+                break;
             case SKIPPED:
-                BraboGlyph glyphSkipped = new BraboGlyph(ICON_SKIPPED);
-                glyphSkipped.setColor(Color.GRAY);
-                return glyphSkipped;
+                glyph = new BraboGlyph(ICON_SKIPPED);
+                glyph.setColor(Color.GRAY);
+                break;
             case SUCCESS:
-                BraboGlyph glyphSuccess = new BraboGlyph(ICON_SUCCESS);
-                glyphSuccess.setColor(Color.GREEN);
-                return glyphSuccess;
+                glyph = new BraboGlyph(ICON_SUCCESS);
+                glyph.setColor(Color.GREEN);
+                break;
             case FAIL:
-                BraboGlyph glyphFail = new BraboGlyph(ICON_FAIL);
-                glyphFail.setColor(Color.RED);
-                return glyphFail;
+                glyph = new BraboGlyph(ICON_FAIL);
+                glyph.setColor(Color.RED);
+                break;
         }
 
-        return null;
+        BraboGlyph background = new BraboGlyph(BraboGlyph.Icon.CIRCLE_SOLID);
+        background.setColor(Color.WHITE);
+        background.getStyleClass().add("outline");
+
+        return new StackPane(background, glyph);
     }
 
     @FXML
@@ -305,7 +312,7 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
                     if (item.getParent()
                         .getChildren()
                         .stream()
-                        .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
+                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren().get(1)).getIcon()
                             .equals(ICON_SUCCESS))) {
                         item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
                     }
@@ -337,7 +344,11 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
     }
 
     private boolean isSkippedDescendant(TreeItem<String> descendant) {
-        Node graphic = descendant.getGraphic();
+        StackPane stackPane = (StackPane)descendant.getGraphic();
+        Node graphic = null;
+        if (stackPane != null) {
+            graphic = stackPane.getChildren().get(1);
+        }
         if (graphic != null && ((BraboGlyph)graphic).getIcon()
             .equals(ICON_SKIPPED)) {
             return true;

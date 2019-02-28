@@ -108,6 +108,7 @@ public class BraboGlyph extends Glyph {
         TIMES(Font.FONT_AWESOME_SOLID, '\uf00d'),
         WALLET(Font.FONT_AWESOME_SOLID, '\uf555'),
         CIRCLE(Font.FONT_AWESOME, '\uf111'),
+        CIRCLE_SOLID(Font.FONT_AWESOME_SOLID, '\uf111'),
         CROSS(Font.FONT_AWESOME_SOLID, '\uf057'),
         CIRCLEMINUS(Font.FONT_AWESOME_SOLID, '\uf056'),
         CUBE(Font.FONT_AWESOME_SOLID, '\uf1b2'),
