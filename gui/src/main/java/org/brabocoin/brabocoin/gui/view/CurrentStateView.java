@@ -23,6 +23,7 @@ import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DateTimeTableCell;
 import org.brabocoin.brabocoin.gui.control.table.DecimalTableCell;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
+import org.brabocoin.brabocoin.listeners.UpdateBlockchainListener;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -39,7 +40,8 @@ import java.util.ResourceBundle;
  * View for the current state.
  */
 public class CurrentStateView extends TabPane implements BraboControl, Initializable,
-                                                         BlockchainListener {
+                                                         BlockchainListener,
+                                                         UpdateBlockchainListener {
 
     @FXML private Tab recentRejectBlkTab;
     @FXML private Tab recentRejectTxTab;
@@ -69,6 +71,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         this.blockchain = state.getBlockchain();
         this.validator = state.getBlockValidator();
 
+        this.state.getEnvironment().addUpdateBlockchainListener(this);
+
         BraboControlInitializer.initialize(this);
     }
 
@@ -83,7 +87,11 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadMainChain();
         blockchain.addListener(this);
 
-        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator, state.getEnvironment());
+        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(
+            blockchain,
+            validator,
+            state.getEnvironment()
+        );
         recentRejectBlkTab.setContent(rejectBlkView);
         recentRejectBlkTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -149,6 +157,7 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
     private void loadTable() {
         blockchainTable.setItems(observableBlocks);
+        blockchainTable.setDisable(state.getEnvironment().isUpdatingBlockchain());
 
         heightColumn.setCellValueFactory(features -> {
             int blockHeight = features.getValue().getBlockInfo().getBlockHeight();
@@ -217,5 +226,15 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         if (block.getHash().equals(observableBlocks.get(0).getHash())) {
             observableBlocks.remove(0);
         }
+    }
+
+    @Override
+    public void onStartUpdate() {
+        blockchainTable.setDisable(true);
+    }
+
+    @Override
+    public void onUpdateFinished() {
+        blockchainTable.setDisable(false);
     }
 }
