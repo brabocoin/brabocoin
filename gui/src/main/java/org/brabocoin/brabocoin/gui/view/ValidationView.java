@@ -65,6 +65,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     private Block block;
     private WebEngine descriptionWebEngine;
     private TreeItem<String> root;
+    private boolean hasSkippedRulesLoaded = false;
     @FXML private MasterDetailPane masterDetailNode;
     @FXML private VBox treeViewPlaceHolder;
 
@@ -450,10 +451,19 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
     @Override
     public void onValidationStarted(FactMap facts) {
-        Platform.runLater(() -> setSkippedRuleDescriptions(root));
+        Platform.runLater(() -> {
+            setSkippedRuleDescriptions(root);
+            hasSkippedRulesLoaded = true;
+        });
     }
 
     private void setSkippedRuleDescriptions(TreeItem<String> root) {
+        // Make sure we only load skipped rule descriptions once, for else we may override
+        // existing results.
+        if (hasSkippedRulesLoaded) {
+            return;
+        }
+
         Class<? extends Rule> inverseSearch = inverseSearchRule(root);
 
         if (inverseSearch != null && (isSkippedRuleClass(inverseSearch) || isSkippedDescendant(root))) {
