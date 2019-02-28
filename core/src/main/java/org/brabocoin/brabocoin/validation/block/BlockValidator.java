@@ -118,7 +118,7 @@ public class BlockValidator implements Validator<Block> {
     public @NotNull BlockValidator withUTXOSet(@NotNull ReadonlyUTXOSet utxoSet) {
         return new BlockValidator(
             this.consensus,
-            this.transactionValidator,
+            this.transactionValidator.withChainUTXOSet(utxoSet),
             this.transactionProcessor,
             this.blockchain,
             utxoSet,

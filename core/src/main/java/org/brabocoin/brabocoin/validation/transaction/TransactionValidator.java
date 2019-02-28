@@ -102,13 +102,40 @@ public class TransactionValidator implements Validator<Transaction> {
      *     The state for the node.
      */
     public TransactionValidator(@NotNull State state) {
-        this.consensus = state.getConsensus();
-        this.mainChain = state.getBlockchain().getMainChain();
-        this.transactionPool = state.getTransactionPool();
-        this.chainUTXODatabase = state.getChainUTXODatabase();
-        this.poolUTXODatabase = state.getPoolUTXODatabase();
-        this.signer = state.getSigner();
+        this(
+            state.getConsensus(),
+            state.getBlockchain().getMainChain(),
+            state.getTransactionPool(),
+            state.getChainUTXODatabase(),
+            state.getPoolUTXODatabase(),
+            state.getSigner()
+        );
+    }
+
+    public TransactionValidator(Consensus consensus,
+                                IndexedChain mainChain,
+                                TransactionPool transactionPool,
+                                ReadonlyUTXOSet chainUTXODatabase,
+                                UTXODatabase poolUTXODatabase,
+                                Signer signer) {
+        this.consensus = consensus;
+        this.mainChain = mainChain;
+        this.transactionPool = transactionPool;
+        this.chainUTXODatabase = chainUTXODatabase;
+        this.poolUTXODatabase = poolUTXODatabase;
+        this.signer = signer;
         this.compositeUTXO = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
+    }
+
+    public TransactionValidator withChainUTXOSet(@NotNull ReadonlyUTXOSet chainUTXOSet) {
+        return new TransactionValidator(
+            this.consensus,
+            this.mainChain,
+            this.transactionPool,
+            chainUTXOSet,
+            this.poolUTXODatabase,
+            this.signer
+        );
     }
 
     private FactMap createFactMap(@NotNull Transaction transaction, ReadonlyUTXOSet utxoSet) {
