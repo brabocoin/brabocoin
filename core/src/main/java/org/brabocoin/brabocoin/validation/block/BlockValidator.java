@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 /**
  * Validates blocks.
  */
-public class BlockValidator implements Validator<Block> {
+public class BlockValidator implements Validator {
 
     private static final Logger LOGGER = Logger.getLogger(BlockValidator.class.getName());
 

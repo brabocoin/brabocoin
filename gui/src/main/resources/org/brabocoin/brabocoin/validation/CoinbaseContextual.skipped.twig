@@ -1,0 +1,6 @@
+{% extends "SkippedRule.twig" %}
+
+{% block description %}
+    The contextual transaction rules are skipped for the coinbase transaction.
+    This is because these rules only apply to regular transactions, not coinbase transactions.
+{% endblock %}

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface Validator<T> extends ValidationListener {
+public interface Validator extends ValidationListener {
     List<ValidationListener> validationListeners = new ArrayList<>();
 
     /**

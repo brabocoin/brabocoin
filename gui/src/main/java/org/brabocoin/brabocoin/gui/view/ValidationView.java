@@ -42,12 +42,12 @@ import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 
 public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.proto.ProtoModel> extends MasterDetailPane implements BraboControl, Initializable,
-                                                                ValidationListener {
+                                                                                                                                   ValidationListener {
 
     private final Map<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItemMap;
     protected final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
     protected final Map<TreeItem<? extends String>, String> descriptionItemMap;
-    private final Validator<T> validator;
+    private final Validator validator;
     private final T subject;
     private WebEngine descriptionWebEngine;
     private TreeItem<String> root;
@@ -68,9 +68,13 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
     }
 
     protected abstract RuleList getRules();
+
     protected abstract RuleList getSkippedRules();
+
     protected abstract BiConsumer<T, RuleList> getValidator();
-    protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule, RuleBook ruleBook);
+
+    protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems,
+                                                               Rule rule, RuleBook ruleBook);
 
     protected Node createIcon(RuleState state) {
         BraboGlyph glyph = null;
@@ -180,7 +184,8 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         }
     }
 
-    protected abstract List<TreeItem<String>> addCompositeRuleChildren(Class<? extends Rule> rule, RuleList composite);
+    protected abstract List<TreeItem<String>> addCompositeRuleChildren(Class<? extends Rule> rule,
+                                                                       RuleList composite);
 
     private void createDescriptionNode() {
         WebView browser = new WebView();
@@ -192,7 +197,8 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         masterDetailNode.setDetailNode(browser);
     }
 
-    public ValidationView(@NotNull Validator<T> validator, @NotNull T subject, @Nullable Node detailView) {
+    public ValidationView(@NotNull Validator validator, @NotNull T subject,
+                          @Nullable Node detailView) {
         super();
         ruleTreeItemMap = new HashMap<>();
         transactionItemMap = new HashMap<>();
@@ -236,8 +242,25 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         }).start();
     }
 
-    private String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
-        String templatePath = ruleClass.getName().replace('.', '/') + ".skipped.twig";
+    protected String deriveClassPath(Class rule) {
+        return rule.getName().replace('.', '/');
+    }
+
+
+    protected String deriveClassTwigPath(Class rule, boolean skipped) {
+        return deriveClassPath(rule) + (skipped ? ".skipped.twig" : ".twig");
+    }
+
+
+    protected String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
+        return deriveSkippedDescription(
+            ruleClass,
+            deriveClassTwigPath(ruleClass, true)
+        );
+    }
+
+    protected String deriveSkippedDescription(Class<? extends Rule> ruleClass,
+                                              String templatePath) {
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
         JtwigModel model = JtwigModel.newModel();
 
@@ -254,7 +277,7 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
     }
 
     private String deriveDescription(Rule rule, boolean success) {
-        String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
+        String templatePath = deriveClassTwigPath(rule.getClass(), false);
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
 
         JtwigModel model = JtwigModel.newModel();
@@ -312,7 +335,8 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
                     if (item.getParent()
                         .getChildren()
                         .stream()
-                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren().get(1)).getIcon()
+                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren()
+                            .get(1)).getIcon()
                             .equals(ICON_SUCCESS))) {
                         item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
                     }

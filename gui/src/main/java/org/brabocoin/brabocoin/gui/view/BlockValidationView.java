@@ -10,6 +10,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
@@ -56,7 +57,8 @@ public class BlockValidationView extends ValidationView<Block> {
     );
 
     public BlockValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
-                               @NotNull BlockValidator validator, @NotNull Consensus consensus, boolean withRevertedUTXO) {
+                               @NotNull BlockValidator validator, @NotNull Consensus consensus,
+                               boolean withRevertedUTXO) {
         super(validator, block, new BlockDetailView(blockchain, block, null, consensus));
         this.block = block;
         this.blockchain = blockchain;
@@ -89,12 +91,16 @@ public class BlockValidationView extends ValidationView<Block> {
             IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getHash());
 
             if (indexedBlock != null && blockchain.getMainChain().contains(indexedBlock)) {
-                ChainUTXODatabase validationUTXO = new ChainUTXODatabase(new HashMapDB(), consensus);
+                ChainUTXODatabase validationUTXO = new ChainUTXODatabase(
+                    new HashMapDB(),
+                    consensus
+                );
                 UTXOProcessor processor = new UTXOProcessor(validationUTXO);
 
                 // Build up validation UTXO
                 for (int i = 1; i < indexedBlock.getBlockInfo().getBlockHeight(); i++) {
-                    Block prevBlk = blockchain.getBlock(blockchain.getMainChain().getBlockAtHeight(i));
+                    Block prevBlk = blockchain.getBlock(blockchain.getMainChain()
+                        .getBlockAtHeight(i));
                     processor.processBlockConnected(prevBlk);
                 }
 
@@ -116,7 +122,8 @@ public class BlockValidationView extends ValidationView<Block> {
     }
 
     @Override
-    protected @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule, RuleBook ruleBook) {
+    protected @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule,
+                                                      RuleBook ruleBook) {
         if (rule instanceof TransactionRule) {
             FactMap map = ruleBook.getFacts();
             Transaction tx = (Transaction)map.get("transaction");
@@ -164,7 +171,22 @@ public class BlockValidationView extends ValidationView<Block> {
                 txItem.setValue("Coinbase transaction");
                 txItem.setGraphic(createIcon(RuleState.SKIPPED));
                 txItem.setExpanded(false);
-                addRules(txItem, composite, true);
+
+                // Hotfix for describing why coinbase tx's are skipped
+                if (rule == ContextualTransactionCheckBlkRule.class) {
+                    String validatorClassPath = deriveClassPath(Validator.class);
+                    // This should really be done differently... :/
+                    descriptionItemMap.put(txItem, deriveSkippedDescription(
+                        rule,
+                        validatorClassPath.substring(
+                            0,
+                            validatorClassPath.lastIndexOf('/') + 1
+                        ) + "CoinbaseContextual.skipped.twig"
+                    ));
+                }
+                else {
+                    addRules(txItem, composite, true);
+                }
             }
             else {
                 txItem.setValue("Transaction " + i);

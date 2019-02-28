@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 /**
  * Validation rules for transactions.
  */
-public class TransactionValidator implements Validator<Transaction> {
+public class TransactionValidator implements Validator {
 
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
