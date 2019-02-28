@@ -2,8 +2,14 @@ package org.brabocoin.brabocoin.gui.view;
 
 import javafx.scene.control.TreeItem;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.processor.UTXOProcessor;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockRule;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
@@ -29,6 +35,8 @@ public class BlockValidationView extends ValidationView<Block> {
     private Block block;
     private Blockchain blockchain;
     private BlockValidator validator;
+    private Consensus consensus;
+    private boolean withRevertedUTXO;
 
     private static final RuleList blockRules = new RuleList(
         BlockValidator.INCOMING_BLOCK,
@@ -43,12 +51,18 @@ public class BlockValidationView extends ValidationView<Block> {
         ValidCoinbaseOutputAmountBlkRule.class
     );
 
+    private static final RuleList skippedBlockRulesWithRevertedUTXO = new RuleList(
+        DuplicateStorageBlkRule.class
+    );
+
     public BlockValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
-                               @NotNull BlockValidator validator) {
-        super(validator, block, new BlockDetailView(blockchain, block, null));
+                               @NotNull BlockValidator validator, @NotNull Consensus consensus, boolean withRevertedUTXO) {
+        super(validator, block, new BlockDetailView(blockchain, block, null, consensus));
         this.block = block;
         this.blockchain = blockchain;
         this.validator = validator;
+        this.consensus = consensus;
+        this.withRevertedUTXO = withRevertedUTXO;
     }
 
     @Override
@@ -58,12 +72,47 @@ public class BlockValidationView extends ValidationView<Block> {
 
     @Override
     protected RuleList getSkippedRules() {
-        return skippedBlockRules;
+        return withRevertedUTXO ? skippedBlockRulesWithRevertedUTXO : skippedBlockRules;
     }
 
     @Override
     protected BiConsumer<Block, RuleList> getValidator() {
-        return (b, r) -> validator.validate(b, r);
+        if (!withRevertedUTXO) {
+            return (block, ruleList) -> validator.validate(block, ruleList);
+        }
+
+        return this::validateWithRevertedUTXO;
+    }
+
+    private void validateWithRevertedUTXO(Block block, RuleList ruleList) {
+        try {
+            IndexedBlock indexedBlock = blockchain.getIndexedBlock(block.getHash());
+
+            if (indexedBlock != null && blockchain.getMainChain().contains(indexedBlock)) {
+                ChainUTXODatabase validationUTXO = new ChainUTXODatabase(new HashMapDB(), consensus);
+                UTXOProcessor processor = new UTXOProcessor(validationUTXO);
+
+                // Build up validation UTXO
+                for (int i = 1; i < indexedBlock.getBlockInfo().getBlockHeight(); i++) {
+                    Block prevBlk = blockchain.getBlock(blockchain.getMainChain().getBlockAtHeight(i));
+                    processor.processBlockConnected(prevBlk);
+                }
+
+                // Construct new validator
+                BlockValidator dummyValidator = validator.withUTXOSet(validationUTXO);
+
+                dummyValidator.addListener(this);
+                dummyValidator.validate(block, ruleList);
+                dummyValidator.removeListener(this);
+
+                return;
+            }
+        }
+        catch (DatabaseException ignored) {
+
+        }
+
+        validator.validate(block, ruleList);
     }
 
     @Override

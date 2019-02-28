@@ -24,6 +24,7 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
@@ -45,6 +46,7 @@ public class RecentRejectBlkView extends CollapsibleMasterDetailPane implements 
     @FXML private TableColumn<RejectedBlock, Class<? extends Rule>> ruleColumn;
 
     private final @NotNull Blockchain blockchain;
+    private final Consensus consensus;
     private final BlockValidator validator;
     private final NodeEnvironment nodeEnvironment;
     private ObservableList<RejectedBlock> observableBlocks = FXCollections.observableArrayList();
@@ -52,11 +54,12 @@ public class RecentRejectBlkView extends CollapsibleMasterDetailPane implements 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
     public RecentRejectBlkView(@NotNull Blockchain blockchain, @NotNull BlockValidator validator, @NotNull
-                               NodeEnvironment nodeEnvironment) {
+                               NodeEnvironment nodeEnvironment, Consensus consensus) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
         this.nodeEnvironment = nodeEnvironment;
+        this.consensus = consensus;
 
         BraboControlInitializer.initialize(this);
     }
@@ -65,7 +68,7 @@ public class RecentRejectBlkView extends CollapsibleMasterDetailPane implements 
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        blockDetailView = new BlockDetailView(blockchain, null, validator, nodeEnvironment);
+        blockDetailView = new BlockDetailView(blockchain, null, validator, nodeEnvironment, consensus);
         setDetailNode(blockDetailView);
 
         loadRejects();

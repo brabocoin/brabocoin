@@ -6,6 +6,7 @@ import org.brabocoin.brabocoin.gui.view.BlockValidationView;
 import org.brabocoin.brabocoin.gui.view.TransactionValidationView;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;
@@ -23,12 +24,12 @@ public class ValidationWindow extends BraboDialog {
      *     The block to create a validation window for
      */
     public ValidationWindow(Blockchain blockchain, Block block,
-                            BlockValidator validator) {
+                            BlockValidator validator, Consensus consensus, boolean withRevertedUTXO) {
         super();
 
         setTitle("Block Validation");
 
-        masterDetailPane = new BlockValidationView(blockchain, block, validator);
+        masterDetailPane = new BlockValidationView(blockchain, block, validator, consensus, withRevertedUTXO);
         setProperties();
     }
 
