@@ -1,9 +1,11 @@
 package org.brabocoin.brabocoin.processor;
 
+import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.listeners.NotificationListener;
+import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
@@ -36,6 +38,7 @@ public class BlockProcessor {
 
     private final @NotNull Set<BlockProcessorListener> listeners;
     private final @NotNull List<NotificationListener> notificationListeners;
+    private final @NotNull List<ReorganizeChainListener> reorganizeChainListeners;
 
     /**
      * UTXO processor.
@@ -86,7 +89,8 @@ public class BlockProcessor {
         this.consensus = consensus;
         this.blockValidator = blockValidator;
         this.listeners = new HashSet<>();
-        notificationListeners = new ArrayList<>();
+        this.notificationListeners = new ArrayList<>();
+        this.reorganizeChainListeners = new ArrayList<>();
     }
 
     /**
@@ -362,10 +366,22 @@ public class BlockProcessor {
 
             // Check if we have at least one disconnect top
             boolean isForkSwitched = false;
+            boolean isReorganized = false;
 
             // Revert chain state to target block by disconnecting top blocks
             while (!revertTargetBlock.equals(blockchain.getMainChain().getTopBlock())) {
-                isForkSwitched = true;
+                if (!isForkSwitched) {
+                    if (blockchain.getMainChain()
+                        .getTopBlock()
+                        .getBlockInfo()
+                        .getBlockHeight() - revertTargetBlock
+                        .getBlockInfo()
+                        .getBlockHeight() >= Constants.FORK_SWITCH_DEPTH_REORGANIZATION) {
+                        reorganizeChainListeners.forEach(ReorganizeChainListener::onStartOrganization);
+                        isReorganized = true;
+                    }
+                    isForkSwitched = true;
+                }
                 disconnectTop();
             }
 
@@ -385,6 +401,10 @@ public class BlockProcessor {
                     allCandidates.remove(bestCandidate);
                     continue reorganization;
                 }
+            }
+
+            if (isReorganized) {
+                reorganizeChainListeners.forEach(ReorganizeChainListener::onFinishOrganization);
             }
 
             LOGGER.info("Main chain is updated with new top block.");
@@ -538,5 +558,13 @@ public class BlockProcessor {
 
     public void removeNotificationListener(NotificationListener notificationListener) {
         this.notificationListeners.remove(notificationListener);
+    }
+
+    public void addReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.add(listener);
+    }
+
+    public void removeReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.remove(listener);
     }
 }

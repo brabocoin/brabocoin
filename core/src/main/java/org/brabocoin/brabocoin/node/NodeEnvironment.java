@@ -16,7 +16,7 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
-import org.brabocoin.brabocoin.listeners.UpdateBlockchainListener;
+import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
@@ -88,7 +88,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private Queue<Runnable> messageQueue;
     private final List<NotificationListener> notificationListeners;
     private final List<NetworkMessageListener> networkMessageListeners;
-    private final List<UpdateBlockchainListener> updateBlockchainListeners;
+    private final List<ReorganizeChainListener> reorganizeChainListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
     private SortedSet<NetworkMessage> networkMessages;
@@ -121,7 +121,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         notificationListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
-        updateBlockchainListeners = new ArrayList<>();
+        reorganizeChainListeners = new ArrayList<>();
         isUpdatingBlockchain = new AtomicBoolean(false);
         networkMessages = new ConcurrentSkipListSet<>(NetworkMessage::compareTo);
 
@@ -237,14 +237,14 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
 
         if (maxHeight > blockchain.getMainChain().getHeight()) {
             isUpdatingBlockchain.set(true);
-            updateBlockchainListeners.forEach(UpdateBlockchainListener::onStartUpdate);
+            reorganizeChainListeners.forEach(ReorganizeChainListener::onStartOrganization);
 
             // Peer has a longer chain, need to update.
             Hash matchingBlockHash = checkChainCompatibleRequest(maxHeightPeer);
 
             seekBlockchainRequest(maxHeightPeer, matchingBlockHash);
 
-            updateBlockchainListeners.forEach(UpdateBlockchainListener::onUpdateFinished);
+            reorganizeChainListeners.forEach(ReorganizeChainListener::onFinishOrganization);
             isUpdatingBlockchain.set(false);
         }
     }
@@ -323,12 +323,12 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         networkMessageListeners.remove(listener);
     }
 
-    public void addUpdateBlockchainListener(UpdateBlockchainListener listener) {
-        updateBlockchainListeners.add(listener);
+    public void addReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.add(listener);
     }
 
-    public void removeUpdateBlockchainListener(UpdateBlockchainListener listener) {
-        updateBlockchainListeners.remove(listener);
+    public void removeReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.remove(listener);
     }
 
     public SortedSet<NetworkMessage> getNetworkMessages() {

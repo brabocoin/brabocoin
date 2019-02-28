@@ -28,7 +28,7 @@ import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.gui.util.BraboConfigPreferencesFX;
-import org.brabocoin.brabocoin.listeners.UpdateBlockchainListener;
+import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.NotificationPane;
@@ -53,7 +53,7 @@ import java.util.prefs.Preferences;
  * Main view for the Brabocoin application.
  */
 public class MainView extends NotificationPane implements BraboControl, Initializable,
-                                                          UpdateBlockchainListener {
+                                                          ReorganizeChainListener {
 
     private static final Logger LOGGER = Logger.getLogger(MainView.class.getName());
     public static final double NOTIFICATION_ICON_FONT_SIZE = 16.0;
@@ -95,7 +95,8 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
         super();
         this.state = state;
         this.initLogLevel = initLogLevel;
-        this.state.getEnvironment().addUpdateBlockchainListener(this);
+        this.state.getEnvironment().addReorganizeChainListener(this);
+        this.state.getBlockProcessor().addReorganizeChainListener(this);
 
         BraboControlInitializer.initialize(this);
     }
@@ -281,6 +282,7 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
 
     private void setUpdating(boolean updating) {
         Platform.runLater(() -> {
+            stateToggleButton.fire();
             mainBorderPane.setDisable(updating);
             if (updating) {
                 this.show();
@@ -292,12 +294,12 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
     }
 
     @Override
-    public void onStartUpdate() {
+    public void onStartOrganization() {
         setUpdating(true);
     }
 
     @Override
-    public void onUpdateFinished() {
+    public void onFinishOrganization() {
         setUpdating(false);
     }
 }
