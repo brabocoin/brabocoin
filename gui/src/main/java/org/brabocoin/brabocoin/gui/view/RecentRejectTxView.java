@@ -13,6 +13,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
@@ -24,6 +25,8 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -35,8 +38,12 @@ import java.util.ResourceBundle;
 /**
  * View for recently rejected transactions.
  */
-public class RecentRejectTxView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
+public class RecentRejectTxView extends CollapsibleMasterDetailPane implements BraboControl,
+                                                                               Initializable,
+                                                                               TransactionPoolListener {
 
+    private final Blockchain blockchain;
+    private final Consensus consensus;
     private TransactionDetailView transactionDetailView;
 
     @FXML private TableView<RejectedTransaction> txsTable;
@@ -50,11 +57,13 @@ public class RecentRejectTxView extends CollapsibleMasterDetailPane implements B
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public RecentRejectTxView(@NotNull TransactionPool pool, @NotNull NodeEnvironment nodeEnvironment, @NotNull TransactionValidator validator) {
+    public RecentRejectTxView(State state) {
         super();
-        this.pool = pool;
-        this.nodeEnvironment = nodeEnvironment;
-        this.validator = validator;
+        this.blockchain = state.getBlockchain();
+        this.consensus = state.getConsensus();
+        this.pool = state.getTransactionPool();
+        this.nodeEnvironment = state.getEnvironment();
+        this.validator = state.getTransactionValidator();
 
         BraboControlInitializer.initialize(this);
     }
@@ -63,7 +72,14 @@ public class RecentRejectTxView extends CollapsibleMasterDetailPane implements B
     public void initialize(URL location, ResourceBundle resources) {
         loadTable();
 
-        transactionDetailView = new TransactionDetailView(null, nodeEnvironment, validator);
+        transactionDetailView = new TransactionDetailView(
+            blockchain,
+            consensus,
+            null,
+            nodeEnvironment,
+            validator,
+            false
+        );
         setDetailNode(transactionDetailView);
 
         loadRejects();

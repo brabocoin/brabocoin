@@ -127,7 +127,7 @@ public class TransactionValidator implements Validator {
         this.compositeUTXO = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
     }
 
-    public TransactionValidator withChainUTXOSet(@NotNull ReadonlyUTXOSet chainUTXOSet) {
+    public TransactionValidator withUTXOSet(@NotNull ReadonlyUTXOSet chainUTXOSet) {
         return new TransactionValidator(
             this.consensus,
             this.mainChain,

@@ -1,7 +1,11 @@
 package org.brabocoin.brabocoin.gui.view;
 
 import javafx.scene.control.TreeItem;
+import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
@@ -20,6 +24,7 @@ public class TransactionValidationView extends ValidationView<Transaction> {
 
     private Transaction transaction;
     private TransactionValidator validator;
+    private final boolean withRevertedUTXO;
 
     private static final RuleList transactionRules = TransactionValidator.ALL;
 
@@ -28,11 +33,39 @@ public class TransactionValidationView extends ValidationView<Transaction> {
         PoolDoubleSpendingTxRule.class
     );
 
-    public TransactionValidationView(@NotNull Transaction transaction, @NotNull
-        TransactionValidator validator) {
-        super(validator, transaction, new TransactionDetailView(transaction, null));
+    public TransactionValidationView(@NotNull Transaction transaction,
+                                     @NotNull Blockchain blockchain,
+                                     @NotNull Consensus consensus,
+                                     @NotNull TransactionValidator validator,
+                                     boolean withRevertedUTXO) {
+        super(
+            validator,
+            transaction,
+            blockchain,
+            consensus,
+            new TransactionDetailView(blockchain, consensus, transaction, null, withRevertedUTXO)
+        );
         this.transaction = transaction;
         this.validator = validator;
+        this.withRevertedUTXO = withRevertedUTXO;
+    }
+
+    @Override
+    protected IndexedBlock getRevertedUTXODestinationBlock(Transaction subject) {
+        try {
+            for (int i = 0; i <= blockchain.getMainChain().getHeight(); i++) {
+                if (blockchain.getBlock(blockchain.getMainChain().getBlockAtHeight(i))
+                    .getTransactions()
+                    .stream()
+                    .anyMatch(t -> t.getHash().equals(subject.getHash()))) {
+                    return blockchain.getMainChain().getBlockAtHeight(i);
+                }
+            }
+        }
+        catch (DatabaseException e) {
+            return null;
+        }
+        return null;
     }
 
     @Override
@@ -46,8 +79,21 @@ public class TransactionValidationView extends ValidationView<Transaction> {
     }
 
     @Override
-    protected BiConsumer<Transaction, RuleList> getValidator() {
-        return (t, r) -> validator.validate(t, r, true);
+    protected BiConsumer<Transaction, RuleList> applyValidator() {
+        if (!withRevertedUTXO) {
+            return (t, r) -> validator.validate(t, r, true);
+        }
+
+        TransactionValidator revertedUTXOValidator = getRevertedUTXOValidator(
+            validator,
+            transaction
+        );
+
+        return (t, r) -> {
+            revertedUTXOValidator.addListener(this);
+            revertedUTXOValidator.validate(t, r, true);
+            revertedUTXOValidator.removeListener(this);
+        };
     }
 
     @Override

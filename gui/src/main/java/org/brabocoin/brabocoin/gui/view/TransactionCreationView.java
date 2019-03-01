@@ -59,8 +59,6 @@ import tornadofx.SmartResizeKt;
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -385,9 +383,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             @Override
             protected TransactionSigningResult call() {
                 TransactionSigningResult result = WalletUtils.signTransaction(
-            buildUnsignedTransaction(),
-            wallet
-        );
+                    buildUnsignedTransaction(),
+                    wallet
+                );
 
                 return result;
             }
@@ -463,7 +461,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @FXML
     private void validateTransaction(ActionEvent event) {
-        new ValidationWindow(buildTransaction(), transactionValidator).showAndWait();
+        new ValidationWindow(blockchain, buildTransaction(), transactionValidator, consensus, false)
+            .showAndWait();
     }
 
     @FXML

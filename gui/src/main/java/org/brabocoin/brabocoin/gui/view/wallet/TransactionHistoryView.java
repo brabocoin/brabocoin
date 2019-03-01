@@ -19,12 +19,10 @@ import org.brabocoin.brabocoin.gui.view.TransactionDetailView;
 import org.brabocoin.brabocoin.listeners.TransactionHistoryListener;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
+import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.wallet.ConfirmedTransaction;
-import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.brabocoin.brabocoin.wallet.UnconfirmedTransaction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.time.Instant;
@@ -35,10 +33,11 @@ import java.util.ResourceBundle;
 /**
  * Transaction history in the wallet.
  */
-public class TransactionHistoryView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionHistoryListener {
+public class TransactionHistoryView extends CollapsibleMasterDetailPane implements BraboControl,
+                                                                                   Initializable,
+                                                                                   TransactionHistoryListener {
 
-    private final @NotNull TransactionHistory transactionHistory;
-    private final @Nullable TransactionValidator validator;
+    @NotNull private final State state;
 
     @FXML private TableView<ConfirmedTransaction> confirmedTable;
     @FXML private TableView<UnconfirmedTransaction> unconfirmedTable;
@@ -52,12 +51,10 @@ public class TransactionHistoryView extends CollapsibleMasterDetailPane implemen
     @FXML private TableColumn<UnconfirmedTransaction, Hash> hashUnconfColumn;
     @FXML private TableColumn<UnconfirmedTransaction, Long> amountUnconfColumn;
 
-    public TransactionHistoryView(@NotNull TransactionHistory transactionHistory,
-                                  @Nullable TransactionValidator validator) {
+    public TransactionHistoryView(State state) {
         super();
-        this.transactionHistory = transactionHistory;
-        this.validator = validator;
-        this.transactionHistory.addListener(this);
+        this.state = state;
+        this.state.getWallet().getTransactionHistory().addListener(this);
         BraboControlInitializer.initialize(this);
     }
 
@@ -117,7 +114,13 @@ public class TransactionHistoryView extends CollapsibleMasterDetailPane implemen
                     setDetailNode(new CoinbaseDetailView(transaction));
                 }
                 else {
-                    setDetailNode(new TransactionDetailView(transaction, validator));
+                    setDetailNode(new TransactionDetailView(
+                        state.getBlockchain(),
+                        state.getConsensus(),
+                        transaction,
+                        state.getTransactionValidator(),
+                        true
+                    ));
                 }
                 setShowDetailNode(true);
             }
@@ -130,14 +133,26 @@ public class TransactionHistoryView extends CollapsibleMasterDetailPane implemen
                     setDetailNode(new CoinbaseDetailView(tx.getTransaction()));
                 }
                 else {
-                    setDetailNode(new TransactionDetailView(tx.getTransaction(), validator));
+                    setDetailNode(new TransactionDetailView(
+                        state.getBlockchain(),
+                        state.getConsensus(),
+                        tx.getTransaction(),
+                        state.getTransactionValidator(),
+                        false
+                    ));
                 }
                 setShowDetailNode(true);
             }
         });
 
-        confirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getConfirmedTransactions().values()));
-        unconfirmedTable.setItems(FXCollections.observableArrayList(transactionHistory.getUnconfirmedTransactions().values()));
+        confirmedTable.setItems(FXCollections.observableArrayList(state.getWallet()
+            .getTransactionHistory()
+            .getConfirmedTransactions()
+            .values()));
+        unconfirmedTable.setItems(FXCollections.observableArrayList(state.getWallet()
+            .getTransactionHistory()
+            .getUnconfirmedTransactions()
+            .values()));
 
         this.registerTableView(confirmedTable);
         this.registerTableView(unconfirmedTable);

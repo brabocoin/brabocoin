@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.validation;
 
+import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,4 +26,6 @@ public interface Validator extends ValidationListener {
     default void removeListener(@NotNull ValidationListener listener) {
         this.validationListeners.remove(listener);
     }
+
+    Validator withUTXOSet(@NotNull ReadonlyUTXOSet utxoSet);
 }

@@ -12,6 +12,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
@@ -21,6 +22,8 @@ import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
+import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +34,15 @@ import java.util.ResourceBundle;
 /**
  * View of the transaction pool.
  */
-public class TransactionPoolView extends CollapsibleMasterDetailPane implements BraboControl, Initializable, TransactionPoolListener {
+public class TransactionPoolView extends CollapsibleMasterDetailPane implements BraboControl,
+                                                                                Initializable,
+                                                                                TransactionPoolListener {
 
     private final @NotNull TransactionPool pool;
     private final @NotNull TransactionValidator validator;
     private final @NotNull NodeEnvironment nodeEnvironment;
+    private final Blockchain blockchain;
+    private final Consensus consensus;
 
     @FXML private TitledPane independentPane;
     @FXML private TitledPane dependentPane;
@@ -50,11 +57,13 @@ public class TransactionPoolView extends CollapsibleMasterDetailPane implements 
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public TransactionPoolView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator, @NotNull NodeEnvironment nodeEnvironment) {
+    public TransactionPoolView(State state) {
         super();
-        this.pool = pool;
-        this.validator = validator;
-        this.nodeEnvironment = nodeEnvironment;
+        this.blockchain = state.getBlockchain();
+        this.consensus = state.getConsensus();
+        this.pool = state.getTransactionPool();
+        this.validator = state.getTransactionValidator();
+        this.nodeEnvironment = state.getEnvironment();
         BraboControlInitializer.initialize(this);
 
         this.pool.addListener(this);
@@ -62,7 +71,14 @@ public class TransactionPoolView extends CollapsibleMasterDetailPane implements 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        detailView = new TransactionDetailView(null, nodeEnvironment, validator);
+        detailView = new TransactionDetailView(
+            blockchain,
+            consensus,
+            null,
+            nodeEnvironment,
+            validator,
+            false
+        );
         setDetailNode(detailView);
 
         independentPane.textProperty().bind(

@@ -1,10 +1,10 @@
 package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.ReadonlyUTXOSet;
 import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -35,7 +35,6 @@ import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.logging.Logger;
@@ -114,11 +113,10 @@ public class BlockValidator implements Validator {
         this.config = config;
     }
 
-    @Contract("_ -> new")
     public @NotNull BlockValidator withUTXOSet(@NotNull ReadonlyUTXOSet utxoSet) {
         return new BlockValidator(
             this.consensus,
-            this.transactionValidator.withChainUTXOSet(utxoSet),
+            this.transactionValidator.withUTXOSet(utxoSet),
             this.transactionProcessor,
             this.blockchain,
             utxoSet,
