@@ -753,17 +753,22 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
         }
     }
 
-    public Map<Input, UnspentOutputInfo> findInputs(long output) throws InsufficientInputException {
-        return findInputs(output, 0, Collections.emptyList());
+    public Map<Input, UnspentOutputInfo> findInputs(long output,
+                                                    boolean allowEqual) throws InsufficientInputException {
+        return findInputs(output, 0, Collections.emptyList(), allowEqual);
     }
 
     public Map<Input, UnspentOutputInfo> findInputs(long targetOutput, long startInput,
-                                                    Collection<Input> skippedInputs) throws InsufficientInputException {
+                                                    Collection<Input> skippedInputs,
+                                                    boolean allowEqual) throws InsufficientInputException {
         long inputSum = startInput;
         Map<Input, UnspentOutputInfo> foundInputs = new HashMap<>();
 
         for (Map.Entry<Input, UnspentOutputInfo> info : getCompositeUtxoSet()) {
-            if (inputSum > targetOutput) {
+            if (allowEqual && (inputSum >= targetOutput)) {
+                break;
+            }
+            else if (!allowEqual && (inputSum > targetOutput)) {
                 break;
             }
 
@@ -792,7 +797,7 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
             foundInputs.put(info.getKey(), info.getValue());
         }
 
-        if (inputSum <= targetOutput) {
+        if ((allowEqual && (inputSum < targetOutput)) || (!allowEqual && (inputSum <= targetOutput))) {
             throw new InsufficientInputException(
                 MessageFormat.format(
                     "Could only gather {0} while trying to match {1}",

@@ -59,8 +59,6 @@ import tornadofx.SmartResizeKt;
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -356,7 +354,7 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
         try {
             inputs = wallet.findInputs(outputSum, inputSum,
                 inputTableView.getItems().stream().map(EditableTableInputEntry::toInput).collect(
-                    Collectors.toList())
+                    Collectors.toList()), false
             );
         }
         catch (InsufficientInputException e) {
@@ -385,9 +383,9 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
             @Override
             protected TransactionSigningResult call() {
                 TransactionSigningResult result = WalletUtils.signTransaction(
-            buildUnsignedTransaction(),
-            wallet
-        );
+                    buildUnsignedTransaction(),
+                    wallet
+                );
 
                 return result;
             }
