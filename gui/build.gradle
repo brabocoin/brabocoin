@@ -10,6 +10,9 @@ dependencies {
     compile('org.yaml:snakeyaml:1.8')
 
     compile project(':core')
+
+    testCompile "org.testfx:testfx-core:4.0.15-alpha"
+    testCompile "org.testfx:testfx-junit5:4.0.15-alpha"
 }
 
 task fatCapsule(type: FatCapsule) {
