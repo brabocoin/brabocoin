@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.dal.TransactionPool;
+import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
@@ -23,7 +24,7 @@ import static org.brabocoin.brabocoin.util.ByteUtil.toHexString;
 /**
  * Processes transactions to and from the {@link TransactionPool}.
  */
-public class TransactionProcessor {
+public class TransactionProcessor implements TransactionPoolListener {
 
     private static final Logger LOGGER = Logger.getLogger(TransactionProcessor.class.getName());
 
@@ -59,6 +60,8 @@ public class TransactionProcessor {
         this.transactionValidator = transactionValidator;
         this.transactionPool = transactionPool;
         this.utxoFromPool = utxoFromPool;
+
+        this.transactionPool.addListener(this);
     }
 
     /**
@@ -150,12 +153,6 @@ public class TransactionProcessor {
             return;
         }
 
-        // Validated transaction: update pool UTXO set
-        LOGGER.fine(
-            "New transaction can be added to transaction pool. Set outputs unspent in transaction"
-                + " pool UTXO.");
-        utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
-
         if (transactionValidator.validate(transaction, TransactionValidator.ORPHAN, false).isPassed()) {
             LOGGER.info("New transaction is added as independent.");
             transactionPool.addIndependentTransaction(transaction);
@@ -197,12 +194,6 @@ public class TransactionProcessor {
 
             // Remove from orphans
             transactionPool.removeOrphan(hash);
-
-            // Set UTXO from pool as spent
-            LOGGER.finest("Set outputs of transaction as spent in UTXO from pool.");
-            for (int i = 0; i < transaction.getOutputs().size(); i++) {
-                utxoFromPool.setOutputSpent(hash, i);
-            }
         }
 
         // Promote dependent transactions to independent when possible
@@ -265,5 +256,29 @@ public class TransactionProcessor {
         }
 
         transactionPool.limitTransactionPoolSize();
+    }
+
+    @Override
+    public void onTransactionAddedToPool(@NotNull Transaction transaction) {
+        try {
+            utxoFromPool.setOutputsUnspent(transaction, Constants.TRANSACTION_POOL_HEIGHT);
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Transacton pool UTXO could not be updated.", e);
+            throw new RuntimeException("Transaction pool UTXO could not be updated.", e);
+        }
+    }
+
+    @Override
+    public void onTransactionRemovedFromPool(@NotNull Transaction transaction) {
+        try {
+            for (int i = 0; i < transaction.getOutputs().size(); i++) {
+                utxoFromPool.setOutputSpent(transaction.getHash(), i);
+            }
+        }
+        catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Transacton pool UTXO could not be updated.", e);
+            throw new RuntimeException("Transaction pool UTXO could not be updated.", e);
+        }
     }
 }
