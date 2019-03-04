@@ -305,6 +305,7 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
     @FXML
     private void stop() {
+        isMiningContinuously = false;
         if (miningTask != null) {
             miningTask.cancel();
         }
