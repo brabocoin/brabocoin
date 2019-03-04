@@ -58,8 +58,8 @@ clean {
 }
 
 jfx {
-    verbose = true
     mainClass = 'org.brabocoin.brabocoin.BrabocoinApplication'
     vendor = 'Brabocoin'
     appName = 'Brabocoin'
+    jfxMainAppJarName = "brabocoin-headless-" + version + ".jar"
 }

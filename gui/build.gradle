@@ -22,10 +22,10 @@ task copyDeploymentIcons(type: Copy) {
 }
 
 jfx {
-    verbose = true
     mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
     vendor = 'Brabocoin'
     appName = 'Brabocoin'
+    jfxMainAppJarName = "brabocoin-" + version + ".jar"
     nativeReleaseVersion = version
     needShortcut = true
     needMenu = true
