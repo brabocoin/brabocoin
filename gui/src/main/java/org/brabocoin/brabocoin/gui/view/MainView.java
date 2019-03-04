@@ -12,6 +12,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
+import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.NotificationManager;
@@ -31,6 +32,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * Main view for the Brabocoin application.
@@ -126,7 +129,17 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @FXML
     private void openSettings() {
-        BraboPreferencesFx.buildPreferencesFx(state.getConfig(), state.getConsensus()).show(false);
+        BraboPreferencesFx.buildPreferencesFx(state.getConfig(), state.getConsensus())
+            .show(true, true, () -> {
+                try {
+                    Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
+                    state.getConfig().initializeValues();
+                    state.getConsensus().initializeValues();
+                }
+                catch (BackingStoreException e) {
+                    // ignored
+                }
+            });
     }
 
     private void requestConfigRestart() {

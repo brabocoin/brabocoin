@@ -2,12 +2,9 @@ package org.brabocoin.brabocoin.validation;
 
 import com.google.protobuf.ByteString;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import org.bouncycastle.util.encoders.Hex;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Hashing;
@@ -19,7 +16,6 @@ import org.brabocoin.brabocoin.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,19 +34,21 @@ public class Consensus {
             );
         });
         targetValue.addListener((observable, oldValue, newValue) -> {
-            try {
-                if (newValue.startsWith("0")) {
-                    cachedTargetValue = new Hash(ByteString.copyFrom(Hex.decode(newValue)));
-                }
-                else {
-                    cachedTargetValue =
-                        new Hash(ByteUtil.toUnsigned(new BigDecimal(newValue).toBigInteger()));
-                }
-            }
-            catch (NumberFormatException e) {
-                // ignored
+            Hash newHash = ByteUtil.parseHash(newValue);
+            if (newHash != null) {
+                cachedTargetValue = newHash;
             }
         });
+        initializeValues();
+    }
+
+    public void initializeValues() {
+        maxBlockSize.setValue(MAX_BLOCK_SIZE);
+        maxNonceSize.setValue(MAX_NONCE_SIZE);
+        coinbaseMaturityDepth.setValue(COINBASE_MATURITY_DEPTH);
+        blockReward.setValue(BLOCK_REWARD);
+        minimumTransactionFee.setValue(MINIMUM_TRANSACTION_FEE);
+        targetValue.setValue(TARGET_VALUE_STRING);
     }
 
     //================================================================================
@@ -60,16 +58,16 @@ public class Consensus {
     /**
      * The max block size, excluding the nonce.
      */
-    private static final long MAX_BLOCK_SIZE = 10_000L; // In bytes
+    private static final int MAX_BLOCK_SIZE = 10_000; // In bytes
 
-    public LongProperty maxBlockSize = new SimpleLongProperty(MAX_BLOCK_SIZE);
+    public IntegerProperty maxBlockSize = new SimpleIntegerProperty();
 
     /**
      * The max nonce size.
      */
     private static final int MAX_NONCE_SIZE = 5; // In bytes
 
-    public IntegerProperty maxNonceSize = new SimpleIntegerProperty(MAX_NONCE_SIZE);
+    public IntegerProperty maxNonceSize = new SimpleIntegerProperty();
 
     /**
      * Block maturity depth.
@@ -77,35 +75,27 @@ public class Consensus {
     private static final int COINBASE_MATURITY_DEPTH = 10;
 
     public IntegerProperty coinbaseMaturityDepth =
-        new SimpleIntegerProperty(COINBASE_MATURITY_DEPTH);
+        new SimpleIntegerProperty();
 
     /**
      * The block reward value.
      */
-    private static final long BLOCK_REWARD = 1_000L;
+    private static final int BLOCK_REWARD = 1_000;
 
-    public LongProperty blockReward = new SimpleLongProperty(BLOCK_REWARD);
+    public IntegerProperty blockReward = new SimpleIntegerProperty();
 
 
     /**
      * Minimum transaction fee in brabocents.
      */
-    private static final long MINIMUM_TRANSACTION_FEE = 1;
+    private static final int MINIMUM_TRANSACTION_FEE = 1;
 
-    public LongProperty minimumTransactionFee = new SimpleLongProperty(MINIMUM_TRANSACTION_FEE);
+    public IntegerProperty minimumTransactionFee =
+        new SimpleIntegerProperty();
 
-    private static final int MAX_BLOCK_HEADER_SIZE = 139;
-
-    public IntegerProperty maxBlockHeaderSize = new SimpleIntegerProperty(MAX_BLOCK_HEADER_SIZE);
-
-    private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
-
-    public IntegerProperty maxCoinbaseTransactionSize = new SimpleIntegerProperty(
-        MAX_COINBASE_TRANSACTION_SIZE);
-
-    public StringProperty targetValue = new SimpleStringProperty("3216E65");
-    private Hash cachedTargetValue =
-        new Hash(ByteUtil.toUnsigned(new BigDecimal(targetValue.get()).toBigInteger()));
+    private static final String TARGET_VALUE_STRING = "3216E65";
+    public StringProperty targetValue = new SimpleStringProperty();
+    private Hash cachedTargetValue;
 
 
     //================================================================================
@@ -136,7 +126,7 @@ public class Consensus {
     /**
      * The amount of brabocents that equals one brabocoin.
      */
-    public static final long COIN = 100;
+    public static final int COIN = 100;
     /**
      * Elliptic curve.
      */
@@ -172,7 +162,7 @@ public class Consensus {
         return GENESIS_BLOCK;
     }
 
-    public long getMaxMoneyValue() {
+    public @NotNull long getMaxMoneyValue() {
         return MAX_MONEY_VALUE;
     }
 
@@ -192,10 +182,15 @@ public class Consensus {
         return CURVE;
     }
 
-    public Long getMaxTransactionSize() {
+    private static final int MAX_COINBASE_TRANSACTION_SIZE = 36;
+
+    private static final int MAX_BLOCK_HEADER_SIZE = 134;
+
+    public int getMaxTransactionSize() {
         return maxBlockSize.get()
-            - maxBlockHeaderSize.get()
-            - maxCoinbaseTransactionSize.get()
+            - MAX_BLOCK_HEADER_SIZE
+            - maxNonceSize.get()
+            - MAX_COINBASE_TRANSACTION_SIZE
             - Long.BYTES;
     }
 
@@ -203,7 +198,7 @@ public class Consensus {
         return info.isCoinbase() && chainHeight - coinbaseMaturityDepth.get() < info.getBlockHeight();
     }
 
-    public long getMaxBlockSize() {
+    public int getMaxBlockSize() {
         return maxBlockSize.get();
     }
 
@@ -215,11 +210,11 @@ public class Consensus {
         return coinbaseMaturityDepth.get();
     }
 
-    public long getBlockReward() {
+    public int getBlockReward() {
         return blockReward.get();
     }
 
-    public long getMinimumTransactionFee() {
+    public int getMinimumTransactionFee() {
         return minimumTransactionFee.get();
     }
 

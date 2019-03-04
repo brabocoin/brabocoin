@@ -17,52 +17,81 @@ import java.util.List;
  * The configuration class for Brabocoin
  */
 public class BraboConfig {
-    public IntegerProperty networkId = new SimpleIntegerProperty(1);
 
-    public IntegerProperty servicePort = new SimpleIntegerProperty(56129);
+    public BraboConfig() {
+        initializeValues();
+    }
 
-    public IntegerProperty targetPeerCount = new SimpleIntegerProperty(25);
+    public void initializeValues() {
+        networkId.setValue(1);
+        servicePort.setValue(56129);
+        targetPeerCount.setValue(25);
+        updatePeerInterval.setValue(45);
+        allowLocalPeers.setValue(false);
+        maxSequentialOrphanBlocks.setValue(10);
+        loopInterval.setValue(500);
+        handshakeDeadline.setValue(2000);
+        bootstrapPeers.setValue(FXCollections.observableArrayList(
+            "brabocoin.org:56129"));
+        dataDirectory.setValue("data");
+        databaseDirectory.setValue("db");
+        blockStoreDirectory.setValue("blocks");
+        utxoStoreDirectory.setValue("utxo");
+        walletStoreDirectory.setValue("wallet");
+        walletFile.setValue("wallet.dat");
+        transactionHistoryFile.setValue("txhist.dat");
+        maxBlockFileSize.setValue(128000000);
+        maxOrphanBlocks.setValue(100);
+        maxRecentRejectBlocks.setValue(20);
+        maxTransactionPoolSize.setValue(300);
+        maxOrphanTransactions.setValue(100);
+        maxRecentRejectTransactions.setValue(20);
+    }
 
-    public IntegerProperty updatePeerInterval = new SimpleIntegerProperty(45);
+    public IntegerProperty networkId = new SimpleIntegerProperty();
 
-    public BooleanProperty allowLocalPeers = new SimpleBooleanProperty(false);
+    public IntegerProperty servicePort = new SimpleIntegerProperty();
 
-    public IntegerProperty maxSequentialOrphanBlocks = new SimpleIntegerProperty(10);
+    public IntegerProperty targetPeerCount = new SimpleIntegerProperty();
 
-    public IntegerProperty loopInterval = new SimpleIntegerProperty(500);
+    public IntegerProperty updatePeerInterval = new SimpleIntegerProperty();
 
-    public IntegerProperty handshakeDeadline = new SimpleIntegerProperty(2000);
+    public BooleanProperty allowLocalPeers = new SimpleBooleanProperty();
+
+    public IntegerProperty maxSequentialOrphanBlocks = new SimpleIntegerProperty();
+
+    public IntegerProperty loopInterval = new SimpleIntegerProperty();
+
+    public IntegerProperty handshakeDeadline = new SimpleIntegerProperty();
 
     // Note: lists do not have a PreferencesFX control
-    public ListProperty<String> bootstrapPeers =
-        new SimpleListProperty<>(FXCollections.observableArrayList(
-            "brabocoin.org:56129"));
+    public ListProperty<String> bootstrapPeers = new SimpleListProperty<>();
 
-    public StringProperty dataDirectory = new SimpleStringProperty("data");
+    public StringProperty dataDirectory = new SimpleStringProperty();
 
-    public StringProperty databaseDirectory = new SimpleStringProperty("db");
+    public StringProperty databaseDirectory = new SimpleStringProperty();
 
-    public StringProperty blockStoreDirectory = new SimpleStringProperty("blocks");
+    public StringProperty blockStoreDirectory = new SimpleStringProperty();
 
-    public StringProperty utxoStoreDirectory = new SimpleStringProperty("utxo");
+    public StringProperty utxoStoreDirectory = new SimpleStringProperty();
 
-    public StringProperty walletStoreDirectory = new SimpleStringProperty("wallet");
+    public StringProperty walletStoreDirectory = new SimpleStringProperty();
 
-    public StringProperty walletFile = new SimpleStringProperty("wallet.dat");
+    public StringProperty walletFile = new SimpleStringProperty();
 
-    public StringProperty transactionHistoryFile = new SimpleStringProperty("txhist.dat");
+    public StringProperty transactionHistoryFile = new SimpleStringProperty();
 
-    public IntegerProperty maxBlockFileSize = new SimpleIntegerProperty(128000000);
+    public IntegerProperty maxBlockFileSize = new SimpleIntegerProperty();
 
-    public IntegerProperty maxOrphanBlocks = new SimpleIntegerProperty(100);
+    public IntegerProperty maxOrphanBlocks = new SimpleIntegerProperty();
 
-    public IntegerProperty maxRecentRejectBlocks = new SimpleIntegerProperty(20);
+    public IntegerProperty maxRecentRejectBlocks = new SimpleIntegerProperty();
 
-    public IntegerProperty maxTransactionPoolSize = new SimpleIntegerProperty(300);
+    public IntegerProperty maxTransactionPoolSize = new SimpleIntegerProperty();
 
-    public IntegerProperty maxOrphanTransactions = new SimpleIntegerProperty(100);
+    public IntegerProperty maxOrphanTransactions = new SimpleIntegerProperty();
 
-    public IntegerProperty maxRecentRejectTransactions = new SimpleIntegerProperty(20);
+    public IntegerProperty maxRecentRejectTransactions = new SimpleIntegerProperty();
 
     public int getNetworkId() {
         return networkId.get();

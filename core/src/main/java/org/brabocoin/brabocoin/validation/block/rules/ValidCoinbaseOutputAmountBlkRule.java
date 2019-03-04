@@ -17,7 +17,7 @@ public class ValidCoinbaseOutputAmountBlkRule extends BlockRule {
     @DescriptionField
     private long feeSum;
     @DescriptionField
-    private long blockReward;
+    private int blockReward;
     @DescriptionField
     private long coinbaseOutput;
 

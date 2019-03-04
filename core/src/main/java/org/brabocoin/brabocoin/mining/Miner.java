@@ -168,7 +168,7 @@ public class Miner {
      * @return A list of independent transactions such that the maximum block size is not exceeded.
      */
     private @NotNull List<Transaction> collectTransactions() {
-        long maxTransactionsSize = consensus.getMaxTransactionSize();
+        int maxTransactionsSize = consensus.getMaxTransactionSize();
 
         int usedSize = 0;
         List<Transaction> transactions = new ArrayList<>();
