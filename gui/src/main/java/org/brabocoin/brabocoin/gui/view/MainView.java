@@ -1,5 +1,7 @@
 package org.brabocoin.brabocoin.gui.view;
 
+import com.dlsc.preferencesfx.PreferencesFx;
+import com.dlsc.preferencesfx.PreferencesFxEvent;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.fxml.FXML;
@@ -129,17 +131,26 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
     @FXML
     private void openSettings() {
-        BraboPreferencesFx.buildPreferencesFx(state.getConfig(), state.getConsensus())
-            .show(true, true, () -> {
-                try {
-                    Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
-                    state.getConfig().initializeValues();
-                    state.getConsensus().initializeValues();
-                }
-                catch (BackingStoreException e) {
-                    // ignored
-                }
-            });
+        PreferencesFx preferencesFx = BraboPreferencesFx.buildPreferencesFx(
+            state.getConfig(),
+            state.getConsensus()
+        );
+
+        preferencesFx.addEventHandler(
+            PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
+            event -> requestConfigRestart()
+        );
+
+        preferencesFx.show(true, true, () -> {
+            try {
+                Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
+                state.getConfig().initializeValues();
+                state.getConsensus().initializeValues();
+            }
+            catch (BackingStoreException e) {
+                // ignored
+            }
+        });
     }
 
     private void requestConfigRestart() {

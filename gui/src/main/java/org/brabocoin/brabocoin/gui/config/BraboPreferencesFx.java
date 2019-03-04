@@ -100,6 +100,10 @@ public class BraboPreferencesFx {
                         .withDescription("bla bla bla...")
                 )
             )
+                .withDescription(
+                    "Beware, changes made to consensus may result in your data being out of sync "
+                        + "with the network.")
+                .withDescriptionStyle("-fx-font-size: 1.2em; -fx-text-fill: #256B9C")
         );
     }
 }
