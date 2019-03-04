@@ -229,8 +229,8 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
             }
         });
 
-        portLabel.setText(Integer.toString(state.getConfig().servicePort()));
-        networkIdLabel.setText(Integer.toString(state.getConfig().networkId()));
+        portLabel.setText(Integer.toString(state.getConfig().getServicePort()));
+        networkIdLabel.setText(Integer.toString(state.getConfig().getNetworkId()));
 
         taskManager.runTask(ipDataTask);
         taskManager.runTask(externalIpTask);
@@ -396,7 +396,7 @@ public class NetworkView extends TabPane implements BraboControl, Initializable,
 
     @FXML
     protected void copyPort(ActionEvent event) {
-        setClipboardContent(Integer.toString(state.getConfig().servicePort()));
+        setClipboardContent(Integer.toString(state.getConfig().getServicePort()));
     }
 
     @FXML

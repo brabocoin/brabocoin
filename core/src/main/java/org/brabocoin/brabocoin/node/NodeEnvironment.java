@@ -104,9 +104,9 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     The state for the node.
      */
     public NodeEnvironment(@NotNull State state) {
-        this.servicePort = state.getConfig().servicePort();
-        this.loopInterval = state.getConfig().loopInterval();
-        this.updatePeerInterval = state.getConfig().updatePeerInterval();
+        this.servicePort = state.getConfig().getServicePort();
+        this.loopInterval = state.getConfig().getLoopInterval();
+        this.updatePeerInterval = state.getConfig().getUpdatePeerInterval();
         this.blockchain = state.getBlockchain();
         this.chainUTXODatabase = state.getChainUTXODatabase();
         this.blockProcessor = state.getBlockProcessor();
@@ -114,7 +114,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.transactionPool = state.getTransactionPool();
         this.transactionProcessor = state.getTransactionProcessor();
         this.messageQueue = new LinkedBlockingQueue<>();
-        this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
+        this.maxSequentialOrphanBlocks = state.getConfig().getMaxSequentialOrphanBlocks();
         notificationListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
         networkMessages = new ConcurrentSkipListSet<>(NetworkMessage::compareTo);
@@ -168,7 +168,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     }
 
     /**
-     * The main execution logic, ran every {@link BraboConfig#loopInterval()} millisecond by the
+     * The main execution logic, ran every {@link BraboConfig#loopInterval} millisecond by the
      * Timer {@link #mainLoopTimer}.
      */
     private void main() {

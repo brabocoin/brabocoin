@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -8,8 +9,8 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
@@ -43,13 +44,13 @@ class TransactionProcessorTest {
     private static final File walletFile = new File(walletPath);
     private static final File txhistFile = new File(txHistPath);
 
-    private static BraboConfig config;
+    private static MockLegacyConfig config;
 
     private TestState state;
 
     @BeforeAll
     static void setUpConfig() {
-        config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+        config = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     }
 
     @BeforeEach

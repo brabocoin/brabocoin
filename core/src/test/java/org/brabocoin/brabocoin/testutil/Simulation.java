@@ -14,7 +14,6 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
@@ -175,7 +174,7 @@ public class Simulation {
         return new Signature(new BigInteger(255, RANDOM), new BigInteger(255, RANDOM), publicKey);
     }
 
-    public static Node generateNode(int port, BraboConfig config) throws DatabaseException {
+    public static Node generateNode(int port, MockLegacyConfig config) throws DatabaseException {
         return generateNode(
             port,
             config,
@@ -186,9 +185,9 @@ public class Simulation {
         );
     }
 
-    public static Node generateNode(int port, BraboConfig config,
+    public static Node generateNode(int port, MockLegacyConfig config,
                                     BlockDatabase providedBlockDatabase) throws DatabaseException {
-        BraboConfig mockConfig = new MockBraboConfig(config) {
+        MockLegacyConfig mockConfig = new MockLegacyConfig(config) {
             @Override
             public Integer servicePort() {
                 return port;

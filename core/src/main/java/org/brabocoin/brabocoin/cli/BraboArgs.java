@@ -9,7 +9,8 @@ import org.brabocoin.brabocoin.util.Destructible;
 public class BraboArgs {
 
     @Parameter(names = {"-c", "--config"}, description = "Path to configuration file")
-    private String config = "brabocoin.config.yml";
+    private String config = null;
+    public final static String defaultConfig = "brabocoin.config.yml";
 
     @Parameter(names = {"-l", "--log-level"}, description = "The log level to use")
     private String logLevel;
@@ -25,7 +26,9 @@ public class BraboArgs {
         return config;
     }
 
-    public String getLogLevel() { return logLevel; }
+    public String getLogLevel() {
+        return logLevel;
+    }
 
     public Destructible<char[]> getPassword() {
         return password;

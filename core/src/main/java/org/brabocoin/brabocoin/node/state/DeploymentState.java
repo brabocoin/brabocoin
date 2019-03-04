@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.config.BraboConfigAdapter;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
 import org.brabocoin.brabocoin.crypto.cipher.Cipher;
@@ -19,7 +19,6 @@ import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.mining.Miner;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
@@ -34,6 +33,7 @@ import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +47,7 @@ import java.util.Random;
  */
 public class DeploymentState implements State {
 
-    protected final @NotNull BraboConfigAdapter config;
-    protected final @NotNull String configPath;
+    protected final @NotNull BraboConfig config;
     protected final @NotNull Random unsecureRandom;
     protected final @NotNull Consensus consensus;
     protected final @NotNull Signer signer;
@@ -76,14 +75,14 @@ public class DeploymentState implements State {
     protected final @NotNull Node node;
 
     public DeploymentState(@NotNull BraboConfig config,
-                           @NotNull String configPath,
+                           @Nullable Consensus consensus,
                            @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
-        this.config = new BraboConfigAdapter(config);
-        this.configPath = configPath;
+        this.config = config;
+
+        this.consensus = consensus == null ? createConsensus() : consensus;
 
         unsecureRandom = createUnsecureRandom();
 
-        consensus = createConsensus();
 
         signer = createSigner();
 
@@ -139,21 +138,23 @@ public class DeploymentState implements State {
         );
     }
 
-    @NotNull public File getWalletFile() {
+    @NotNull
+    public File getWalletFile() {
         return Paths.get(
-            config.dataDirectory(),
-            Integer.toString(config.networkId()),
-            config.walletStoreDirectory(),
-            config.walletFile()
+            config.getDataDirectory(),
+            Integer.toString(config.getNetworkId()),
+            config.getWalletStoreDirectory(),
+            config.getWalletFile()
         ).toFile();
     }
 
-    @NotNull public File getTxHistoryFile() {
+    @NotNull
+    public File getTxHistoryFile() {
         return Paths.get(
-            config.dataDirectory(),
-            Integer.toString(config.networkId()),
-            config.walletStoreDirectory(),
-            config.transactionHistoryFile()
+            config.getDataDirectory(),
+            Integer.toString(config.getNetworkId()),
+            config.getWalletStoreDirectory(),
+            config.getTransactionHistoryFile()
         ).toFile();
     }
 
@@ -252,28 +253,28 @@ public class DeploymentState implements State {
 
     protected KeyValueStore createBlockStorage() {
         return new LevelDB(Paths.get(
-            config.dataDirectory(),
-            Integer.toString(config.networkId()),
-            config.blockStoreDirectory(),
-            config.databaseDirectory()
+            config.getDataDirectory(),
+            Integer.toString(config.getNetworkId()),
+            config.getBlockStoreDirectory(),
+            config.getDatabaseDirectory()
         ).toFile());
     }
 
     protected KeyValueStore createUtxoStorage() {
         return new LevelDB(Paths.get(
-            config.dataDirectory(),
-            Integer.toString(config.networkId()),
-            config.utxoStoreDirectory(),
-            config.databaseDirectory()
+            config.getDataDirectory(),
+            Integer.toString(config.getNetworkId()),
+            config.getUtxoStoreDirectory(),
+            config.getDatabaseDirectory()
         ).toFile());
     }
 
     protected KeyValueStore createWalletChainUtxoStorage() {
         return new LevelDB(Paths.get(
-            config.dataDirectory(),
-            Integer.toString(config.networkId()),
-            config.walletStoreDirectory(),
-            config.databaseDirectory()
+            config.getDataDirectory(),
+            Integer.toString(config.getNetworkId()),
+            config.getWalletStoreDirectory(),
+            config.getDatabaseDirectory()
         ).toFile());
     }
 
@@ -285,11 +286,11 @@ public class DeploymentState implements State {
         return new BlockDatabase(
             blockStorage,
             Paths.get(
-                config.dataDirectory(),
-                Integer.toString(config.networkId()),
-                config.blockStoreDirectory()
+                config.getDataDirectory(),
+                Integer.toString(config.getNetworkId()),
+                config.getBlockStoreDirectory()
             ).toFile(),
-            config.maxBlockFileSize()
+            config.getMaxBlockFileSize()
         );
     }
 
@@ -313,18 +314,18 @@ public class DeploymentState implements State {
         return new Blockchain(
             blockDatabase,
             consensus,
-            config.maxOrphanBlocks(),
-            config.maxRecentRejectBlocks(),
+            config.getMaxOrphanBlocks(),
+            config.getMaxRecentRejectBlocks(),
             unsecureRandom
         );
     }
 
     protected TransactionPool createTransactionPool() {
         return new TransactionPool(
-            config.maxTransactionPoolSize(),
-            config.maxOrphanTransactions(),
+            config.getMaxTransactionPoolSize(),
+            config.getMaxOrphanTransactions(),
             unsecureRandom,
-            config.maxRecentRejectTransactions()
+            config.getMaxRecentRejectTransactions()
         );
     }
 
@@ -364,8 +365,8 @@ public class DeploymentState implements State {
             consensus,
             unsecureRandom,
             new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase),
-            config.networkId(),
-            config.targetValue()
+            config.getNetworkId(),
+            consensus.getTargetValue()
         );
     }
 
@@ -374,17 +375,12 @@ public class DeploymentState implements State {
     }
 
     protected Node createNode() {
-        return new Node(environment, config.servicePort(), config.networkId());
+        return new Node(environment, config.getServicePort(), config.getNetworkId());
     }
 
     @NotNull
     @Override
     public BraboConfig getConfig() {
-        return config;
-    }
-
-    @Override
-    public @NotNull BraboConfigAdapter getConfigAdapter() {
         return config;
     }
 
@@ -528,9 +524,5 @@ public class DeploymentState implements State {
     @Override
     public @NotNull WalletIO getWalletIO() {
         return walletIO;
-    }
-
-    public String getConfigPath() {
-        return configPath;
     }
 }

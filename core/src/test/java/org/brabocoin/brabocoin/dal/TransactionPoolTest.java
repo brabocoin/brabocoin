@@ -1,12 +1,12 @@
 package org.brabocoin.brabocoin.dal;
 
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,13 +29,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TransactionPoolTest {
 
-    private static BraboConfig config;
+    private static MockLegacyConfig config;
 
     private TransactionPool pool;
 
     @BeforeAll
     static void setUpConfig() {
-        config = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+        config = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     }
 
     @BeforeEach
@@ -367,7 +367,7 @@ class TransactionPoolTest {
 
     @Test
     void limitTransactionPoolSizeChildOnly() {
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public Integer maxTransactionPoolSize() {
                 return 2;
@@ -425,7 +425,7 @@ class TransactionPoolTest {
 
     @Test
     void limitTransactionPoolSizeParentFirst() {
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public Integer maxTransactionPoolSize() {
                 return 1;
@@ -484,7 +484,7 @@ class TransactionPoolTest {
 
     @Test
     void limitTransactionPoolSizeIndependent() {
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public Integer maxTransactionPoolSize() {
                 return 1;
@@ -540,7 +540,7 @@ class TransactionPoolTest {
 
     @Test
     void maxOrphanTransactions() {
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public Integer maxOrphanTransactions() {
                 return 2;

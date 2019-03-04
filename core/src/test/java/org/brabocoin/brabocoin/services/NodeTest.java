@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.Miner;
@@ -11,10 +12,9 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -43,28 +43,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NodeTest {
 
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
+    static MockLegacyConfig defaultConfig =
+        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     static Consensus mockConsensus;
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
+        defaultConfig = new MockLegacyConfig(defaultConfig) {
 
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
+        };
 
+        mockConsensus = new Consensus() {
             @Override
-            public Hash targetValue() {
+            public Hash getTargetValue() {
                 return new Hash(ByteString.copyFrom(
                     BigInteger.valueOf(2).pow(255).toByteArray()
                 ));
             }
         };
-
-        mockConsensus = new Consensus();
     }
 
     @AfterEach
@@ -100,7 +100,7 @@ public class NodeTest {
     @Test
     void announceBlockToPeer() throws DatabaseException, IOException, InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -125,7 +125,7 @@ public class NodeTest {
 
         Hash newBlockHash = newBlock.getHash();
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -181,7 +181,7 @@ public class NodeTest {
     void announceBlockPropagatedToPeer() throws DatabaseException, IOException,
                                                 InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -211,7 +211,7 @@ public class NodeTest {
         Hash newBlockHash = newBlock.getHash();
         stateA.getBlockProcessor().processNewBlock(newBlock, false);
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -233,7 +233,7 @@ public class NodeTest {
             }
         };
 
-        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
@@ -294,7 +294,7 @@ public class NodeTest {
     void announceTransactionToPeer() throws DatabaseException, IOException,
                                             InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -355,7 +355,7 @@ public class NodeTest {
             ))
         );
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -422,7 +422,7 @@ public class NodeTest {
                                                                   IOException,
                                                                   InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -487,7 +487,7 @@ public class NodeTest {
             ))
         );
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -511,7 +511,7 @@ public class NodeTest {
             }
         };
 
-        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
@@ -587,7 +587,7 @@ public class NodeTest {
     void announceTransactionPropagatedToPeer() throws DatabaseException, IOException,
                                                       InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -647,7 +647,7 @@ public class NodeTest {
             ))
         );
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -671,7 +671,7 @@ public class NodeTest {
             }
         };
 
-        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
@@ -741,7 +741,7 @@ public class NodeTest {
     void updateBlockchain() throws DatabaseException, IOException, InterruptedException {
 
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -770,7 +770,7 @@ public class NodeTest {
             previousBlockA = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -800,7 +800,7 @@ public class NodeTest {
             stateB.getBlockProcessor().processNewBlock(newBlock, false);
         }
 
-        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
@@ -896,7 +896,7 @@ public class NodeTest {
     @Test
     void forkSwitching() throws DatabaseException, IOException, InterruptedException {
         // Create default node A
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -925,7 +925,7 @@ public class NodeTest {
 
         IndexedBlock fork2Start = stateA.getBlockchain().getMainChain().getTopBlock();
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -1052,7 +1052,7 @@ public class NodeTest {
                                           InterruptedException {
         // Create a blockchain with a block mined on top of genesis block.
 
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -1095,7 +1095,7 @@ public class NodeTest {
             previousBlock = stateA.getBlockchain().getIndexedBlock(newBlock.getHash());
         }
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";
@@ -1120,7 +1120,7 @@ public class NodeTest {
         };
 
 
-        State stateC = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeC";
@@ -1211,7 +1211,7 @@ public class NodeTest {
      */
     @Test
     void seekTransctionPool() throws DatabaseException, IOException, InterruptedException {
-        State stateA = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateA = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeA";
@@ -1373,7 +1373,7 @@ public class NodeTest {
             }
         }
 
-        State stateB = new TestState(new MockBraboConfig(defaultConfig) {
+        State stateB = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
             public String dataDirectory() {
                 return super.dataDirectory() + "/nodeB";

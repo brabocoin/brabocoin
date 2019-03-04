@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.validation.transaction.rules;
 
 import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.Signer;
@@ -16,10 +17,9 @@ import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -47,8 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TransactionRuleTests {
 
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     Consensus consensus = new Consensus();
 
     private static final ByteString ZERO = ByteString.copyFrom(new byte[] {0});
@@ -61,7 +60,7 @@ class TransactionRuleTests {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig);
+        defaultConfig = new MockLegacyConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }

@@ -6,8 +6,7 @@ dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
     compile('org.fxmisc.cssfx:cssfx:1.0.0')
     compile('no.tornado:tornadofx:1.7.17')
-    compile('com.dlsc.preferencesfx:preferencesfx-core:2.1.0')
-    compile('org.yaml:snakeyaml:1.8')
+    compile(fileTree('lib') { include '*.jar' })
 
     compile project(':core')
 

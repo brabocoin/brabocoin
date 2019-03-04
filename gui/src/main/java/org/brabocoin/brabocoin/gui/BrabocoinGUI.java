@@ -104,6 +104,7 @@ public class BrabocoinGUI extends Application {
 
                 BrabocoinApplication application = new BrabocoinApplication(
                     arguments.getConfig(),
+                    false,
                     walletUnlocker
                 );
 
@@ -200,7 +201,8 @@ public class BrabocoinGUI extends Application {
     }
 
     private void showSplash(Stage primaryStage, Task<?> task, Runnable completionHandler) {
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("icon/icon-h50.png")));
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("icon/icon-h50"
+            + ".png")));
         icon.setCache(true);
         Label text = new Label("Brabocoin");
         text.setFont(Font.font(30));

@@ -1,5 +1,6 @@
 package org.brabocoin.brabocoin.wallet;
 
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
@@ -10,10 +11,9 @@ import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.Destructible;
@@ -34,8 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WalletIOTest {
 
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     private static final String walletPath = "src/test/resources/testwallet.dat";
     private static final String txHistPath = "src/test/resources/testtxhist.dat";
     private static final File walletFile = new File(walletPath);
@@ -44,7 +43,7 @@ class WalletIOTest {
 
     @BeforeEach
     void beforeEach() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
+        defaultConfig = new MockLegacyConfig(defaultConfig) {
             @Override
             public String walletFile() {
                 return walletPath;

@@ -107,7 +107,7 @@ public class PeerCreationDialog extends BraboDialog<Peer> {
 
                 HandshakeResponse response = peerProcessor.handshake(checkPeer);
 
-                if (response == null || config.networkId() != response.getNetworkId()) {
+                if (response == null || config.getNetworkId() != response.getNetworkId()) {
                     Platform.runLater(() -> {
                         statusBar.setGraphic(failIcon);
                         statusBar.setText("Peer connection failed.");

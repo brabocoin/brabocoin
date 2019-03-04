@@ -1,8 +1,7 @@
 package org.brabocoin.brabocoin.processor;
 
-import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.crypto.Hashing;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -10,9 +9,8 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
@@ -49,23 +47,17 @@ class BlockProcessorTest {
 
     private static final String BLOCK_FILE_LOCATION = "testenv/blocks";
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
-    private static BraboConfig config;
+    private static MockLegacyConfig config;
 
     private TestState state;
 
     @BeforeAll
     static void loadConfig() {
-        BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-            .bind("brabo", BraboConfig.class);
-        config = new MockBraboConfig(defaultConfig) {
+        BraboConfig defaultConfig = new BraboConfig();
+        config = new MockLegacyConfig(new LegacyBraboConfig(defaultConfig)) {
             @Override
             public String blockStoreDirectory() {
                 return BLOCK_FILE_LOCATION;
-            }
-
-            @Override
-            public Hash targetValue() {
-                return Hashing.digestSHA256(ByteString.copyFromUtf8("easy"));
             }
         };
     }

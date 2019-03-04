@@ -1,133 +1,155 @@
 package org.brabocoin.brabocoin.config;
 
-import org.brabocoin.brabocoin.config.annotation.BraboPref;
-import org.brabocoin.brabocoin.model.Hash;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface BraboConfig {
-    String braboConfigSection = "brabo";
+/**
+ * The configuration class for Brabocoin
+ */
+public class BraboConfig {
+    public IntegerProperty networkId = new SimpleIntegerProperty(1);
 
-    /**
-     * The target value for blocks.
-     * <p>
-     * The representation of the target value is interpreted as:
-     * <ul>
-     * <li>If the string starts with a zero, the string is interpreted as the hexadeximal hash
-     * representation of the target value.</li>
-     * <li>Otherwise, the string is parsed as a BigDecimal value in base 10, and then converted
-     * to a BigInteger (allowing scientific notation).</li>
-     * </ul>
-     *
-     * @return The block target value.
-     */
-    @BraboPref(name = "Target value", destination = BraboPreferencesTree.Consensus.class, order = 0)
-    Hash targetValue();
+    public IntegerProperty servicePort = new SimpleIntegerProperty(56129);
 
-    @BraboPref(name = "Network ID", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 0)
-    Integer networkId();
+    public IntegerProperty targetPeerCount = new SimpleIntegerProperty(25);
 
-    @BraboPref(name = "Service port number", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 1)
-    Integer servicePort();
+    public IntegerProperty updatePeerInterval = new SimpleIntegerProperty(45);
 
-    @BraboPref(name = "Target peer count", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 2)
-    Integer targetPeerCount();
+    public BooleanProperty allowLocalPeers = new SimpleBooleanProperty(false);
 
-    @BraboPref(name = "Update peer interval (s)", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 3)
-    Integer updatePeerInterval();
+    public IntegerProperty maxSequentialOrphanBlocks = new SimpleIntegerProperty(10);
 
-    @BraboPref(name = "Allow local peers", destination = BraboPreferencesTree.NetworkCategory.General.class, order = 4)
-    Boolean allowLocalPeers();
+    public IntegerProperty loopInterval = new SimpleIntegerProperty(500);
 
-    @BraboPref(name = "Number of orphan blocks before syncing", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 0)
-    Integer maxSequentialOrphanBlocks();
-
-    @BraboPref(name = "Message processing interval (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 1)
-    Integer loopInterval();
-
-    @BraboPref(name = "Handshake response deadline (ms)", destination = BraboPreferencesTree.NetworkCategory.Advanced.class, order = 2)
-    Integer handshakeDeadline();
+    public IntegerProperty handshakeDeadline = new SimpleIntegerProperty(2000);
 
     // Note: lists do not have a PreferencesFX control
-    List<String> bootstrapPeers();
+    public ListProperty<String> bootstrapPeers =
+        new SimpleListProperty<>(FXCollections.observableArrayList(
+            "brabocoin.org:56129"));
 
-    @BraboPref(name = "Data directory", destination = BraboPreferencesTree.StorageCategory.General.class, order = 0)
-    String dataDirectory();
+    public StringProperty dataDirectory = new SimpleStringProperty("data");
 
-    @BraboPref(name = "Database subdirectory", destination = BraboPreferencesTree.StorageCategory.General.class, order = 1)
-    String databaseDirectory();
+    public StringProperty databaseDirectory = new SimpleStringProperty("db");
 
-    @BraboPref(name = "Block storage subdirectory", destination = BraboPreferencesTree.StorageCategory.General.class, order = 2)
-    String blockStoreDirectory();
+    public StringProperty blockStoreDirectory = new SimpleStringProperty("blocks");
 
-    @BraboPref(name = "UTXO storage subdirectory", destination = BraboPreferencesTree.StorageCategory.General.class, order = 3)
-    String utxoStoreDirectory();
+    public StringProperty utxoStoreDirectory = new SimpleStringProperty("utxo");
 
-    @BraboPref(name = "Wallet storage subdirectory", destination = BraboPreferencesTree.StorageCategory.General.class, order = 4)
-    String walletStoreDirectory();
+    public StringProperty walletStoreDirectory = new SimpleStringProperty("wallet");
 
-    /**
-     * Maximum file size of the block storage files in bytes.
-     *
-     * @return The maximum file size.
-     */
-    @BraboPref(name = "Maximum block storage file size (bytes)", destination = BraboPreferencesTree.StorageCategory.Block.class, order = 0)
-    Integer maxBlockFileSize();
+    public StringProperty walletFile = new SimpleStringProperty("wallet.dat");
 
-    /**
-     * Maximum number of orphan blocks kept in memory.
-     *
-     * @return The maximum number of orphan blocks.
-     */
-    @BraboPref(name = "Maximum orphan blocks in memory", destination = BraboPreferencesTree.StorageCategory.Block.class, order = 1)
-    Integer maxOrphanBlocks();
+    public StringProperty transactionHistoryFile = new SimpleStringProperty("txhist.dat");
 
-    /**
-     * Maximum number of recently rejected blocks in memory.
-     *
-     * @return The maximum number of recently rejected blocks.
-     */
-    @BraboPref(name = "Maximum rejected blocks in memory", destination = BraboPreferencesTree.StorageCategory.Block.class, order = 2)
-    Integer maxRecentRejectBlocks();
+    public IntegerProperty maxBlockFileSize = new SimpleIntegerProperty(128000000);
 
-    /**
-     * Maximum size of the transaction pool in number of transactions.
-     *
-     * @return The maximum transaction pool size.
-     */
-    @BraboPref(name = "Maximum transactions in pool", destination = BraboPreferencesTree.StorageCategory.Transaction.class, order = 0)
-    Integer maxTransactionPoolSize();
+    public IntegerProperty maxOrphanBlocks = new SimpleIntegerProperty(100);
 
-    /**
-     * Maximum number of orphan transactions kept in memory.
-     *
-     * @return The maximum number of orphan transactions.
-     */
-    @BraboPref(name = "Maximum orphan transactions in memory", destination = BraboPreferencesTree.StorageCategory.Transaction.class, order = 1)
-    Integer maxOrphanTransactions();
+    public IntegerProperty maxRecentRejectBlocks = new SimpleIntegerProperty(20);
 
-    /**
-     * Maximum number of recently rejected transactions in memory.
-     *
-     * @return The maximum number of recently rejected transactions.
-     */
-    @BraboPref(name = "Maximum rejected transactions in memory", destination = BraboPreferencesTree.StorageCategory.Transaction.class, order = 2)
-    Integer maxRecentRejectTransactions();
+    public IntegerProperty maxTransactionPoolSize = new SimpleIntegerProperty(300);
 
-    /**
-     * File in which the wallet is stored.
-     *
-     * @return The wallet file path.
-     */
+    public IntegerProperty maxOrphanTransactions = new SimpleIntegerProperty(100);
 
-    @BraboPref(name = "Wallet file", destination = BraboPreferencesTree.StorageCategory.Wallet.class, order = 0)
-    String walletFile();
+    public IntegerProperty maxRecentRejectTransactions = new SimpleIntegerProperty(20);
 
-    /**
-     * File in which the wallet transaction history is stored.
-     *
-     * @return The transaction history file path.
-     */
-    @BraboPref(name = "Transaction history file", destination = BraboPreferencesTree.StorageCategory.Wallet.class, order = 1)
-    String transactionHistoryFile();
+    public int getNetworkId() {
+        return networkId.get();
+    }
+
+    public int getServicePort() {
+        return servicePort.get();
+    }
+
+    public int getTargetPeerCount() {
+        return targetPeerCount.get();
+    }
+
+    public int getUpdatePeerInterval() {
+        return updatePeerInterval.get();
+    }
+
+    public boolean isAllowLocalPeers() {
+        return allowLocalPeers.get();
+    }
+
+    public int getMaxSequentialOrphanBlocks() {
+        return maxSequentialOrphanBlocks.get();
+    }
+
+    public int getLoopInterval() {
+        return loopInterval.get();
+    }
+
+    public int getHandshakeDeadline() {
+        return handshakeDeadline.get();
+    }
+
+    public List<String> getBootstrapPeers() {
+        return new ArrayList<>(bootstrapPeers.get());
+    }
+
+    public String getDataDirectory() {
+        return dataDirectory.get();
+    }
+
+    public String getDatabaseDirectory() {
+        return databaseDirectory.get();
+    }
+
+    public String getBlockStoreDirectory() {
+        return blockStoreDirectory.get();
+    }
+
+    public String getUtxoStoreDirectory() {
+        return utxoStoreDirectory.get();
+    }
+
+    public String getWalletStoreDirectory() {
+        return walletStoreDirectory.get();
+    }
+
+    public String getWalletFile() {
+        return walletFile.get();
+    }
+
+    public String getTransactionHistoryFile() {
+        return transactionHistoryFile.get();
+    }
+
+    public int getMaxBlockFileSize() {
+        return maxBlockFileSize.get();
+    }
+
+    public int getMaxOrphanBlocks() {
+        return maxOrphanBlocks.get();
+    }
+
+    public int getMaxRecentRejectBlocks() {
+        return maxRecentRejectBlocks.get();
+    }
+
+    public int getMaxTransactionPoolSize() {
+        return maxTransactionPoolSize.get();
+    }
+
+    public int getMaxOrphanTransactions() {
+        return maxOrphanTransactions.get();
+    }
+
+    public int getMaxRecentRejectTransactions() {
+        return maxRecentRejectTransactions.get();
+    }
+
 }

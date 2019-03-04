@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.validation.block;
 
-import com.google.protobuf.ByteString;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.Signer;
@@ -9,13 +9,11 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.rules.NonContextualTransactionCheckBlkRule;
 import org.brabocoin.brabocoin.validation.block.rules.ValidBlockHeightBlkRule;
@@ -33,19 +31,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockValidatorTest {
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+
+    static MockLegacyConfig defaultConfig =
+        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     private static Signer signer;
 
     private static final EllipticCurve CURVE = EllipticCurve.secp256k1();
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig) {
-            @Override
-            public Hash targetValue() {
-                return new Hash(ByteString.copyFrom(BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
-            }
-        };
+        defaultConfig = new MockLegacyConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }
@@ -55,23 +50,29 @@ class BlockValidatorTest {
         State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
-                Transaction.coinbase( new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),1)
+            Transaction.coinbase(new Output(
+                Simulation.randomHash(),
+                state.getConsensus().getBlockReward()
+            ), 1)
         );
 
-        Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
-                transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())).getRoot();
+        Hash merkleRoot = new MerkleTree(
+            state.getConsensus().getMerkleTreeHashFunction(),
+            transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())
+        ).getRoot();
 
         Block block = new Block(
-                Simulation.randomHash(),
-                merkleRoot,
-                state.getConfig().targetValue(),
-                BigInteger.ZERO,
-                1,
-                transactionList,
-            state.getConfig().networkId());
+            Simulation.randomHash(),
+            merkleRoot,
+            state.getConsensus().getTargetValue(),
+            BigInteger.ZERO,
+            1,
+            transactionList,
+            state.getConfig().getNetworkId()
+        );
 
         BlockValidationResult result = state.getBlockValidator().validate(
-                block, BlockValidator.INCOMING_BLOCK
+            block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.ORPHAN, result.getStatus());
@@ -82,20 +83,26 @@ class BlockValidatorTest {
         State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2)
+            Transaction.coinbase(new Output(
+                Simulation.randomHash(),
+                state.getConsensus().getBlockReward()
+            ), 2)
         );
 
-        Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
-                transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())).getRoot();
+        Hash merkleRoot = new MerkleTree(
+            state.getConsensus().getMerkleTreeHashFunction(),
+            transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())
+        ).getRoot();
 
         Block block = new Block(
-                state.getConsensus().getGenesisBlock().getHash(),
-                merkleRoot,
-                state.getConfig().targetValue(),
-                BigInteger.ZERO,
-                2,
-                transactionList,
-            state.getConfig().networkId());
+            state.getConsensus().getGenesisBlock().getHash(),
+            merkleRoot,
+            state.getConsensus().getTargetValue(),
+            BigInteger.ZERO,
+            2,
+            transactionList,
+            state.getConfig().getNetworkId()
+        );
 
         BlockValidationResult result = state.getBlockValidator().validate(
             block, BlockValidator.INCOMING_BLOCK
@@ -110,30 +117,46 @@ class BlockValidatorTest {
         State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Arrays.asList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()),2),
-                new Transaction(Collections.emptyList(), Collections.emptyList(), Collections.emptyList())
+            Transaction.coinbase(new Output(
+                Simulation.randomHash(),
+                state.getConsensus().getBlockReward()
+            ), 2),
+            new Transaction(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+            )
         );
 
-        Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
-                transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())).getRoot();
+        Hash merkleRoot = new MerkleTree(
+            state.getConsensus().getMerkleTreeHashFunction(),
+            transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())
+        ).getRoot();
 
         Block block = new Block(
-                state.getConsensus().getGenesisBlock().getHash(),
-                merkleRoot,
-                state.getConfig().targetValue(),
-                BigInteger.ZERO,
-                2,
-                transactionList,
-            state.getConfig().networkId());
+            state.getConsensus().getGenesisBlock().getHash(),
+            merkleRoot,
+            state.getConsensus().getTargetValue(),
+            BigInteger.ZERO,
+            2,
+            transactionList,
+            state.getConfig().getNetworkId()
+        );
 
         BlockValidationResult result = state.getBlockValidator().validate(
             block, BlockValidator.INCOMING_BLOCK
         );
 
         assertEquals(ValidationStatus.INVALID, result.getStatus());
-        assertEquals(NonContextualTransactionCheckBlkRule.class, result.getFailMarker().getFailedRule());
+        assertEquals(
+            NonContextualTransactionCheckBlkRule.class,
+            result.getFailMarker().getFailedRule()
+        );
         assertTrue(result.getFailMarker().hasChild());
-        assertEquals(InputOutputNotEmptyTxRule.class, result.getFailMarker().getChild().getFailedRule());
+        assertEquals(
+            InputOutputNotEmptyTxRule.class,
+            result.getFailMarker().getChild().getFailedRule()
+        );
     }
 
     @Test
@@ -141,20 +164,26 @@ class BlockValidatorTest {
         State state = new TestState(defaultConfig);
 
         List<Transaction> transactionList = Collections.singletonList(
-                Transaction.coinbase(new Output(Simulation.randomHash(), state.getConsensus().getBlockReward()), 1)
+            Transaction.coinbase(new Output(
+                Simulation.randomHash(),
+                state.getConsensus().getBlockReward()
+            ), 1)
         );
 
-        Hash merkleRoot = new MerkleTree(state.getConsensus().getMerkleTreeHashFunction(),
-                transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())).getRoot();
+        Hash merkleRoot = new MerkleTree(
+            state.getConsensus().getMerkleTreeHashFunction(),
+            transactionList.stream().map(Transaction::getHash).collect(Collectors.toList())
+        ).getRoot();
 
         Block block = new Block(
-                state.getConsensus().getGenesisBlock().getHash(),
-                merkleRoot,
-                state.getConfig().targetValue(),
-                BigInteger.ZERO,
-                1,
-                transactionList,
-                state.getConfig().networkId());
+            state.getConsensus().getGenesisBlock().getHash(),
+            merkleRoot,
+            state.getConsensus().getTargetValue(),
+            BigInteger.ZERO,
+            1,
+            transactionList,
+            state.getConfig().getNetworkId()
+        );
 
         BlockValidationResult result = state.getBlockValidator().validate(
             block, BlockValidator.INCOMING_BLOCK

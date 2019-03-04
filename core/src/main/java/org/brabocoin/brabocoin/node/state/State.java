@@ -1,7 +1,6 @@
 package org.brabocoin.brabocoin.node.state;
 
 import org.brabocoin.brabocoin.chain.Blockchain;
-import org.brabocoin.brabocoin.config.BraboConfigAdapter;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
@@ -31,10 +30,6 @@ import java.io.File;
 public interface State {
 
     @NotNull BraboConfig getConfig();
-
-    @NotNull String getConfigPath();
-
-    @NotNull BraboConfigAdapter getConfigAdapter();
 
     @NotNull Consensus getConsensus();
 
