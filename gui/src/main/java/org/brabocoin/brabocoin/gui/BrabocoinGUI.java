@@ -26,9 +26,12 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
+import org.brabocoin.brabocoin.exceptions.CipherException;
+import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
+import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.gui.util.WalletUtils;
 import org.brabocoin.brabocoin.gui.view.MainView;
 import org.brabocoin.brabocoin.node.state.State;
@@ -38,6 +41,7 @@ import org.brabocoin.brabocoin.util.LoggingUtil;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +55,10 @@ import java.util.stream.Collectors;
  * Brabocoin GUI application.
  */
 public class BrabocoinGUI extends Application {
+
+    // This leaks the password by storing it as a field.
+    // This is only used to retrieve the password on application exit, for user convenience.
+    public static final boolean LEAK_PASSWORD = true;
 
     private static final String VERSION = BrabocoinGUI.class.getPackage()
         .getImplementationVersion() != null ? BrabocoinGUI.class.getPackage()
@@ -66,6 +74,9 @@ public class BrabocoinGUI extends Application {
 
     private static final double MIN_WIDTH = 800.0;
     private static final double MIN_HEIGHT = 600.0;
+
+    private UnlockDialog<Wallet> unlockDialog;
+    private char[] parameterPassword;
 
     @Override
     public void start(Stage stage) {
@@ -85,6 +96,14 @@ public class BrabocoinGUI extends Application {
             commander.usage();
             Platform.exit();
             return;
+        }
+
+        if (LEAK_PASSWORD && arguments.getPassword() != null) {
+            char[] passwordChars = arguments.getPassword().getReference().get();
+            parameterPassword = Arrays.copyOf(
+                passwordChars,
+                passwordChars.length
+            );
         }
 
         // Expensive startup task
@@ -161,6 +180,35 @@ public class BrabocoinGUI extends Application {
     private void onExit(WindowEvent t, State state) {
         Object result = null;
 
+        if (LEAK_PASSWORD) {
+            char[] cachedPassword = null;
+            if (parameterPassword != null) {
+                cachedPassword = parameterPassword;
+            }
+            else if (unlockDialog.getChachedPassword() != null) {
+                cachedPassword = unlockDialog.getChachedPassword();
+            }
+            if (cachedPassword != null) {
+                try {
+                    char[] finalCachedPassword = cachedPassword;
+                    WalletUtils.saveWallet(
+                        state,
+                        new Destructible<>(() ->
+                            Arrays.copyOf(finalCachedPassword, finalCachedPassword.length))
+                    );
+                }
+                catch (DestructionException | CipherException | IOException e) {
+                    GUIUtils.displayErrorDialog(
+                        "Error saving wallet",
+                        "Error while trying to save your wallet.",
+                        "Could not save your wallet, error:\n" + e.getMessage()
+                    );
+                    t.consume();
+                }
+                System.exit(0);
+            }
+        }
+
         Optional<Object> optionalO = WalletUtils.saveWallet(state);
         if (optionalO.isPresent()) {
             result = optionalO.get();
@@ -192,7 +240,8 @@ public class BrabocoinGUI extends Application {
     }
 
     private void showSplash(Stage primaryStage, Task<?> task, Runnable completionHandler) {
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("icon/icon-h50.png")));
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream("icon/icon-h50"
+            + ".png")));
         icon.setCache(true);
         Label text = new Label("Brabocoin");
         text.setFont(Font.font(30));
@@ -257,17 +306,17 @@ public class BrabocoinGUI extends Application {
         AtomicReference<Optional<Wallet>> wallet = new AtomicReference<>();
 
         Platform.runLater(() -> {
-            UnlockDialog<Wallet> dialog = new UnlockDialog<>(creation, creator);
+            unlockDialog = new UnlockDialog<>(creation, creator);
 
-            dialog.setTitle("Brabocoin " + VERSION);
+            unlockDialog.setTitle("Brabocoin " + VERSION);
             if (creation) {
-                dialog.setHeaderText("Create a password to encrypt your wallet");
+                unlockDialog.setHeaderText("Create a password to encrypt your wallet");
             }
             else {
-                dialog.setHeaderText("Unlock your wallet");
+                unlockDialog.setHeaderText("Unlock your wallet");
             }
 
-            wallet.set(dialog.showAndWait());
+            wallet.set(unlockDialog.showAndWait());
             latch.countDown();
         });
 
