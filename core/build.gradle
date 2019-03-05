@@ -63,5 +63,6 @@ jfx {
     vendor = 'Brabocoin'
     appName = 'Brabocoin'
     jfxMainAppJarName = "brabocoin-headless-" + version + ".jar"
+    nativeReleaseVersion = version
     manifestAttributes['Implementation-Version'] = version
 }
