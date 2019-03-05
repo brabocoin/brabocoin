@@ -320,7 +320,9 @@ public class MinerView extends BorderPane implements BraboControl, Initializable
 
             // Check if a new block mined on the parent block, restart mining if so
             if (parentBlock.getHash().equals(block.getPreviousBlockHash())) {
-                stop();
+                if (miningTask != null) {
+                    miningTask.cancel();
+                }
 
                 if (!updateConfigParentBlock(block)) {
                     return;
