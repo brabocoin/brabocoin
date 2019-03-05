@@ -147,3 +147,10 @@
     -fx-stroke: white;
     -fx-stroke-width: 2px;
 }
+
+.tooltip {
+    -fx-background-radius: 2px;
+    -fx-background-color: rgba(30,30,30,0.9);
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.5) , 10, 0.0 , 0 , 3 );
+    -fx-font-size: 1em;
+}

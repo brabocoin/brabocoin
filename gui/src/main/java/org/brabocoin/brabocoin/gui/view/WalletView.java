@@ -186,24 +186,25 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         GridPane.setHalignment(immatureMiningReward, HPos.RIGHT);
 
         Tooltip infoTooltip = new Tooltip(
-            "Tne 'confirmed balance' is the user's balance, based only on the transactions that "
+            "The 'confirmed balance' is the user's balance, based only on the transactions that "
                 + "are already mined in a block in the blockchain.\n"
                 + "'Pending' is the user's additional balance, based on the transactions that are"
                 + " in the transaction pool.\n"
-                + "Together, these form the user's 'spendable balance', the amount of brabocoins "
+                + "Together, these form the user's 'spendable balance', the amount of brabocoin "
                 + "the user can actually spend.\n"
                 + "'Immature mining reward' consists of the user's mining rewards, which will be "
                 + "spendable after there are "
                 + state.getConsensus().getCoinbaseMaturityDepth()
                 + " blocks mined on top of the user's mined blocks."
         );
-        tooltipStartTimer(infoTooltip, 100);
+        infoTooltip.setWrapText(true);
+        tooltipStartTimer(infoTooltip, 100, 30000);
         immatureMiningRewardInfo.setTooltip(infoTooltip);
 
         updateBalances();
     }
 
-    private void tooltipStartTimer(Tooltip tooltip, long millis) {
+    private void tooltipStartTimer(Tooltip tooltip, long millis, long visibleMillis) {
         try {
             Field fieldBehavior = tooltip.getClass().getDeclaredField("BEHAVIOR");
             fieldBehavior.setAccessible(true);
@@ -215,6 +216,14 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
             objTimer.getKeyFrames().clear();
             objTimer.getKeyFrames().add(new KeyFrame(new Duration(millis)));
+
+            // Hide timer
+            Field fieldTimerHide = objBehavior.getClass().getDeclaredField("hideTimer");
+            fieldTimerHide.setAccessible(true);
+            Timeline objTimerHide = (Timeline)fieldTimerHide.get(objBehavior);
+
+            objTimerHide.getKeyFrames().clear();
+            objTimerHide.getKeyFrames().add(new KeyFrame(new Duration(visibleMillis)));
         }
         catch (Exception e) {
             e.printStackTrace();
