@@ -13,8 +13,13 @@ import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 
 public class BraboPreferencesFx {
 
+    private static MutableBraboConfig config;
+    private static MutableConsensus consensus;
+
     public static PreferencesFx buildPreferencesFx(MutableBraboConfig config,
                                                    MutableConsensus consensus) {
+        BraboPreferencesFx.config = config;
+        BraboPreferencesFx.consensus = consensus;
         return PreferencesFx.of(
             BrabocoinApplication.class,
             Category.of(
@@ -106,5 +111,13 @@ public class BraboPreferencesFx {
                         + "with the network.")
                 .withDescriptionStyle("-fx-font-size: 1.2em; -fx-text-fill: #256B9C")
         );
+    }
+
+    public static MutableBraboConfig getConfig() {
+        return config;
+    }
+
+    public static MutableConsensus getConsensus() {
+        return consensus;
     }
 }

@@ -23,6 +23,7 @@ import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.gui.NotificationManager;
+import org.brabocoin.brabocoin.gui.config.BraboPreferencesFx;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
@@ -178,42 +179,17 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
             return;
         }
 
-        preferencesFx.addEventHandler(
-            PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
-            event -> requestConfigRestart()
-        );
-
-        preferencesFx.show(true, true, () -> {
+        preferencesFx.show(false, true, () -> {
             try {
                 Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
-                //state.getConfig().initializeDefaultValues();
-                //state.getConsensus().initializeDefaultValues();
+                BraboPreferencesFx.getConfig().initializeDefaultValues();
+                BraboPreferencesFx.getConsensus().initializeDefaultValues();
             }
             catch (BackingStoreException e) {
                 // ignored
             }
         });
     }
-
-    private void requestConfigRestart() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        BraboDialog.setBraboStyling(alert.getDialogPane());
-
-        alert.setTitle("Restart required");
-        alert.setHeaderText("Restart is required for changes to take effect.");
-        alert.setContentText("Do you want to exit the application now?");
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (!result.isPresent()) {
-            return;
-        }
-
-        if (result.get() == ButtonType.OK) {
-            System.exit(0);
-        }
-    }
-
     private void setUpdating(boolean updating) {
         Platform.runLater(() -> {
             stateToggleButton.fire();

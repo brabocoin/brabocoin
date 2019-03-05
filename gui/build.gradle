@@ -6,6 +6,10 @@ dependencies {
     compile('org.controlsfx:controlsfx:8.40.14')
     compile('org.fxmisc.cssfx:cssfx:1.0.0')
     compile('no.tornado:tornadofx:1.7.17')
+
+    compile('com.dlsc.formsfx:formsfx-core:1.3.1')
+    compile('at.bestsolution.efxclipse.rt:org.eclipse.fx.ui.controls:3.3.0')
+
     compile(fileTree('lib') { include '*.jar' })
 
     compile project(':core')
