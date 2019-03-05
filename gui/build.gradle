@@ -35,6 +35,8 @@ jfx {
     appName = 'Brabocoin'
     jfxMainAppJarName = "brabocoin-" + version + ".jar"
     nativeReleaseVersion = version
+    needShortcut = true
+    needMenu = true
     manifestAttributes = [
             'Implementation-Version': version
     ]

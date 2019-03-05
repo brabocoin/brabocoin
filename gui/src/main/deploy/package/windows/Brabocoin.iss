@@ -61,13 +61,15 @@ begin
   Result := True;
 end;
 
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+procedure CurUninstallStepChanged (CurUninstallStep: TUninstallStep);
+var
+     mres : integer;
 begin
-  if CurUninstallStep = usUninstall then begin
-    if MsgBox('Do you want to delete all data files?', mbConfirmation,
-        MB_YESNO) = IDYES 
-    then begin
-      DelTree(ExpandConstant('{app}'));
+    case CurUninstallStep of usPostUninstall:
+        begin
+          mres := MsgBox('Do you want to Remove settings?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2)
+          if mres = IDYES then
+            DelTree(ExpandConstant('{app}'), True, True, True);
+        end;
     end;
-  end;
-end;
+end; 
