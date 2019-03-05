@@ -1,18 +1,23 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
@@ -461,4 +466,99 @@ class BlockProcessorTest {
             .hasValidTransaction(blockC.getTransactions().get(0).getHash()));
     }
 
+    /**
+     * Given a chain Genesis-A-B-C-D where in block D a transaction T is mined that spends the
+     * output of the coinbase transaction of block B.
+     * Then, a fork switch on A is attempted, switching to a chain Genesis-A-E-F-G-H.
+     *
+     * The transaction T becomes orphan (since the coinbase of B is removed from the main chain).
+     * This test tests whether T is not present in either chain and pool UTXO.
+     */
+    @Test
+    void forkSwitchOrphanTxsRemovedFromUtxo() throws DatabaseException, DestructionException {
+        Consensus mockConsensus = new Consensus() {
+            @Override
+            public int getCoinbaseMaturityDepth() {
+                return 1;
+            }
+        };
+
+        state = new TestState(config) {
+            @Override
+            protected Consensus createConsensus() {
+                return mockConsensus;
+            }
+        };
+
+        PublicKey key = state.getWallet().getPublicKeys().iterator().next();
+
+        // Mine block A
+        Block blockA = state.getMiner().mineNewBlock(
+            state.getBlockchain().getMainChain().getTopBlock(),
+            key.getHash()
+        );
+        assertNotNull(blockA);
+        state.getBlockProcessor().processNewBlock(blockA, true);
+
+        // Mine block B
+        Block blockB = state.getMiner().mineNewBlock(
+            state.getBlockchain().getMainChain().getTopBlock(),
+            key.getHash()
+        );
+        assertNotNull(blockB);
+        state.getBlockProcessor().processNewBlock(blockB, true);
+
+        // Mine block C
+        Block blockC = state.getMiner().mineNewBlock(
+            state.getBlockchain().getMainChain().getTopBlock(),
+            key.getHash()
+        );
+        assertNotNull(blockC);
+        state.getBlockProcessor().processNewBlock(blockC, true);
+
+        // Create a transaction that spends the output of block B
+        UnsignedTransaction utx = new UnsignedTransaction(
+            Collections.singletonList(new Input(blockB.getCoinbaseTransaction().getHash(), 0)),
+            Collections.singletonList(new Output(key.getHash(), 9))
+        );
+        Transaction tx = state.getWallet().signTransaction(utx).getTransaction();
+        state.getTransactionProcessor().processNewTransaction(tx);
+
+        assertTrue(state.getPoolUTXODatabase().isUnspent(tx.getHash(), 0));
+
+        // Mine block D with this transaction
+        Block blockD = state.getMiner().mineNewBlock(
+            state.getBlockchain().getMainChain().getTopBlock(),
+            key.getHash()
+        );
+        assertNotNull(blockD);
+        assertEquals(2, blockD.getTransactions().size());
+        assertEquals(blockD.getTransactions().get(1).getHash(), tx.getHash());
+        state.getBlockProcessor().processNewBlock(blockD, true);
+
+        // Check that the tx is removed from the pool UTXO and added to the chain UTXO
+        assertFalse(state.getPoolUTXODatabase().isUnspent(tx.getHash(), 0));
+        assertTrue(state.getChainUTXODatabase().isUnspent(tx.getHash(), 0));
+
+        // Now do a fork switch to Genesis-A-E-F-G-H
+        IndexedBlock blk = state.getBlockchain().getIndexedBlock(blockA.getHash());
+        for (int i = 0; i < 4; i++) {
+            assertNotNull(blk);
+            Block minedBlk = state.getMiner().mineNewBlock(blk, key.getHash());
+            assertNotNull(minedBlk);
+            state.getBlockProcessor().processNewBlock(minedBlk, true);
+
+            blk = state.getBlockchain().getIndexedBlock(minedBlk.getHash());
+        }
+
+        // Check that the fork switch was successful
+        assertNotNull(blk);
+        assertTrue(state.getBlockchain().getMainChain().contains(blk));
+
+        // Check that the transaction has become orphan and is not present in neither UTXO set
+        assertTrue(state.getTransactionPool().isOrphan(tx.getHash()));
+        assertFalse(state.getTransactionPool().hasValidTransaction(tx.getHash()));
+        assertFalse(state.getChainUTXODatabase().isUnspent(tx.getHash(), 0));
+        assertFalse(state.getPoolUTXODatabase().isUnspent(tx.getHash(), 0));
+    }
 }
