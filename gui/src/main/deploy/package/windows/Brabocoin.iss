@@ -64,3 +64,14 @@ function InitializeSetup(): Boolean;
 begin
   Result := True;
 end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usUninstall then begin
+    if MsgBox('Do you want to delete all data files?', mbConfirmation,
+        MB_YESNO) = IDYES 
+    then begin
+      DeleteBitmaps(ExpandConstant('{app}'));
+    end;
+  end;
+end;
