@@ -9,15 +9,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -41,9 +37,7 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.auxil.SimpleTransactionCreationResult;
 import org.brabocoin.brabocoin.gui.control.table.AddressTableCell;
 import org.brabocoin.brabocoin.gui.control.table.BalanceTableCell;
-import org.brabocoin.brabocoin.gui.control.table.BooleanTextTableCell;
 import org.brabocoin.brabocoin.gui.control.table.ColoredBalanceTableCell;
-import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.SimpleTransactionCreationDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
@@ -61,7 +55,6 @@ import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.model.crypto.PrivateKey;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.wallet.BalanceListener;
 import org.brabocoin.brabocoin.wallet.KeyPairListener;
 import org.brabocoin.brabocoin.wallet.TransactionSigningResult;
@@ -146,11 +139,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
         indexColumn.setCellValueFactory(new PropertyValueFactory<>("index"));
         indexColumn.getStyleClass().add("column-fixed");
 
-        TableColumn<TableKeyPairEntry, Boolean> encryptedColumn = new TableColumn<>(
-            "Encrypted");
-        encryptedColumn.setCellValueFactory(new PropertyValueFactory<>("encrypted"));
-        encryptedColumn.setCellFactory(col -> new BooleanTextTableCell<>());
-
         TableColumn<TableKeyPairEntry, Hash> addressColumn = new TableColumn<>(
             "Address");
         addressColumn.setCellValueFactory(new PropertyValueFactory<>("address"));
@@ -174,7 +162,6 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
         keyPairsTableView.getColumns().addAll(
             indexColumn,
-            encryptedColumn,
             addressColumn,
             confirmedBalance,
             pendingBalance,
@@ -330,60 +317,11 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @FXML
     private void createKeyPair(ActionEvent event) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        BraboDialog.setBraboStyling(alert.getDialogPane());
-        alert.setTitle("Key pair generation");
-        alert.setHeaderText("Choose key pair type");
-        alert.setContentText(
-            "Do you want to create a plain key pair or encrypt it with a new password?");
-
-        ButtonType buttonPlain = new ButtonType("Plain");
-        ButtonType buttonEncrypted = new ButtonType("Encrypted");
-        ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(buttonPlain, buttonEncrypted, buttonTypeCancel);
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (!result.isPresent()) {
-            return;
+        try {
+            state.getWallet().generatePlainKeyPair();
         }
-
-        if (result.get() == buttonPlain) {
-            try {
-                state.getWallet().generatePlainKeyPair();
-            }
-            catch (DestructionException e) {
-                throw new RuntimeException("Could not destruct generated random number.");
-            }
-        }
-        else if (result.get() == buttonEncrypted) {
-            UnlockDialog<Destructible<char[]>> passwordDialog = new UnlockDialog<>(
-                true,
-                (d) -> d,
-                "Ok"
-            );
-
-            passwordDialog.setTitle("Key pair password");
-            passwordDialog.setHeaderText("Enter a password to encrypt the private key");
-
-            Optional<Destructible<char[]>> optionalDestructible = passwordDialog.showAndWait();
-
-            optionalDestructible.ifPresent(destructible -> taskManager.runTask(new Task<Void>() {
-                @Override
-                protected Void call() {
-                    updateTitle("Generating encrypted private key");
-                    try {
-                        state.getWallet().generateEncryptedKeyPair(
-                            destructible
-                        );
-                    }
-                    catch (DestructionException | CipherException e) {
-                        // ignore
-                    }
-                    return null;
-                }
-            }));
+        catch (DestructionException e) {
+            throw new RuntimeException("Could not destruct generated random number.");
         }
     }
 
