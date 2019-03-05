@@ -143,6 +143,7 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
 
         // Disable when updating blockchain
         this.setText("The blockchain is synchronizing, please wait...");
+        this.setCloseButtonVisible(false);
         BraboGlyph notificationIcon = new BraboGlyph(BraboGlyph.Icon.EXCLAMATION);
         notificationIcon.setFontSize(NOTIFICATION_ICON_FONT_SIZE);
         this.setGraphic(notificationIcon);
