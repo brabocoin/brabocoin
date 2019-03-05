@@ -3,7 +3,9 @@ package org.brabocoin.brabocoin.services;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
-import org.brabocoin.brabocoin.dal.*;
+import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.dal.BlockDatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -11,21 +13,23 @@ import org.brabocoin.brabocoin.model.messages.BlockHeight;
 import org.brabocoin.brabocoin.model.messages.ChainCompatibility;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.Peer;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,17 +44,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NodeMessageTest {
 
     private Random random = new Random();
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
-
-    @BeforeAll
-    static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig);
-    }
+    static MockLegacyConfig defaultConfig =
+        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
 
     @Test
     void handshakeTest() throws IOException, DatabaseException, InterruptedException {
-        Node nodeA = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeA = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -58,14 +57,14 @@ class NodeMessageTest {
         });
 
 
-        Node nodeB = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
             }
         });
 
-        Node responder = generateNode(8090, new MockBraboConfig(defaultConfig) {
+        Node responder = generateNode(8090, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -75,7 +74,7 @@ class NodeMessageTest {
             }
         });
 
-        Node greeter = generateNode(8089, new MockBraboConfig(defaultConfig) {
+        Node greeter = generateNode(8089, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -103,7 +102,7 @@ class NodeMessageTest {
 
     @Test
     void updatePeer() throws DatabaseException, IOException, InterruptedException {
-        Node nodeA = generateNode(8090, new MockBraboConfig(defaultConfig) {
+        Node nodeA = generateNode(8090, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -115,7 +114,7 @@ class NodeMessageTest {
             }
         });
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return Collections.singletonList(
@@ -129,7 +128,7 @@ class NodeMessageTest {
             }
         });
 
-        Node nodeC = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeC = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return Collections.singletonList(
@@ -164,7 +163,7 @@ class NodeMessageTest {
                 nodeA.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size()
             );
 
-        Node nodeD = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeD = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return Collections.singletonList(
@@ -189,8 +188,12 @@ class NodeMessageTest {
             .until(() -> nodeA.getEnvironment()
                 .getPeers()
                 .size() >= 2 &&
-                nodeB.getEnvironment().getPeers().size() == nodeA.getEnvironment().getPeers().size() &&
-                nodeD.getEnvironment().getPeers().size() == nodeB.getEnvironment().getPeers().size());
+                nodeB.getEnvironment().getPeers().size() == nodeA.getEnvironment()
+                    .getPeers()
+                    .size() &&
+                nodeD.getEnvironment().getPeers().size() == nodeB.getEnvironment()
+                    .getPeers()
+                    .size());
 
         nodeA.stopAndBlock();
         nodeB.stopAndBlock();
@@ -199,7 +202,7 @@ class NodeMessageTest {
 
     @Test
     void getBlocksTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -220,7 +223,7 @@ class NodeMessageTest {
 
         Node nodeA = generateNode(8091, config, database);
 
-        Node nodeB = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -279,7 +282,7 @@ class NodeMessageTest {
 
     @Test
     void getBlocksNotFoundTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -300,7 +303,7 @@ class NodeMessageTest {
 
         Node nodeA = generateNode(8091, config, database);
 
-        Node nodeB = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -361,7 +364,7 @@ class NodeMessageTest {
     @Test
     void getBlocksIntermediateInvalidTest() throws DatabaseException, IOException,
                                                    InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -382,7 +385,7 @@ class NodeMessageTest {
 
         Node nodeA = generateNode(8091, config, database);
 
-        Node nodeB = generateNode(8092, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8092, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -458,7 +461,7 @@ class NodeMessageTest {
     @Test
     void announceBlockTest() throws DatabaseException, IOException, InterruptedException {
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -482,7 +485,7 @@ class NodeMessageTest {
             }
         };
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -527,7 +530,7 @@ class NodeMessageTest {
     @Test
     void announceTransactionTest() throws DatabaseException, IOException, InterruptedException {
         final CountDownLatch finishLatch = new CountDownLatch(1);
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -552,7 +555,7 @@ class NodeMessageTest {
             }
         };
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -596,7 +599,7 @@ class NodeMessageTest {
 
     @Test
     void discoverTopBlockHeightTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -620,7 +623,7 @@ class NodeMessageTest {
             }
         };
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -647,7 +650,7 @@ class NodeMessageTest {
 
     @Test
     void checkChainCompatibleTest() throws DatabaseException, IOException, InterruptedException {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -671,7 +674,7 @@ class NodeMessageTest {
             }
         };
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{
@@ -702,7 +705,7 @@ class NodeMessageTest {
     void seekBlockchainTest() throws DatabaseException, IOException, InterruptedException {
         List<Hash> hashes = Simulation.repeatedBuilder(Simulation::randomHash, 10);
 
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<>();
@@ -726,7 +729,7 @@ class NodeMessageTest {
             }
         };
 
-        Node nodeB = generateNode(8091, new MockBraboConfig(defaultConfig) {
+        Node nodeB = generateNode(8091, new MockLegacyConfig(defaultConfig) {
             @Override
             public List<String> bootstrapPeers() {
                 return new ArrayList<String>() {{

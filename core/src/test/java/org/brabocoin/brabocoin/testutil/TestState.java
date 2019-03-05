@@ -1,13 +1,16 @@
 package org.brabocoin.brabocoin.testutil;
 
+import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
+import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.node.Peer;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
+import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.util.Destructible;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -18,8 +21,18 @@ import java.util.HashSet;
  */
 public class TestState extends DeploymentState {
 
-    public TestState(@NotNull BraboConfig config) throws DatabaseException {
-        super(config, "", (creation, creator) -> creator.apply(new Destructible<>("testpassphrase"::toCharArray)));
+    public TestState(@NotNull MockLegacyConfig config) throws DatabaseException {
+        super(
+            config.toBraboConfig(),
+            new Consensus() {
+                @Override
+                public Hash getTargetValue() {
+                    return new Hash(ByteString.copyFrom(
+                        BigIntegerUtil.getMaxBigInteger(33).toByteArray()));
+                }
+            },
+            (creation, creator) -> creator.apply(new Destructible<>("testpassphrase"::toCharArray))
+        );
     }
 
     @Override
@@ -47,7 +60,7 @@ public class TestState extends DeploymentState {
         return new PeerProcessor(new HashSet<>(), config) {
             @Override
             protected synchronized boolean filterPeer(Peer peer) {
-                return !(peer.isLocal() && peer.getPort() == config.servicePort());
+                return !(peer.isLocal() && peer.getPort() == config.getServicePort());
             }
         };
     }

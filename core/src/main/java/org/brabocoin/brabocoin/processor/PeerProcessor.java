@@ -78,7 +78,7 @@ public class PeerProcessor implements NetworkMessageListener {
     private synchronized List<Peer> getBootstrapPeers() {
         LOGGER.fine("Getting bootstrap peers.");
         List<Peer> configPeers = new ArrayList<>();
-        for (final String peerSocket : config.bootstrapPeers()) {
+        for (final String peerSocket : config.getBootstrapPeers()) {
             LOGGER.log(
                 Level.FINEST,
                 () -> MessageFormat.format("Peer socket read from config: {0}", peerSocket)
@@ -119,7 +119,7 @@ public class PeerProcessor implements NetworkMessageListener {
      */
     protected synchronized boolean filterPeer(Peer peer) {
         boolean filterLocal = true;
-        if (!config.allowLocalPeers()) {
+        if (!config.isAllowLocalPeers()) {
             filterLocal = !peer.isLocal();
         }
         return filterLocal && !peer.getAddress().isMulticastAddress();
@@ -137,12 +137,12 @@ public class PeerProcessor implements NetworkMessageListener {
             return;
         }
 
-        while (peers.size() < config.targetPeerCount() && handshakePeers.size() > 0) {
+        while (peers.size() < config.getTargetPeerCount() && handshakePeers.size() > 0) {
             Peer handshakePeer = handshakePeers.get(0);
             LOGGER.log(Level.FINEST, "Handshaking with peer: {0}", handshakePeer);
             // Perform a handshake with the peer
             HandshakeResponse response = handshake(handshakePeer);
-            if (response == null || config.networkId() != response.getNetworkId()) {
+            if (response == null || config.getNetworkId() != response.getNetworkId()) {
                 handshakePeers.remove(0);
                 // Also remove from peer list (to remove unresponsive peers)
                 peers.remove(handshakePeer);
@@ -216,10 +216,10 @@ public class PeerProcessor implements NetworkMessageListener {
                 () -> MessageFormat.format("Handshaking with peer: {0}", peer.toString())
             );
             protoResponse = peer.getBlockingStub()
-                .withDeadlineAfter(config.handshakeDeadline(), TimeUnit.MILLISECONDS)
+                .withDeadlineAfter(config.getHandshakeDeadline(), TimeUnit.MILLISECONDS)
                 .handshake(
                     ProtoConverter.toProto(
-                        new HandshakeRequest(config.servicePort(), config.networkId()),
+                        new HandshakeRequest(config.getServicePort(), config.getNetworkId()),
                         BrabocoinProtos.HandshakeRequest.class
                     )
                 );

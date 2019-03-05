@@ -75,6 +75,8 @@ public class BrabocoinGUI extends Application {
     private static final double MIN_WIDTH = 800.0;
     private static final double MIN_HEIGHT = 600.0;
 
+    private Stage mainStage;
+
     private UnlockDialog<Wallet> unlockDialog;
     private char[] parameterPassword;
 
@@ -90,7 +92,10 @@ public class BrabocoinGUI extends Application {
         // Parse parameters
         BraboArgs arguments = new BraboArgs();
         JCommander commander = JCommander.newBuilder().addObject(arguments).build();
-        commander.parse(getParameters().getRaw().toArray(new String[0]));
+        Parameters parameters = getParameters();
+        if (parameters != null) {
+            commander.parse(parameters.getRaw().toArray(new String[0]));
+        }
 
         if (arguments.isHelp()) {
             commander.usage();
@@ -118,6 +123,7 @@ public class BrabocoinGUI extends Application {
 
                 BrabocoinApplication application = new BrabocoinApplication(
                     arguments.getConfig(),
+                    false,
                     walletUnlocker
                 );
 
@@ -173,7 +179,10 @@ public class BrabocoinGUI extends Application {
             }
         };
 
-        showSplash(stage, startupTask, () -> startupTask.getValue().show());
+        showSplash(stage, startupTask, () -> {
+            mainStage = startupTask.getValue();
+            mainStage.show();
+        });
         new Thread(startupTask).start();
     }
 
@@ -337,5 +346,9 @@ public class BrabocoinGUI extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    public Stage getMainStage() {
+        return mainStage;
     }
 }

@@ -18,7 +18,7 @@ public class CorrectTargetValueBlkRule extends BlockRule {
     @Override
     public boolean isValid() {
         blockTargetValue = block.getTargetValue();
-        configTargetValue = config.targetValue();
+        configTargetValue = consensus.getTargetValue();
 
         return blockTargetValue.equals(configTargetValue);
     }

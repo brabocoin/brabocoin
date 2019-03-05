@@ -11,7 +11,7 @@ public class MaxSizeBlkRule extends BlockRule {
     @DescriptionField
     private int blockSize;
     @DescriptionField
-    private long consensusBlockSize;
+    private int consensusBlockSize;
 
     @Override
     public boolean isValid() {

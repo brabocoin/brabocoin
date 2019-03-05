@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.mining;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.Hashing;
 import org.brabocoin.brabocoin.dal.CompositeReadonlyUTXOSet;
 import org.brabocoin.brabocoin.dal.TransactionPool;
@@ -9,9 +10,9 @@ import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.util.ProtoConverter;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -43,7 +44,7 @@ class MinerTest {
     @BeforeEach
     void setUp() {
         Random random = new Random();
-        BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+        MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
 
         transactionPool = new TransactionPool(defaultConfig.maxTransactionPoolSize(),defaultConfig.maxOrphanTransactions(), random,
             657989

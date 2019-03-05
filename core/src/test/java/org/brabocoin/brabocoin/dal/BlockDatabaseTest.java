@@ -1,15 +1,15 @@
 package org.brabocoin.brabocoin.dal;
 
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.dal.BlockFileInfo;
 import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -35,15 +35,15 @@ class BlockDatabaseTest {
 
     private static final String BLOCK_FILE_LOCATION = "testenv/blocks";
     private static final @NotNull File blocksDirectory = new File(BLOCK_FILE_LOCATION);
-    private static BraboConfig config;
+    private static LegacyBraboConfig config;
 
     private BlockDatabase database;
     private KeyValueStore storage;
 
     @BeforeAll
     static void setUpEnvironment() {
-        BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
-        config = new MockBraboConfig(defaultConfig) {
+        BraboConfig defaultConfig = new BraboConfig();
+        config = new LegacyBraboConfig(defaultConfig) {
             @Override
             public String blockStoreDirectory() {
                 return BLOCK_FILE_LOCATION;
@@ -236,7 +236,7 @@ class BlockDatabaseTest {
 
     @Test
     void createNewFileWhenSizeExceeds() throws DatabaseException {
-        BraboConfig smallConfig = new MockBraboConfig(config) {
+        MockLegacyConfig smallConfig = new MockLegacyConfig(config) {
             @Override
             public Integer maxBlockFileSize() {
                 return 1;
@@ -321,7 +321,7 @@ class BlockDatabaseTest {
     void createNewDirectory() throws DatabaseException {
         final String newDir = BLOCK_FILE_LOCATION + "/stroomboot";
 
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public String blockStoreDirectory() {
                 return newDir;
@@ -341,7 +341,7 @@ class BlockDatabaseTest {
     void cannotCreateDirectory() {
         final String newDir = "/\0/invalid";
 
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public String blockStoreDirectory() {
                 return newDir;
@@ -355,7 +355,7 @@ class BlockDatabaseTest {
     void isNotDirectory() {
         final String newDir = "src/test/java/org/brabocoin/brabocoin/dal/BlockDatabaseTest.java";
 
-        BraboConfig newConfig = new MockBraboConfig(config) {
+        MockLegacyConfig newConfig = new MockLegacyConfig(config) {
             @Override
             public String blockStoreDirectory() {
                 return newDir;

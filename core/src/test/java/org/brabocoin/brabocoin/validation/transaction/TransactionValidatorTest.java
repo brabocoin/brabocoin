@@ -1,15 +1,15 @@
 package org.brabocoin.brabocoin.validation.transaction;
 
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.validation.Consensus;
@@ -25,7 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class TransactionValidatorTest {
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig().bind("brabo", BraboConfig.class);
+
+    static MockLegacyConfig defaultConfig =
+        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     Consensus consensus = new Consensus();
 
     private static Signer signer;
@@ -34,7 +36,7 @@ class TransactionValidatorTest {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig);
+        defaultConfig = new MockLegacyConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }
@@ -45,12 +47,13 @@ class TransactionValidatorTest {
         State state = new TestState(defaultConfig);
 
         Transaction transaction = new Transaction(
-                Simulation.repeatedBuilder(Simulation::randomInput, 10000),
-                Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
-                Collections.emptyList()
+            Simulation.repeatedBuilder(Simulation::randomInput, 10000),
+            Simulation.repeatedBuilder(Simulation::randomOutput, 10000),
+            Collections.emptyList()
         );
 
-        RuleBookResult result = state.getTransactionValidator().validate(transaction, TransactionValidator.ALL, true);
+        RuleBookResult result = state.getTransactionValidator()
+            .validate(transaction, TransactionValidator.ALL, true);
 
         assertFalse(result.isPassed());
         assertEquals(MaxSizeTxRule.class, result.getFailMarker().getFailedRule());
@@ -72,7 +75,8 @@ class TransactionValidatorTest {
             )
         );
 
-        RuleBookResult result = state.getTransactionValidator().validate(transaction, TransactionValidator.ALL, true);
+        RuleBookResult result = state.getTransactionValidator()
+            .validate(transaction, TransactionValidator.ALL, true);
 
         assertFalse(result.isPassed());
         assertEquals(ValidInputUTXOTxRule.class, result.getFailMarker().getFailedRule());

@@ -17,7 +17,7 @@ public class ValidNetworkIdBlkRule extends BlockRule {
     @Override
     public boolean isValid() {
         networkID = block.getNetworkId();
-        configID = config.networkId();
+        configID = config.getNetworkId();
 
         return networkID == configID;
     }

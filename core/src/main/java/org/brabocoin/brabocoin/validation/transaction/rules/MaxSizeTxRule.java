@@ -17,7 +17,7 @@ public class MaxSizeTxRule extends TransactionRule {
     @DescriptionField
     private int size;
     @DescriptionField
-    private long consensusSize;
+    private int consensusSize;
 
     public boolean isValid() {
         size = ProtoConverter.toProto(transaction, BrabocoinProtos.Transaction.class)

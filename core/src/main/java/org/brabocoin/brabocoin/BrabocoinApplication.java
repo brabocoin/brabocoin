@@ -2,28 +2,30 @@ package org.brabocoin.brabocoin;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.collect.Sets;
+import javafx.util.Pair;
 import org.brabocoin.brabocoin.cli.BraboArgs;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
+import org.brabocoin.brabocoin.util.ConfigUtil;
 import org.brabocoin.brabocoin.util.LoggingUtil;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * Main Brabocoin application that runs the full node.
@@ -57,30 +59,22 @@ public class BrabocoinApplication {
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(@Nullable String configPath,
+    public BrabocoinApplication(String configPath,
+                                Boolean forceDrop,
                                 @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
-        state = new DeploymentState(getConfig(configPath), configPath, walletUnlocker);
+        Pair<BraboConfig, Consensus> configPair = getConfigPair(configPath, forceDrop);
+        state = new DeploymentState(
+            configPair.getKey(),
+            configPair.getValue(),
+            walletUnlocker
+        );
+
         storages = Sets.newHashSet(
             state.getBlockStorage(),
             state.getUtxoStorage(),
             state.getWalletChainUtxoStorage(),
             state.getWalletPoolUtxoStorage()
         );
-    }
-
-    /**
-     * Initialize a new Brabocoin node instance.
-     * <p>
-     * All existing data is loaded from disk and the data model is gathered and processed in
-     * every data holder class.
-     *
-     * @param walletUnlocker
-     *     The wallet unlocker.
-     * @throws DatabaseException
-     *     When one of the databases could not be initialized.
-     */
-    public BrabocoinApplication(@NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
-        this(null, walletUnlocker);
     }
 
     public static void main(String[] args) throws DatabaseException, IOException {
@@ -101,21 +95,60 @@ public class BrabocoinApplication {
 
         BrabocoinApplication application = new BrabocoinApplication(
             arguments.getConfig(),
+            true,
             (creation, creator) -> creator.apply(arguments.getPassword())
         );
         application.start();
     }
 
-    private static @NotNull BraboConfig getConfig(@NotNull String path) throws IOException {
-        File configFile = new File(path);
+    private static void dropConfig(File configFile) {
+        try {
+            ConfigUtil.write(new BraboConfig(), new Consensus(), configFile);
+        }
+        catch (IOException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 
-        if (!configFile.exists()) {
-            // Unpack the default config to use
-            InputStream config = BrabocoinApplication.class.getResourceAsStream("/application.yaml");
-            Files.copy(config, configFile.getAbsoluteFile().toPath());
+    private static Pair<BraboConfig, Consensus> getConfigPair(
+        String path, Boolean forceDrop) throws IOException {
+        File configFile = path == null ? null : new File(path);
+
+        if (!forceDrop) {
+            if (configFile != null) {
+                // Make sure PreferencesFX does not override parameter-passed config
+                try {
+                    Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
+                }
+                catch (BackingStoreException e) {
+                    // ignored
+                }
+
+                if (!configFile.exists()) {
+                    dropConfig(configFile);
+                }
+            }
+            else {
+                return new Pair<>(new BraboConfig(), new Consensus());
+            }
+        }
+        else {
+            if (configFile == null) {
+                configFile = new File(BraboArgs.defaultConfig);
+            }
+
+            if (!configFile.exists()) {
+                dropConfig(configFile);
+            }
         }
 
-        return BraboConfigProvider.getConfigFromFile(path).bind(BraboConfig.braboConfigSection, BraboConfig.class);
+        try {
+            return ConfigUtil.read(configFile);
+        }
+        catch (IllegalAccessException e) {
+            return new Pair<>(new BraboConfig(), new Consensus());
+        }
     }
 
     /**

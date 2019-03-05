@@ -3,9 +3,13 @@ package org.brabocoin.brabocoin.util;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import org.bouncycastle.util.encoders.DecoderException;
+import org.bouncycastle.util.encoders.Hex;
+import org.brabocoin.brabocoin.model.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
@@ -119,5 +123,28 @@ public final class ByteUtil {
             return result.substring(1);
         }
         return result;
+    }
+
+
+    /**
+     * Parses a hash from a string.
+     * If it starts with a zero, use hexadecimal decoding, else, use BigDecimal parsing.
+     *
+     * @param hashString
+     *     The string to parse
+     * @return Hash object
+     */
+    public static Hash parseHash(String hashString) {
+        try {
+            if (hashString.startsWith("0")) {
+                return new Hash(ByteString.copyFrom(Hex.decode(hashString)));
+            }
+            else {
+                return new Hash(ByteUtil.toUnsigned(new BigDecimal(hashString).toBigInteger()));
+            }
+        }
+        catch (NumberFormatException | DecoderException e) {
+            return null;
+        }
     }
 }

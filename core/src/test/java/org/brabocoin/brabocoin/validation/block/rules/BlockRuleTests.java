@@ -15,9 +15,9 @@ import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.config.BraboConfigProvider;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.testutil.MockBraboConfig;
+import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
+import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
@@ -44,8 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockRuleTests {
 
-    static BraboConfig defaultConfig = BraboConfigProvider.getConfig()
-        .bind("brabo", BraboConfig.class);
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
     Consensus consensus = new Consensus();
 
     private static final ByteString ZERO = ByteString.copyFrom(new byte[] {0});
@@ -55,7 +54,7 @@ class BlockRuleTests {
 
     @BeforeAll
     static void setUp() {
-        defaultConfig = new MockBraboConfig(defaultConfig);
+        defaultConfig = new MockLegacyConfig(defaultConfig);
 
         signer = new Signer(CURVE);
     }
@@ -65,7 +64,7 @@ class BlockRuleTests {
         Block block = new Block(
             Simulation.randomHash(),
             Simulation.randomHash(),
-            defaultConfig.targetValue(),
+            consensus.getTargetValue(),
             Simulation.randomBigInteger(),
             0,
             Collections.emptyList(),
@@ -79,7 +78,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("config", defaultConfig);
+        facts.put("config", defaultConfig.toBraboConfig());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
@@ -103,7 +102,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("config", defaultConfig);
+        facts.put("config", defaultConfig.toBraboConfig());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
@@ -1556,7 +1555,7 @@ class BlockRuleTests {
 
     @Test
     void ValidNetworkIdBlkRuleSuccess() {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public Integer networkId() {
                 return 666;
@@ -1580,14 +1579,14 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("config", config);
+        facts.put("config", config.toBraboConfig());
 
         assertTrue(ruleBook.run(facts).isPassed());
     }
 
     @Test
     void ValidNetworkIdBlkRuleFailed() {
-        BraboConfig config = new MockBraboConfig(defaultConfig) {
+        MockLegacyConfig config = new MockLegacyConfig(defaultConfig) {
             @Override
             public Integer networkId() {
                 return 667;
@@ -1611,7 +1610,7 @@ class BlockRuleTests {
         FactMap facts = new FactMap();
         facts.put("block", block);
         facts.put("consensus", consensus);
-        facts.put("config", config);
+        facts.put("config", config.toBraboConfig());
 
         assertFalse(ruleBook.run(facts).isPassed());
     }
