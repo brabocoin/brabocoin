@@ -12,6 +12,7 @@ import org.brabocoin.brabocoin.model.UnsignedTransaction;
 import org.brabocoin.brabocoin.model.crypto.KeyPair;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidationResult;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
@@ -46,12 +47,7 @@ public class WalletUtils {
                 }
 
                 try {
-                    state.getWalletIO().write(
-                        state.getWallet(),
-                        state.getWalletFile(),
-                        state.getTxHistoryFile(),
-                        d
-                    );
+                    saveWallet(state, d);
                     d.destruct();
                 }
                 catch (IOException | DestructionException | CipherException e) {
@@ -66,6 +62,17 @@ public class WalletUtils {
         passwordDialog.setHeaderText("Enter a password to encrypt your wallet");
 
         return passwordDialog.showAndWait();
+    }
+
+    public static void saveWallet(State state,
+                                  Destructible<char[]> password) throws DestructionException,
+                                                                 CipherException, IOException {
+        state.getWalletIO().write(
+            state.getWallet(),
+            state.getWalletFile(),
+            state.getTxHistoryFile(),
+            password
+        );
     }
 
     public static String getPendingStyle(long difference) {

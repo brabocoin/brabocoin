@@ -9,6 +9,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.layout.GridPane;
+import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.controlsfx.validation.ValidationMessage;
 import org.controlsfx.validation.ValidationSupport;
@@ -20,13 +21,13 @@ import java.util.function.Function;
 
 /**
  * Dialog that prompts for a password to unlock an object.
- *
+ * <p>
  * When the dialog is used for creation, a confirmation password is also required by the user.
  *
- * @param <T> The type of the object to unlock.
+ * @param <T>
+ *     The type of the object to unlock.
  */
 public class UnlockDialog<T> extends BraboDialog<T> {
-
     private T object;
 
     private Function<Destructible<char[]>, T> unlocker;
@@ -35,12 +36,16 @@ public class UnlockDialog<T> extends BraboDialog<T> {
     private PasswordField passwordField;
     private PasswordField confirmField;
     private Label messageLabel;
+    private char[] chachedPassword;
 
-    public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker) {
+    public UnlockDialog(boolean creation,
+                        @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker) {
         this(creation, unlocker, "Unlock");
     }
 
-    public UnlockDialog(boolean creation, @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker, String okButtonText) {
+    public UnlockDialog(boolean creation,
+                        @NotNull Function<@NotNull Destructible<char[]>, @Nullable T> unlocker,
+                        String okButtonText) {
         super(false);
         this.unlocker = unlocker;
 
@@ -66,7 +71,11 @@ public class UnlockDialog<T> extends BraboDialog<T> {
         // Add password field
         passwordField = new PasswordField();
         passwordField.setPromptText("Password");
-        validationSupport.registerValidator(passwordField, false, Validator.createEmptyValidator("Password is required"));
+        validationSupport.registerValidator(
+            passwordField,
+            false,
+            Validator.createEmptyValidator("Password is required")
+        );
 
         grid.addRow(1, new Label("Password:"), passwordField);
 
@@ -74,7 +83,11 @@ public class UnlockDialog<T> extends BraboDialog<T> {
         if (creation) {
             confirmField = new PasswordField();
             confirmField.setPromptText("Confirm password");
-            validationSupport.registerValidator(confirmField, false, Validator.createEmptyValidator("Password confirmation is required"));
+            validationSupport.registerValidator(
+                confirmField,
+                false,
+                Validator.createEmptyValidator("Password confirmation is required")
+            );
 
             grid.addRow(2, new Label("Confirm password:"), confirmField);
         }
@@ -127,6 +140,9 @@ public class UnlockDialog<T> extends BraboDialog<T> {
         else {
             this.object = object;
         }
+        if (BrabocoinGUI.LEAK_PASSWORD) {
+            chachedPassword = passwordField.getText().toCharArray();
+        }
     }
 
     private void attemptCreation(ActionEvent event) {
@@ -149,5 +165,17 @@ public class UnlockDialog<T> extends BraboDialog<T> {
                 new Destructible<>(() -> passwordField.getText().toCharArray())
             );
         }
+        if (BrabocoinGUI.LEAK_PASSWORD) {
+            chachedPassword = passwordField.getText().toCharArray();
+        }
+    }
+
+    /**
+     * Get the cached password.
+     *
+     * @return Stored password.
+     */
+    public @Nullable char[] getChachedPassword() {
+        return chachedPassword;
     }
 }
