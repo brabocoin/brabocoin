@@ -3,7 +3,7 @@ package org.brabocoin.brabocoin.gui.control;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.util.converter.DoubleStringConverter;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 
 import java.util.regex.Pattern;
 

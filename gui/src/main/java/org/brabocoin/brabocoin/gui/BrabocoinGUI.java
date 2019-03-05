@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.gui;
 
 import com.beust.jcommander.JCommander;
 import com.dlsc.preferencesfx.PreferencesFx;
+import com.dlsc.preferencesfx.PreferencesFxEvent;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -28,7 +29,7 @@ import javafx.stage.WindowEvent;
 import javafx.util.Pair;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
@@ -42,7 +43,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.LoggingUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
 
@@ -127,15 +128,13 @@ public class BrabocoinGUI extends Application {
 
                 updateMessage("Loading data from disk...");
 
-                Pair<BraboConfig, Consensus> configPair = BrabocoinApplication.getConfigPair(
+                Pair<MutableBraboConfig, MutableConsensus> configPair =
+                    BrabocoinApplication.getConfigPair(
                     arguments.getConfig(),
                     false
                 );
                 if (arguments.getConfig() == null) {
-                    preferencesFx = BraboPreferencesFx.buildPreferencesFx(
-                        configPair.getKey(),
-                        configPair.getValue()
-                    );
+                    setupPreferences(configPair.getKey(), configPair.getValue());
                 }
 
                 BrabocoinApplication application = new BrabocoinApplication(
@@ -367,6 +366,39 @@ public class BrabocoinGUI extends Application {
 
     public Stage getMainStage() {
         return mainStage;
+    }
+
+
+    private void requestConfigRestart() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        BraboDialog.setBraboStyling(alert.getDialogPane());
+
+        alert.setTitle("Restart required");
+        alert.setHeaderText("Restart is required for changes to take effect.");
+        alert.setContentText("Do you want to exit the application now?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (!result.isPresent()) {
+            return;
+        }
+
+        if (result.get() == ButtonType.OK) {
+            System.exit(0);
+        }
+    }
+
+    private void setupPreferences(MutableBraboConfig config, MutableConsensus consensus) {
+        preferencesFx = BraboPreferencesFx.buildPreferencesFx(
+            config,
+            consensus
+        );
+
+
+        preferencesFx.addEventHandler(
+            PreferencesFxEvent.EVENT_PREFERENCES_SAVED,
+            event -> requestConfigRestart()
+        );
     }
 
     public static PreferencesFx getPreferencesFx() {

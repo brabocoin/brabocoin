@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.processor;
 
 import org.brabocoin.brabocoin.Constants;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -50,7 +50,7 @@ class TransactionProcessorTest {
 
     @BeforeAll
     static void setUpConfig() {
-        config = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        config = new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     }
 
     @BeforeEach

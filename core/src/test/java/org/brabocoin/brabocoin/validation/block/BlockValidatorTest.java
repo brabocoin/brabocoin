@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.validation.block;
 
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.Signer;
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BlockValidatorTest {
 
     static MockLegacyConfig defaultConfig =
-        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     private static Signer signer;
 
     private static final EllipticCurve CURVE = EllipticCurve.secp256k1();

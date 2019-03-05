@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.processor;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
@@ -17,11 +18,11 @@ import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationStatus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.block.rules.KnownParentBlkRule;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ class BlockProcessorTest {
 
     @BeforeAll
     static void loadConfig() {
-        BraboConfig defaultConfig = new BraboConfig();
+        BraboConfig defaultConfig = new MutableBraboConfig();
         config = new MockLegacyConfig(new LegacyBraboConfig(defaultConfig)) {
             @Override
             public String blockStoreDirectory() {
@@ -483,12 +484,7 @@ class BlockProcessorTest {
             }
         };
 
-        state = new TestState(config) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        state = new TestState(config, mockConsensus);
 
         PublicKey key = state.getWallet().getPublicKeys().iterator().next();
 

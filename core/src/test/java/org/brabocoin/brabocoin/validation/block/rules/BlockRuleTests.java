@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.validation.block.rules;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.MerkleTree;
 import org.brabocoin.brabocoin.crypto.Signer;
@@ -14,16 +15,15 @@ import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidationResult;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockRuleTests {
 
-    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     Consensus consensus = new Consensus();
 
     private static final ByteString ZERO = ByteString.copyFrom(new byte[] {0});

@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.validation.transaction;
 
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.Signer;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -12,7 +12,7 @@ import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.transaction.rules.MaxSizeTxRule;
 import org.brabocoin.brabocoin.validation.transaction.rules.ValidInputUTXOTxRule;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 class TransactionValidatorTest {
 
     static MockLegacyConfig defaultConfig =
-        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     Consensus consensus = new Consensus();
 
     private static Signer signer;

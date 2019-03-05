@@ -3,8 +3,8 @@ package org.brabocoin.brabocoin.util;
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.util.Pair;
-import org.brabocoin.brabocoin.config.BraboConfig;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
+import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +22,17 @@ public class ConfigUtil {
     private static final String configSection = "config";
     private static final String consensusSection = "consensus";
 
-    public static void write(BraboConfig config,
-                             Consensus consensus,
-                             File configFile) throws IOException, InvocationTargetException,
+    public static void write(MutableBraboConfig config,
+                             MutableConsensus consensus,
+                             File configFile) throws IOException,
                                                      IllegalAccessException {
         FileWriter writer = new FileWriter(configFile);
         Map<String, Object> configMap = new HashMap<>();
-        for (Field field : config.getClass().getDeclaredFields()) {
+        for (Field field : MutableBraboConfig.class.getDeclaredFields()) {
             addFieldObject(configMap, field, (Property)field.get(config));
         }
         Map<String, Object> consensusMap = new HashMap<>();
-        for (Field field : consensus.getClass().getDeclaredFields()) {
+        for (Field field : MutableConsensus.class.getDeclaredFields()) {
             field.setAccessible(true);
             Object fieldObject = field.get(consensus);
             if (!Property.class.isAssignableFrom(fieldObject.getClass())) {
@@ -61,19 +60,19 @@ public class ConfigUtil {
     }
 
 
-    public static Pair<BraboConfig, Consensus> read(
+    public static Pair<MutableBraboConfig, MutableConsensus> read(
         File configFile) throws IOException, IllegalAccessException {
         Yaml yaml = new Yaml();
 
         Map<String, Object> yamlMap = (Map<String, Object>)yaml.load(new FileInputStream(
             configFile));
-        BraboConfig config = new BraboConfig();
+        MutableBraboConfig config = new MutableBraboConfig();
         if (!yamlMap.containsKey(configSection)) {
             throw new IllegalArgumentException("Could not find config section");
         }
         Map<String, Object> configMap = (Map<String, Object>)yamlMap.get(configSection);
 
-        for (Field field : config.getClass().getDeclaredFields()) {
+        for (Field field : MutableBraboConfig.class.getDeclaredFields()) {
             field.setAccessible(true);
             if (!configMap.containsKey(field.getName())) {
                 throw new IllegalArgumentException(String.format(
@@ -89,13 +88,13 @@ public class ConfigUtil {
             configProperty.setValue(value);
         }
 
-        Consensus consensus = new Consensus();
+        MutableConsensus consensus = new MutableConsensus();
         Map<String, Object> consensusMap = (Map<String, Object>)yamlMap.get(consensusSection);
 
         for (Map.Entry<String, Object> entry : consensusMap.entrySet()) {
             Field field;
             try {
-                field = consensus.getClass().getDeclaredField(entry.getKey());
+                field = MutableConsensus.class.getDeclaredField(entry.getKey());
             }
             catch (NoSuchFieldException e) {
                 throw new IllegalArgumentException(String.format(

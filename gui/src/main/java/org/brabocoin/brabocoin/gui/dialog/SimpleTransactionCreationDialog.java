@@ -14,7 +14,7 @@ import org.brabocoin.brabocoin.gui.control.KeyDropDown;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.util.Base58Check;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 

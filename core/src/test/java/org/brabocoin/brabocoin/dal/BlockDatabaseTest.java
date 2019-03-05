@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.dal;
 
 import org.brabocoin.brabocoin.chain.IndexedBlock;
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
@@ -42,7 +43,7 @@ class BlockDatabaseTest {
 
     @BeforeAll
     static void setUpEnvironment() {
-        BraboConfig defaultConfig = new BraboConfig();
+        BraboConfig defaultConfig = new MutableBraboConfig();
         config = new LegacyBraboConfig(defaultConfig) {
             @Override
             public String blockStoreDirectory() {

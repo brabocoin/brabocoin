@@ -26,7 +26,7 @@ import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBookFailMarker;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
