@@ -35,7 +35,9 @@ jfx {
     appName = 'Brabocoin'
     jfxMainAppJarName = "brabocoin-" + version + ".jar"
     nativeReleaseVersion = version
-    manifestAttributes['Implementation-Version'] = version
+    manifestAttributes = [
+            'Implementation-Version': version
+    ]
 }
 
 tasks.jfxNative.dependsOn(copyDeploymentIcons)
