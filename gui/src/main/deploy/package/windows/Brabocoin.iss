@@ -12,12 +12,6 @@ AppCopyright=APPLICATION_COPYRIGHT
 ;AppSupportURL=http://java.com/
 ;AppUpdatesURL=http://java.com/
 DefaultDirName=APPLICATION_INSTALL_ROOT\APPLICATION_NAME
-DisableStartupPrompt=Yes
-DisableDirPage=DISABLE_DIR_PAGE
-DisableProgramGroupPage=Yes
-DisableReadyPage=Yes
-DisableFinishedPage=Yes
-DisableWelcomePage=Yes
 DefaultGroupName=APPLICATION_GROUP
 ;Optional License
 LicenseFile=APPLICATION_LICENSE_FILE
