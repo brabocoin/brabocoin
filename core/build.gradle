@@ -63,9 +63,5 @@ jfx {
     vendor = 'Brabocoin'
     appName = 'Brabocoin'
     jfxMainAppJarName = "brabocoin-headless-" + version + ".jar"
-    manifestAttributes = [
-        minJavaVersion : '1.8.0',
-        applicationId : 'org.brabocoin.core',
-        applicationName : 'Brabocoin'
-    ]
+    manifestAttributes['Implementation-Version'] = version
 }

@@ -37,11 +37,7 @@ jfx {
     nativeReleaseVersion = version
     needShortcut = true
     needMenu = true
-    manifestAttributes = [
-        minJavaVersion : '1.8.0',
-        applicationId : 'org.brabocoin.gui',
-        applicationName : 'Brabocoin'
-    ]
+    manifestAttributes['Implementation-Version'] = version
 }
 
 tasks.jfxNative.dependsOn(copyDeploymentIcons)
