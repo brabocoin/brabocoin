@@ -67,7 +67,7 @@ var
 begin
     case CurUninstallStep of usPostUninstall:
         begin
-          mres := MsgBox('Do you want to Remove settings?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2)
+          mres := MsgBox('Do you want to remove user data (this includes your wallet)?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2)
           if mres = IDYES then
             DelTree(ExpandConstant('{app}'), True, True, True);
         end;

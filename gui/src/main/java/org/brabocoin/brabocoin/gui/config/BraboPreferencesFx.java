@@ -41,7 +41,7 @@ public class BraboPreferencesFx {
                     Setting.of(
                         "Number of orphan blocks before syncing",
                         config.maxSequentialOrphanBlocks
-                    ).withDescription("Placeholder"),
+                    ),
                     Setting.of("Message processing interval (ms)", config.loopInterval),
                     Setting.of("Handshake response deadline (ms)", config.handshakeDeadline)
                 )
@@ -101,9 +101,8 @@ public class BraboPreferencesFx {
                     Setting.of(
                         "Minimum transaction fee (brabocents)",
                         consensus.minimumTransactionFee
-                    ).withDescription("Placeholder "),
+                    ),
                     Setting.of("Coinbase maturity depth", consensus.coinbaseMaturityDepth)
-                        .withDescription("bla bla bla...")
                 )
             )
                 .withDescription(
