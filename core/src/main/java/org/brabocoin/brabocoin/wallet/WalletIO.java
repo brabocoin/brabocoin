@@ -126,6 +126,9 @@ public class WalletIO {
                                                               DestructionException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         for (KeyPair keyPair : wallet) {
+            if (keyPair == null) {
+                continue;
+            }
             BrabocoinProtos.KeyPair protoKeyPair = ProtoConverter.toProto(
                 keyPair,
                 BrabocoinProtos.KeyPair.class

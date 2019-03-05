@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -317,12 +318,19 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
 
     @FXML
     private void createKeyPair(ActionEvent event) {
-        try {
-            state.getWallet().generatePlainKeyPair();
-        }
-        catch (DestructionException e) {
-            throw new RuntimeException("Could not destruct generated random number.");
-        }
+        taskManager.runTask(new Task<Void>() {
+            @Override
+            protected Void call() {
+                try {
+                    updateTitle("Generating key pair");
+                    state.getWallet().generatePlainKeyPair();
+                }
+                catch (DestructionException e) {
+                    throw new RuntimeException("Could not destruct generated random number.");
+                }
+                return null;
+            }
+        });
     }
 
 

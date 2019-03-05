@@ -122,11 +122,6 @@ public class Wallet implements Iterable<KeyPair>, BlockchainListener,
     private final @NotNull Blockchain blockchain;
 
     /**
-     * Cached mining address.
-     */
-    private @Nullable Hash miningAddress;
-
-    /**
      * Key pair generated listeners.
      */
     private List<KeyPairListener> keyPairListeners = new ArrayList<>();
