@@ -2,6 +2,7 @@ package org.brabocoin.brabocoin.gui.view;
 
 import com.dlsc.preferencesfx.PreferencesFx;
 import com.dlsc.preferencesfx.PreferencesFxEvent;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.event.EventHandler;
@@ -25,7 +26,6 @@ import org.brabocoin.brabocoin.gui.config.BraboPreferencesFx;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
-import org.brabocoin.brabocoin.gui.util.BraboConfigPreferencesFX;
 import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
