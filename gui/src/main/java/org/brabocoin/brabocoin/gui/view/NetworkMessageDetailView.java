@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.gui.view;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -29,8 +30,14 @@ import org.brabocoin.brabocoin.node.MessageArtifact;
 import org.brabocoin.brabocoin.node.NetworkMessage;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class NetworkMessageDetailView extends SplitPane implements BraboControl, Initializable {
 
@@ -84,12 +91,57 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
         destinationBox.getChildren().clear();
         if (artifacts.size() > 1) {
             resetTitledPane(titledPane);
-            for (int i = 0; i < artifacts.size(); i++) {
-                MessageArtifact artifact = artifacts.get(i);
-                TitledPane artifactPane = createMessageArtifactTitledPane(artifact, i);
 
-                destinationBox.getChildren().add(artifactPane);
-            }
+            List<TitledPane> titledPanesUpdateList =
+                Collections.synchronizedList(new ArrayList<>());
+
+            AtomicBoolean stopRefresh = new AtomicBoolean(false);
+
+            Lock titledPaneLock = new ReentrantLock();
+            new Thread(() -> {
+                for (int i = 0; i < artifacts.size(); i++) {
+                    MessageArtifact artifact = artifacts.get(i);
+                    TitledPane artifactPane = createMessageArtifactTitledPane(artifact, i);
+
+                    titledPaneLock.lock();
+                    titledPanesUpdateList.add(artifactPane);
+                    titledPaneLock.unlock();
+                }
+
+                stopRefresh.set(true);
+            }).start();
+
+            new Thread(() -> {
+                final int elementsToAdd = 7;
+                final int interval = 50;
+
+                while (!stopRefresh.get() || !titledPanesUpdateList.isEmpty()) {
+                    titledPaneLock.lock();
+                    // Create view of first number of elements
+                    List<TitledPane> insertedElements = titledPanesUpdateList.subList(
+                        0,
+                        Math.min(titledPanesUpdateList.size(), elementsToAdd)
+                    );
+
+
+                    // Insert into UI destination node
+                    runAndWait(() -> destinationBox.getChildren()
+                        .addAll(insertedElements));
+
+                    // Also removes the elements from the host list
+                    insertedElements.clear();
+
+                    titledPaneLock.unlock();
+
+                    try {
+                        // Sleep to allow UI to catch up.
+                        Thread.sleep(interval);
+                    }
+                    catch (InterruptedException e) {
+                        // ignored
+                    }
+                }
+            }).start();
         }
         else if (artifacts.size() == 1) {
             TextArea textArea = createMessageArtifactTextArea(artifacts.get(0));
@@ -98,7 +150,8 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
             String title;
             if (titledPane.getGraphic() == null) {
                 title = titledPane.getText();
-            } else {
+            }
+            else {
                 title = extractTitleFromTitledArtifactPane(titledPane);
             }
             titledPane.setGraphic(createTitledPaneGraphic(
@@ -124,7 +177,8 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
 
         // Compute textarea height that fits parent
         double textHeight = Math.max(MIN_TEXTAREA_HEIGHT, getTextAreaTextHeight(textArea));
-        textArea.setPrefHeight(Math.ceil(textArea.getInsets().getBottom() + textArea.getInsets().getTop() + textHeight));
+        textArea.setPrefHeight(Math.ceil(textArea.getInsets().getBottom() + textArea.getInsets()
+            .getTop() + textHeight));
         textArea.setMinHeight(Region.USE_PREF_SIZE);
 
         TitledPane titledPane = createShowDataTitledPane(
@@ -188,5 +242,44 @@ public class NetworkMessageDetailView extends SplitPane implements BraboControl,
 
     public void setNetworkMessage(NetworkMessage networkMessage) {
         this.networkMessage.set(networkMessage);
+    }
+
+    /**
+     * Runs the specified {@link Runnable} on the
+     * JavaFX application thread and waits for completion.
+     *
+     * @param action
+     *     the {@link Runnable} to run
+     * @throws NullPointerException
+     *     if {@code action} is {@code null}
+     */
+    private void runAndWait(Runnable action) {
+        if (action == null) {
+            throw new NullPointerException("action");
+        }
+
+        // run synchronously on JavaFX thread
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+            return;
+        }
+
+        // queue on JavaFX thread and wait for completion
+        final CountDownLatch doneLatch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                action.run();
+            }
+            finally {
+                doneLatch.countDown();
+            }
+        });
+
+        try {
+            doneLatch.await();
+        }
+        catch (InterruptedException e) {
+            // ignore exception
+        }
     }
 }

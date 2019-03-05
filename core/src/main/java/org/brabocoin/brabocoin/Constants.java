@@ -18,6 +18,8 @@ public final class Constants {
 
     public static final int TRANSACTION_HASH_SIZE = 32;
 
+    public static final int FORK_SWITCH_DEPTH_REORGANIZATION = 10;
+
     /**
      * PBKDF2
      */

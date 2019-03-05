@@ -5,6 +5,7 @@ import com.dlsc.preferencesfx.PreferencesFxEvent;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
@@ -15,6 +16,8 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Window;
+import javafx.stage.WindowEvent;
 import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.IllegalConfigMappingException;
 import org.brabocoin.brabocoin.gui.BraboControl;
@@ -22,10 +25,13 @@ import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.gui.NotificationManager;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
+import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
 import org.brabocoin.brabocoin.gui.util.BraboConfigPreferencesFX;
+import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.node.state.State;
 import org.controlsfx.control.HiddenSidesPane;
+import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +52,16 @@ import java.util.prefs.Preferences;
 /**
  * Main view for the Brabocoin application.
  */
-public class MainView extends BorderPane implements BraboControl, Initializable {
+public class MainView extends NotificationPane implements BraboControl, Initializable,
+                                                          ReorganizeChainListener {
 
     private static final Logger LOGGER = Logger.getLogger(MainView.class.getName());
+    public static final double NOTIFICATION_ICON_FONT_SIZE = 16.0;
 
     private final @NotNull State state;
     private final Level initLogLevel;
+
+    @FXML private BorderPane mainBorderPane;
 
     @FXML private ToggleButton logPaneToggleButton;
     @FXML private HiddenSidesPane sidesPane;
@@ -85,6 +95,8 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         super();
         this.state = state;
         this.initLogLevel = initLogLevel;
+        this.state.getEnvironment().addReorganizeChainListener(this);
+        this.state.getBlockProcessor().addReorganizeChainListener(this);
 
         BraboControlInitializer.initialize(this);
     }
@@ -133,6 +145,24 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
 
         // Create notification manager
         notificationManager = new NotificationManager(state);
+
+        // Disable when updating blockchain
+        this.setText("The blockchain is synchronizing, please wait...");
+        BraboGlyph notificationIcon = new BraboGlyph(BraboGlyph.Icon.EXCLAMATION);
+        notificationIcon.setFontSize(NOTIFICATION_ICON_FONT_SIZE);
+        this.setGraphic(notificationIcon);
+
+        final EventHandler<WindowEvent> shownHandler = event -> setUpdating(state.getEnvironment()
+            .isUpdatingBlockchain());
+        Bindings.<Window>select(this.sceneProperty(), "window").addListener((observable, oldValue
+            , newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeEventHandler(WindowEvent.WINDOW_SHOWN, shownHandler);
+            }
+            if (newValue != null) {
+                newValue.addEventHandler(WindowEvent.WINDOW_SHOWN, shownHandler);
+            }
+        });
     }
 
     @FXML
@@ -248,5 +278,28 @@ public class MainView extends BorderPane implements BraboControl, Initializable 
         if (result.get() == ButtonType.OK) {
             System.exit(0);
         }
+    }
+
+    private void setUpdating(boolean updating) {
+        Platform.runLater(() -> {
+            stateToggleButton.fire();
+            mainBorderPane.setDisable(updating);
+            if (updating) {
+                this.show();
+            }
+            else {
+                this.hide();
+            }
+        });
+    }
+
+    @Override
+    public void onStartOrganization() {
+        setUpdating(true);
+    }
+
+    @Override
+    public void onFinishOrganization() {
+        setUpdating(false);
     }
 }

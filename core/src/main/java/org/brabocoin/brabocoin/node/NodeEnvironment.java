@@ -9,18 +9,19 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.MalformedSocketException;
 import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
+import org.brabocoin.brabocoin.listeners.ReorganizeChainListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
@@ -56,6 +57,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -87,9 +89,11 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     private Queue<Runnable> messageQueue;
     private final List<NotificationListener> notificationListeners;
     private final List<NetworkMessageListener> networkMessageListeners;
+    private final List<ReorganizeChainListener> reorganizeChainListeners;
     private final int maxSequentialOrphanBlocks;
     private int sequentialOrphanBlockCount = 0;
     private SortedSet<NetworkMessage> networkMessages;
+    private AtomicBoolean isUpdatingBlockchain;
 
     /*
      * Processors
@@ -118,6 +122,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         this.maxSequentialOrphanBlocks = state.getConfig().maxSequentialOrphanBlocks();
         notificationListeners = new ArrayList<>();
         networkMessageListeners = new ArrayList<>();
+        reorganizeChainListeners = new ArrayList<>();
+        isUpdatingBlockchain = new AtomicBoolean(false);
         networkMessages = new ConcurrentSkipListSet<>(NetworkMessage::compareTo);
 
         peerProcessor.addPeerSetChangedListener(this);
@@ -176,13 +182,16 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         while (!messageQueue.isEmpty()) {
             try {
                 messageQueue.remove().run();
-            } catch (StatusRuntimeException e) {
+            }
+            catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
                     LOGGER.finest("Peer did not respond or is unavailable for request.");
-                } else {
+                }
+                else {
                     LOGGER.log(Level.WARNING, e, () -> "Peer request failed.");
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e, () -> "Exception in message queue loop.");
             }
         }
@@ -228,10 +237,16 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         );
 
         if (maxHeight > blockchain.getMainChain().getHeight()) {
+            isUpdatingBlockchain.set(true);
+            reorganizeChainListeners.forEach(ReorganizeChainListener::onStartOrganization);
+
             // Peer has a longer chain, need to update.
             Hash matchingBlockHash = checkChainCompatibleRequest(maxHeightPeer);
 
             seekBlockchainRequest(maxHeightPeer, matchingBlockHash);
+
+            reorganizeChainListeners.forEach(ReorganizeChainListener::onFinishOrganization);
+            isUpdatingBlockchain.set(false);
         }
     }
 
@@ -301,13 +316,20 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
         LOGGER.info("Message propagated to all peers.");
     }
 
-
     public void addNetworkMessageListener(NetworkMessageListener listener) {
         networkMessageListeners.add(listener);
     }
 
-    public void removeNetworkMessageListeners(NetworkMessageListener listener) {
+    public void removeNetworkMessageListener(NetworkMessageListener listener) {
         networkMessageListeners.remove(listener);
+    }
+
+    public void addReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.add(listener);
+    }
+
+    public void removeReorganizeChainListener(ReorganizeChainListener listener) {
+        reorganizeChainListeners.remove(listener);
     }
 
     public SortedSet<NetworkMessage> getNetworkMessages() {
@@ -437,7 +459,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     The peers for which we request the block, if needed.
      */
     public void onReceiveBlockHash(@NotNull Hash blockHash,
-                                                @NotNull List<Peer> peers) {
+                                   @NotNull List<Peer> peers) {
         LOGGER.fine("Block hash received.");
         LOGGER.log(
             Level.FINEST,
@@ -476,7 +498,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     The peers to request the transaction from.
      */
     public void onReceiveTransactionHash(@NotNull Hash transactionHash,
-                                                      List<Peer> peers) {
+                                         List<Peer> peers) {
         LOGGER.fine("Transaction hash received.");
         LOGGER.log(
             Level.FINEST,
@@ -571,7 +593,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     Whether or not to propagate an announce message to all peers.
      */
     public void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
-                                              boolean propagate) {
+                                 boolean propagate) {
         try {
             getBlocksRequest(hashes, peers, propagate, false);
         }
@@ -596,8 +618,8 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     Whether or not to wait for the blocks to be received.
      */
     public void getBlocksRequest(List<Hash> hashes, List<Peer> peers,
-                                              boolean propagate,
-                                              boolean blocking) throws InterruptedException {
+                                 boolean propagate,
+                                 boolean blocking) throws InterruptedException {
         LOGGER.info("Getting a list of blocks from peers.");
 
         final CountDownLatch latch = new CountDownLatch(peers.size());
@@ -918,7 +940,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     Whether or not to propagate.
      */
     public void getTransactionRequest(List<Hash> hashes, List<Peer> peers,
-                                                   boolean propagate) {
+                                      boolean propagate) {
         LOGGER.info("Getting a list of transactions from peers.");
 
         for (Peer peer : peers) {
@@ -1059,6 +1081,15 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
     //================================================================================
 
     /**
+     * Get whether the environment is updating the blockchain
+     *
+     * @return Whether or not the blockchain is updating.
+     */
+    public boolean isUpdatingBlockchain() {
+        return isUpdatingBlockchain.get();
+    }
+
+    /**
      * Get a copy of the set of peers.
      *
      * @return Set of peers.
@@ -1180,7 +1211,7 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      *     Hash of the transaction to get.
      * @return Transaction instance or null if not found.
      */
-    public  Transaction getTransaction(@NotNull Hash transactionHash) {
+    public Transaction getTransaction(@NotNull Hash transactionHash) {
         LOGGER.fine("Transaction requested by hash.");
         LOGGER.log(
             Level.FINEST,

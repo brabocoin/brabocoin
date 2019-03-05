@@ -83,7 +83,11 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadMainChain();
         blockchain.addListener(this);
 
-        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator, state.getEnvironment(), state.getConsensus());
+        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(
+            blockchain,
+            validator,
+            state.getEnvironment()
+        , state.getConsensus());
         recentRejectBlkTab.setContent(rejectBlkView);
         recentRejectBlkTab.textProperty().bind(
             Bindings.createStringBinding(
