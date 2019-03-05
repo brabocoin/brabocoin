@@ -17,6 +17,7 @@ import org.brabocoin.brabocoin.listeners.NotificationListener;
 import org.brabocoin.brabocoin.listeners.PeerSetChangedListener;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Hash;
+import org.brabocoin.brabocoin.model.RejectedBlock;
 import org.brabocoin.brabocoin.model.RejectedTransaction;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.config.BraboConfig;
@@ -1087,7 +1088,21 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
                 return block;
             }
 
-            return blockchain.getOrphan(blockHash);
+            Block orphanBlock = blockchain.getOrphan(blockHash);
+            if (orphanBlock != null) {
+                return orphanBlock;
+            }
+
+            // Propagate rejected blocks if the client asked for it
+            Optional<RejectedBlock> rejectedBlock = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(
+                    blockchain.recentRejectsIterator(),
+                    Spliterator.ORDERED
+                ), false)
+                .filter(b -> b.getBlock().getHash().equals(blockHash))
+                .findFirst();
+
+            return rejectedBlock.map(RejectedBlock::getBlock).orElse(null);
         }
         catch (DatabaseException e) {
             LOGGER.log(
