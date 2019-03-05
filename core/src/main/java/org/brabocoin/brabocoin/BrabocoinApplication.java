@@ -52,20 +52,21 @@ public class BrabocoinApplication {
      * All existing data is loaded from disk and the data model is gathered and processed in
      * every data holder class.
      *
-     * @param configPath
-     *     The configuration path to use.
+     * @param config
+     *     The config to use
+     * @param consensus
+     *     The consensus to use
      * @param walletUnlocker
      *     The wallet unlocker.
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(String configPath,
-                                Boolean forceDrop,
+    public BrabocoinApplication(BraboConfig config,
+                                Consensus consensus,
                                 @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
-        Pair<BraboConfig, Consensus> configPair = getConfigPair(configPath, forceDrop);
         state = new DeploymentState(
-            configPair.getKey(),
-            configPair.getValue(),
+            config,
+            consensus,
             walletUnlocker
         );
 
@@ -93,9 +94,11 @@ public class BrabocoinApplication {
 
         LoggingUtil.setLogLevel(arguments.getLogLevel());
 
+        Pair<BraboConfig, Consensus> configPair = getConfigPair(arguments.getConfig(), true);
+
         BrabocoinApplication application = new BrabocoinApplication(
-            arguments.getConfig(),
-            true,
+            configPair.getKey(),
+            configPair.getValue(),
             (creation, creator) -> creator.apply(arguments.getPassword())
         );
         application.start();
@@ -111,7 +114,7 @@ public class BrabocoinApplication {
         }
     }
 
-    private static Pair<BraboConfig, Consensus> getConfigPair(
+    public static Pair<BraboConfig, Consensus> getConfigPair(
         String path, Boolean forceDrop) throws IOException {
         File configFile = path == null ? null : new File(path);
 

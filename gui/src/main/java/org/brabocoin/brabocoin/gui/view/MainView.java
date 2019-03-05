@@ -21,8 +21,8 @@ import javafx.stage.WindowEvent;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
+import org.brabocoin.brabocoin.gui.BrabocoinGUI;
 import org.brabocoin.brabocoin.gui.NotificationManager;
-import org.brabocoin.brabocoin.gui.config.BraboPreferencesFx;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
 import org.brabocoin.brabocoin.gui.task.TaskManager;
@@ -162,10 +162,20 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
 
     @FXML
     private void openSettings() {
-        PreferencesFx preferencesFx = BraboPreferencesFx.buildPreferencesFx(
-            state.getConfig(),
-            state.getConsensus()
-        );
+        PreferencesFx preferencesFx = BrabocoinGUI.getPreferencesFx();
+
+        if (preferencesFx == null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+
+            BraboDialog.setBraboStyling(alert.getDialogPane());
+
+            alert.setTitle("Custom config loaded");
+            alert.setHeaderText("You have loaded a custom config.");
+            alert.setContentText("Config GUI is disabled when passing a custom config.");
+
+            alert.showAndWait();
+            return;
+        }
 
         preferencesFx.addEventHandler(
             PreferencesFxEvent.EVENT_PREFERENCES_SAVED,

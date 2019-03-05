@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.gui;
 
 import com.beust.jcommander.JCommander;
+import com.dlsc.preferencesfx.PreferencesFx;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -24,11 +25,14 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+import javafx.util.Pair;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
+import org.brabocoin.brabocoin.config.BraboConfig;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
+import org.brabocoin.brabocoin.gui.config.BraboPreferencesFx;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
 import org.brabocoin.brabocoin.gui.dialog.UnlockDialog;
 import org.brabocoin.brabocoin.gui.util.GUIUtils;
@@ -38,6 +42,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.LoggingUtil;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
 
@@ -74,6 +79,7 @@ public class BrabocoinGUI extends Application {
 
     private static final double MIN_WIDTH = 800.0;
     private static final double MIN_HEIGHT = 600.0;
+    private static PreferencesFx preferencesFx;
 
     private Stage mainStage;
 
@@ -121,9 +127,20 @@ public class BrabocoinGUI extends Application {
 
                 updateMessage("Loading data from disk...");
 
-                BrabocoinApplication application = new BrabocoinApplication(
+                Pair<BraboConfig, Consensus> configPair = BrabocoinApplication.getConfigPair(
                     arguments.getConfig(),
-                    false,
+                    false
+                );
+                if (arguments.getConfig() == null) {
+                    preferencesFx = BraboPreferencesFx.buildPreferencesFx(
+                        configPair.getKey(),
+                        configPair.getValue()
+                    );
+                }
+
+                BrabocoinApplication application = new BrabocoinApplication(
+                    configPair.getKey(),
+                    configPair.getValue(),
                     walletUnlocker
                 );
 
@@ -350,5 +367,9 @@ public class BrabocoinGUI extends Application {
 
     public Stage getMainStage() {
         return mainStage;
+    }
+
+    public static PreferencesFx getPreferencesFx() {
+        return preferencesFx;
     }
 }
