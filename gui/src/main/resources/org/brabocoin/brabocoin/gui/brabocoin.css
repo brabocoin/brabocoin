@@ -39,7 +39,7 @@
 }
 
 * {
-    -fx-ellipsis-string: "…";
+    -fx-ellipsis-string: "\u2026";
 }
 
 .custom-text-field .left-pane .glyph-font {
