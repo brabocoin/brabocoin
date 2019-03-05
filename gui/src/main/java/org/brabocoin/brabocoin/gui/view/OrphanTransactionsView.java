@@ -11,6 +11,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.TransactionPoolListener;
 import org.brabocoin.brabocoin.gui.BraboControl;
@@ -19,6 +20,8 @@ import org.brabocoin.brabocoin.gui.control.CollapsibleMasterDetailPane;
 import org.brabocoin.brabocoin.gui.control.table.HashTableCell;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.node.state.State;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +35,8 @@ public class OrphanTransactionsView extends CollapsibleMasterDetailPane implemen
 
     private final @NotNull TransactionPool pool;
     private final @NotNull TransactionValidator validator;
+    private final Blockchain blockchain;
+    private final Consensus consensus;
 
     @FXML private TableView<Transaction> orphanTable;
 
@@ -41,10 +46,12 @@ public class OrphanTransactionsView extends CollapsibleMasterDetailPane implemen
 
     private final IntegerProperty count = new SimpleIntegerProperty(0);
 
-    public OrphanTransactionsView(@NotNull TransactionPool pool, @NotNull TransactionValidator validator) {
+    public OrphanTransactionsView(State state) {
         super();
-        this.pool = pool;
-        this.validator = validator;
+        this.blockchain = state.getBlockchain();
+        this.consensus = state.getConsensus();
+        this.pool = state.getTransactionPool();
+        this.validator = state.getTransactionValidator();
         BraboControlInitializer.initialize(this);
 
         this.pool.addListener(this);
@@ -52,7 +59,7 @@ public class OrphanTransactionsView extends CollapsibleMasterDetailPane implemen
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        detailView = new TransactionDetailView(null, validator);
+        detailView = new TransactionDetailView(blockchain, consensus, null, validator, false);
         setDetailNode(detailView);
 
         hashColumn.setCellValueFactory(features -> {

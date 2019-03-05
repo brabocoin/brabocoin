@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 /**
  * Validation rules for transactions.
  */
-public class TransactionValidator implements Validator<Transaction> {
+public class TransactionValidator implements Validator {
 
     private static final Logger LOGGER = Logger.getLogger(TransactionValidator.class.getName());
 
@@ -127,7 +127,7 @@ public class TransactionValidator implements Validator<Transaction> {
         this.compositeUTXO = new CompositeReadonlyUTXOSet(chainUTXODatabase, poolUTXODatabase);
     }
 
-    public TransactionValidator withChainUTXOSet(@NotNull ReadonlyUTXOSet chainUTXOSet) {
+    public TransactionValidator withUTXOSet(@NotNull ReadonlyUTXOSet chainUTXOSet) {
         return new TransactionValidator(
             this.consensus,
             this.mainChain,

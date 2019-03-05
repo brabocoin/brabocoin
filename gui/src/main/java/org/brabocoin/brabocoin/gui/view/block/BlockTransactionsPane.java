@@ -28,7 +28,9 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
         BraboControlInitializer.initialize(this);
 
         block.addListener((obs, old, val) -> {
-            if (val != null) loadBlock();
+            if (val != null) {
+                loadBlock();
+            }
         });
     }
 
@@ -43,7 +45,8 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
 
         // Show coinbase (if available)
         if (block.getCoinbaseTransaction() != null) {
-            CoinbaseDetailView coinbaseView = new CoinbaseDetailView(block.getCoinbaseTransaction());
+            CoinbaseDetailView coinbaseView =
+                new CoinbaseDetailView(block.getCoinbaseTransaction());
             coinbaseView.setShowHeader(false);
             TitledPane coinbasePane = new TitledPane("Coinbase transaction", coinbaseView);
             coinbasePane.setExpanded(false);
@@ -54,7 +57,13 @@ public class BlockTransactionsPane extends TitledPane implements BraboControl {
         for (int i = 1; i < transactions.size(); i++) {
             Transaction tx = transactions.get(i);
 
-            TransactionDetailView detailView = new TransactionDetailView(tx, null);
+            TransactionDetailView detailView = new TransactionDetailView(
+                null,
+                null,
+                tx,
+                null,
+                false
+            );
             detailView.setShowHeader(false);
 
             TitledPane pane = new TitledPane("Transaction " + i, detailView);

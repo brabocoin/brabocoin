@@ -128,10 +128,7 @@ public class WalletView extends TabPane implements BraboControl, Initializable, 
             return row;
         });
 
-        txHistoryTab.setContent(new TransactionHistoryView(
-            state.getWallet().getTransactionHistory(),
-            state.getTransactionValidator()
-        ));
+        txHistoryTab.setContent(new TransactionHistoryView(state));
 
         keyPairsTableView.setEditable(false);
 

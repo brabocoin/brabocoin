@@ -17,6 +17,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
+import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
@@ -36,6 +37,7 @@ import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.model.crypto.Signature;
 import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.util.ByteUtil;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +55,11 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     private final ObjectProperty<Transaction> transaction = new SimpleObjectProperty<>();
     private final BooleanProperty showHeader = new SimpleBooleanProperty(true);
+    private final Blockchain blockchain;
+    private final Consensus consensus;
     private final NodeEnvironment nodeEnvironment;
     private @Nullable TransactionValidator validator;
+    private final boolean useRevertedUTXO;
 
     @FXML private TransactionDataMenuButton transactionDataMenuButtonBottom;
     @FXML private TransactionDataMenuButton transactionDataMenuButton;
@@ -79,20 +84,30 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     @FXML private SelectableLabel hashField;
     @FXML private HBox header;
+    @FXML private Button buttonValidateRevertedUTXO;
     @FXML private Button buttonValidate;
     @FXML private Button buttonPropagate;
 
-    public TransactionDetailView(Transaction transaction,
-                                 @Nullable TransactionValidator validator) {
-        this(transaction, null, validator);
+    public TransactionDetailView(Blockchain blockchain,
+                                 Consensus consensus,
+                                 Transaction transaction,
+                                 @Nullable TransactionValidator validator,
+                                 boolean useRevertedUTXO) {
+        this(blockchain, consensus, transaction, null, validator, useRevertedUTXO);
     }
 
-    public TransactionDetailView(Transaction transaction,
+    public TransactionDetailView(Blockchain blockchain,
+                                 Consensus consensus,
+                                 Transaction transaction,
                                  @Nullable NodeEnvironment nodeEnvironment,
-                                 @Nullable TransactionValidator validator) {
+                                 @Nullable TransactionValidator validator,
+                                 boolean useRevertedUTXO) {
         super();
+        this.blockchain = blockchain;
+        this.consensus = consensus;
         this.nodeEnvironment = nodeEnvironment;
         this.validator = validator;
+        this.useRevertedUTXO = useRevertedUTXO;
 
         BraboControlInitializer.initialize(this);
 
@@ -119,6 +134,12 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Show/hide button depending on whether reverted utxo is allowed
+        buttonValidate.setDisable(useRevertedUTXO);
+        buttonValidate.setManaged(!useRevertedUTXO);
+        buttonValidateRevertedUTXO.setDisable(!useRevertedUTXO);
+        buttonValidateRevertedUTXO.setManaged(useRevertedUTXO);
+
         // Bind table heights to fit row content
         fitTableRowContent(inputTableView, 3);
         fitTableRowContent(outputTableView, 3);
@@ -195,7 +216,13 @@ public class TransactionDetailView extends VBox implements BraboControl, Initial
 
     @FXML
     protected void validate(ActionEvent event) {
-        Dialog dialog = new ValidationWindow(transaction.get(), validator);
+        Dialog dialog = new ValidationWindow(blockchain, transaction.get(), validator, consensus, false);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    protected void validateRevertedUTXO(ActionEvent event) {
+        Dialog dialog = new ValidationWindow(blockchain, transaction.get(), validator, consensus, true);
         dialog.showAndWait();
     }
 

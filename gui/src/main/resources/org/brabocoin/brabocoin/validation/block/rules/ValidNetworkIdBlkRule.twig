@@ -4,8 +4,8 @@
     This rule checks whether the network ID defined in the block header is equal to the network ID defined in the configuration.
     If not, the block is invalid.<br>
     <br>
-    Block network ID: {{ networkID }}<br>
-    Configuration network ID: {{ configID }}<br>
+    Block network ID: <code>{{ networkID }}</code><br>
+    Configuration network ID: <code>{{ configID }}</code><br>
     <br>
     Check: <code>{{ networkID }} = {{ configID }}</code><br>
 {% endblock %}

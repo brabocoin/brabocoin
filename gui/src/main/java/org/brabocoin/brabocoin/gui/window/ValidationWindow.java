@@ -24,12 +24,18 @@ public class ValidationWindow extends BraboDialog {
      *     The block to create a validation window for
      */
     public ValidationWindow(Blockchain blockchain, Block block,
-                            BlockValidator validator, Consensus consensus, boolean withRevertedUTXO) {
+                            BlockValidator validator, Consensus consensus,
+                            boolean withRevertedUTXO) {
         super();
-
         setTitle("Block Validation");
 
-        masterDetailPane = new BlockValidationView(blockchain, block, validator, consensus, withRevertedUTXO);
+        masterDetailPane = new BlockValidationView(
+            blockchain,
+            block,
+            validator,
+            consensus,
+            withRevertedUTXO
+        );
         setProperties();
     }
 
@@ -39,11 +45,19 @@ public class ValidationWindow extends BraboDialog {
      * @param transaction
      *     The transaction to create a validation window for
      */
-    public ValidationWindow(Transaction transaction, TransactionValidator validator) {
+    public ValidationWindow(Blockchain blockchain, Transaction transaction,
+                            TransactionValidator validator, Consensus consensus,
+                            boolean withRevertedUTXO) {
         super();
         setTitle("Transaction Validation");
 
-        masterDetailPane = new TransactionValidationView(transaction, validator);
+        masterDetailPane = new TransactionValidationView(
+            transaction,
+            blockchain,
+            consensus,
+            validator,
+            withRevertedUTXO
+        );
         setProperties();
     }
 

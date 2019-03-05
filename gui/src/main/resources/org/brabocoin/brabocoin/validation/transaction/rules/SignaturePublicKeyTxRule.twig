@@ -1,4 +1,4 @@
-{% extends "../../SkippedRule.twig" %}
+{% extends "../../Rule.twig" %}
 
 {% block description %}
     This rule checks that the signatures contain the right public key.
@@ -6,5 +6,5 @@
     The signature should contain the public key that belongs to the brabocoin address referenced by this input.
     If this is not the case for some signature, the transaction is invalid.<br>
     <br>
-    Signatures contain the right key: {{ validPubKeys }}<br>
+    Signatures contain the right key: <code>{{ validPubKeys }}</code><br>
 {% endblock %}

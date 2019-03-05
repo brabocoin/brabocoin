@@ -11,10 +11,18 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import org.brabocoin.brabocoin.chain.Blockchain;
+import org.brabocoin.brabocoin.chain.IndexedBlock;
+import org.brabocoin.brabocoin.dal.ChainUTXODatabase;
+import org.brabocoin.brabocoin.dal.HashMapDB;
+import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
+import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
+import org.brabocoin.brabocoin.processor.UTXOProcessor;
+import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
@@ -34,7 +42,6 @@ import org.jtwig.resource.exceptions.ResourceNotFoundException;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,65 +50,120 @@ import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 
 public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.proto.ProtoModel> extends MasterDetailPane implements BraboControl, Initializable,
-                                                                ValidationListener {
-
-    private final Map<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItemMap;
-    protected final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
-    protected final Map<TreeItem<? extends String>, String> descriptionItemMap;
-    private final Validator<T> validator;
-    private final T subject;
-    private WebEngine descriptionWebEngine;
-    private TreeItem<String> root;
-    @FXML private MasterDetailPane masterDetailNode;
-    @FXML private VBox treeViewPlaceHolder;
+                                                                                                                                   ValidationListener {
 
     private static final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
     private static final BraboGlyph.Icon ICON_SKIPPED = BraboGlyph.Icon.CIRCLEMINUS;
     private static final BraboGlyph.Icon ICON_SUCCESS = BraboGlyph.Icon.CHECK;
     private static final BraboGlyph.Icon ICON_FAIL = BraboGlyph.Icon.CROSS;
+    final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
+    final Map<TreeItem<? extends String>, String> descriptionItemMap;
+    private final Map<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItemMap;
+    private final Validator validator;
+    private final T subject;
+    protected final Blockchain blockchain;
+    protected final Consensus consensus;
+    private WebEngine descriptionWebEngine;
+    private TreeItem<String> root;
+    private boolean hasSkippedRulesLoaded = false;
+    @FXML private TreeView<String> ruleView;
+    @FXML private MasterDetailPane masterDetailNode;
+    @FXML private VBox treeViewPlaceHolder;
 
-    public enum RuleState {
-        PENDING,
-        SKIPPED,
-        SUCCESS,
-        FAIL
+    public ValidationView(@NotNull Validator validator, @NotNull T subject,
+                          @NotNull Blockchain blockchain, @NotNull Consensus consensus,
+                          @Nullable Node detailView) {
+        super();
+        ruleTreeItemMap = new HashMap<>();
+        transactionItemMap = new HashMap<>();
+        descriptionItemMap = new HashMap<>();
+
+        this.validator = validator;
+        this.subject = subject;
+        this.blockchain = blockchain;
+        this.consensus = consensus;
+        this.setDetailNode(detailView);
+
+        BraboControlInitializer.initialize(this);
     }
 
-    protected abstract RuleList getRules();
-    protected abstract RuleList getSkippedRules();
-    protected abstract BiConsumer<T, RuleList> getValidator();
-    protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule, RuleBook ruleBook);
-
-    protected Node createIcon(RuleState state) {
-        BraboGlyph glyph = null;
-
-        switch (state) {
-            case PENDING:
-                glyph = new BraboGlyph(ICON_PENDING);
-                break;
-            case SKIPPED:
-                glyph = new BraboGlyph(ICON_SKIPPED);
-                glyph.setColor(Color.GRAY);
-                break;
-            case SUCCESS:
-                glyph = new BraboGlyph(ICON_SUCCESS);
-                glyph.setColor(Color.GREEN);
-                break;
-            case FAIL:
-                glyph = new BraboGlyph(ICON_FAIL);
-                glyph.setColor(Color.RED);
-                break;
+    protected <U extends Validator> U getRevertedUTXOValidator(U validator, T subject) {
+        ChainUTXODatabase revertedUTXO = getRevertedUTXO(subject);
+        if (revertedUTXO == null) {
+            return validator;
         }
-
-        BraboGlyph background = new BraboGlyph(BraboGlyph.Icon.CIRCLE_SOLID);
-        background.setColor(Color.WHITE);
-        background.getStyleClass().add("outline");
-
-        return new StackPane(background, glyph);
+        return (U) validator.withUTXOSet(revertedUTXO);
     }
 
-    @FXML
-    public TreeView<String> ruleView;
+    protected abstract IndexedBlock getRevertedUTXODestinationBlock(T subject);
+
+    private ChainUTXODatabase getRevertedUTXO(T subject) {
+        try {
+            IndexedBlock indexedDestinationBlock = getRevertedUTXODestinationBlock(subject);
+
+            if (indexedDestinationBlock != null && blockchain.getMainChain()
+                .contains(indexedDestinationBlock)) {
+                ChainUTXODatabase validationUTXO = new ChainUTXODatabase(
+                    new HashMapDB(),
+                    consensus
+                );
+                UTXOProcessor processor = new UTXOProcessor(validationUTXO);
+
+                // Build up validation UTXO
+                for (int i = 1; i < indexedDestinationBlock.getBlockInfo().getBlockHeight(); i++) {
+                    Block prevBlk = blockchain.getBlock(blockchain.getMainChain()
+                        .getBlockAtHeight(i));
+                    processor.processBlockConnected(prevBlk);
+                }
+
+                return validationUTXO;
+            }
+        }
+        catch (DatabaseException ignored) {
+        }
+        return null;
+    }
+
+    @Override
+    public @NotNull String resourceName() {
+        return "validation_view";
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        createDescriptionNode();
+        new Thread(() -> {
+            loadRules();
+
+            Platform.runLater(() -> ruleView.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observable, oldValue, newValue) -> {
+                    String data = "This rule was not executed.";
+                    if (descriptionItemMap.containsKey(newValue)) {
+                        data = descriptionItemMap.get(newValue);
+                    }
+                    descriptionWebEngine.loadContent(data);
+                }));
+
+            synchronized (validator) {
+                validator.addListener(this);
+                List<Class<? extends Rule>> rules = getRules().getRules();
+                rules.removeAll(getSkippedRules().getRules());
+                applyValidator().accept(subject, new RuleList(rules));
+                validator.removeListener(this);
+            }
+        }).start();
+    }
+
+    private void createDescriptionNode() {
+        WebView browser = new WebView();
+        descriptionWebEngine = browser.getEngine();
+        descriptionWebEngine.setUserStyleSheetLocation(
+            this.getClass().getResource("validation_description.css").toExternalForm()
+        );
+
+        masterDetailNode.setDetailNode(browser);
+    }
 
     private void loadRules() {
         root = new TreeItem<>();
@@ -118,9 +180,11 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         });
     }
 
-    protected boolean isSkippedRuleClass(Class<? extends Rule> rule) {
-        return getSkippedRules().getRules().contains(rule);
-    }
+    protected abstract RuleList getRules();
+
+    protected abstract RuleList getSkippedRules();
+
+    protected abstract BiConsumer<T, RuleList> applyValidator();
 
     protected void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
         for (Class<? extends Rule> rule : ruleList) {
@@ -180,107 +244,54 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         }
     }
 
-    protected abstract List<TreeItem<String>> addCompositeRuleChildren(Class<? extends Rule> rule, RuleList composite);
+    protected boolean isSkippedRuleClass(Class<? extends Rule> rule) {
+        return getSkippedRules().getRules().contains(rule);
+    }
 
-    private void createDescriptionNode() {
-        WebView browser = new WebView();
-        descriptionWebEngine = browser.getEngine();
-        descriptionWebEngine.setUserStyleSheetLocation(
-            this.getClass().getResource("validation_description.css").toExternalForm()
+    protected Node createIcon(RuleState state) {
+        BraboGlyph glyph = null;
+
+        switch (state) {
+            case PENDING:
+                glyph = new BraboGlyph(ICON_PENDING);
+                break;
+            case SKIPPED:
+                glyph = new BraboGlyph(ICON_SKIPPED);
+                glyph.setColor(Color.GRAY);
+                break;
+            case SUCCESS:
+                glyph = new BraboGlyph(ICON_SUCCESS);
+                glyph.setColor(Color.GREEN);
+                break;
+            case FAIL:
+                glyph = new BraboGlyph(ICON_FAIL);
+                glyph.setColor(Color.RED);
+                break;
+        }
+
+        BraboGlyph background = new BraboGlyph(BraboGlyph.Icon.CIRCLE_SOLID);
+        background.setColor(Color.WHITE);
+        background.getStyleClass().add("outline");
+
+        return new StackPane(background, glyph);
+    }
+
+    protected abstract List<TreeItem<String>> addCompositeRuleChildren(Class<? extends Rule> rule,
+                                                                       RuleList composite);
+
+    protected String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
+        return deriveSkippedDescription(
+            ruleClass,
+            deriveClassTwigPath(ruleClass, true)
         );
-
-        masterDetailNode.setDetailNode(browser);
     }
 
-    public ValidationView(@NotNull Validator<T> validator, @NotNull T subject, @Nullable Node detailView) {
-        super();
-        ruleTreeItemMap = new HashMap<>();
-        transactionItemMap = new HashMap<>();
-        descriptionItemMap = new HashMap<>();
-
-        this.validator = validator;
-        this.subject = subject;
-        this.setDetailNode(detailView);
-
-        BraboControlInitializer.initialize(this);
-    }
-
-    @Override
-    public @NotNull String resourceName() {
-        return "validation_view";
-    }
-
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        createDescriptionNode();
-        new Thread(() -> {
-            loadRules();
-
-            Platform.runLater(() -> ruleView.getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> {
-                    String data = "This rule was not executed.";
-                    if (descriptionItemMap.containsKey(newValue)) {
-                        data = descriptionItemMap.get(newValue);
-                    }
-                    descriptionWebEngine.loadContent(data);
-                }));
-
-            synchronized (validator) {
-                validator.addListener(this);
-                List<Class<? extends Rule>> rules = getRules().getRules();
-                rules.removeAll(getSkippedRules().getRules());
-                getValidator().accept(subject, new RuleList(rules));
-                validator.removeListener(this);
-            }
-        }).start();
-    }
-
-    private String deriveSkippedDescription(Class<? extends Rule> ruleClass) {
-        String templatePath = ruleClass.getName().replace('.', '/') + ".skipped.twig";
+    protected String deriveSkippedDescription(Class<? extends Rule> ruleClass,
+                                              String templatePath) {
         JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
         JtwigModel model = JtwigModel.newModel();
 
         ValidationRule annotation = ruleClass.getAnnotation(ValidationRule.class);
-        model.with("title", annotation.name());
-
-        try {
-            return template.render(model);
-        }
-        catch (
-            ResourceNotFoundException e) {
-            return "Could not find rule description template.";
-        }
-    }
-
-    private String deriveDescription(Rule rule, boolean success) {
-        String templatePath = rule.getClass().getName().replace('.', '/') + ".twig";
-        JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
-
-        JtwigModel model = JtwigModel.newModel();
-
-        for (Field field : rule.getClass().getDeclaredFields()) {
-            if (field.getAnnotation(DescriptionField.class) != null) {
-                field.setAccessible(true);
-
-                Object value;
-                try {
-                    value = field.get(rule);
-                }
-                catch (IllegalAccessException e) {
-                    value = "NOT-FOUND";
-                }
-
-                model.with(
-                    field.getName(),
-                    MessageFormat.format("<code>{0}</code>", value.toString())
-                );
-            }
-        }
-
-        model.with("result", success);
-
-        ValidationRule annotation = rule.getClass().getAnnotation(ValidationRule.class);
         model.with("title", annotation.name());
 
         try {
@@ -312,7 +323,8 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
                     if (item.getParent()
                         .getChildren()
                         .stream()
-                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren().get(1)).getIcon()
+                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren()
+                            .get(1)).getIcon()
                             .equals(ICON_SUCCESS))) {
                         item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
                     }
@@ -326,12 +338,71 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         });
     }
 
+    protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems,
+                                                               Rule rule, RuleBook ruleBook);
+
+    private String deriveDescription(Rule rule, boolean success) {
+        String templatePath = deriveClassTwigPath(rule.getClass(), false);
+        JtwigTemplate template = JtwigTemplate.classpathTemplate(templatePath);
+
+        JtwigModel model = JtwigModel.newModel();
+
+        for (Field field : rule.getClass().getDeclaredFields()) {
+            if (field.getAnnotation(DescriptionField.class) != null) {
+                field.setAccessible(true);
+
+                Object value;
+                try {
+                    value = field.get(rule);
+                }
+                catch (IllegalAccessException e) {
+                    value = "NOT-FOUND";
+                }
+
+                model.with(
+                    field.getName(),
+                    value
+                );
+            }
+        }
+
+        model.with("result", success);
+
+        ValidationRule annotation = rule.getClass().getAnnotation(ValidationRule.class);
+        model.with("title", annotation.name());
+
+        try {
+            return template.render(model);
+        }
+        catch (
+            ResourceNotFoundException e) {
+            return "Could not find rule description template.";
+        }
+    }
+
+    protected String deriveClassTwigPath(Class rule, boolean skipped) {
+        return deriveClassPath(rule) + (skipped ? ".skipped.twig" : ".twig");
+    }
+
+    protected String deriveClassPath(Class rule) {
+        return rule.getName().replace('.', '/');
+    }
+
     @Override
     public void onValidationStarted(FactMap facts) {
-        Platform.runLater(() -> setSkippedRuleDescriptions(root));
+        Platform.runLater(() -> {
+            setSkippedRuleDescriptions(root);
+            hasSkippedRulesLoaded = true;
+        });
     }
 
     private void setSkippedRuleDescriptions(TreeItem<String> root) {
+        // Make sure we only load skipped rule descriptions once, for else we may override
+        // existing results.
+        if (hasSkippedRulesLoaded) {
+            return;
+        }
+
         Class<? extends Rule> inverseSearch = inverseSearchRule(root);
 
         if (inverseSearch != null && (isSkippedRuleClass(inverseSearch) || isSkippedDescendant(root))) {
@@ -372,5 +443,12 @@ public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.pro
         }
 
         return null;
+    }
+
+    public enum RuleState {
+        PENDING,
+        SKIPPED,
+        SUCCESS,
+        FAIL
     }
 }

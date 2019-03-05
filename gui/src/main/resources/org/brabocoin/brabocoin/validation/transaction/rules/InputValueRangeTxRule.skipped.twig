@@ -1,0 +1,12 @@
+{% extends "../../SkippedRule.twig" %}
+
+{% block description %}
+    This rule checks that the sum of all inputs in the transaction is within the allowed range.
+    If not, this transaction instance is invalid.<br>
+    <br>
+    We need to find the referenced outputs of the inputs of the transactions, which are stored in the UTXO set at the time the transaction is first received.<br>
+    <br>
+    At this point in time, however, the UTXO set has (probably) changed already, which means we cannot find these referenced outputs anymore.
+    We can only check this rule once when the transaction is first received.
+    Therefore, this validation rule is skipped.<br>
+{% endblock %}

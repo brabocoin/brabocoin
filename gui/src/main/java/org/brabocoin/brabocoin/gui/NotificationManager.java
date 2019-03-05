@@ -78,8 +78,11 @@ public class NotificationManager implements NotificationListener {
                 "Validate",
                 (a) -> {
                     new ValidationWindow(
+                        state.getBlockchain(),
                         transaction,
-                        state.getTransactionValidator()
+                        state.getTransactionValidator(),
+                        state.getConsensus(),
+                        false
                     ).show();
                     a.consume();
                 }

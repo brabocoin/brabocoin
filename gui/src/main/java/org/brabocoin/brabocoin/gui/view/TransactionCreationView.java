@@ -461,7 +461,8 @@ public class TransactionCreationView extends VBox implements BraboControl, Initi
 
     @FXML
     private void validateTransaction(ActionEvent event) {
-        new ValidationWindow(buildTransaction(), transactionValidator).showAndWait();
+        new ValidationWindow(blockchain, buildTransaction(), transactionValidator, consensus, false)
+            .showAndWait();
     }
 
     @FXML
