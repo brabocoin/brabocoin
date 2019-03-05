@@ -184,15 +184,15 @@ public class MutableConsensus {
     private static final int MAX_BLOCK_HEADER_SIZE = 134;
 
     public int getMaxTransactionSize() {
-        return maxBlockSize.get()
+        return getMaxBlockSize()
             - MAX_BLOCK_HEADER_SIZE
-            - maxNonceSize.get()
+            - getMaxNonceSize()
             - MAX_COINBASE_TRANSACTION_SIZE
             - Long.BYTES;
     }
 
     public boolean immatureCoinbase(int chainHeight, UnspentOutputInfo info) {
-        return info.isCoinbase() && chainHeight - coinbaseMaturityDepth.get() < info.getBlockHeight();
+        return info.isCoinbase() && chainHeight - getCoinbaseMaturityDepth() < info.getBlockHeight();
     }
 
     public int getMaxBlockSize() {
