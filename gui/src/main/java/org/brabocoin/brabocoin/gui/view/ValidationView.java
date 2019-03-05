@@ -6,39 +6,28 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import org.brabocoin.brabocoin.chain.Blockchain;
 import org.brabocoin.brabocoin.gui.BraboControl;
 import org.brabocoin.brabocoin.gui.BraboControlInitializer;
 import org.brabocoin.brabocoin.gui.glyph.BraboGlyph;
-import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.validation.ValidationListener;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.annotation.CompositeRuleList;
 import org.brabocoin.brabocoin.validation.annotation.DescriptionField;
 import org.brabocoin.brabocoin.validation.annotation.ValidationRule;
-import org.brabocoin.brabocoin.validation.block.BlockRule;
-import org.brabocoin.brabocoin.validation.block.BlockValidator;
-import org.brabocoin.brabocoin.validation.block.rules.ContextualTransactionCheckBlkRule;
-import org.brabocoin.brabocoin.validation.block.rules.DuplicateStorageBlkRule;
-import org.brabocoin.brabocoin.validation.block.rules.LegalTransactionFeesBlkRule;
-import org.brabocoin.brabocoin.validation.block.rules.UniqueUnspentCoinbaseBlkRule;
-import org.brabocoin.brabocoin.validation.block.rules.ValidCoinbaseOutputAmountBlkRule;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 import org.brabocoin.brabocoin.validation.rule.RuleBook;
 import org.brabocoin.brabocoin.validation.rule.RuleBookResult;
 import org.brabocoin.brabocoin.validation.rule.RuleList;
-import org.brabocoin.brabocoin.validation.transaction.TransactionRule;
-import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
-import org.brabocoin.brabocoin.validation.transaction.rules.DuplicatePoolTxRule;
-import org.brabocoin.brabocoin.validation.transaction.rules.PoolDoubleSpendingTxRule;
 import org.controlsfx.control.MasterDetailPane;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
 import org.jtwig.resource.exceptions.ResourceNotFoundException;
@@ -51,28 +40,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
+import java.util.function.BiConsumer;
 
-public class ValidationView extends MasterDetailPane implements BraboControl, Initializable,
+public abstract class ValidationView<T extends org.brabocoin.brabocoin.model.proto.ProtoModel> extends MasterDetailPane implements BraboControl, Initializable,
                                                                 ValidationListener {
 
     private final Map<Class<? extends Rule>, List<TreeItem<String>>> ruleTreeItemMap;
-    private final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
-    private final Map<TreeItem<? extends String>, String> descriptionItemMap;
-    private final Validator<? extends org.brabocoin.brabocoin.model.proto.ProtoModel> validator;
-    private TransactionDetailView transactionDetailView;
-    private BlockDetailView blockDetailView;
-    private Transaction transaction;
-    private Block block;
+    protected final Map<TreeItem<? extends String>, Transaction> transactionItemMap;
+    protected final Map<TreeItem<? extends String>, String> descriptionItemMap;
+    private final Validator<T> validator;
+    private final T subject;
     private WebEngine descriptionWebEngine;
     private TreeItem<String> root;
     @FXML private MasterDetailPane masterDetailNode;
     @FXML private VBox treeViewPlaceHolder;
 
-    private final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
-    private final BraboGlyph.Icon ICON_SKIPPED = BraboGlyph.Icon.CIRCLEMINUS;
-    private final BraboGlyph.Icon ICON_SUCCESS = BraboGlyph.Icon.CHECK;
-    private final BraboGlyph.Icon ICON_FAIL = BraboGlyph.Icon.CROSS;
+    private static final BraboGlyph.Icon ICON_PENDING = BraboGlyph.Icon.CIRCLE;
+    private static final BraboGlyph.Icon ICON_SKIPPED = BraboGlyph.Icon.CIRCLEMINUS;
+    private static final BraboGlyph.Icon ICON_SUCCESS = BraboGlyph.Icon.CHECK;
+    private static final BraboGlyph.Icon ICON_FAIL = BraboGlyph.Icon.CROSS;
 
     public enum RuleState {
         PENDING,
@@ -81,46 +67,38 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         FAIL
     }
 
-    private BraboGlyph createIcon(RuleState state) {
+    protected abstract RuleList getRules();
+    protected abstract RuleList getSkippedRules();
+    protected abstract BiConsumer<T, RuleList> getValidator();
+    protected abstract @Nullable TreeItem<String> findTreeItem(List<TreeItem<String>> treeItems, Rule rule, RuleBook ruleBook);
+
+    protected Node createIcon(RuleState state) {
+        BraboGlyph glyph = null;
+
         switch (state) {
             case PENDING:
-                BraboGlyph glyphPending = new BraboGlyph(ICON_PENDING);
-                return glyphPending;
+                glyph = new BraboGlyph(ICON_PENDING);
+                break;
             case SKIPPED:
-                BraboGlyph glyphSkipped = new BraboGlyph(ICON_SKIPPED);
-                glyphSkipped.setColor(Color.GRAY);
-                return glyphSkipped;
+                glyph = new BraboGlyph(ICON_SKIPPED);
+                glyph.setColor(Color.GRAY);
+                break;
             case SUCCESS:
-                BraboGlyph glyphSuccess = new BraboGlyph(ICON_SUCCESS);
-                glyphSuccess.setColor(Color.GREEN);
-                return glyphSuccess;
+                glyph = new BraboGlyph(ICON_SUCCESS);
+                glyph.setColor(Color.GREEN);
+                break;
             case FAIL:
-                BraboGlyph glyphFail = new BraboGlyph(ICON_FAIL);
-                glyphFail.setColor(Color.RED);
-                return glyphFail;
+                glyph = new BraboGlyph(ICON_FAIL);
+                glyph.setColor(Color.RED);
+                break;
         }
 
-        return null;
+        BraboGlyph background = new BraboGlyph(BraboGlyph.Icon.CIRCLE_SOLID);
+        background.setColor(Color.WHITE);
+        background.getStyleClass().add("outline");
+
+        return new StackPane(background, glyph);
     }
-
-    private static final RuleList skippedBlockRules = new RuleList(
-        DuplicateStorageBlkRule.class,
-        UniqueUnspentCoinbaseBlkRule.class,
-        ContextualTransactionCheckBlkRule.class,
-        LegalTransactionFeesBlkRule.class,
-        ValidCoinbaseOutputAmountBlkRule.class
-    );
-
-    private static final RuleList skippedTransactionRules = new RuleList(
-        DuplicatePoolTxRule.class,
-        PoolDoubleSpendingTxRule.class
-    );
-
-    private static final RuleList blockRules = new RuleList(
-        BlockValidator.INCOMING_BLOCK,
-        BlockValidator.CONNECT_TO_CHAIN
-    );
-    private static final RuleList transactionRules = TransactionValidator.ALL;
 
     @FXML
     public TreeView<String> ruleView;
@@ -129,13 +107,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         root = new TreeItem<>();
         Platform.runLater(() -> ruleView.setShowRoot(false));
 
-        RuleList ruleList;
-        if (isForBlock()) {
-            ruleList = blockRules;
-        }
-        else {
-            ruleList = transactionRules;
-        }
+        RuleList ruleList = getRules();
         addRules(root, ruleList, false);
         Platform.runLater(() -> {
             ruleView.setManaged(true);
@@ -146,12 +118,11 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         });
     }
 
-    private boolean isSkippedRuleClass(Class<? extends Rule> rule) {
-        return (isForBlock() && skippedBlockRules.getRules().contains(rule)) ||
-            (!isForBlock() && skippedTransactionRules.getRules().contains(rule));
+    protected boolean isSkippedRuleClass(Class<? extends Rule> rule) {
+        return getSkippedRules().getRules().contains(rule);
     }
 
-    private void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
+    protected void addRules(TreeItem<String> node, RuleList ruleList, boolean ignored) {
         for (Class<? extends Rule> rule : ruleList) {
             TreeItem<String> ruleTreeItem = new TreeItem<>();
             if (ignored || isSkippedRuleClass(rule)) {
@@ -187,34 +158,8 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                         continue;
                     }
 
-                    List<Transaction> transactions = block.getTransactions();
-                    for (int i = 0; i < transactions.size(); i++) {
-                        Transaction tx = transactions.get(i);
-                        TreeItem<String> txItem = new TreeItem<>();
-                        descriptionItemMap.put(txItem, "");
-                        transactionItemMap.put(txItem, tx);
-
-                        if (tx.isCoinbase()) {
-                            txItem.setValue("Coinbase transaction");
-                            txItem.setGraphic(createIcon(RuleState.SKIPPED));
-                            txItem.setExpanded(false);
-                            addRules(txItem, composite, true);
-                        }
-                        else {
-                            txItem.setValue("Transaction " + i);
-                            txItem.setGraphic(
-                                isSkippedRuleClass(rule) ?
-                                    createIcon(RuleState.SKIPPED) : createIcon(RuleState.PENDING)
-                            );
-                            txItem.setExpanded(true);
-
-                            addRules(txItem, composite,
-                                isSkippedRuleClass(rule)
-                            );
-                        }
-
-                        ruleTreeItem.getChildren().add(txItem);
-                    }
+                    List<TreeItem<String>> children = addCompositeRuleChildren(rule, composite);
+                    ruleTreeItem.getChildren().addAll(children);
 
                     ruleTreeItem.setExpanded(true);
                 }
@@ -235,6 +180,8 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         }
     }
 
+    protected abstract List<TreeItem<String>> addCompositeRuleChildren(Class<? extends Rule> rule, RuleList composite);
+
     private void createDescriptionNode() {
         WebView browser = new WebView();
         descriptionWebEngine = browser.getEngine();
@@ -245,40 +192,22 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         masterDetailNode.setDetailNode(browser);
     }
 
-    public ValidationView(@NotNull Transaction transaction, @NotNull
-        Validator<Transaction> validator) {
+    public ValidationView(@NotNull Validator<T> validator, @NotNull T subject, @Nullable Node detailView) {
         super();
-
         ruleTreeItemMap = new HashMap<>();
         transactionItemMap = new HashMap<>();
         descriptionItemMap = new HashMap<>();
-        this.transaction = transaction;
-        this.validator = validator;
 
-        transactionDetailView = new TransactionDetailView(transaction, null);
-        this.setDetailNode(transactionDetailView);
+        this.validator = validator;
+        this.subject = subject;
+        this.setDetailNode(detailView);
 
         BraboControlInitializer.initialize(this);
     }
 
-    public ValidationView(@NotNull Blockchain blockchain, @NotNull Block block,
-                          @NotNull Validator<Block> validator) {
-        super();
-
-        ruleTreeItemMap = new HashMap<>();
-        transactionItemMap = new HashMap<>();
-        descriptionItemMap = new HashMap<>();
-        this.block = block;
-        this.validator = validator;
-
-        blockDetailView = new BlockDetailView(blockchain, block, null);
-        this.setDetailNode(blockDetailView);
-
-        BraboControlInitializer.initialize(this);
-    }
-
-    private boolean isForBlock() {
-        return block != null;
+    @Override
+    public @NotNull String resourceName() {
+        return "validation_view";
     }
 
     @Override
@@ -299,21 +228,9 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
 
             synchronized (validator) {
                 validator.addListener(this);
-                // Run validator
-                if (isForBlock()) {
-                    BlockValidator blockValidator = (BlockValidator)validator;
-
-                    List<Class<? extends Rule>> rules = blockRules.getRules();
-                    rules.removeAll(skippedBlockRules.getRules());
-                    blockValidator.validate(block, new RuleList(rules));
-                }
-                else {
-                    TransactionValidator transactionValidator = (TransactionValidator)validator;
-
-                    List<Class<? extends Rule>> rules = transactionRules.getRules();
-                    rules.removeAll(skippedTransactionRules.getRules());
-                    transactionValidator.validate(transaction, new RuleList(rules), true);
-                }
+                List<Class<? extends Rule>> rules = getRules().getRules();
+                rules.removeAll(getSkippedRules().getRules());
+                getValidator().accept(subject, new RuleList(rules));
                 validator.removeListener(this);
             }
         }).start();
@@ -380,47 +297,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
         Platform.runLater(() -> {
             List<TreeItem<String>> treeItems = ruleTreeItemMap.get(rule.getClass());
 
-            TreeItem<String> item;
-            if (rule instanceof TransactionRule) {
-                if (isForBlock()) {
-                    FactMap map = ruleBook.getFacts();
-                    Transaction tx = (Transaction)map.get("transaction");
-
-                    List<TreeItem<String>> treeItemParents = treeItems.stream().map(
-                        TreeItem::getParent
-                    ).collect(Collectors.toList());
-
-                    TreeItem<String> parent = treeItemParents.stream()
-                        .filter(t -> transactionItemMap.get(t).getHash().equals(tx.getHash()))
-                        .findFirst()
-                        .orElse(null);
-
-                    item = treeItems.stream()
-                        .filter(t -> t.getParent().equals(parent))
-                        .findFirst()
-                        .orElse(null);
-
-                }
-                else {
-                    if (treeItems.size() != 1) {
-                        throw new IllegalStateException(
-                            "Found not exactly one rule tree items for transactions");
-                    }
-
-                    item = treeItems.get(0);
-                }
-            }
-            else if (rule instanceof BlockRule) {
-                if (treeItems.size() != 1) {
-                    throw new IllegalStateException(
-                        "Found not exactly one rule tree items for blocks");
-                }
-
-                item = treeItems.get(0);
-            }
-            else {
-                throw new IllegalStateException("Rule of invalid type");
-            }
+            TreeItem<String> item = findTreeItem(treeItems, rule, ruleBook);
 
             descriptionItemMap.put(item, deriveDescription(rule, result.isPassed()));
 
@@ -435,7 +312,7 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
                     if (item.getParent()
                         .getChildren()
                         .stream()
-                        .allMatch(t -> ((BraboGlyph)t.getGraphic()).getIcon()
+                        .allMatch(t -> ((BraboGlyph)((StackPane)t.getGraphic()).getChildren().get(1)).getIcon()
                             .equals(ICON_SUCCESS))) {
                         item.getParent().setGraphic(createIcon(RuleState.SUCCESS));
                     }
@@ -467,7 +344,11 @@ public class ValidationView extends MasterDetailPane implements BraboControl, In
     }
 
     private boolean isSkippedDescendant(TreeItem<String> descendant) {
-        Node graphic = descendant.getGraphic();
+        StackPane stackPane = (StackPane)descendant.getGraphic();
+        Node graphic = null;
+        if (stackPane != null) {
+            graphic = stackPane.getChildren().get(1);
+        }
         if (graphic != null && ((BraboGlyph)graphic).getIcon()
             .equals(ICON_SKIPPED)) {
             return true;

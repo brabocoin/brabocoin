@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
 import javafx.scene.layout.VBox;
 import org.brabocoin.brabocoin.Constants;
 import org.brabocoin.brabocoin.chain.Blockchain;
@@ -44,6 +45,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     private boolean hasActions;
     @Nullable private BlockValidator validator;
     private final NodeEnvironment nodeEnvironment;
+    private final Consensus consensus;
 
     @FXML private HiddenItemsToolBar buttonToolbar;
 
@@ -55,24 +57,25 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
     @FXML private Button buttonShowData;
 
     @FXML private Label titleLabel;
-    @FXML private Button buttonValidate;
+    @FXML private MenuButton buttonValidate;
     @FXML private SelectableLabel hashField;
 
     private final ObjectProperty<Block> block = new SimpleObjectProperty<>();
 
-    public BlockDetailView(@NotNull Blockchain blockchain) {
-        this(blockchain, null, null);
+    public BlockDetailView(@NotNull Blockchain blockchain, Consensus consensus) {
+        this(blockchain, null, null, consensus);
     }
 
-    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator) {
-        this(blockchain, block, validator, null);
+    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator, Consensus consensus) {
+        this(blockchain, block, validator, null, consensus);
     }
 
-    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator, NodeEnvironment nodeEnvironment) {
+    public BlockDetailView(@NotNull Blockchain blockchain, Block block, BlockValidator validator, NodeEnvironment nodeEnvironment, Consensus consensus) {
         super();
         this.blockchain = blockchain;
         this.validator = validator;
         this.nodeEnvironment = nodeEnvironment;
+        this.consensus = consensus;
 
         BraboControlInitializer.initialize(this);
 
@@ -127,12 +130,26 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
         Dialog dialog = new ValidationWindow(
             blockchain,
             getBlock(),
-            validator
+            validator,
+            consensus,
+            false
         );
 
         dialog.showAndWait();
     }
 
+    @FXML
+    protected void validateRevertedUTXO(ActionEvent event) {
+        Dialog dialog = new ValidationWindow(
+            blockchain,
+            getBlock(),
+            validator,
+            consensus,
+            true
+        );
+
+        dialog.showAndWait();
+    }
 
     @FXML
     protected void showData(ActionEvent event) {

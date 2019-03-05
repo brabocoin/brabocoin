@@ -2,17 +2,18 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar?>
 <?import org.brabocoin.brabocoin.gui.control.SelectableLabel?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockDetailsPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockHeaderPane?>
 <?import org.brabocoin.brabocoin.gui.view.block.BlockTransactionsPane?>
 <?import java.lang.Double?>
-<?import org.brabocoin.brabocoin.gui.control.HiddenItemsToolBar?>
 <fx:root type="javafx.scene.layout.VBox"
          xmlns:fx="http://javafx.com/fxml/1"
          fx:controller="org.brabocoin.brabocoin.gui.view.BlockDetailView">
@@ -26,7 +27,12 @@
             <!-- Note: -Infinity is actually USE_PREF_SIZE -->
             <Label fx:id="titleLabel" HBox.hgrow="NEVER" minWidth="-Infinity" styleClass="side-pane-title"/>
             <HiddenItemsToolBar fx:id="buttonToolbar" HBox.hgrow="ALWAYS" styleClass="detail-toolbar">
-                <Button fx:id="buttonValidate" text="Validate" onAction="#validate"/>
+                <MenuButton fx:id="buttonValidate" text="Validate">
+                    <items>
+                        <MenuItem text="Quick" onAction="#validate"/>
+                        <MenuItem text="Complete" onAction="#validateRevertedUTXO"/>
+                    </items>
+                </MenuButton>
                 <Button fx:id="buttonShowData" text="Show data" onAction="#showData"/>
                 <Button fx:id="buttonPropagate" text="Propagate to peers" onAction="#propagate"/>
             </HiddenItemsToolBar>

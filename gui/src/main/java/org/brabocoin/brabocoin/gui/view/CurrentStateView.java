@@ -77,13 +77,13 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
         loadTable();
         masterDetailPane.registerTableView(blockchainTable);
 
-        blockDetailView = new BlockDetailView(blockchain, null, validator);
+        blockDetailView = new BlockDetailView(blockchain, null, validator, state.getConsensus());
         masterDetailPane.setDetailNode(blockDetailView);
 
         loadMainChain();
         blockchain.addListener(this);
 
-        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator, state.getEnvironment());
+        RecentRejectBlkView rejectBlkView = new RecentRejectBlkView(blockchain, validator, state.getEnvironment(), state.getConsensus());
         recentRejectBlkTab.setContent(rejectBlkView);
         recentRejectBlkTab.textProperty().bind(
             Bindings.createStringBinding(
@@ -132,7 +132,8 @@ public class CurrentStateView extends TabPane implements BraboControl, Initializ
 
         OrphanBlocksView orphanBlkView = new OrphanBlocksView(
             state.getBlockchain(),
-            state.getBlockValidator()
+            state.getBlockValidator(),
+            state.getConsensus()
         );
         blkOrphansTab.setContent(orphanBlkView);
         blkOrphansTab.textProperty().bind(
