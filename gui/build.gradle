@@ -37,6 +37,7 @@ jfx {
     nativeReleaseVersion = version
     needShortcut = true
     needMenu = true
+    additionalAppResources = 'src/main/deploy/package/windows/resources'
     manifestAttributes = [
             'Implementation-Version': version
     ]

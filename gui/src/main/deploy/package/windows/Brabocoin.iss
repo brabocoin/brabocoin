@@ -1,3 +1,5 @@
+#define VCmsg "Installing Microsoft Visual C++ Redistributable...."
+
 ;This file will be executed next to the application bundle image
 ;I.e. current directory will contain folder APPLICATION_NAME with application files
 [Setup]
@@ -20,7 +22,7 @@ MinVersion=0,5.1
 OutputBaseFilename=INSTALLER_FILE_NAME
 Compression=lzma
 SolidCompression=yes
-PrivilegesRequired=APPLICATION_INSTALL_PRIVILEGE
+PrivilegesRequired=admin
 SetupIconFile=APPLICATION_NAME\APPLICATION_NAME.ico
 UninstallDisplayIcon={app}\APPLICATION_NAME.ico
 UninstallDisplayName=APPLICATION_NAME
@@ -44,6 +46,9 @@ SECONDARY_LAUNCHERS
 [Run]
 Filename: "{app}\RUN_FILENAME.exe"; Parameters: "-Xappcds:generatecache"; Check: APPLICATION_APP_CDS_INSTALL()
 Filename: "{app}\RUN_FILENAME.exe"; Description: "{cm:LaunchProgram,APPLICATION_NAME}"; Flags: nowait postinstall skipifsilent; Check: APPLICATION_NOT_SERVICE()
+Filename: "{app}\app\vcredist_x86.exe"; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: "{#VCmsg}"; Check: not IsWin64 
+Filename: "{app}\app\vcredist_x64.exe"; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: "{#VCmsg}"; Check: IsWin64 
+
 
 [Code]
 function returnTrue(): Boolean;
