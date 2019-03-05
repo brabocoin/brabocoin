@@ -18,19 +18,25 @@ dependencies {
     testCompile "org.testfx:testfx-junit5:4.0.15-alpha"
 }
 
-task fatCapsule(type: FatCapsule) {
-    applicationClass 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
-    baseName 'brabocoin'
-    classifier null
-    reallyExecutable
-
-    capsuleManifest {
-        minJavaVersion = '1.8.0'
-        applicationId = 'org.brabocoin.gui'
-        applicationName = 'Brabocoin'
+task copyDeploymentIcons(type: Copy) {
+    from('src/main/resources/org/brabocoin/brabocoin/gui/icon/') {
+        include('48.ico')
+        include('48.bmp')
     }
+    into('src/main/deploy/package/windows/')
+
+    rename('48.ico', 'Brabocoin.ico')
+    rename('48.bmp', 'Brabocoin-setup-icon.bmp')
 }
 
-artifacts {
-    archives fatCapsule
+jfx {
+    mainClass = 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    vendor = 'Brabocoin'
+    appName = 'Brabocoin'
+    jfxMainAppJarName = "brabocoin-" + version + ".jar"
+    nativeReleaseVersion = version
+    needShortcut = true
+    needMenu = true
 }
+
+tasks.jfxNative.dependsOn(copyDeploymentIcons)
