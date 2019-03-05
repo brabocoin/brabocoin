@@ -5,6 +5,8 @@ import com.google.common.collect.Sets;
 import javafx.util.Pair;
 import org.brabocoin.brabocoin.cli.BraboArgs;
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.BraboConfigAdapter;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.node.state.DeploymentState;
@@ -14,13 +16,13 @@ import org.brabocoin.brabocoin.processor.BlockProcessor;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ConfigUtil;
 import org.brabocoin.brabocoin.util.LoggingUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,12 +63,15 @@ public class BrabocoinApplication {
      * @throws DatabaseException
      *     When one of the databases could not be initialized.
      */
-    public BrabocoinApplication(BraboConfig config,
-                                Consensus consensus,
-                                @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException, IOException {
+    public BrabocoinApplication(MutableBraboConfig config,
+                                MutableConsensus consensus,
+                                @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
+        BraboConfig immutableConfig = new BraboConfigAdapter(config);
+        Consensus immutableConsensus = new Consensus(consensus);
+
         state = new DeploymentState(
-            config,
-            consensus,
+            immutableConfig,
+            immutableConsensus,
             walletUnlocker
         );
 
@@ -94,7 +99,10 @@ public class BrabocoinApplication {
 
         LoggingUtil.setLogLevel(arguments.getLogLevel());
 
-        Pair<BraboConfig, Consensus> configPair = getConfigPair(arguments.getConfig(), true);
+        Pair<MutableBraboConfig, MutableConsensus> configPair = getConfigPair(
+            arguments.getConfig(),
+            true
+        );
 
         BrabocoinApplication application = new BrabocoinApplication(
             configPair.getKey(),
@@ -106,15 +114,15 @@ public class BrabocoinApplication {
 
     private static void dropConfig(File configFile) {
         try {
-            ConfigUtil.write(new BraboConfig(), new Consensus(), configFile);
+            ConfigUtil.write(new MutableBraboConfig(), new Consensus(), configFile);
         }
-        catch (IOException | InvocationTargetException | IllegalAccessException e) {
+        catch (IOException | IllegalAccessException e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    public static Pair<BraboConfig, Consensus> getConfigPair(
+    public static Pair<MutableBraboConfig, MutableConsensus> getConfigPair(
         String path, Boolean forceDrop) throws IOException {
         File configFile = path == null ? null : new File(path);
 
@@ -133,7 +141,7 @@ public class BrabocoinApplication {
                 }
             }
             else {
-                return new Pair<>(new BraboConfig(), new Consensus());
+                return new Pair<>(new MutableBraboConfig(), new Consensus());
             }
         }
         else {
@@ -150,7 +158,7 @@ public class BrabocoinApplication {
             return ConfigUtil.read(configFile);
         }
         catch (IllegalAccessException e) {
-            return new Pair<>(new BraboConfig(), new Consensus());
+            return new Pair<>(new MutableBraboConfig(), new Consensus());
         }
     }
 

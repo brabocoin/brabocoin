@@ -185,8 +185,8 @@ public class MainView extends NotificationPane implements BraboControl, Initiali
         preferencesFx.show(true, true, () -> {
             try {
                 Preferences.userNodeForPackage(BrabocoinApplication.class).clear();
-                state.getConfig().initializeValues();
-                state.getConsensus().initializeValues();
+                //state.getConfig().initializeDefaultValues();
+                //state.getConsensus().initializeDefaultValues();
             }
             catch (BackingStoreException e) {
                 // ignored

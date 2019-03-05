@@ -3,7 +3,7 @@ package org.brabocoin.brabocoin.services;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -45,7 +45,7 @@ class NodeMessageTest {
 
     private Random random = new Random();
     static MockLegacyConfig defaultConfig =
-        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
 
     @Test
     void handshakeTest() throws IOException, DatabaseException, InterruptedException {

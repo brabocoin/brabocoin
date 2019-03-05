@@ -7,13 +7,14 @@ import com.dlsc.preferencesfx.model.Category;
 import com.dlsc.preferencesfx.model.Group;
 import com.dlsc.preferencesfx.model.Setting;
 import org.brabocoin.brabocoin.BrabocoinApplication;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 
 public class BraboPreferencesFx {
 
-    public static PreferencesFx buildPreferencesFx(BraboConfig config, Consensus consensus) {
+    public static PreferencesFx buildPreferencesFx(MutableBraboConfig config,
+                                                   MutableConsensus consensus) {
         return PreferencesFx.of(
             BrabocoinApplication.class,
             Category.of(

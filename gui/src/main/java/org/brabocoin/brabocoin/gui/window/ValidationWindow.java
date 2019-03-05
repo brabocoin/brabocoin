@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.gui.view.BlockValidationView;
 import org.brabocoin.brabocoin.gui.view.TransactionValidationView;
 import org.brabocoin.brabocoin.model.Block;
 import org.brabocoin.brabocoin.model.Transaction;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.controlsfx.control.MasterDetailPane;

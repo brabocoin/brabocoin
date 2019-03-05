@@ -8,7 +8,7 @@ import org.brabocoin.brabocoin.dal.TransactionPool;
 import org.brabocoin.brabocoin.dal.UTXODatabase;
 import org.brabocoin.brabocoin.model.Transaction;
 import org.brabocoin.brabocoin.node.state.State;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.Validator;
 import org.brabocoin.brabocoin.validation.fact.FactMap;
 import org.brabocoin.brabocoin.validation.rule.Rule;

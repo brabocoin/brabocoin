@@ -2,7 +2,7 @@ package org.brabocoin.brabocoin.services;
 
 import com.google.protobuf.ByteString;
 import org.brabocoin.brabocoin.chain.IndexedBlock;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.mining.Miner;
@@ -17,7 +17,7 @@ import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.MockLegacyConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
 import org.brabocoin.brabocoin.testutil.TestState;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class NodeTest {
 
     static MockLegacyConfig defaultConfig =
-        new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     static Consensus mockConsensus;
 
     @BeforeAll
@@ -110,12 +110,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         Miner minerA = stateA.getMiner();
         Block newBlock = minerA.mineNewBlock(stateA.getBlockchain()
@@ -140,12 +135,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Start nodes
         stateA.getNode().start();
@@ -196,12 +186,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Create a blockchain with a block mined on top of genesis block.
         Miner minerA = stateA.getMiner();
@@ -226,12 +211,7 @@ public class NodeTest {
             public List<String> bootstrapPeers() {
                 return Collections.singletonList("localhost:8090");
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
@@ -253,12 +233,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
 
         // Start nodes
@@ -304,12 +279,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
 
         // Mine 100 blocks to create valid output for new transaction
@@ -372,12 +342,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Start nodes
         stateA.getNode().start();
@@ -437,12 +402,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Mine 100 blocks to create valid output for new transaction
         BigInteger privateKey = Simulation.randomPrivateKey();
@@ -504,12 +464,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
@@ -533,12 +488,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Start nodes
         stateA.getNode().start();
@@ -597,12 +547,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Mine 100 blocks to create valid output for new transaction
         BigInteger privateKey = Simulation.randomPrivateKey();
@@ -664,12 +609,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
             @Override
@@ -688,12 +628,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8092;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Start nodes
         stateA.getNode().start();
@@ -751,12 +686,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         Miner minerA = stateA.getMiner();
 
@@ -787,12 +717,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         for (int i = 1; i < 9; i++) {
             Block newBlock = stateA.getBlockchain()
@@ -817,12 +742,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8092;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         for (int i = 1; i < 11; i++) {
             Block newBlock = stateA.getBlockchain()
@@ -906,12 +826,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         Miner minerA = stateA.getMiner();
 
@@ -942,12 +857,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         minerA = stateA.getMiner();
 
@@ -1067,12 +977,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         Miner minerA = stateA.getMiner();
         IndexedBlock previousBlock = stateA.getBlockchain().getMainChain().getGenesisBlock();
@@ -1112,12 +1017,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
 
         State stateC = new TestState(new MockLegacyConfig(defaultConfig) {
@@ -1140,12 +1040,7 @@ public class NodeTest {
             public Integer targetPeerCount() {
                 return 1;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         stateA.getNode().start();
         stateB.getNode().start();
@@ -1226,12 +1121,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8090;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         Miner minerA = stateA.getMiner();
 
@@ -1390,12 +1280,7 @@ public class NodeTest {
             public Integer servicePort() {
                 return 8091;
             }
-        }) {
-            @Override
-            protected Consensus createConsensus() {
-                return mockConsensus;
-            }
-        };
+        }, mockConsensus);
 
         // Start nodes
         stateA.getNode().start();

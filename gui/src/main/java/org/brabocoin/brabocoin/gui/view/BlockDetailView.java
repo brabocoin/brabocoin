@@ -26,7 +26,7 @@ import org.brabocoin.brabocoin.node.NodeEnvironment;
 import org.brabocoin.brabocoin.proto.model.BrabocoinProtos;
 import org.brabocoin.brabocoin.util.ByteUtil;
 import org.brabocoin.brabocoin.util.ProtoConverter;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +119,7 @@ public class BlockDetailView extends VBox implements BraboControl, Initializable
 
     public void setBlock(Block value) {
         if (value != null) {
-            hasActions = !new Consensus().getGenesisBlock().getHash().equals(value.getHash())
+            hasActions = !consensus.getGenesisBlock().getHash().equals(value.getHash())
                 && validator != null;
         }
         block.setValue(value);

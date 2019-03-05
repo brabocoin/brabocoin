@@ -15,7 +15,7 @@ import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.Wallet;

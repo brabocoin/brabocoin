@@ -3,6 +3,7 @@ package org.brabocoin.brabocoin.testutil;
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -130,7 +131,7 @@ public class LegacyBraboConfig {
     }
 
     public BraboConfig toBraboConfig() {
-        BraboConfig config = new BraboConfig();
+        BraboConfig config = new MutableBraboConfig();
         for (Field f : config.getClass().getFields()) {
             Property property;
             try {

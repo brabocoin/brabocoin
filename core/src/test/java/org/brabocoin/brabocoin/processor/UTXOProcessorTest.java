@@ -12,7 +12,7 @@ import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.model.dal.TransactionUndo;
 import org.brabocoin.brabocoin.model.dal.UnspentOutputInfo;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

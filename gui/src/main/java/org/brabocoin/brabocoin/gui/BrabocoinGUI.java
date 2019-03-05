@@ -28,7 +28,7 @@ import javafx.stage.WindowEvent;
 import javafx.util.Pair;
 import org.brabocoin.brabocoin.BrabocoinApplication;
 import org.brabocoin.brabocoin.cli.BraboArgs;
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
 import org.brabocoin.brabocoin.exceptions.StateInitializationException;
@@ -42,7 +42,7 @@ import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.node.state.Unlocker;
 import org.brabocoin.brabocoin.util.Destructible;
 import org.brabocoin.brabocoin.util.LoggingUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.MutableConsensus;
 import org.brabocoin.brabocoin.wallet.Wallet;
 import org.controlsfx.dialog.ExceptionDialog;
 
@@ -127,7 +127,7 @@ public class BrabocoinGUI extends Application {
 
                 updateMessage("Loading data from disk...");
 
-                Pair<BraboConfig, Consensus> configPair = BrabocoinApplication.getConfigPair(
+                Pair<MutableBraboConfig, MutableConsensus> configPair = BrabocoinApplication.getConfigPair(
                     arguments.getConfig(),
                     false
                 );

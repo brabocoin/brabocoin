@@ -6,7 +6,7 @@ import org.brabocoin.brabocoin.dal.KeyValueStore;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

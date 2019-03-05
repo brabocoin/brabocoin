@@ -2,7 +2,7 @@ package org.brabocoin.brabocoin.gui.util;
 
 import javafx.scene.control.Alert;
 import org.brabocoin.brabocoin.gui.dialog.BraboDialog;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

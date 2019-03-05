@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.dal;
 
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.model.Hash;
 import org.brabocoin.brabocoin.model.Input;
 import org.brabocoin.brabocoin.model.Output;
@@ -35,7 +35,7 @@ class TransactionPoolTest {
 
     @BeforeAll
     static void setUpConfig() {
-        config = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+        config = new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     }
 
     @BeforeEach

@@ -24,8 +24,8 @@ import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.processor.TransactionProcessor;
 import org.brabocoin.brabocoin.processor.UTXOProcessor;
 import org.brabocoin.brabocoin.services.Node;
-import org.brabocoin.brabocoin.validation.Consensus;
 import org.brabocoin.brabocoin.validation.block.BlockValidator;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.transaction.TransactionValidator;
 import org.brabocoin.brabocoin.wallet.TransactionHistory;
 import org.brabocoin.brabocoin.wallet.Wallet;
@@ -33,7 +33,6 @@ import org.brabocoin.brabocoin.wallet.WalletIO;
 import org.brabocoin.brabocoin.wallet.generation.KeyGenerator;
 import org.brabocoin.brabocoin.wallet.generation.SecureRandomKeyGenerator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,14 +74,13 @@ public class DeploymentState implements State {
     protected final @NotNull Node node;
 
     public DeploymentState(@NotNull BraboConfig config,
-                           @Nullable Consensus consensus,
+                           @NotNull Consensus consensus,
                            @NotNull Unlocker<Wallet> walletUnlocker) throws DatabaseException {
         this.config = config;
 
-        this.consensus = consensus == null ? createConsensus() : consensus;
+        this.consensus = consensus;
 
         unsecureRandom = createUnsecureRandom();
-
 
         signer = createSigner();
 
@@ -241,10 +239,6 @@ public class DeploymentState implements State {
 
     protected Random createUnsecureRandom() {
         return new Random();
-    }
-
-    protected Consensus createConsensus() {
-        return new Consensus();
     }
 
     protected Signer createSigner() {

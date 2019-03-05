@@ -1,4 +1,4 @@
-package org.brabocoin.brabocoin.validation;
+package org.brabocoin.brabocoin.validation.consensus;
 
 import com.google.protobuf.ByteString;
 import javafx.beans.property.IntegerProperty;
@@ -22,12 +22,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Function;
 
-/**
- * Consensus rules.
- */
-public class Consensus {
+public class MutableConsensus {
 
-    public Consensus() {
+    public MutableConsensus() {
         maxNonceSize.addListener((observable, oldValue, newValue) -> {
             MAX_NONCE = BigIntegerUtil.getMaxBigInteger(
                 newValue.intValue()
@@ -39,10 +36,10 @@ public class Consensus {
                 cachedTargetValue = newHash;
             }
         });
-        initializeValues();
+        initializeDefaultValues();
     }
 
-    public void initializeValues() {
+    public void initializeDefaultValues() {
         maxBlockSize.setValue(MAX_BLOCK_SIZE);
         maxNonceSize.setValue(MAX_NONCE_SIZE);
         coinbaseMaturityDepth.setValue(COINBASE_MATURITY_DEPTH);
@@ -221,5 +218,4 @@ public class Consensus {
     public Hash getTargetValue() {
         return cachedTargetValue;
     }
-
 }

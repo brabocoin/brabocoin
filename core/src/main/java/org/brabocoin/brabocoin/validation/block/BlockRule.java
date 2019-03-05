@@ -1,7 +1,7 @@
 package org.brabocoin.brabocoin.validation.block;
 
 import org.brabocoin.brabocoin.model.Block;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.brabocoin.brabocoin.validation.rule.Rule;
 
 public abstract class BlockRule implements Rule {

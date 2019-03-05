@@ -17,7 +17,7 @@ import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.node.state.State;
 import org.brabocoin.brabocoin.services.Node;
 import org.brabocoin.brabocoin.util.ByteUtil;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 
 import java.io.File;
 import java.math.BigInteger;

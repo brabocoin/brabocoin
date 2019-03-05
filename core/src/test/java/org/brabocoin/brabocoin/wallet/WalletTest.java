@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.wallet;
 
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.exceptions.CipherException;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
 import org.brabocoin.brabocoin.exceptions.DestructionException;
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class WalletTest {
 
-    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     private static final String walletPath = "testwallet.dat";
     private static final File walletFile = Paths.get(
         defaultConfig.dataDirectory(),

@@ -1,6 +1,7 @@
 package org.brabocoin.brabocoin.chain;
 
 import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.dal.BlockDatabase;
 import org.brabocoin.brabocoin.dal.HashMapDB;
 import org.brabocoin.brabocoin.exceptions.DatabaseException;
@@ -10,7 +11,7 @@ import org.brabocoin.brabocoin.model.dal.BlockInfo;
 import org.brabocoin.brabocoin.model.dal.BlockUndo;
 import org.brabocoin.brabocoin.testutil.LegacyBraboConfig;
 import org.brabocoin.brabocoin.testutil.Simulation;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,7 +49,7 @@ class BlockchainTest {
     static void setUpAll() throws DatabaseException {
         TEST_BLOCK = Simulation.randomBlockChainGenerator(1).get(0);
 
-        BraboConfig defaultConfig = new BraboConfig();
+        BraboConfig defaultConfig = new MutableBraboConfig();
         config = new LegacyBraboConfig(defaultConfig) {
             @Override
             public String blockStoreDirectory() {

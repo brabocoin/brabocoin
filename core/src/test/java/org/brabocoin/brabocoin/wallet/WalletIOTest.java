@@ -1,6 +1,6 @@
 package org.brabocoin.brabocoin.wallet;
 
-import org.brabocoin.brabocoin.config.BraboConfig;
+import org.brabocoin.brabocoin.config.MutableBraboConfig;
 import org.brabocoin.brabocoin.crypto.EllipticCurve;
 import org.brabocoin.brabocoin.crypto.PublicKey;
 import org.brabocoin.brabocoin.crypto.cipher.BouncyCastleAES;
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WalletIOTest {
 
-    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new BraboConfig()));
+    static MockLegacyConfig defaultConfig = new MockLegacyConfig(new LegacyBraboConfig(new MutableBraboConfig()));
     private static final String walletPath = "src/test/resources/testwallet.dat";
     private static final String txHistPath = "src/test/resources/testtxhist.dat";
     private static final File walletFile = new File(walletPath);

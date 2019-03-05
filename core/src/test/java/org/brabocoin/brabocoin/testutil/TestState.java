@@ -10,7 +10,7 @@ import org.brabocoin.brabocoin.node.state.DeploymentState;
 import org.brabocoin.brabocoin.processor.PeerProcessor;
 import org.brabocoin.brabocoin.util.BigIntegerUtil;
 import org.brabocoin.brabocoin.util.Destructible;
-import org.brabocoin.brabocoin.validation.Consensus;
+import org.brabocoin.brabocoin.validation.consensus.Consensus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -22,9 +22,13 @@ import java.util.HashSet;
 public class TestState extends DeploymentState {
 
     public TestState(@NotNull MockLegacyConfig config) throws DatabaseException {
+        this(config, new Consensus());
+    }
+
+    public TestState(@NotNull MockLegacyConfig config, Consensus consensus) throws DatabaseException {
         super(
             config.toBraboConfig(),
-            new Consensus() {
+            new Consensus(consensus) {
                 @Override
                 public Hash getTargetValue() {
                     return new Hash(ByteString.copyFrom(
