@@ -56,7 +56,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -153,13 +156,14 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
             }
         }, 0, loopInterval);
 
-        updatePeerTimer = new Timer();
-        updatePeerTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                peerProcessor.updatePeers();
-            }
-        }, 0, updatePeerInterval * 1000);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        scheduler.scheduleAtFixedRate(
+            peerProcessor::updatePeers,
+            0,
+            updatePeerInterval,
+            TimeUnit.SECONDS
+        );
 
         seekTransactionPoolRequest();
     }
