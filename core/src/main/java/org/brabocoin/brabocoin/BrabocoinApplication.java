@@ -141,7 +141,7 @@ public class BrabocoinApplication {
                 }
             }
             else {
-                return new Pair<>(new MutableBraboConfig(), new Consensus());
+                return new Pair<>(new MutableBraboConfig(), new MutableConsensus());
             }
         }
         else {
@@ -158,7 +158,7 @@ public class BrabocoinApplication {
             return ConfigUtil.read(configFile);
         }
         catch (IllegalAccessException e) {
-            return new Pair<>(new MutableBraboConfig(), new Consensus());
+            return new Pair<>(new MutableBraboConfig(), new MutableConsensus());
         }
     }
 
