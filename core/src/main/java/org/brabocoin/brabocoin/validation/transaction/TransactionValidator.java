@@ -64,6 +64,7 @@ public class TransactionValidator implements Validator {
         OutputValueTxRule.class,
         InputValueRangeTxRule.class,
         SufficientInputTxRule.class,
+        SignatureCountTxRule.class,
         SignaturePublicKeyTxRule.class,
         SignatureTxRule.class
     );
