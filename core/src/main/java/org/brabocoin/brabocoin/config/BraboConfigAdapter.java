@@ -76,7 +76,7 @@ public class BraboConfigAdapter implements BraboConfig {
 
     @Override
     public boolean isAllowLocalPeers() {
-        return false;
+        return allowLocalPeers;
     }
 
     @Override
