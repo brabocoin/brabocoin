@@ -71,7 +71,12 @@ class BlockProcessorTest {
     @AfterEach
     void tearDown() {
         // Remove block files
-        for (File f : blocksDirectory.listFiles()) {
+        if (!blocksDirectory.exists()) return;
+
+        File[] files = blocksDirectory.listFiles();
+        if (files == null) return;
+
+        for (File f : files) {
             f.delete();
         }
     }
