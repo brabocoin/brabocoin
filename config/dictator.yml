@@ -1,24 +1,30 @@
-brabo:
-  networkId: 1                        # The network on which blocks are accepted
-  targetValue: 3216E65                # Target value for blocks
-  loopInterval: 500                   # The interval in the main node loop, in milliseconds
-  targetPeerCount: 10000              # Target of number of peers at which we stop discovering new peers
-  handshakeDeadline: 2000             # In milliseconds per bootstrapping peer
-  bootstrapPeers: []                  # List of peers known at startup
-  updatePeerInterval: 30              # The interval in which we discover new peers to reach targetPeerCount, in seconds.
-  maxSequentialOrphanBlocks: 10       # Max sequential orphan blocks to receive before initializing synchronization.
-  dataDirectory: data                 # Data directory
-  blockStoreDirectory: blocks         # Subfolder to store block data
-  utxoStoreDirectory: utxo            # Subfolder to store UTXO data
-  walletStoreDirectory: wallet        # Subfolder to store wallet data
-  databaseDirectory: db               # Database subfolder
-  maxBlockFileSize: 128000000         # Max block file size in bytes (128 MB)
-  maxTransactionPoolSize: 300         # Max number of transactions in transaction pool
-  maxOrphanTransactions: 100          # Max number of orphan transactions
-  maxOrphanBlocks: 100                # Max number of orphan blocks
-  maxRecentRejectBlocks: 0            # Max number of recently rejected blocks
-  maxRecentRejectTransactions: 0      # Max number of recently rejected transactions
-  servicePort: 56129                  # Port on which the application listens for messages
-  walletFile: wallet.dat              # Wallet file
-  transactionHistoryFile: txhist.dat  # Wallet transaction history file
-  allowLocalPeers: false              # Allow peers to have local host IP addresses
+consensus:
+  maxBlockSize: 10000
+  maxNonceSize: 5
+  targetValue: 3216E65
+  coinbaseMaturityDepth: 10
+  blockReward: 1000
+  minimumTransactionFee: 1
+config:
+  transactionHistoryFile: txhist.dat
+  blockStoreDirectory: blocks
+  dataDirectory: data
+  maxTransactionPoolSize: 300
+  updatePeerInterval: 30
+  databaseDirectory: db
+  maxOrphanTransactions: 100
+  maxSequentialOrphanBlocks: 10
+  maxOrphanBlocks: 100
+  walletStoreDirectory: wallet
+  maxRecentRejectTransactions: 0
+  maxRecentRejectBlocks: 0
+  allowLocalPeers: false
+  bootstrapPeers: []
+  loopInterval: 500
+  targetPeerCount: 10000
+  networkId: 1
+  walletFile: wallet.dat
+  servicePort: 56129
+  utxoStoreDirectory: utxo
+  maxBlockFileSize: 128000000
+  handshakeDeadline: 2000

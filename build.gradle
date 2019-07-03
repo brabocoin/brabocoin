@@ -7,6 +7,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "us.kirchmeier.capsule" version "1.0.2"
+}
+
 allprojects {
     group 'org.brabocoin'
     version '0.4.1'
@@ -16,6 +20,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'javafx-gradle-plugin'
+    apply plugin: 'us.kirchmeier.capsule'
 
     sourceCompatibility = 1.8
 

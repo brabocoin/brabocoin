@@ -68,3 +68,20 @@ jfx {
             'Implementation-Version': version
     ]
 }
+
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.BrabocoinApplication'
+    baseName 'brabocoin'
+    classifier 'headless'
+    reallyExecutable
+
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.core'
+        applicationName = 'Brabocoin'
+    }
+}
+
+artifacts {
+    archives fatCapsule
+}

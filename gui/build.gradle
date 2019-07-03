@@ -44,3 +44,20 @@ jfx {
 }
 
 tasks.jfxNative.dependsOn(copyDeploymentIcons)
+
+task fatCapsule(type: FatCapsule) {
+    applicationClass 'org.brabocoin.brabocoin.gui.BrabocoinGUI'
+    baseName 'brabocoin'
+    classifier null
+    reallyExecutable
+
+    capsuleManifest {
+        minJavaVersion = '1.8.0'
+        applicationId = 'org.brabocoin.gui'
+        applicationName = 'Brabocoin'
+    }
+}
+
+artifacts {
+    archives fatCapsule
+}
