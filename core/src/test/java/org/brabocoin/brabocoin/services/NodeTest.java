@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +81,11 @@ public class NodeTest {
             @Override
             public FileVisitResult postVisitDirectory(Path dir,
                                                       IOException exc) throws IOException {
-                Files.delete(dir);
+                try {
+                    Files.delete(dir);
+                } catch (DirectoryNotEmptyException ignored) {
+                    // Can be ignored, leaves some mess but cleaning it up properly might fail as well, causing the test to hang.
+                }
                 return FileVisitResult.CONTINUE;
             }
         });

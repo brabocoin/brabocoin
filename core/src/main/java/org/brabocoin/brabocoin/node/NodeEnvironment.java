@@ -78,7 +78,6 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      * Timers
      */
     private Timer mainLoopTimer;
-    private Timer updatePeerTimer;
 
     /*
      * Data holders
@@ -173,7 +172,6 @@ public class NodeEnvironment implements NetworkMessageListener, PeerSetChangedLi
      */
     public void stop() {
         mainLoopTimer.cancel();
-        updatePeerTimer.cancel();
 
         peerProcessor.shutdownPeers();
     }
